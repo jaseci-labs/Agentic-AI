@@ -67,6 +67,12 @@ def convert_py_to_jac(py_file_path, output_dir=None):
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(stdout)
         print(f"  ✅ Converted to {output_file}")
+        # Remove the original Python file after successful conversion
+        try:
+            os.remove(py_file_path)
+            print(f"  🗑️  Removed original file: {py_file_path}")
+        except Exception as e:
+            print(f"  ⚠️  Could not remove {py_file_path}: {e}")
         return True
     except Exception as e:
         print(f"  ❌ Failed to write output file {output_file}: {e}")
