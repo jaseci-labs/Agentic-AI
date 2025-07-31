@@ -86,7 +86,7 @@ def main():
     parser.add_argument(
         "directory", 
         nargs="?", 
-        default="aider/coders", 
+        default="aider",  # /coders
         help="Directory to search for .jac files (default: current directory)"
     )
     parser.add_argument(

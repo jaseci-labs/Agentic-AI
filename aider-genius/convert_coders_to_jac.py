@@ -86,7 +86,7 @@ def main():
     # Get the script directory and project root
     script_dir = Path(__file__).parent
     project_root = script_dir
-    coders_dir = project_root / "aider" / "coders"
+    coders_dir = project_root  / "aider" # / "coders"
     
     # Check if coders directory exists
     if not coders_dir.exists():
@@ -97,7 +97,7 @@ def main():
     print("=" * 60)
     
     # Create output directory for Jac files
-    jac_output_dir = coders_dir  #/ "jac_converted"
+    jac_output_dir = coders_dir  
     jac_output_dir.mkdir(exist_ok=True)
     print(f"Jac files will be saved to: {jac_output_dir}")
     print()
@@ -120,7 +120,7 @@ def main():
     
     for py_file in py_files:
         # Skip __init__.py and other special files if desired
-        if py_file.name in ["__init__.py"]:
+        if py_file.name in ["__init__.py", "convert_coders_to_jac.py", "find_syntax_errors.py"]:
             print(f"Skipping {py_file.name}")
             continue
             

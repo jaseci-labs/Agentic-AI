@@ -695,6 +695,49 @@ def get_parser(default_config_files, git_root):
         help="Print the system prompts and exit (debug)",
         default=False,
     )
+    
+    group.add_argument(
+        "--genius",
+        action="store_true",
+        default=False,
+        help="Run in autonomous Genius Mode",
+    )
+    group.add_argument(
+        "--genius-limit",
+        type=int,
+        metavar="N",
+        default=10,
+        help="Max iterations for Genius Mode (default: 10)",
+    )
+    group.add_argument(
+        "--genius-task",
+        metavar="GENIUS_TASK",
+        help="Specify the task for Genius Mode",
+    )
+    group.add_argument(
+        "--enable-web-search",
+        action="store_true",
+        default=True,
+        help="Enable web search for additional context in Genius Mode (default: True)",
+    )
+    group.add_argument(
+        "--disable-web-search",
+        action="store_true",
+        default=False,
+        help="Disable web search in Genius Mode",
+    )
+    group.add_argument(
+        "--enable-security-scan",
+        action="store_true",
+        default=True,
+        help="Enable security scanning in Genius Mode (default: True)",
+    )
+    group.add_argument(
+        "--disable-security-scan",
+        action="store_true",
+        default=False,
+        help="Disable security scanning in Genius Mode",
+    )
 
     ##########
     group = parser.add_argument_group("Voice settings")

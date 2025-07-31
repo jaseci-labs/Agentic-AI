@@ -518,6 +518,10 @@ class Model(ModelSettings):
             self.use_temperature = False
             return  # <--
 
+        if "codex" in model:
+            self.use_temperature = False
+            return  # <--
+
         if (
             "qwen" in model
             and "coder" in model
