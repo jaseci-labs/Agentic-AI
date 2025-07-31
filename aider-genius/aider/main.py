@@ -7,6 +7,7 @@ import traceback
 import webbrowser
 from dataclasses import fields
 from pathlib import Path
+import jaclang
 
 try:
     import git
@@ -38,6 +39,25 @@ from aider.versioncheck import check_version, install_from_main_branch, install_
 from aider.watch import FileWatcher
 
 from .dump import dump  # noqa: F401
+
+
+def show_jac_coder_ascii_art():
+    """Display Jac Coder ASCII art banner"""
+    ascii_art = """
+    
+    ##################################################
+    #                                                #
+    #      _                            _            #
+    #     | | __ _  ___    ___ ___   __| | ___ _ __  #
+    #  _  | |/ _` |/ __|  / __/ _ \ / _` |/ _ \ '__| #
+    # | |_| | (_| | (__  | (_| (_) | (_| |  __/ |    #
+    #  \___/ \__,_|\___|  \___\___/ \__,_|\___|_|    #
+    #                                                #
+    ##################################################
+
+    Advanced AI-Powered Pair Programming in Your Terminal
+    """
+    print(ascii_art)
 
 
 def check_config_files_for_yes(config_files):
@@ -505,7 +525,7 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
 
     if args.shell_completions:
         # Ensure parser.prog is set for shtab, though it should be by default
-        parser.prog = "aider"
+        parser.prog = "jac-coder"
         print(shtab.complete(parser, shell=args.shell_completions))
         sys.exit(0)
 
@@ -586,6 +606,10 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
         io = get_io(False)
         io.tool_warning("Terminal does not support pretty output (UnicodeDecodeError)")
 
+    # Show JAC-CODER ASCII art banner
+    if not return_coder and not args.gui:
+        show_jac_coder_ascii_art()
+
     # Process any environment variables set via --set-env
     if args.set_env:
         for env_setting in args.set_env:
@@ -642,12 +666,12 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
     if args.analytics is not False:
         if analytics.need_to_ask(args.analytics):
             io.tool_output(
-                "Aider respects your privacy and never collects your code, chat messages, keys or"
+                "JAC-CODER respects your privacy and never collects your code, chat messages, keys or"
                 " personal info."
             )
             io.tool_output(f"For more info: {urls.analytics}")
             disable = not io.confirm_ask(
-                "Allow collection of anonymous analytics to help improve aider?"
+                "Allow collection of anonymous analytics to help improve jac-coder?"
             )
 
             analytics.asked_opt_in = True
@@ -1150,6 +1174,57 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
         analytics.event("exit", reason="Completed --message-file")
         return
 
+    if args.genius:
+        # from aider.genius import GeniusAgent # _mode
+        from aider.genius import GeniusMode
+        
+        # Try to get task from multiple sources in order of priority
+        task = args.genius_task or args.message
+        
+        # If no explicit task, check if there are file arguments that look like task descriptions
+        if not task and args.files:
+            # If the file argument doesn't exist and looks like a task description, use it as task
+            potential_task = args.files[0] if len(args.files) == 1 else None
+            if potential_task and not Path(potential_task).exists():
+                # If it doesn't exist as a file and contains descriptive words, treat as task
+                task_indicators = ['create', 'add', 'implement', 'build', 'make', 'generate', 'write']
+                if any(indicator in potential_task.lower() for indicator in task_indicators):
+                    task = potential_task
+        
+        # Don't set a default task here - let GeniusAgent handle it
+        # This way GeniusAgent knows whether a task was explicitly provided
+        
+        # Handle web search flags
+        enable_web_search = True
+        if args.disable_web_search:
+            enable_web_search = False
+        elif hasattr(args, 'enable_web_search'):
+            enable_web_search = args.enable_web_search
+            
+        # Handle security scan flags  
+        enable_security_scan = True
+        if args.disable_security_scan:
+            enable_security_scan = False
+        elif hasattr(args, 'enable_security_scan'):
+            enable_security_scan = args.enable_security_scan
+        
+        mode = GeniusMode(coder=coder, task=task,
+                         max_iterations=args.genius_limit,
+                         enable_web_search=enable_web_search,
+                         enable_security_scan=enable_security_scan)
+        
+        # agent = GeniusAgent(
+        #     coder=coder, 
+        #     task=task,  # This will be None if no task was provided
+        #     max_iterations=args.genius_limit,
+        #     enable_web_search=enable_web_search,
+        #     enable_security_scan=enable_security_scan
+        # )
+        mode.run()
+        # agent.run()
+        analytics.event("exit", reason="genius mode")
+        return
+        
     if args.exit:
         analytics.event("exit", reason="Exit flag set")
         return
