@@ -1,12 +1,11 @@
 import sys;
 import os;
-import from tools {RagEngine, WebSearch}
-import from mcp.server.fastmcp.tools {Tool}
-import from mcp.server.fastmcp {FastMCP}
+import from web_search { WebSearcher }
+import from mcp.server.fastmcp.tools { Tool }
+import from mcp.server.fastmcp { FastMCP }
 import typing;
 
-glob rag_engine: RagEngine = RagEngine();
-glob web_search: WebSearch = WebSearch();
+glob web_search: WebSearcher = WebSearcher();
 
 
 with entry {
