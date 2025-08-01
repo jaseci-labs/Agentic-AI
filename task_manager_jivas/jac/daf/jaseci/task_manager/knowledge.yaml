@@ -1,0 +1,14 @@
+- metadata:
+    knode_index: Example, Knode, Index
+    anchors:
+      - What does this do?
+      - What is JIVAS?
+  text: |2-
+
+    # Example
+
+    ## Example Questions:
+    - What is JIVAS?
+
+    ## Answer:
+    JIVAS is a framework for building agents that can interact with the world.

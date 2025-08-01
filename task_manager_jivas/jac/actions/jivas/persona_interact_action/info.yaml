@@ -1,0 +1,18 @@
+package:
+  name: jivas/persona_interact_action
+  author: V75 Inc.
+  archetype: PersonaInteractAction
+  version: 0.1.0
+  meta:
+    title: Persona Interact Action
+    description: Maintains a master prompt to provide role, history and context for LLM chat and/or retrieval augmented generation. Which works with optional modular prompts.
+    group: core
+    type: interact_action
+  config:
+    singleton: true
+  dependencies:
+    jivas: ~2.1.0
+    actions:
+      jivas/langchain_model_action: "~0.1.0"
+
+

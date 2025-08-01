@@ -1,0 +1,54 @@
+# Python #
+*.pyc
+__pycache__
+venv
+.pytest_cache
+__jac_gen__
+
+# Distribution / packaging
+.Python
+play/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+test_source/
+
+# Others #
+.coverage
+.session
+*.session.db
+mydatabase/
+actions/jivas/
+daf/jivas/
+.DS_Store
+.vscode
+build
+*Zone.Identifier
+.DS_Store
+parser.out
+codegen_output*
+.qodo
+.files
+*.rdb
+node_modules
+out.dot
+out.txt
+.jvdata
+*.env
+
+# Mypy files #
+.mypy_cache*
+.jac_mypy_cache*

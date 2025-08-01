@@ -1,0 +1,14 @@
+package:
+  name: "jaseci/create_task_action_interact_action"
+  author: "jaseci"
+  archetype: "CreateTaskActionInteractAction"
+  version: "0.1.0"
+  meta:
+    title: "Create Task Action Interact Action"
+    description: "No description provided."
+    group: "contrib"
+    type: "interact_action"
+  config:
+    singleton: "true"
+  dependencies:
+    jivas: "~2.1.0"
