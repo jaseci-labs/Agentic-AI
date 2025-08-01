@@ -1,5 +1,9 @@
 import from jivas.agent.action.interact_action { InteractAction }
 import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
+import from actions.jaseci.create_task_action_interact_action.task { Task }
+import from jivas.agent.memory.interaction_response { TextInteractionMessage, SilentInteractionMessage }
+import json;
+import re;
 
 node CreateTaskActionInteractAction(InteractAction) {
     has model_action: str = "LangChainModelAction";
@@ -12,6 +16,12 @@ node CreateTaskActionInteractAction(InteractAction) {
         "task": "short one-sentence task summary",
         "date": "YYYY-MM-DD",
         "time": "HH:MM"
+        }}
+        If the user does not mention any task or give scheduling information, return a single object with empty strings:
+        {{
+        "task": "",
+        "date": "",
+        "time": ""
         }}
         No explanations or paragraphs, only valid JSON.
     """;
@@ -29,10 +39,7 @@ node CreateTaskActionInteractAction(InteractAction) {
         # This action is a placeholder for creating tasks in the Jaseci system.
         # It can be extended to include specific task creation logic.
         
-        print("Executing CreateTaskActionInteractAction");
-
         utterance = visitor.utterance;
-
         prompt_messages = [
             {"system": self.prompt},
             {"human": "{utterance}"}
@@ -54,48 +61,45 @@ node CreateTaskActionInteractAction(InteractAction) {
                 interaction_message = model_action_result.get_result();
                 if not interaction_message {
                     interaction_message = "...";
+                    return;
                 }
-                print(interaction_message);
+                raw_message = re.sub(r"^```json|^```|```$", "", interaction_message.strip(), flags=re.MULTILINE).strip();
+                interact_action_json = json.loads(raw_message);
+                print("Parsed JSON:", interact_action_json);
+
+                if isinstance(interact_action_json, dict) {
+                    tasks = [interact_action_json];
+                } elif isinstance(interact_action_json, list) {
+                    tasks = interact_action_json;
+                } else {
+                    print("Invalid JSON structure");
+                    return;
+                }
+
+                for task_obj in tasks {
+                    is_task_added = self.add_task(
+                        task=task_obj.get("task", ""),
+                        date=task_obj.get("date", ""),
+                        time=task_obj.get("time", "")
+                    );
+                    if is_task_added {
+                        visitor.interaction_node.set_message(
+                            TextInteractionMessage(content="Task created successfully: " + task_obj.get("task", ""))
+                        );
+                    }
+                }
             }
         }
-        print({"status": "success", "message": "Task created successfully."});
+        self.logger.info("CreateTaskActionInteractAction executed successfully.");
     }
 
-    # Declare your has variables to be persisted here
-    # e.g has var_a : str = "string";   
-
-    #* (Abilities - Uncomment and implement as needed)
-    can on_register {
-        # override to execute operations upon registration of action
+    def add_task(task:str, date:str, time:str) -> str {
+        if not task or not date or not time {
+            self.logger.error("Invalid task details provided.");
+            return False;
+        }
+        collection = self.get_collection();
+        collection ++> Task(task=task, date=date, time=time);
+        return True;
     }
-
-
-    can post_register {
-        # override to execute any setup code when all actions are in place
-    }
-
-    can on_enable {
-        # override to execute operations upon enabling of action
-    }
-
-    can on_disable {
-        # override to execute operations upon disabling of action
-    }
-
-    can on_deregister {
-        # override to execute operations upon deregistration of action
-    }
-
-    can touch(visitor: interact_graph_walker) -> bool {
-        # override to authorize, redirect or deny the interact walker from running execute
-    }
-
-    can execute(visitor: interact_graph_walker) -> dict {
-        # override to implement action execution
-    }
-
-    can pulse() {
-        # override to implement pulse operation
-    }
-    *#
 }
