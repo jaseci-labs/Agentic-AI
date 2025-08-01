@@ -1,0 +1,34 @@
+published: true
+name: "jaseci/task_manager"
+description: |-
+  A jivas agent autocreated by the jvcli.
+actions:
+  - action: jivas/intro_interact_action
+    context:
+      version: "0.1.0"
+      enabled: true
+      prompt: "In a natural and brief manner:\na. Introduce yourself by name and explain your role."
+  - action: jivas/persona_interact_action
+    context:
+      version: "0.1.0"
+      enabled: true
+      anchors: []
+      timezone: "UTC"
+      history: true
+      user_model: true
+      history_size: 2
+      max_statement_length: 800
+      model_name: "gpt-4o"
+  - action: jivas/agent_utils_action
+    context:
+      version: "0.1.0"
+      enabled: true
+  - action: jivas/langchain_model_action
+    context:
+      version: "0.1.0"
+      enabled: true
+      api_key: ""
+  - action: jaseci/create_task_action_interact_action
+    context:
+      version: "0.1.0"
+      enabled: true

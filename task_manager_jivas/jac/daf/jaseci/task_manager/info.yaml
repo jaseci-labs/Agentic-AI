@@ -1,0 +1,10 @@
+package:
+  name: "jaseci/task_manager"
+  author: "jaseci"
+  version: "0.0.1"
+  meta:
+    title: "Task Manager"
+    description: "A jivas agent autocreated by the jvcli."
+    type: "agent"
+  dependencies:
+    jivas: "~2.1.0"

@@ -1,0 +1,21 @@
+package:
+  name: jivas/intro_interact_action
+  author: V75 Inc.
+  archetype: IntroInteractAction
+  version: 0.1.0
+  meta:
+    title: Introductory Interact Action
+    description: Dispatches an introductory prompt directive to persona_response_action if user is a first-time user.
+    group: core
+    type: interact_action
+  config:
+    singleton: true
+    order:
+      weight: 0
+      before: jivas/persona_interact_action
+  dependencies:
+    jivas: ~2.1.0
+    actions:
+      jivas/persona_interact_action: "~0.1.0"
+
+
