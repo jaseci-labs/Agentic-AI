@@ -12,3 +12,4 @@ semver
 codespell
 uv
 google-cloud-bigquery
+mcp[cli]
