@@ -10,5 +10,8 @@ package:
     type: "interact_action"
   config:
     singleton: "true"
+    order:
+      weight: 0
+      before: jivas/persona_interact_action
   dependencies:
     jivas: "~2.1.0"

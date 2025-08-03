@@ -107,7 +107,7 @@ node PersonaInteractAction(InteractAction) {
     def touch(visitor:agent_graph_walker) -> bool {
         # authorize, redirect or deny the interact walker here
         # only executes if response message is empty
-        # return (visitor.utterance and not visitor.interaction_node.has_response());
+        return (visitor.utterance and not visitor.interaction_node.has_response());
     }
 
     def execute(visitor:agent_graph_walker) -> None {
