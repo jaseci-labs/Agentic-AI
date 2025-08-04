@@ -900,6 +900,76 @@ node ValidatorNode {
     # }
 }
 
+# User input node for task continuation
+node UserInputNode {
+    has status: str = "waiting";
+    has user_input: str = "";
+    has should_continue: bool = True;
+    
+    """Wait for user input and determine next action"""
+    def get_user_input(coder: Any) -> Tuple[str, bool] {
+        try {
+            coder.io.tool_output("\n" + "="*50);
+            coder.io.tool_output("Genius Agent - Task Completed!");
+            coder.io.tool_output("What would you like me to do next?");
+            coder.io.tool_output("Options:");
+            coder.io.tool_output("  - Describe a new task");
+            coder.io.tool_output("  - Type 'exit' or 'quit' to stop");
+            coder.io.tool_output("  - Type 'status' to see current repository state");
+            coder.io.tool_output("="*50);
+            
+            user_input = input("\nNext task > ").strip();
+            
+            if user_input.lower() in ['exit', 'quit', 'stop'] {
+                return ("", False);
+            } elif user_input.lower() == 'status' {
+                return ("status", True);
+            } elif user_input == '' {
+                return ("empty", True);  # Handle empty input separately
+            } else {
+                return (user_input, True);
+            }
+        } except (KeyboardInterrupt, EOFError) {
+            coder.io.tool_output("\nExiting Genius Agent...");
+            return ("", False);
+        } except Exception as e {
+            coder.io.tool_output(f"Error getting user input: {str(e)}");
+            return ("", False);
+        }
+    }
+    
+    """Show current repository status"""
+    def show_status(coder: Any) {
+        coder.io.tool_output("\nCurrent Repository Status:");
+        coder.io.tool_output("-" * 30);
+        
+        if coder.abs_fnames {
+            coder.io.tool_output("Files in current session:");
+            for fname in coder.abs_fnames {
+                coder.io.tool_output(f"  - {fname}");
+            }
+        } else {
+            coder.io.tool_output("No files in current session");
+        }
+        
+        if coder.repo {
+            try {
+                dirty_files = coder.repo.get_dirty_files();
+                if dirty_files {
+                    coder.io.tool_output("\nModified files:");
+                    for file in dirty_files {
+                        coder.io.tool_output(f"  - {file}");
+                    }
+                } else {
+                    coder.io.tool_output("\nNo uncommitted changes");
+                }
+            } except Exception as e {
+                coder.io.tool_output(f"Could not get git status: {e}");
+            }
+        }
+    }
+}
+
 # Terminal node for end of graph traversal
 node EndNode {}
 glob END = EndNode();
@@ -941,12 +1011,14 @@ walker GeniusAgent {
         planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
         editor_node = EditorNode(file_path="", content="", changes=[], status="pending", editor_model=self.editor_model);
         validator_node = ValidatorNode(file_path="", issues=[], status="pending", validation_model=self.editor_model);
+        user_input_node = UserInputNode(status="waiting");
         
-        # Connect the workflow
+        # Connect the workflow with user input loop
         root ++> planning_node;
         planning_node ++> editor_node;
         editor_node ++> validator_node;
-        validator_node ++> END;
+        validator_node ++> user_input_node;  # Go to user input instead of END
+        # Note: UserInputNode will handle navigation based on user choice
         
         self.coder.io.tool_output(f"Genius Agent - Phase: Initialization | Action: Starting Genius Agent | Reasoning: Beginning autonomous development cycle for: {self.task}");
         
@@ -1196,7 +1268,65 @@ walker GeniusAgent {
             }
         }
         
+        # Generate report before moving to user input
+        self.generate_comprehensive_report();
+        
         visit [-->];
+    }
+
+    # Handle user input and decide next action
+    can handle_user_input with UserInputNode entry {
+        here.status = "waiting";
+        
+        while True {
+            (user_input, should_continue) = here.get_user_input(self.coder);
+            
+            if not should_continue {
+                self.coder.io.tool_output("Genius Agent - Phase: Shutdown | Action: User requested exit | Reasoning: Gracefully shutting down");
+                # End the walker execution
+                return;
+            }
+            
+            if user_input == "status" {
+                here.show_status(self.coder);
+                continue;
+            }
+            
+            if user_input == "empty" {
+                self.coder.io.tool_output("Please provide a task description or type 'exit' to quit.");
+                continue;
+            }
+            
+            if user_input {
+                # Reset for new task
+                self.task = user_input;
+                self.task_explicitly_provided = True;
+                self.planning_complete = False;
+                self.last_error_context = None;
+                self.current_iteration = 0;
+                
+                self.coder.io.tool_output(f"Genius Agent - Phase: New Task | Action: Starting new task | Reasoning: User provided new task: {user_input}");
+                
+                # Create new nodes for the next cycle
+                planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
+                editor_node = EditorNode(file_path="", content="", changes=[], status="pending", editor_model=self.editor_model);
+                validator_node = ValidatorNode(file_path="", issues=[], status="pending", validation_model=self.editor_model);
+                new_user_input_node = UserInputNode(status="waiting");
+                
+                # Connect the new workflow
+                here ++> planning_node;
+                planning_node ++> editor_node;
+                editor_node ++> validator_node;
+                validator_node ++> new_user_input_node;
+                
+                # Start the new cycle
+                visit [-->];
+                return;
+            } else {
+                here.show_status(self.coder);
+                self.coder.io.tool_output("Please provide a valid task or type 'exit' to quit.");
+            }
+        }
     }
 
     # Handle reaching the end
