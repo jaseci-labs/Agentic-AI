@@ -1,0 +1,3 @@
+git+https://github.com/TrueSelph/jvcli@2.1.0
+git+https://github.com/TrueSelph/jvserve@2.1.0
+git+https://github.com/TrueSelph/jivas@2.1.0

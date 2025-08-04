@@ -37,7 +37,7 @@ Planned features include:
 
 ## Repositories
 
-- Implementation: [chat-powered-task-agent](https://github.com/MalithaPrabhashana/chat-powered-task-agent.git)
+- Implementation: [chat-powered-task-agent](jac/README.md)
 - Based on: [Jivas](https://github.com/TrueSelph/jivas.git)
 
 ---
