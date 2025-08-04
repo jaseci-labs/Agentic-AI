@@ -1,4 +1,5 @@
 import from uuid { uuid4 }
+import from datetime { datetime }
 import from pydantic { BaseModel, Field, condecimal }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
@@ -6,6 +7,7 @@ import from utils { convert_date_to_valid_format }
 import from mtp { extract_memory_details, update_memory_details }
 import from mtllm.llm { Image }
 import from google_maps_service { google_location_service }
+import from memory { memory, memories, visit_memories }
 
 
 node sessions {}
@@ -55,4 +57,11 @@ walker get_session(visit_sessions) {
 
     can visit_session with sessions entry;
     can report_session with session entry;
+}
+
+walker save_memory(visit_memories) {
+    has session_id: str;
+
+    can create_memory with memories entry;
+    can update_memory with memory entry;
 }
