@@ -5,7 +5,6 @@ import re;
 import from pathlib { Path }
 import from typing { Any, Dict, List, Optional, Tuple }
 import from aider.web_search { web_search, create_web_searcher }
-import from mcp_client { list_mcp_tools, call_mcp_tool }
 import from mtllm {Model}
 
 with entry {
@@ -608,8 +607,7 @@ node EditorNode {
             search_results = "";
             for query in search_queries[:2] { 
                 search_results += f"Searching for: {query}\n";
-                # result = web_searcher.search(query);
-                result = call_mcp_tool("search_web", {"query":query});
+                result = web_searcher.search(query);
                 print(f"Search result for '{query}': {result}");
                 if result and not result.startswith('No') and len(result.strip()) > 50 {
                     if len(result) > 1000 {
