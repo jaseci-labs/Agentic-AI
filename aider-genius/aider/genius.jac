@@ -5,7 +5,6 @@ import re;
 import from pathlib { Path }
 import from typing { Any, Dict, List, Optional, Tuple }
 import from aider.web_search { web_search, create_web_searcher }
-import from mcp_client { list_mcp_tools, call_mcp_tool }
 import from mtllm {Model}
 
 with entry {
@@ -158,7 +157,7 @@ node PlanningNode {
     # """Perform background research to gather additional context"""
     # def background_research(task_description:str) -> str by self.planning_model(method="ReAct", tools=[web_search]);
 
-    """ Generate specific implementation instructions for the user's task, focusing on exact code structure and technologies to use."""
+    """Generate specific implementation instructions for the user's task, focusing on exact code structure and technologies to use."""
     def generate_plan(task_description: str, repo_context: str, issues_context: str) -> List[Plan] by self.planning_model(method="Reason"); 
 
     """Use LLM to analyze the task and repository context to create an intelligent task plan."""
@@ -608,8 +607,7 @@ node EditorNode {
             search_results = "";
             for query in search_queries[:2] { 
                 search_results += f"Searching for: {query}\n";
-                # result = web_searcher.search(query);
-                result = call_mcp_tool("search_web", {"query":query});
+                result = web_searcher.search(query);
                 print(f"Search result for '{query}': {result}");
                 if result and not result.startswith('No') and len(result.strip()) > 50 {
                     if len(result) > 1000 {
