@@ -2,7 +2,7 @@ import from uuid { uuid4 }
 import from pydantic { BaseModel, Field, condecimal }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
-import from utils { download_and_save_image, convert_date_to_valid_format }
+import from utils { convert_date_to_valid_format }
 import from mtp { extract_memory_details, update_memory_details }
 import from mtllm.llm { Image }
 import from google_maps_service { google_location_service }
@@ -19,7 +19,6 @@ node session {
     has what: str = "";
     has conversation : list = [];
     has image_url: str = "";
-    has file_path: str = "";
     has save_memory: bool = False;
     has show_summary: bool = False;
 }
