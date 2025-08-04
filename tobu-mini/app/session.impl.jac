@@ -175,13 +175,13 @@ impl get_session.report_session with session entry {
 }
 
 impl save_memory.create_memory with memories entry {
-    logger.debug("memory | save_memory | creating new memory");
+    logger.debug("session | save_memory | creating new memory");
     memory_node = here ++> memory();
     visit memory_node[0];
 }
 
 impl save_memory.update_memory with memory entry {
-    logger.debug("memory | save_memory | updating memory");
+    logger.debug("session | save_memory | updating memory");
     walker_obj = root spawn get_session(
         session_id=self.session_id,
         if_report=False
