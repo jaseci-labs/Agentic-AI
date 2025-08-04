@@ -158,7 +158,7 @@ node PlanningNode {
     # """Perform background research to gather additional context"""
     # def background_research(task_description:str) -> str by self.planning_model(method="ReAct", tools=[web_search]);
 
-    """ Generate specific implementation instructions for the user's task, focusing on exact code structure and technologies to use."""
+    """Generate specific implementation instructions for the user's task, focusing on exact code structure and technologies to use."""
     def generate_plan(task_description: str, repo_context: str, issues_context: str) -> List[Plan] by self.planning_model(method="Reason"); 
 
     """Use LLM to analyze the task and repository context to create an intelligent task plan."""
