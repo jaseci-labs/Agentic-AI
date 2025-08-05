@@ -6,6 +6,10 @@ import from jac_cloud.jaseci.utils.logger { logger }
 
 walker init_user {
 
+    class __specs__ {
+        has tags: list = ["user"];
+    }
+
     can initialize_user with `root entry;
     can update_email with profile entry;
 }

@@ -21,5 +21,10 @@ node memory {
 }
 
 walker visit_memories {
+
+    class __specs__ {
+        has tags: list = ["memory"];
+    }
+    
     can visit_memories with `root entry;
 }

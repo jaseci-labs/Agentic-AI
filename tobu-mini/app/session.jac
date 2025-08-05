@@ -31,6 +31,11 @@ class Location(BaseModel) {
 }
 
 walker visit_sessions {
+    
+    class __specs__ {
+        has tags: list = ["session"];
+    }
+
     can visit_sessions with `root entry;
 }
 
@@ -38,6 +43,10 @@ walker init_session(visit_sessions) {
     has image_url: str;
     has location: Location = Location(latitude=0, longitude=0);
     has date: str = "";
+
+    class __specs__ {
+        has tags: list = ["session"];
+    }
 
     can initialize_session with sessions entry; 
     can update_session with session entry;
@@ -47,6 +56,10 @@ walker continue_session(visit_sessions) {
     has session_id: str;
     has utterance: str;
 
+    class __specs__ {
+        has tags: list = ["session"];
+    }
+    
     can visit_session with sessions entry;
     can update_session with session entry;
 }
@@ -55,6 +68,10 @@ walker get_session(visit_sessions) {
     has session_id: str;
     has if_report: bool = True;
 
+    class __specs__ {
+        has tags: list = ["session"];
+    }
+    
     can visit_session with sessions entry;
     can report_session with session entry;
 }
@@ -62,6 +79,10 @@ walker get_session(visit_sessions) {
 walker save_memory(visit_memories) {
     has session_id: str;
 
+    class __specs__ {
+        has tags: list = ["session"];
+    }
+    
     can create_memory with memories entry;
     can update_memory with memory entry;
 }
