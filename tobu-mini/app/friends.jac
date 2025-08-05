@@ -1,6 +1,5 @@
 import from jac_cloud.jaseci.utils.logger { logger }
-import from profile { profile }
-import from profile { visit_profile } 
+import from profile { profile, visit_profile } 
 import from pydantic { EmailStr }
 import from jaseci_sdk { get_user_by_email, get_node_by_root_id, grant_permission, get_current_user }
 import from fastapi { HTTPException, status }
@@ -36,4 +35,32 @@ walker accept_friend_request(visit_profile) {
     }
 
     can accept_friend_request with profile entry;
+}
+
+walker get_received_friend_requests(visit_profile) {
+
+    class __specs__ {
+        has tags: list = ["friends"];
+    }
+
+    can get_received_friend_requests with profile entry;
+}
+
+walker get_sent_friend_requests(visit_profile) {
+
+    class __specs__ {
+        has tags: list = ["friends"];
+    }
+
+    can get_sent_friend_requests with profile entry;
+}
+
+walker get_friends(visit_profile) {
+    has friends: list = [];
+
+    class __specs__ {
+        has tags: list = ["friends"];
+    }
+
+    can get_friends with profile entry;
 }
