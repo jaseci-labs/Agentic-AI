@@ -83,13 +83,14 @@ def get_user_by_email(email: str) {
 def get_node_by_root_id(root_id: str, node_type: str) {
     logger.debug(f"jaseci_sdk | get_node_by_root_id | Fetching node by root_id: {root_id} and name: {node_type}");
     filter = {
-        "root_id": ObjectId(root_id),
-        "name": node_type
+        "name": node_type,
+        "root": ObjectId(root_id)
     };
     fetched_node = NodeAnchor.Collection.find_one(filter=filter);
     if fetched_node {
-        logger.debug(f"jaseci_sdk | get_node_by_root_id | Node found: {fetched_node.name}");
-        return fetched_node;
+        logger.debug(f"jaseci_sdk | get_node_by_root_id | Node found");
+        fetched_node = _.get_context().mem.find_by_id(fetched_node);
+        return fetched_node.archetype;
     } else {
         logger.debug(f"jaseci_sdk | get_node_by_root_id | No node found with root_id: {root_id} and name: {node_type}");
         return None;
