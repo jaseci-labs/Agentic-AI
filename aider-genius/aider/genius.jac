@@ -771,7 +771,6 @@ walker GeniusAgent {
         planning_node ++> editor_node;
         editor_node ++> validator_node;
         validator_node ++> user_input_node;  # Go to user input instead of END
-        # Note: UserInputNode will handle navigation based on user choice
         
         self.coder.io.tool_output(f"Genius Agent - Phase: Initialization | Action: Starting Genius Agent | Reasoning: Beginning autonomous development cycle for: {self.task}");
         
