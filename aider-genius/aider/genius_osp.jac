@@ -201,6 +201,247 @@ node PlanningNode {
             print(f"LLM planning failed: {str(e)}");
         }
     }
+
+    # """Create a comprehensive prompt for the planning LLM"""
+    # def create_planning_prompt(task: str, repo_context: Dict, issues: List[Dict]) -> str {
+    #     prompt_parts = [
+    #         f"MAIN TASK (HIGHEST PRIORITY): {task}",
+    #         "",
+    #         "FOCUS: Create a plan that prioritizes completing the main task above all else.",
+    #         "",
+    #         "REPOSITORY CONTEXT:"
+    #     ];
+        
+    #     if repo_context.get('files_in_chat') {
+    #         prompt_parts.append("Files currently being worked on:");
+    #         for file in repo_context['files_in_chat'] {
+    #             prompt_parts.append(f"  - {file}");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if repo_context.get('missing_files') {
+    #         prompt_parts.append("Missing files mentioned in repo map:");
+    #         for file in repo_context['missing_files'][:3] {
+    #             prompt_parts.append(f"  - {file}");
+    #         }
+    #         if len(repo_context['missing_files']) > 3 {
+    #             prompt_parts.append(f"  ... and {len(repo_context['missing_files']) - 3} more");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if repo_context.get('repo_map') {
+    #         prompt_parts.append("Repository structure:");
+    #         repo_map = str(repo_context['repo_map']);
+    #         if len(repo_map) > 2000 {
+    #             repo_map = repo_map[:2000] + "... (truncated)";
+    #         }
+    #         prompt_parts.append(repo_map);
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if repo_context.get('git_status') {
+    #         prompt_parts.append("Git status (dirty files):");
+    #         for file in repo_context['git_status'] {
+    #             prompt_parts.append(f"  - {file}");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if issues {
+    #         prompt_parts.append("Current issues in codebase (fix only if they block the main task):");
+    #         for issue in issues {
+    #             prompt_parts.append(f"  - {issue['type']}: {issue.get('file', 'general')} - {issue['details'][:100]}...");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     prompt_parts.extend([
+    #         "REQUIREMENTS:",
+    #         "1. PRIORITY 1: Create tasks to complete the main task - this is most important",
+    #         "2. Break down the main task into logical, implementable steps",
+    #         "3. Only include existing issue fixes if they directly block the main task",
+    #         "4. Consider dependencies and proper ordering for the main task",
+    #         "5. Missing files unrelated to the main task should be low priority or excluded",
+    #         "6. Be specific about what each task should accomplish for the main goal",
+    #         "",
+    #         "Please analyze the above context and create an optimal task execution plan as a JSON array, focusing primarily on the main task:"
+    #     ]);
+        
+    #     return "\n".join(prompt_parts);
+    # }
+
+    # """Get the system prompt for the planning LLM"""
+    # def get_planning_system_prompt() -> str {
+    #     return """You are an expert software development planning agent. Your job is to analyze a development task and codebase context to create an optimal execution plan.
+
+    #     CRITICAL PRIORITY RULE: The user's main task should ALWAYS be the highest priority. All other tasks (fixing lint errors, missing files, etc.) are secondary unless they directly block the main task.
+
+    #     You should:
+    #     1. ALWAYS prioritize the user's main task as priority 1
+    #     2. Break down the main task into smaller, manageable subtasks with priority 1-2
+    #     3. Only include fixing existing issues (lint, tests) if they directly impact the main task
+    #     4. Consider dependencies between tasks and order them logically
+    #     5. Ensure tasks are specific and actionable
+    #     6. For missing files that are not related to the main task, assign low priority (4-5) or exclude them
+    #     7. When creating new files for the main task, focus on "feature_implementation" task types
+
+    #     Respond with a JSON array of task objects. Each task should have:
+    #     - "name": Clear, descriptive task name
+    #     - "type": One of ["fix_tests", "fix_lint", "fix_security", "feature_implementation", "improvement", "refactor", "documentation"]
+    #     - "priority": Integer (1=highest priority for main task, 2-3=supporting tasks, 4-5=maintenance/optional)
+    #     - "details": Specific description of what needs to be done
+    #     - "dependencies": Array of task names that must complete first (empty array if none)
+    #     - "estimated_effort": "small", "medium", or "large"
+    #     - "file": (optional) Specific file path if the task is file-specific
+
+    #     IMPORTANT:
+    #     - The user's main task gets priority 1
+    #     - Supporting tasks for the main task get priority 2-3
+    #     - Existing code fixes only get priority 1-2 if they block the main task
+    #     - Missing files unrelated to main task get priority 4-5 or are excluded""";
+    # }
+    
+    # """Create a simple task graph when LLM planning fails"""
+    # def create_simple_task_graph(task: str, repo_context: Dict, issues: List[Dict]) -> List[Dict] {
+    #     tasks = [];
+        
+    #     # Main task always gets priority 1
+    #     if task and task != "Analyze and improve the codebase" {
+    #         task_details = task;
+    #         # Enhance task details for common requests
+    #         if 'calculator' in task.lower() {
+    #             task_details = f"{task}\n\nCreate a simple calculator program that:\n- Supports basic arithmetic operations (+, -, *, /)\n- Handles user input and output\n- Includes error handling for invalid inputs and division by zero\n- Has a clean, user-friendly interface";
+    #         }
+            
+    #         tasks.append({
+    #             "name": task,
+    #             "type": "feature_implementation",
+    #             "priority": 1,
+    #             "details": task_details,
+    #             "dependencies": [],
+    #             "estimated_effort": "medium"
+    #         });
+    #     }
+        
+    #     # Add critical issues that might block the main task
+    #     critical_issues = [];
+    #     for issue in issues {
+    #         if issue['type'] == 'test' and issue.get('priority') == 'high' {
+    #             critical_issues.append(issue);
+    #         }
+    #     }
+        
+    #     for issue in critical_issues {
+    #         if issue['type'] == 'test' {
+    #             tasks.append({
+    #                 "name": "Fix failing tests",
+    #                 "type": "fix_tests",
+    #                 "priority": 2,
+    #                 "details": issue['details'],
+    #                 "dependencies": [],
+    #                 "estimated_effort": "medium"
+    #             });
+    #         }
+    #     }
+        
+    #     # Fallback improvement task
+    #     if task == "Analyze and improve the codebase" and repo_context['files_in_chat'] {
+    #         tasks.append({
+    #             "name": "Improve code quality and documentation",
+    #             "type": "improvement",
+    #             "priority": 1,
+    #             "details": "Review and improve code quality, add documentation where needed",
+    #             "dependencies": [],
+    #             "estimated_effort": "large"
+    #         });
+    #     }
+        
+    #     # Sort by priority
+    #     def get_priority(task: dict) -> int {
+    #         return task['priority'];
+    #     }
+    #     tasks = sorted(tasks, key=get_priority);
+    #     return tasks;
+    # }
+
+    # """Parse the LLM's planning response and convert to task objects"""
+    # def parse_llm_planning_response(response: str) -> List[Dict] {
+    #     try {
+    #         json_match = re.search(r'\[.*\]', response, re.DOTALL);
+    #         if json_match {
+    #             json_str = json_match.group(0);
+    #             tasks = json.loads(json_str);
+                
+    #             # Validate task structure
+    #             valid_tasks = [];
+    #             for task in tasks {
+    #                 if isinstance(task, dict) and 'name' in task and 'type' in task {
+    #                     # Set defaults for missing fields
+    #                     task.setdefault('priority', 1);
+    #                     task.setdefault('details', task.get('name', ''));
+    #                     task.setdefault('dependencies', []);
+    #                     task.setdefault('estimated_effort', 'medium');
+    #                     valid_tasks.append(task);
+    #                 }
+    #             }
+    #             return valid_tasks;
+    #         }
+    #     } except (json.JSONDecodeError, Exception) as e {
+    #         print(f"Failed to parse LLM planning response: {str(e)}");
+    #     }
+        
+    #     return [];
+    # }
+
+    # """Sort tasks by dependencies and priority"""
+    # def resolve_task_dependencies(tasks: List[Dict]) -> List[Dict] {
+    #     task_map = {task['name']: task for task in tasks};
+    #     resolved = [];
+    #     remaining = tasks.copy();
+        
+    #     while remaining {
+    #         ready_tasks = [];
+    #         for task in remaining {
+    #             deps = task.get('dependencies', []);
+    #             resolved_names = [t['name'] for t in resolved];
+    #             deps_satisfied = True;
+    #             for dep in deps {
+    #                 if dep not in resolved_names {
+    #                     deps_satisfied = False;
+    #                     break;
+    #                 }
+    #             }
+    #             if deps_satisfied {
+    #                 ready_tasks.append(task);
+    #             }
+    #         }
+            
+    #         if not ready_tasks {
+    #             # Break circular dependencies by taking the highest priority task
+    #             min_priority = min([task['priority'] for task in remaining]);
+    #             for task in remaining {
+    #                 if task['priority'] == min_priority {
+    #                     ready_tasks = [task];
+    #                     break;
+    #                 }
+    #             }
+    #         }
+            
+    #         # Sort ready tasks by priority
+    #         def get_task_priority(task: dict) -> int {
+    #             return task['priority'];
+    #         }
+    #         ready_tasks = sorted(ready_tasks, key=get_task_priority);
+    #         for task in ready_tasks {
+    #             resolved.append(task);
+    #             remaining.remove(task);
+    #         }
+    #     }
+        
+    #     return resolved;
+    # }
 }
 
 
@@ -278,6 +519,77 @@ node EditorNode {
         
         return base_message;
     }
+    
+    # """Determine if web search would be helpful for this task"""
+    # def should_search_web(task: Dict, web_searcher: Any, last_error_context: Optional[str] = None) -> bool {
+    #     if not web_searcher or not web_searcher.is_available() {
+    #         return False;
+    #     }
+        
+    #     return (task['type'] in ['feature_implementation', 'improvement'] or
+    #             last_error_context is not None or
+    #             'jac' in task.get('details', '').lower() or
+    #             'documentation' in task.get('details', '').lower() or
+    #             'jac language' in task.get('details', '').lower() or
+    #             'create' in task.get('details', '').lower());
+    # }
+
+    # """Generate relevant search queries for the task"""
+    # def generate_search_queries(task: Dict, last_error_context: Optional[str] = None) -> List[str] {
+    #     queries = [];
+    #     details = task.get('details', '').lower();
+        
+    #     if task['type'] == 'feature_implementation' {
+    #         task_details = task.get('details', '');
+    #         if 'jac language' in details or 'jac' in details {
+    #             queries.extend([
+    #                 "jac programming language syntax guide",
+    #                 "jac language examples tutorial",
+    #                 "object spatial programming jac"
+    #             ]);
+    #         } elif 'calculator' in details {
+    #             queries.extend([
+    #                 "python calculator implementation tutorial",
+    #                 "simple calculator program with error handling",
+    #                 "basic arithmetic calculator python code example"
+    #             ]);
+    #         } else {
+    #             queries.append(f"how to implement {task_details} programming");
+    #         }
+            
+    #         if 'api' in details {
+    #             queries.append("REST API implementation guide");
+    #         }
+    #         if 'test' in details {
+    #             queries.append("unit testing best practices");
+    #         }
+    #     } elif task['type'] == 'fix_tests' {
+    #         queries.extend([
+    #             "fix failing unit tests debugging",
+    #             "test failure troubleshooting guide"
+    #         ]);
+    #     } elif task['type'] == 'fix_lint' {
+    #         queries.extend([
+    #             "code linting errors how to fix",
+    #             "static analysis warnings solutions"
+    #         ]);
+    #     } elif last_error_context {
+    #         error_key_terms = last_error_context[:100];
+    #         queries.append(f"python error solution {error_key_terms}");
+    #     }
+        
+    #     # Remove duplicates while preserving order
+    #     unique_queries = [];
+    #     seen = set();
+    #     for query in queries {
+    #         if query.lower() not in seen {
+    #             unique_queries.append(query);
+    #             seen.add(query.lower());
+    #         }
+    #     }
+        
+    #     return unique_queries;
+    # }
 
     """Determine if web search is required for this task. if you dont have the latest syntaxes of a language, you should search the web for it."""
     def need_web_search(task: Dict, web_searcher: Any, last_error_context: Optional[str] = None) -> bool by self.editor_model(method="Reason");
@@ -524,6 +836,68 @@ node ValidatorNode {
         };
     }
     
+    # """Run comprehensive security scanning on the codebase using both traditional and AI-powered analysis"""
+    # def run_security_scan(coder: Any) -> Dict[str, Any] {
+    #     print("Checking for security issues");
+    #     print("Ensuring code security");
+        
+    #     security_issues = [];
+        
+    #     for fname in coder.abs_fnames {
+    #         if fname.endswith('.py') {
+    #             try {
+    #                 with open(fname, 'r') as f {
+    #                     content = f.read();
+    #                 }
+                    
+    #                 # Basic security checks
+    #                 if 'eval(' in content {
+    #                     security_issues.append(f"{fname}: Use of eval() detected - potential code injection risk");
+    #                 }
+    #                 if 'exec(' in content {
+    #                     security_issues.append(f"{fname}: Use of exec() detected - potential code injection risk");
+    #                 }
+    #                 if 'shell=True' in content {
+    #                     security_issues.append(f"{fname}: subprocess with shell=True detected - potential command injection risk");
+    #                 }
+    #                 if 'pickle.loads' in content {
+    #                     security_issues.append(f"{fname}: Use of pickle.loads detected - potential deserialization risk");
+    #                 }
+                    
+    #                 # AI-powered intelligent security analysis for recently edited files
+    #                 if self.validation_model and len(content.strip()) > 0 {
+    #                     try {
+    #                         # Create context about the coder's recent work
+    #                         coder_context = f"Files being worked on: {list(coder.abs_fnames)[:5]}";
+    #                         print(f"Recent files in chat: {coder_context}");
+    #                         if hasattr(coder, 'cur_messages') and coder.cur_messages {
+    #                             recent_messages = coder.cur_messages[-3:];  # Last 3 messages
+    #                             coder_context += f"\nRecent conversation: {str(recent_messages)[:500]}...";
+    #                         }
+                            
+    #                         ai_scan_result = self.intelligent_security_scan(content, fname, coder_context);
+                            
+    #                         if ai_scan_result and ai_scan_result.get('issues') {
+    #                             for issue in ai_scan_result['issues'] {
+    #                                 security_issues.append(f"{fname}: {issue}");
+    #                             }
+    #                         }
+    #                     } except Exception as e {
+    #                         print(f"AI security scan failed for {fname}: {str(e)}");
+    #                     }
+    #                 }
+                    
+    #             } except Exception as e {
+    #                 print(f"Security scan failed for {fname}: {str(e)}");
+    #             }
+    #         }
+    #     }
+        
+    #     return {
+    #         'passed': len(security_issues) == 0,
+    #         'output': "\n".join(security_issues) if security_issues else "No security issues detected"
+    #     };
+    # }
 }
 
 # User input node for task continuation
