@@ -27,3 +27,13 @@ walker send_friend_request(visit_profile) {
 
     can send_friend_request with profile entry;
 }
+
+walker accept_friend_request(visit_profile) {
+    has email: EmailStr;
+
+    class __specs__ {
+        has tags: list = ["friends"];
+    }
+
+    can accept_friend_request with profile entry;
+}
