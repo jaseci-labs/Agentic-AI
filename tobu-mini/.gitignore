@@ -1,3 +1,5 @@
 .env
 mydatabase/
+temp/
 .DS_Store
+.aider*

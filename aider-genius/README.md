@@ -248,3 +248,46 @@ This project maintains the same license as the original Aider project. See the [
 ---
 
 *Revolutionizing AI pair programming with intelligent agentic workflows for the future of software development.*
+# Calculator CLI
+
+This project provides a simple command-line interface (CLI) calculator that performs basic arithmetic operations.
+
+## Features
+
+- Addition
+- Subtraction
+- Multiplication
+- Division (with error handling for division by zero)
+
+## Usage
+
+To use the calculator, run the `cli_calculator.py` script with the desired operation and operands. For example:
+
+```bash
+python aider-genius/cli_calculator.py add 5 3
+```
+
+This will output:
+
+```
+The result of adding 5.0 and 3.0 is: 8.0
+```
+
+### Available Operations
+
+- `add`: Add two numbers.
+- `subtract`: Subtract the second number from the first.
+- `multiply`: Multiply two numbers.
+- `divide`: Divide the first number by the second (raises an error if the second number is zero).
+
+### Example Commands
+
+```bash
+python aider-genius/cli_calculator.py subtract 10 4
+python aider-genius/cli_calculator.py multiply 6 7
+python aider-genius/cli_calculator.py divide 8 2
+```
+
+## Error Handling
+
+The calculator handles division by zero by raising a `ValueError` with a clear error message.
