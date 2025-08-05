@@ -51,6 +51,124 @@ sem SecurityScanResult.analysis = "Detailed security analysis breakdown by categ
 sem SecurityScanResult.risk_level = "Overall risk assessment: low, medium, high, critical";
 sem SecurityScanResult.recommendations = "List of security improvement recommendations";
 
+node IntelligentDecisionNode {
+    has decision_model: Optional[Model] = None;
+    has current_task_context: dict = {};
+    has repo_context: dict = {};
+    
+    """Analyze a file operation request and decide whether to approve it based on context, safety, and task relevance."""
+    def should_approve_file_operation(
+        operation_type: str, 
+        file_path: str, 
+        task_context: str, 
+        repo_context: str,
+        operation_details: str = ""
+    ) -> bool by self.decision_model(method="Reason");
+    
+    """Make an intelligent decision about file operations"""
+    def make_intelligent_decision(
+        operation_type: str,
+        file_path: str,
+        operation_details: str = "",
+        task_context: Optional[Dict] = None,
+        repo_context: Optional[Dict] = None
+    ) -> bool {
+        if not self.decision_model {
+            # Fallback to safe default if no decision model
+            return operation_type in ['create', 'edit', 'read'];
+        }
+        
+        try {
+            # Prepare context for the decision
+            task_str = str(task_context) if task_context else "No task context";
+            repo_str = str(repo_context) if repo_context else "No repository context";
+            
+            decision = self.should_approve_file_operation(
+                operation_type,
+                file_path,
+                task_str,
+                repo_str,
+                operation_details
+            );
+            
+            print(f"Intelligent Decision: {operation_type} {file_path} -> {'APPROVED' if decision else 'DENIED'}");
+            return decision;
+        } except Exception as e {
+            print(f"Decision making failed: {str(e)}, defaulting to safe approval");
+            # Default to approval for common operations if decision fails
+            return operation_type in ['create', 'edit', 'read'];
+        }
+    }
+}
+
+obj IntelligentIO {
+    """Custom IO wrapper that makes intelligent decisions about file operations"""
+    has original_io: Any;
+    has decision_node: IntelligentDecisionNode;
+    has current_task: Optional[Dict] = None;
+    has repo_context: Optional[Dict] = None;
+    
+    def __init__(original_io: Any, decision_model: Any) {
+        self.original_io = original_io;
+        self.decision_node = IntelligentDecisionNode(decision_model=decision_model);
+    }
+    
+    def set_context(task: Optional[Dict], repo_context: Optional[Dict]) {
+        self.current_task = task;
+        self.repo_context = repo_context;
+        self.decision_node.current_task_context = task or {};
+        self.decision_node.repo_context = repo_context or {};
+    }
+    
+    def confirm_ask(
+        question: str,
+        default: str = "y",
+        subject: Optional[str] = None,
+        explicit_yes_required: bool = False,
+        group: Any = None,
+        allow_never: bool = False
+    ) -> bool {
+        # Analyze the question to determine operation type
+        operation_type = "unknown";
+        file_path = subject or "unknown";
+        
+        if "Create new file" in question or "create" in question.lower() {
+            operation_type = "create";
+        } elif "edit" in question.lower() or "modify" in question.lower() {
+            operation_type = "edit";
+        } elif "delete" in question.lower() or "remove" in question.lower() {
+            operation_type = "delete";
+        } elif "add" in question.lower() and "to the chat" in question.lower() {
+            operation_type = "add_to_chat";
+        } elif "commit" in question.lower() {
+            operation_type = "commit";
+        }
+        
+        # Make intelligent decision
+        decision = self.decision_node.make_intelligent_decision(
+            operation_type=operation_type,
+            file_path=file_path,
+            operation_details=question,
+            task_context=self.current_task,
+            repo_context=self.repo_context
+        );
+        
+        if decision {
+            self.original_io.tool_output(f"AI Decision: APPROVED - {operation_type} {file_path}");
+            return True;
+        } else {
+            self.original_io.tool_output(f"AI Decision: DENIED - {operation_type} {file_path}");
+            self.original_io.tool_output(f"Reason: Operation deemed unsafe or unnecessary for current task");
+            return False;
+        }
+    }
+    
+    # Delegate all other methods to original IO
+    def __getattr__(name: str) -> Any {
+        return getattr(self.original_io, name);
+    }
+}
+
 
 node PlanningNode {
     has task: str = "";
@@ -241,8 +359,10 @@ node EditorNode {
                 base_message += f"Please implement the following feature or improvement:\n{task['details']}\n\n";
                 details_lower = task['details'].lower();
                 if 'create' in details_lower or 'new file' in details_lower {
-                    base_message += "IMPORTANT: You must create the necessary files. Do not ask for confirmation - proceed directly with implementation.\n";
+                    base_message += "IMPORTANT: You must create the necessary files. The AI assistant will intelligently approve necessary file operations.\n";
                 }
+                # Add intelligent operation directive
+                base_message += "INTELLIGENT MODE: An AI assistant will review and approve file operations based on task relevance and safety. Proceed with necessary file operations.\n";
                 if 'calculator' in details_lower {
                     base_message += "Create a functional calculator with basic arithmetic operations (addition, subtraction, multiplication, division).\n";
                     base_message += "Include proper error handling for division by zero and invalid inputs.\n";
@@ -275,6 +395,9 @@ node EditorNode {
             base_message += f"\n\nNote: Previous attempt failed with: {last_error_context}\n";
             base_message += "Please address this issue in your implementation.";
         }
+        
+        # Add intelligent operation directive for all tasks
+        base_message += f"\n\nINTELLIGENT MODE: This agent has an AI assistant that will intelligently review and approve file operations based on task relevance, safety, and necessity. Proceed with the implementation knowing that file operations will be evaluated appropriately.";
         
         return base_message;
     }
@@ -621,17 +744,21 @@ walker GeniusAgent {
 
     # Initialize the agent and start at root
     can start with `root entry {
+        # Set up planning and editor models first
+        self.planning_model = Model(model_name="gpt-4.1-mini");
+        self.editor_model = Model(model_name="gpt-4.1-mini");
+        
+        # Replace the coder's IO with intelligent decision-making IO
+        original_io = self.coder.io;
+        self.coder.io = IntelligentIO(original_io, self.editor_model);
+        self.coder.io.tool_output("Genius Agent - Intelligent Decision Mode Enabled: AI will make smart decisions about file operations");
+        
         # Initialize web searcher if available
         if WEB_SEARCH_AVAILABLE and create_web_searcher {
             self.web_searcher = create_web_searcher(print_error=self.coder.io.tool_error);
         } else {
             self.web_searcher = None;
         }
-        
-        # Set planning model
-        # self.planning_model = self.planning_model or self.coder.main_model;
-        self.planning_model = Model(model_name="gpt-4.1-mini");
-        self.editor_model = Model(model_name="gpt-4.1-mini");
         
         # Create the workflow graph
         planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
@@ -749,6 +876,9 @@ walker GeniusAgent {
             # Store current task in node
             here.current_task = current_task;
             here.status = "processing";
+            
+            # Update the intelligent IO with current task context
+            self.coder.io.set_context(current_task, planning_node.repo_context);
             
             # Enhanced editing with web search if needed
             self.coder.io.tool_output(f"Genius Agent - Phase: Editing/Code Generation | Action: Working on {current_task['name']} | Reasoning: Implementing {current_task['type']} with targeted approach");
@@ -932,6 +1062,9 @@ walker GeniusAgent {
                 self.current_iteration = 0;
                 
                 self.coder.io.tool_output(f"Genius Agent - Phase: New Task | Action: Starting new task | Reasoning: User provided new task: {user_input}");
+                
+                # Reset the intelligent IO context for the new task
+                self.coder.io.set_context(None, None);
                 
                 # Create new nodes for the next cycle
                 planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
