@@ -29,7 +29,7 @@ node CreateTaskActionInteractAction(InteractAction) {
 
     has prompt_detect_intent: str = """
         Determine the user's intent from the message. Choose one of: "create_task" or "summarize_tasks".
-        Respond only with the string: "create_task" or "summarize_tasks".
+        Respond only with the string: "create_task, "summarize_tasks" or "no_task".
     """;
 
     has prompt_summarize_all_tasks: str = """
@@ -45,9 +45,6 @@ node CreateTaskActionInteractAction(InteractAction) {
     }
 
     def execute(visitor:agent_graph_walker) -> None {
-        # This action is a placeholder for creating tasks in the Jaseci system.
-        # It can be extended to include specific task creation logic.
-        
         utterance = visitor.utterance;
         prompt_messages = [
             {"system": self.prompt_detect_intent},
