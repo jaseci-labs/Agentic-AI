@@ -18,6 +18,7 @@ impl init_user.initialize_user with `root entry {
 }
 
 impl init_user.update_email with profile entry {
+    grant_permission_to_all(node=here, permission_level="CONNECT");
     if not here.email {
         logger.debug("user | init_user | No email found in profile, fetching current user");
         user_data = get_current_user();

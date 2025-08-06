@@ -1,1 +1,1 @@
-import session, memory, user, profile;
+import session, memory, user, profile, friends;
