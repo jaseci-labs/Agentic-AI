@@ -37,6 +37,26 @@ walker accept_friend_request(visit_profile) {
     can accept_friend_request with profile entry;
 }
 
+walker reject_friend_request(visit_profile) {
+    has email: EmailStr;
+
+    class __specs__ {
+        has tags: list = ["friends"];
+    }
+
+    can reject_friend_request with profile entry;
+}
+
+walker unfriend(visit_profile) {
+    has email: EmailStr;
+
+    class __specs__ {
+        has tags: list = ["friends"];
+    }
+
+    can unfriend with profile entry;
+}
+
 walker get_received_friend_requests(visit_profile) {
 
     class __specs__ {

@@ -95,6 +95,83 @@ impl accept_friend_request.accept_friend_request with profile entry {
     }   
 }
 
+impl reject_friend_request.reject_friend_request with profile entry {
+    sender = get_user_by_email(email=self.email);
+    current_user = get_current_user();
+    if not sender {
+        logger.error(f"friends | reject_friend_request | User with email {self.email} not found");
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found");
+    }
+
+    if current_user["email"]==sender["email"] {
+        logger.error(f"friends | reject_friend_request | Cannot reject friend request from self: {current_user['email']}");
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot reject friend request from self");
+    }
+
+    logger.debug(f"friends | reject_friend_request | checking existing friend request");
+    sender_profile = get_node_by_root_id(root_id=sender["root_id"], node_type="profile");
+    if not sender_profile {
+        logger.error(f"friends | reject_friend_request | Profile for user {sender['email']} not found");
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found");
+    }
+
+    received_request = [edge sender_profile->:friend_request:->here];
+    if not received_request {
+        logger.error(f"friends | reject_friend_request | No friend request received from {sender['email']}");
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No friend request received");
+    }
+    
+    received_request_edge = received_request[0];
+    if received_request_edge.status.value == FriendRequestStatus.PENDING.value {
+        logger.debug(f"friends | reject_friend_request | Rejecting friend request from {sender['email']}");
+        sender_profile del--> here;
+        here <+:friend_request(status=FriendRequestStatus.REJECTED):+> sender_profile;
+        report {
+            "status": "success",
+            "message": f"Friend request from {sender['email']} rejected",
+            "status": FriendRequestStatus.REJECTED.value,
+            "user_email": sender["email"]
+        };
+    } else {
+        logger.error(f"friends | reject_friend_request | Friend request from {sender['email']} is not pending");
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Friend request is not pending");
+    }
+}
+
+impl unfriend.unfriend with profile entry {
+    friend = get_user_by_email(email=self.email);
+    current_user = get_current_user();
+    if not friend {
+        logger.error(f"friends | unfriend | User with email {self.email} not found");
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found");
+    }
+
+    if current_user["email"]==friend["email"] {
+        logger.error(f"friends | unfriend | Cannot unfriend self: {current_user['email']}");
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot unfriend self");
+    }
+
+    logger.debug(f"friends | unfriend | checking existing friendship");
+    friend_profile = get_node_by_root_id(root_id=friend["root_id"], node_type="profile");
+    if not friend_profile {
+        logger.error(f"friends | unfriend | Profile for user {friend['email']} not found");
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found");
+    }
+
+    friendship_edge = [edge here->:friend_request:->friend_profile];
+    if not friendship_edge {
+        logger.error(f"friends | unfriend | No friendship found with {friend['email']}");
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No friendship found");
+    }
+
+    here del--> friend_profile;
+    report {
+        "status": "success",
+        "message": f"You have unfriended {friend['email']}",
+        "user_email": friend["email"]
+    };
+}
+
 impl get_received_friend_requests.get_received_friend_requests with profile entry {
     profile_nodes = [here<-:friend_request:status == FriendRequestStatus.PENDING:<-](`?profile);
     for profile_node in profile_nodes {
