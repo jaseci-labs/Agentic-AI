@@ -10,7 +10,8 @@ node CreateTaskActionInteractAction(InteractAction) {
     has model_name:str = "gpt-4o";
     has model_temperature:float = 0.4;
     has model_max_tokens:int = 2048;
-    has prompt: str = """
+
+    has prompt_extracting_task: str = """
         Extract all tasks the user wants to schedule. For each, return a short one-sentence task with a clear date (YYYY-MM-DD) and time (HH:MM, 24-hour). Respond only with a list of JSON objects in this format:
         {{
         "task": "short one-sentence task summary",
@@ -26,7 +27,15 @@ node CreateTaskActionInteractAction(InteractAction) {
         No explanations or paragraphs, only valid JSON.
     """;
 
+    has prompt_detect_intent: str = """
+        Determine the user's intent from the message. Choose one of: "create_task" or "summarize_tasks".
+        Respond only with the string: "create_task" or "summarize_tasks".
+    """;
 
+    has prompt_summarize_all_tasks: str = """
+        The following is a list of scheduled tasks. Create a brief human-friendly summary in natural language.
+        Format it in a helpful way for the user. Use bullet points or paragraph form.
+    """;
 
     def touch(visitor:agent_graph_walker) -> bool {
         if visitor.utterance {
@@ -41,65 +50,130 @@ node CreateTaskActionInteractAction(InteractAction) {
         
         utterance = visitor.utterance;
         prompt_messages = [
-            {"system": self.prompt},
-            {"human": "{utterance}"}
+            {"system": self.prompt_detect_intent},
+            {"human": utterance}
         ];
 
-        if (model_action := self.get_agent().get_actions().get(action_label=self.model_action)) {
-            if (model_action_result := model_action.call_model(
-                prompt_messages = prompt_messages,
-                prompt_variables = {
-                    "utterance": visitor.utterance
-                },
-                kwargs = {
-                    "model_name": self.model_name,
-                    "model_temperature": self.model_temperature,
-                    "model_max_tokens": self.model_max_tokens
-                },
-                interaction_node = visitor.interaction_node
-            )) {
-                interaction_message = model_action_result.get_result();
-                if not interaction_message {
-                    interaction_message = "...";
-                    return;
-                }
-                raw_message = re.sub(r"^```json|^```|```$", "", interaction_message.strip(), flags=re.MULTILINE).strip();
-                interact_action_json = json.loads(raw_message);
-                print("Parsed JSON:", interact_action_json);
+        model_action = self.get_agent().get_actions().get(action_label=self.model_action);
+        if not model_action {
+            self.logger.error("Model action not found.");
+            return;
+        }
 
-                if isinstance(interact_action_json, dict) {
-                    tasks = [interact_action_json];
-                } elif isinstance(interact_action_json, list) {
-                    tasks = interact_action_json;
-                } else {
-                    print("Invalid JSON structure");
-                    return;
-                }
+        model_result = model_action.call_model(
+            prompt_messages=prompt_messages,
+            prompt_variables={"utterance": utterance},
+            kwargs={
+                "model_name": self.model_name,
+                "model_temperature": self.model_temperature,
+                "model_max_tokens": 100
+            },
+            interaction_node=visitor.interaction_node
+        );
 
-                for task_obj in tasks {
-                    is_task_added = self.add_task(
-                        task=task_obj.get("task", ""),
-                        date=task_obj.get("date", ""),
-                        time=task_obj.get("time", "")
-                    );
-                    if is_task_added {
-                        visitor.interaction_node.set_message(
-                            TextInteractionMessage(content="Task created successfully: " + task_obj.get("task", ""))
-                        );
-                    }
-                }
+        intent = model_result.get_result().strip().lower();
+        self.logger.info(f"Detected user intent: {intent}");
+
+        if intent == "create_task" {
+            self.handle_task_creation(visitor);
+        } elif intent == "summarize_tasks" {
+            self.handle_task_summary(visitor);
+        }
+    }
+
+    def handle_task_creation(visitor:agent_graph_walker) -> None {
+        utterance = visitor.utterance;
+        prompt_messages = [
+            {"system": self.prompt_extracting_task},
+            {"human": utterance}
+        ];
+
+        model_action = self.get_agent().get_actions().get(action_label=self.model_action);
+        result = model_action.call_model(
+            prompt_messages=prompt_messages,
+            prompt_variables={"utterance": visitor.utterance},
+            kwargs={
+                "model_name": self.model_name,
+                "model_temperature": self.model_temperature,
+                "model_max_tokens": self.model_max_tokens
+            },
+            interaction_node=visitor.interaction_node
+        );
+
+        interaction_message = result.get_result();
+        if not interaction_message {
+            visitor.interaction_node.set_message(TextInteractionMessage(content="I couldn't understand the task."));
+            return;
+        }
+
+        raw_message = re.sub(r"^```json|^```|```$", "", interaction_message.strip(), flags=re.MULTILINE).strip();
+        interact_action_json = json.loads(raw_message);
+
+        tasks = (
+            [interact_action_json] if isinstance(interact_action_json, dict)
+            else interact_action_json if isinstance(interact_action_json, list)
+            else []
+        );
+
+        for task_obj in tasks {
+            is_task_added = self.add_task(
+                task=task_obj.get("task", ""),
+                date=task_obj.get("date", ""),
+                time=task_obj.get("time", "")
+            );
+
+            if is_task_added {
+                visitor.interaction_node.set_message(
+                    TextInteractionMessage(content="Task created successfully: " + task_obj.get("task", ""))
+                );
             }
         }
-        self.logger.info("CreateTaskActionInteractAction executed successfully.");
+    }
+
+    def handle_task_summary(visitor:agent_graph_walker) -> None {
+        scheduled_tasks = self.check_scheduled_tasks();
+
+        if not scheduled_tasks or len(scheduled_tasks) == 0 {
+            visitor.interaction_node.set_message(TextInteractionMessage(content="There are no scheduled tasks."));
+            return;
+        }
+
+        tasks_text = "\n".join([f"- {t.task} on {t.date} at {t.time}" for t in scheduled_tasks]);
+
+        prompt_messages = [
+            {"system": self.prompt_summarize_all_tasks},
+            {"human": tasks_text}
+        ];
+
+        model_action = self.get_agent().get_actions().get(action_label=self.model_action);
+        result = model_action.call_model(
+            prompt_messages=prompt_messages,
+            prompt_variables={"tasks_text": tasks_text},
+            kwargs={
+                "model_name": self.model_name,
+                "model_temperature": 0.5,
+                "model_max_tokens": 512
+            },
+            interaction_node=visitor.interaction_node
+        );
+
+        summary = result.get_result().strip();
+        visitor.interaction_node.set_message(TextInteractionMessage(content=summary));
     }
 
     def add_task(task:str, date:str, time:str) -> str {
         if not task or not date or not time {
-            self.logger.error("Invalid task details provided.");
+            self.logger.info("No Task details are provided.");
             return False;
         }
         collection = self.get_collection();
         collection ++> Task(task=task, date=date, time=time);
         return True;
+    }
+
+    def check_scheduled_tasks() -> list {
+        collection = self.get_collection();
+        scheduled_tasks = [collection --> (`?Task)];
+        return scheduled_tasks;
     }
 }
