@@ -54,4 +54,24 @@ node AgentUtilsAction(Action) {
         return self.get_agent().get_memory().import_memory(memory_data, overwrite);
     }
 
+
+    def test_llm_call(llm_prompt_message:str="", model_name:str="", model_temperature:float=0.4, model_max_tokens:int=4096) {
+        model_action := self.get_agent().get_action(action_label="LangChainModelAction");
+
+        if not model_action {
+            return {};
+        }
+
+        model_action_result = model_action.test_invoke(
+            llm_prompt_message = llm_prompt_message,
+            model_name=model_name,
+            model_temperature=model_temperature,
+            model_max_tokens=model_max_tokens,
+            prompt_messages=[],
+            prompt_variables={}
+        );
+
+        return model_action_result;
+    }
+
 }

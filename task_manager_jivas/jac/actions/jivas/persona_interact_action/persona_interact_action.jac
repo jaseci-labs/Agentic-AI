@@ -2,7 +2,9 @@ import json;
 import logging;
 import traceback;
 import from logging { Logger }
-import from jivas.agent.modules.agentlib.utils { Utils }
+
+import from jivas.agent.modules.system.common { date_now }
+
 import from jivas.agent.action.interact_action { InteractAction }
 import from jivas.agent.memory.interaction_response { TextInteractionMessage, SilentInteractionMessage }
 import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
@@ -107,7 +109,7 @@ node PersonaInteractAction(InteractAction) {
     def touch(visitor:agent_graph_walker) -> bool {
         # authorize, redirect or deny the interact walker here
         # only executes if response message is empty
-        # return (visitor.utterance and not visitor.interaction_node.has_response());
+        return (visitor.utterance and not visitor.interaction_node.has_response());
     }
 
     def execute(visitor:agent_graph_walker) -> None {
@@ -118,8 +120,8 @@ node PersonaInteractAction(InteractAction) {
         # grab user's name, if set
         user = visitor.frame_node.get_user_name();
 
-        date = Utils.date_now(timezone=self.timezone, date_format='%A, %d %B, %Y');
-        time = Utils.date_now(timezone=self.timezone, date_format='%I:%M %p');
+        date = date_now(timezone=self.timezone, date_format='%A, %d %B, %Y');
+        time = date_now(timezone=self.timezone, date_format='%I:%M %p');
 
         # prepare directives
         directives = self.prepare_persona_task_directives( visitor.interaction_node.get_directives() );
@@ -145,7 +147,7 @@ node PersonaInteractAction(InteractAction) {
 
         # add any active events in this interaction
         if events := visitor.frame_node.get_active_event_statements() {
-            prompt_messages.append(events);
+            prompt_messages.extend(events);
         }
 
         # add the system prompt last
