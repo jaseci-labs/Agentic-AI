@@ -46,6 +46,19 @@ pip install -r requirements.txt
 jvcli server launch
 ```
 
+Before launching the server, ensure you have set the required environment variables for authentication. If you encounter an error like:
+
+```bash
+Missing JIVAS_USER or JIVAS_PASSWORD
+```
+
+please run the following commands in your terminal:
+
+```bash
+export JIVAS_USER=admin@jivas.com
+export JIVAS_PASSWORD=password
+```
+
 #### 6. Initialize the Agent
 
 - First-time setup (in a new terminal):
