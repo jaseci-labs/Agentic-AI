@@ -2,4 +2,5 @@
 mydatabase/
 temp/
 .DS_Store
+.jac_mypy_cache/
 .aider*

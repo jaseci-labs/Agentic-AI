@@ -7,9 +7,13 @@ import from jivas.agent.modules.action.path { action_walker_path }
 import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
 
 
-walker get_logging(agent_graph_walker) {
+walker test_llm_call(agent_graph_walker) {
 
-    has response:bool = False;
+    has llm_prompt_message:str = "";
+    has model_name:str = "";
+    has model_temperature:float = 0.4;
+    has model_max_tokens:int = 4096;
+    has response:dict = {};
     has reporting:bool = True;
 
     # set up logger
@@ -29,10 +33,22 @@ walker get_logging(agent_graph_walker) {
     }
 
     can on_action with Action entry {
-        self.response = here.get_agent().is_logging();
+        response = here.test_llm_call(llm_prompt_message=self.llm_prompt_message, model_name=self.model_name, model_temperature=self.model_temperature, model_max_tokens=self.model_max_tokens);
+
+        self.response = {
+            "prompt": response.prompt,
+            "functions": response.functions,
+            "result": response.result,
+            "tokens": response.tokens,
+            "temperature": response.temperature,
+            "model_name": response.model_name,
+            "max_tokens": response.max_tokens
+        };
+
         if self.reporting {
             report self.response;
         }
     }
 
 }
+
