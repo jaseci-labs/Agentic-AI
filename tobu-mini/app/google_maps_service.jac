@@ -7,19 +7,19 @@ import from jac_cloud.jaseci.utils.logger { logger }
 obj GoogleLocationService {
     def init() {
         self.api_key = os.getenv("GOOGLE_MAPS_API_KEY");
-        self.get_city_url = "https://maps.googleapis.com/maps/api/geocode/json?latlng={latitude},{longitude}&key={api_key}";
+        self.get_city_url = "https://maps.googleapis.com/maps/api/geocode/json";
         self.get_places_url = "https://places.googleapis.com/v1/places:searchText";
     }
 
     def get_city(latitude: float, longitude: float) -> Optional[str] {
         try {
             logger.debug(f"google_location_service | get_city | Fetching city for coordinates: {latitude}, {longitude}");
-            url = self.get_city_url.format(
-                latitude=latitude,
-                longitude=longitude,
-                api_key=self.api_key    
-            );
-            response = requests.get(url);
+            params = {
+                "latlng": f"{latitude},{longitude}",
+                "key": self.api_key
+            };
+            
+            response = requests.get(self.get_city_url, params=params);
 
             if response.status_code == 200 {
                 results = response.json().get("results", []);

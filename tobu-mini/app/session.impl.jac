@@ -15,8 +15,7 @@ impl init_session.initialize_session with sessions entry {
 
 impl init_session.update_session with session entry {
     logger.debug("session | init_session | updating session");
-    file_path = download_and_save_image(self.image_url);
-    if self.location.latitude and self.location.longitude and file_path {
+    if self.location.latitude and self.location.longitude {
         logger.debug("session | init_session | fetching city for provided coordinates");
         city = google_location_service.get_city(
             latitude=self.location.latitude,
@@ -29,60 +28,52 @@ impl init_session.update_session with session entry {
             logger.warning("session | init_session | City not found for the provided coordinates.");
         }
     }
-    if file_path {
-        here.file_path = file_path;
-        mtp_response = extract_memory_details(
-            image=Image(file_path),
-            city=city,
-            date=convert_date_to_valid_format(self.date)
-        );
-        logger.debug(f"session | init_session | extracted memory details: {mtp_response}");
-        here.summary = mtp_response.summary;
-        here.when = convert_date_to_valid_format(mtp_response.when);
-        here.who = mtp_response.who;
-        here.what = mtp_response.what;
-        here.save_memory = mtp_response.save_memory;
-        here.show_summary = mtp_response.show_summary;
-        here.conversation.append(
-            {
-                "assistant": mtp_response.follow_up_questions
-            }
-        );
-        if mtp_response.location_description {
-            logger.debug(f"session | init_session | Fetching places for location description: {mtp_response.location_description}");
-            places = google_location_service.get_detailed_location(
-                latitude=self.location.latitude,
-                longitude=self.location.longitude,
-                radius=100,
-                search_query=mtp_response.location_description,
-                top_n=3
-            );
-            if places {
-                logger.debug(f"session | init_session | Places found: {places}");
-                here.where = list(set(here.where).union(places));
-            } else {
-                logger.warning("session | init_session | No places found for the provided location description.");
-            }
+    mtp_response = extract_memory_details(
+        image=Image(self.image_url),
+        city=city,
+        date=convert_date_to_valid_format(self.date)
+    );
+    logger.debug(f"session | init_session | extracted memory details: {mtp_response}");
+    here.image_url = self.image_url;
+    here.summary = mtp_response.summary;
+    here.when = convert_date_to_valid_format(mtp_response.when);
+    here.who = mtp_response.who;
+    here.what = mtp_response.what;
+    here.conversation.append(
+        {
+            "assistant": mtp_response.follow_up_questions
         }
-        response = {
-            "session_id": here.session_id,
-            "follow_up_questions": mtp_response.follow_up_questions,
-            "summary": here.summary,
-            "when": here.when,
-            "who": here.who,
-            "where": here.where,
-            "what": here.what,
-            "conversation": here.conversation,
-            "save_memory": here.save_memory,
-            "show_summary": here.show_summary
-        };
-        report response;
-    } else {
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to download or save the image."
+    );
+    if mtp_response.location_type {
+        logger.debug(f"session | init_session | Fetching places for location description: {mtp_response.location_type}");
+        places = google_location_service.get_detailed_location(
+            latitude=self.location.latitude,
+            longitude=self.location.longitude,
+            radius=100,
+            search_query=mtp_response.location_type,
+            top_n=3
         );
+        if places {
+            logger.debug(f"session | init_session | Places found: {places}");
+            here.where = list(dict.fromkeys(here.where[:1] + places));
+        } else {
+            logger.warning("session | init_session | No places found for the provided location description.");
+        }
     }
+    response = {
+        "session_id": here.session_id,
+        "follow_up_questions": mtp_response.follow_up_questions,
+        "summary": here.summary,
+        "when": here.when,
+        "who": here.who,
+        "where": here.where,
+        "what": here.what,
+        "conversation": here.conversation,
+        "image_url": here.image_url,
+        "save_memory": here.save_memory,
+        "show_summary": here.show_summary
+    };
+    report response;
 }
 
 impl continue_session.visit_session with sessions entry {
@@ -97,9 +88,9 @@ impl continue_session.visit_session with sessions entry {
 
 impl continue_session.update_session with session entry {
     logger.debug("session | continue_session | updating session");
-    if here.file_path {
+    if here.image_url {
         mtp_response = update_memory_details(
-            image=Image(here.file_path),
+            image=Image(here.image_url),
             utterance=self.utterance,
             summary=here.summary,
             when=here.when,
@@ -107,7 +98,8 @@ impl continue_session.update_session with session entry {
             where=here.where,
             what=here.what,
             conversation=here.conversation,
-            show_summary=here.show_summary
+            show_summary=here.show_summary,
+            save_memory=here.save_memory
         );
         logger.debug(f"session | continue_session | updated memory details: {mtp_response}");
         here.summary = mtp_response.summary;
@@ -115,6 +107,7 @@ impl continue_session.update_session with session entry {
         here.who = mtp_response.who;
         here.where = mtp_response.where;
         here.what = mtp_response.what;
+        is_saved = here.save_memory;
         here.save_memory = mtp_response.save_memory;
         here.show_summary = mtp_response.show_summary;
         here.conversation.append(
@@ -132,10 +125,23 @@ impl continue_session.update_session with session entry {
             "where": here.where,
             "what": here.what,
             "conversation": here.conversation,
+            "image_url": here.image_url,
             "save_memory": here.save_memory,
             "show_summary": here.show_summary
         };
         report response;
+        if not is_saved and mtp_response.save_memory {
+            logger.debug("session | continue_session | Saving memory as requested.");
+            root spawn save_memory(
+                session_id=here.session_id
+            );
+        }
+    } else {
+        logger.warning("session | continue_session | No image URL provided for updating session.");
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image URL is required to update the session."
+        );
     }
 }
 
@@ -160,11 +166,60 @@ impl get_session.report_session with session entry {
         "what": here.what,
         "conversation": here.conversation,
         "image_url": here.image_url,
-        "file_path": here.file_path,
         "save_memory": here.save_memory,
         "show_summary": here.show_summary
     };
     if self.if_report {
         report self.response;
     }
+}
+
+impl save_memory.create_memory with memories entry {
+    logger.debug("session | save_memory | creating new memory");
+    memory_node = here ++> memory();
+    visit memory_node[0];
+}
+
+impl save_memory.update_memory with memory entry {
+    logger.debug("session | save_memory | updating memory");
+    walker_obj = root spawn get_session(
+        session_id=self.session_id,
+        if_report=False
+    );
+    response = walker_obj.response;
+    if not response {
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found, please initialize the session first."
+        );
+    }
+    here.session_id = response["session_id"];
+    here.summary = response["summary"];
+    here.when = response["when"];
+    here.who = response["who"];
+    here.where = response["where"];
+    here.what = response["what"];
+    here.image_url = response["image_url"];
+    here.conversation = response["conversation"];
+    here.updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S");
+    here.created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S");
+    here.save_memory = response["save_memory"];
+    here.show_summary = response["show_summary"];
+
+    response = {
+        "memory_id": here.memory_id,
+        "session_id": here.session_id,
+        "summary": here.summary,
+        "when": here.when,  
+        "who": here.who,
+        "where": here.where,
+        "what": here.what,
+        "image_url": here.image_url,
+        "conversation": here.conversation,
+        "created_at": here.created_at,
+        "updated_at": here.updated_at,
+        "save_memory": here.save_memory,
+        "show_summary": here.show_summary
+    };
+    report response;
 }

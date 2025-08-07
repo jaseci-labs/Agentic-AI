@@ -1,6 +1,4 @@
 import from uuid { uuid4 }
-import from session { get_session }
-import from datetime { datetime }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
 
@@ -23,12 +21,10 @@ node memory {
 }
 
 walker visit_memories {
+
+    class __specs__ {
+        has tags: list = ["memory"];
+    }
+    
     can visit_memories with `root entry;
-}
-
-walker save_memory(visit_memories) {
-    has session_id: str;
-
-    can create_memory with memories entry;
-    can update_memory with memory entry;
 }
