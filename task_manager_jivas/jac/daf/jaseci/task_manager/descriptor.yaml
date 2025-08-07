@@ -32,3 +32,7 @@ actions:
     context:
       version: "0.1.0"
       enabled: true
+  - action: jaseci/email_handle_action_interact_action
+    context:
+      version: "0.1.0"
+      enabled: true
