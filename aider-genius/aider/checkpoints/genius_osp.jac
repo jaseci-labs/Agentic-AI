@@ -5,7 +5,6 @@ import re;
 import from pathlib { Path }
 import from typing { Any, Dict, List, Optional, Tuple }
 import from aider.web_search { web_search, create_web_searcher }
-import from mcp_client { list_mcp_tools, call_mcp_tool }
 import from mtllm {Model}
 
 with entry {
@@ -51,124 +50,6 @@ sem SecurityScanResult.issues = "List of specific security issues found (empty i
 sem SecurityScanResult.analysis = "Detailed security analysis breakdown by category";
 sem SecurityScanResult.risk_level = "Overall risk assessment: low, medium, high, critical";
 sem SecurityScanResult.recommendations = "List of security improvement recommendations";
-
-node IntelligentDecisionNode {
-    has decision_model: Optional[Model] = None;
-    has current_task_context: dict = {};
-    has repo_context: dict = {};
-    
-    """Analyze a file operation request and decide whether to approve it based on context, safety, and task relevance."""
-    def should_approve_file_operation(
-        operation_type: str, 
-        file_path: str, 
-        task_context: str, 
-        repo_context: str,
-        operation_details: str = ""
-    ) -> bool by self.decision_model(method="Reason");
-    
-    """Make an intelligent decision about file operations"""
-    def make_intelligent_decision(
-        operation_type: str,
-        file_path: str,
-        operation_details: str = "",
-        task_context: Optional[Dict] = None,
-        repo_context: Optional[Dict] = None
-    ) -> bool {
-        if not self.decision_model {
-            # Fallback to safe default if no decision model
-            return operation_type in ['create', 'edit', 'read'];
-        }
-        
-        try {
-            # Prepare context for the decision
-            task_str = str(task_context) if task_context else "No task context";
-            repo_str = str(repo_context) if repo_context else "No repository context";
-            
-            decision = self.should_approve_file_operation(
-                operation_type,
-                file_path,
-                task_str,
-                repo_str,
-                operation_details
-            );
-            
-            print(f"Intelligent Decision: {operation_type} {file_path} -> {'APPROVED' if decision else 'DENIED'}");
-            return decision;
-        } except Exception as e {
-            print(f"Decision making failed: {str(e)}, defaulting to safe approval");
-            # Default to approval for common operations if decision fails
-            return operation_type in ['create', 'edit', 'read'];
-        }
-    }
-}
-
-obj IntelligentIO {
-    """Custom IO wrapper that makes intelligent decisions about file operations"""
-    has original_io: Any;
-    has decision_node: IntelligentDecisionNode;
-    has current_task: Optional[Dict] = None;
-    has repo_context: Optional[Dict] = None;
-    
-    def __init__(original_io: Any, decision_model: Any) {
-        self.original_io = original_io;
-        self.decision_node = IntelligentDecisionNode(decision_model=decision_model);
-    }
-    
-    def set_context(task: Optional[Dict], repo_context: Optional[Dict]) {
-        self.current_task = task;
-        self.repo_context = repo_context;
-        self.decision_node.current_task_context = task or {};
-        self.decision_node.repo_context = repo_context or {};
-    }
-    
-    def confirm_ask(
-        question: str,
-        default: str = "y",
-        subject: Optional[str] = None,
-        explicit_yes_required: bool = False,
-        group: Any = None,
-        allow_never: bool = False
-    ) -> bool {
-        # Analyze the question to determine operation type
-        operation_type = "unknown";
-        file_path = subject or "unknown";
-        
-        if "Create new file" in question or "create" in question.lower() {
-            operation_type = "create";
-        } elif "edit" in question.lower() or "modify" in question.lower() {
-            operation_type = "edit";
-        } elif "delete" in question.lower() or "remove" in question.lower() {
-            operation_type = "delete";
-        } elif "add" in question.lower() and "to the chat" in question.lower() {
-            operation_type = "add_to_chat";
-        } elif "commit" in question.lower() {
-            operation_type = "commit";
-        }
-        
-        # Make intelligent decision
-        decision = self.decision_node.make_intelligent_decision(
-            operation_type=operation_type,
-            file_path=file_path,
-            operation_details=question,
-            task_context=self.current_task,
-            repo_context=self.repo_context
-        );
-        
-        if decision {
-            self.original_io.tool_output(f"AI Decision: APPROVED - {operation_type} {file_path}");
-            return True;
-        } else {
-            self.original_io.tool_output(f"AI Decision: DENIED - {operation_type} {file_path}");
-            self.original_io.tool_output(f"Reason: Operation deemed unsafe or unnecessary for current task");
-            return False;
-        }
-    }
-    
-    # Delegate all other methods to original IO
-    def __getattr__(name: str) -> Any {
-        return getattr(self.original_io, name);
-    }
-}
 
 
 node PlanningNode {
@@ -320,6 +201,247 @@ node PlanningNode {
             print(f"LLM planning failed: {str(e)}");
         }
     }
+
+    # """Create a comprehensive prompt for the planning LLM"""
+    # def create_planning_prompt(task: str, repo_context: Dict, issues: List[Dict]) -> str {
+    #     prompt_parts = [
+    #         f"MAIN TASK (HIGHEST PRIORITY): {task}",
+    #         "",
+    #         "FOCUS: Create a plan that prioritizes completing the main task above all else.",
+    #         "",
+    #         "REPOSITORY CONTEXT:"
+    #     ];
+        
+    #     if repo_context.get('files_in_chat') {
+    #         prompt_parts.append("Files currently being worked on:");
+    #         for file in repo_context['files_in_chat'] {
+    #             prompt_parts.append(f"  - {file}");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if repo_context.get('missing_files') {
+    #         prompt_parts.append("Missing files mentioned in repo map:");
+    #         for file in repo_context['missing_files'][:3] {
+    #             prompt_parts.append(f"  - {file}");
+    #         }
+    #         if len(repo_context['missing_files']) > 3 {
+    #             prompt_parts.append(f"  ... and {len(repo_context['missing_files']) - 3} more");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if repo_context.get('repo_map') {
+    #         prompt_parts.append("Repository structure:");
+    #         repo_map = str(repo_context['repo_map']);
+    #         if len(repo_map) > 2000 {
+    #             repo_map = repo_map[:2000] + "... (truncated)";
+    #         }
+    #         prompt_parts.append(repo_map);
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if repo_context.get('git_status') {
+    #         prompt_parts.append("Git status (dirty files):");
+    #         for file in repo_context['git_status'] {
+    #             prompt_parts.append(f"  - {file}");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     if issues {
+    #         prompt_parts.append("Current issues in codebase (fix only if they block the main task):");
+    #         for issue in issues {
+    #             prompt_parts.append(f"  - {issue['type']}: {issue.get('file', 'general')} - {issue['details'][:100]}...");
+    #         }
+    #         prompt_parts.append("");
+    #     }
+        
+    #     prompt_parts.extend([
+    #         "REQUIREMENTS:",
+    #         "1. PRIORITY 1: Create tasks to complete the main task - this is most important",
+    #         "2. Break down the main task into logical, implementable steps",
+    #         "3. Only include existing issue fixes if they directly block the main task",
+    #         "4. Consider dependencies and proper ordering for the main task",
+    #         "5. Missing files unrelated to the main task should be low priority or excluded",
+    #         "6. Be specific about what each task should accomplish for the main goal",
+    #         "",
+    #         "Please analyze the above context and create an optimal task execution plan as a JSON array, focusing primarily on the main task:"
+    #     ]);
+        
+    #     return "\n".join(prompt_parts);
+    # }
+
+    # """Get the system prompt for the planning LLM"""
+    # def get_planning_system_prompt() -> str {
+    #     return """You are an expert software development planning agent. Your job is to analyze a development task and codebase context to create an optimal execution plan.
+
+    #     CRITICAL PRIORITY RULE: The user's main task should ALWAYS be the highest priority. All other tasks (fixing lint errors, missing files, etc.) are secondary unless they directly block the main task.
+
+    #     You should:
+    #     1. ALWAYS prioritize the user's main task as priority 1
+    #     2. Break down the main task into smaller, manageable subtasks with priority 1-2
+    #     3. Only include fixing existing issues (lint, tests) if they directly impact the main task
+    #     4. Consider dependencies between tasks and order them logically
+    #     5. Ensure tasks are specific and actionable
+    #     6. For missing files that are not related to the main task, assign low priority (4-5) or exclude them
+    #     7. When creating new files for the main task, focus on "feature_implementation" task types
+
+    #     Respond with a JSON array of task objects. Each task should have:
+    #     - "name": Clear, descriptive task name
+    #     - "type": One of ["fix_tests", "fix_lint", "fix_security", "feature_implementation", "improvement", "refactor", "documentation"]
+    #     - "priority": Integer (1=highest priority for main task, 2-3=supporting tasks, 4-5=maintenance/optional)
+    #     - "details": Specific description of what needs to be done
+    #     - "dependencies": Array of task names that must complete first (empty array if none)
+    #     - "estimated_effort": "small", "medium", or "large"
+    #     - "file": (optional) Specific file path if the task is file-specific
+
+    #     IMPORTANT:
+    #     - The user's main task gets priority 1
+    #     - Supporting tasks for the main task get priority 2-3
+    #     - Existing code fixes only get priority 1-2 if they block the main task
+    #     - Missing files unrelated to main task get priority 4-5 or are excluded""";
+    # }
+    
+    # """Create a simple task graph when LLM planning fails"""
+    # def create_simple_task_graph(task: str, repo_context: Dict, issues: List[Dict]) -> List[Dict] {
+    #     tasks = [];
+        
+    #     # Main task always gets priority 1
+    #     if task and task != "Analyze and improve the codebase" {
+    #         task_details = task;
+    #         # Enhance task details for common requests
+    #         if 'calculator' in task.lower() {
+    #             task_details = f"{task}\n\nCreate a simple calculator program that:\n- Supports basic arithmetic operations (+, -, *, /)\n- Handles user input and output\n- Includes error handling for invalid inputs and division by zero\n- Has a clean, user-friendly interface";
+    #         }
+            
+    #         tasks.append({
+    #             "name": task,
+    #             "type": "feature_implementation",
+    #             "priority": 1,
+    #             "details": task_details,
+    #             "dependencies": [],
+    #             "estimated_effort": "medium"
+    #         });
+    #     }
+        
+    #     # Add critical issues that might block the main task
+    #     critical_issues = [];
+    #     for issue in issues {
+    #         if issue['type'] == 'test' and issue.get('priority') == 'high' {
+    #             critical_issues.append(issue);
+    #         }
+    #     }
+        
+    #     for issue in critical_issues {
+    #         if issue['type'] == 'test' {
+    #             tasks.append({
+    #                 "name": "Fix failing tests",
+    #                 "type": "fix_tests",
+    #                 "priority": 2,
+    #                 "details": issue['details'],
+    #                 "dependencies": [],
+    #                 "estimated_effort": "medium"
+    #             });
+    #         }
+    #     }
+        
+    #     # Fallback improvement task
+    #     if task == "Analyze and improve the codebase" and repo_context['files_in_chat'] {
+    #         tasks.append({
+    #             "name": "Improve code quality and documentation",
+    #             "type": "improvement",
+    #             "priority": 1,
+    #             "details": "Review and improve code quality, add documentation where needed",
+    #             "dependencies": [],
+    #             "estimated_effort": "large"
+    #         });
+    #     }
+        
+    #     # Sort by priority
+    #     def get_priority(task: dict) -> int {
+    #         return task['priority'];
+    #     }
+    #     tasks = sorted(tasks, key=get_priority);
+    #     return tasks;
+    # }
+
+    # """Parse the LLM's planning response and convert to task objects"""
+    # def parse_llm_planning_response(response: str) -> List[Dict] {
+    #     try {
+    #         json_match = re.search(r'\[.*\]', response, re.DOTALL);
+    #         if json_match {
+    #             json_str = json_match.group(0);
+    #             tasks = json.loads(json_str);
+                
+    #             # Validate task structure
+    #             valid_tasks = [];
+    #             for task in tasks {
+    #                 if isinstance(task, dict) and 'name' in task and 'type' in task {
+    #                     # Set defaults for missing fields
+    #                     task.setdefault('priority', 1);
+    #                     task.setdefault('details', task.get('name', ''));
+    #                     task.setdefault('dependencies', []);
+    #                     task.setdefault('estimated_effort', 'medium');
+    #                     valid_tasks.append(task);
+    #                 }
+    #             }
+    #             return valid_tasks;
+    #         }
+    #     } except (json.JSONDecodeError, Exception) as e {
+    #         print(f"Failed to parse LLM planning response: {str(e)}");
+    #     }
+        
+    #     return [];
+    # }
+
+    # """Sort tasks by dependencies and priority"""
+    # def resolve_task_dependencies(tasks: List[Dict]) -> List[Dict] {
+    #     task_map = {task['name']: task for task in tasks};
+    #     resolved = [];
+    #     remaining = tasks.copy();
+        
+    #     while remaining {
+    #         ready_tasks = [];
+    #         for task in remaining {
+    #             deps = task.get('dependencies', []);
+    #             resolved_names = [t['name'] for t in resolved];
+    #             deps_satisfied = True;
+    #             for dep in deps {
+    #                 if dep not in resolved_names {
+    #                     deps_satisfied = False;
+    #                     break;
+    #                 }
+    #             }
+    #             if deps_satisfied {
+    #                 ready_tasks.append(task);
+    #             }
+    #         }
+            
+    #         if not ready_tasks {
+    #             # Break circular dependencies by taking the highest priority task
+    #             min_priority = min([task['priority'] for task in remaining]);
+    #             for task in remaining {
+    #                 if task['priority'] == min_priority {
+    #                     ready_tasks = [task];
+    #                     break;
+    #                 }
+    #             }
+    #         }
+            
+    #         # Sort ready tasks by priority
+    #         def get_task_priority(task: dict) -> int {
+    #             return task['priority'];
+    #         }
+    #         ready_tasks = sorted(ready_tasks, key=get_task_priority);
+    #         for task in ready_tasks {
+    #             resolved.append(task);
+    #             remaining.remove(task);
+    #         }
+    #     }
+        
+    #     return resolved;
+    # }
 }
 
 
@@ -360,10 +482,8 @@ node EditorNode {
                 base_message += f"Please implement the following feature or improvement:\n{task['details']}\n\n";
                 details_lower = task['details'].lower();
                 if 'create' in details_lower or 'new file' in details_lower {
-                    base_message += "IMPORTANT: You must create the necessary files. The AI assistant will intelligently approve necessary file operations.\n";
+                    base_message += "IMPORTANT: You must create the necessary files. Do not ask for confirmation - proceed directly with implementation.\n";
                 }
-                # Add intelligent operation directive
-                base_message += "INTELLIGENT MODE: An AI assistant will review and approve file operations based on task relevance and safety. Proceed with necessary file operations.\n";
                 if 'calculator' in details_lower {
                     base_message += "Create a functional calculator with basic arithmetic operations (addition, subtraction, multiplication, division).\n";
                     base_message += "Include proper error handling for division by zero and invalid inputs.\n";
@@ -397,11 +517,79 @@ node EditorNode {
             base_message += "Please address this issue in your implementation.";
         }
         
-        # Add intelligent operation directive for all tasks
-        base_message += f"\n\nINTELLIGENT MODE: This agent has an AI assistant that will intelligently review and approve file operations based on task relevance, safety, and necessity. Proceed with the implementation knowing that file operations will be evaluated appropriately.";
-        
         return base_message;
     }
+    
+    # """Determine if web search would be helpful for this task"""
+    # def should_search_web(task: Dict, web_searcher: Any, last_error_context: Optional[str] = None) -> bool {
+    #     if not web_searcher or not web_searcher.is_available() {
+    #         return False;
+    #     }
+        
+    #     return (task['type'] in ['feature_implementation', 'improvement'] or
+    #             last_error_context is not None or
+    #             'jac' in task.get('details', '').lower() or
+    #             'documentation' in task.get('details', '').lower() or
+    #             'jac language' in task.get('details', '').lower() or
+    #             'create' in task.get('details', '').lower());
+    # }
+
+    # """Generate relevant search queries for the task"""
+    # def generate_search_queries(task: Dict, last_error_context: Optional[str] = None) -> List[str] {
+    #     queries = [];
+    #     details = task.get('details', '').lower();
+        
+    #     if task['type'] == 'feature_implementation' {
+    #         task_details = task.get('details', '');
+    #         if 'jac language' in details or 'jac' in details {
+    #             queries.extend([
+    #                 "jac programming language syntax guide",
+    #                 "jac language examples tutorial",
+    #                 "object spatial programming jac"
+    #             ]);
+    #         } elif 'calculator' in details {
+    #             queries.extend([
+    #                 "python calculator implementation tutorial",
+    #                 "simple calculator program with error handling",
+    #                 "basic arithmetic calculator python code example"
+    #             ]);
+    #         } else {
+    #             queries.append(f"how to implement {task_details} programming");
+    #         }
+            
+    #         if 'api' in details {
+    #             queries.append("REST API implementation guide");
+    #         }
+    #         if 'test' in details {
+    #             queries.append("unit testing best practices");
+    #         }
+    #     } elif task['type'] == 'fix_tests' {
+    #         queries.extend([
+    #             "fix failing unit tests debugging",
+    #             "test failure troubleshooting guide"
+    #         ]);
+    #     } elif task['type'] == 'fix_lint' {
+    #         queries.extend([
+    #             "code linting errors how to fix",
+    #             "static analysis warnings solutions"
+    #         ]);
+    #     } elif last_error_context {
+    #         error_key_terms = last_error_context[:100];
+    #         queries.append(f"python error solution {error_key_terms}");
+    #     }
+        
+    #     # Remove duplicates while preserving order
+    #     unique_queries = [];
+    #     seen = set();
+    #     for query in queries {
+    #         if query.lower() not in seen {
+    #             unique_queries.append(query);
+    #             seen.add(query.lower());
+    #         }
+    #     }
+        
+    #     return unique_queries;
+    # }
 
     """Determine if web search is required for this task. if you dont have the latest syntaxes of a language, you should search the web for it."""
     def need_web_search(task: Dict, web_searcher: Any, last_error_context: Optional[str] = None) -> bool by self.editor_model(method="Reason");
@@ -419,8 +607,7 @@ node EditorNode {
             search_results = "";
             for query in search_queries[:2] { 
                 search_results += f"Searching for: {query}\n";
-                result = call_mcp_tool("search_web", {'query': query});
-                # result = web_searcher.search(query);
+                result = web_searcher.search(query);
                 print(f"Search result for '{query}': {result}");
                 if result and not result.startswith('No') and len(result.strip()) > 50 {
                     if len(result) > 1000 {
@@ -649,6 +836,68 @@ node ValidatorNode {
         };
     }
     
+    # """Run comprehensive security scanning on the codebase using both traditional and AI-powered analysis"""
+    # def run_security_scan(coder: Any) -> Dict[str, Any] {
+    #     print("Checking for security issues");
+    #     print("Ensuring code security");
+        
+    #     security_issues = [];
+        
+    #     for fname in coder.abs_fnames {
+    #         if fname.endswith('.py') {
+    #             try {
+    #                 with open(fname, 'r') as f {
+    #                     content = f.read();
+    #                 }
+                    
+    #                 # Basic security checks
+    #                 if 'eval(' in content {
+    #                     security_issues.append(f"{fname}: Use of eval() detected - potential code injection risk");
+    #                 }
+    #                 if 'exec(' in content {
+    #                     security_issues.append(f"{fname}: Use of exec() detected - potential code injection risk");
+    #                 }
+    #                 if 'shell=True' in content {
+    #                     security_issues.append(f"{fname}: subprocess with shell=True detected - potential command injection risk");
+    #                 }
+    #                 if 'pickle.loads' in content {
+    #                     security_issues.append(f"{fname}: Use of pickle.loads detected - potential deserialization risk");
+    #                 }
+                    
+    #                 # AI-powered intelligent security analysis for recently edited files
+    #                 if self.validation_model and len(content.strip()) > 0 {
+    #                     try {
+    #                         # Create context about the coder's recent work
+    #                         coder_context = f"Files being worked on: {list(coder.abs_fnames)[:5]}";
+    #                         print(f"Recent files in chat: {coder_context}");
+    #                         if hasattr(coder, 'cur_messages') and coder.cur_messages {
+    #                             recent_messages = coder.cur_messages[-3:];  # Last 3 messages
+    #                             coder_context += f"\nRecent conversation: {str(recent_messages)[:500]}...";
+    #                         }
+                            
+    #                         ai_scan_result = self.intelligent_security_scan(content, fname, coder_context);
+                            
+    #                         if ai_scan_result and ai_scan_result.get('issues') {
+    #                             for issue in ai_scan_result['issues'] {
+    #                                 security_issues.append(f"{fname}: {issue}");
+    #                             }
+    #                         }
+    #                     } except Exception as e {
+    #                         print(f"AI security scan failed for {fname}: {str(e)}");
+    #                     }
+    #                 }
+                    
+    #             } except Exception as e {
+    #                 print(f"Security scan failed for {fname}: {str(e)}");
+    #             }
+    #         }
+    #     }
+        
+    #     return {
+    #         'passed': len(security_issues) == 0,
+    #         'output': "\n".join(security_issues) if security_issues else "No security issues detected"
+    #     };
+    # }
 }
 
 # User input node for task continuation
@@ -746,21 +995,17 @@ walker GeniusAgent {
 
     # Initialize the agent and start at root
     can start with `root entry {
-        # Set up planning and editor models first
-        self.planning_model = Model(model_name="gpt-4.1-mini");
-        self.editor_model = Model(model_name="gpt-4.1-mini");
-        
-        # Replace the coder's IO with intelligent decision-making IO
-        original_io = self.coder.io;
-        self.coder.io = IntelligentIO(original_io, self.editor_model);
-        self.coder.io.tool_output("Genius Agent - Intelligent Decision Mode Enabled: AI will make smart decisions about file operations");
-        
         # Initialize web searcher if available
         if WEB_SEARCH_AVAILABLE and create_web_searcher {
             self.web_searcher = create_web_searcher(print_error=self.coder.io.tool_error);
         } else {
             self.web_searcher = None;
         }
+        
+        # Set planning model
+        # self.planning_model = self.planning_model or self.coder.main_model;
+        self.planning_model = Model(model_name="gpt-4.1-mini");
+        self.editor_model = Model(model_name="gpt-4.1-mini");
         
         # Create the workflow graph
         planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
@@ -773,6 +1018,7 @@ walker GeniusAgent {
         planning_node ++> editor_node;
         editor_node ++> validator_node;
         validator_node ++> user_input_node;  # Go to user input instead of END
+        # Note: UserInputNode will handle navigation based on user choice
         
         self.coder.io.tool_output(f"Genius Agent - Phase: Initialization | Action: Starting Genius Agent | Reasoning: Beginning autonomous development cycle for: {self.task}");
         
@@ -877,9 +1123,6 @@ walker GeniusAgent {
             # Store current task in node
             here.current_task = current_task;
             here.status = "processing";
-            
-            # Update the intelligent IO with current task context
-            self.coder.io.set_context(current_task, planning_node.repo_context);
             
             # Enhanced editing with web search if needed
             self.coder.io.tool_output(f"Genius Agent - Phase: Editing/Code Generation | Action: Working on {current_task['name']} | Reasoning: Implementing {current_task['type']} with targeted approach");
@@ -1063,9 +1306,6 @@ walker GeniusAgent {
                 self.current_iteration = 0;
                 
                 self.coder.io.tool_output(f"Genius Agent - Phase: New Task | Action: Starting new task | Reasoning: User provided new task: {user_input}");
-                
-                # Reset the intelligent IO context for the new task
-                self.coder.io.set_context(None, None);
                 
                 # Create new nodes for the next cycle
                 planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
