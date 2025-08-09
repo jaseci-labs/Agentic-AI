@@ -10,5 +10,8 @@ package:
     type: "interact_action"
   config:
     singleton: "true"
+    order:
+      weight: 0
+      before: jaseci/create_task_action_interact_action
   dependencies:
     jivas: "~2.1.2"

@@ -8,6 +8,8 @@ import from typing { Union }
 import from logging { Logger }
 import from jivas.agent.action.interact_action { InteractAction }
 import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
+import from jivas.agent.memory.interaction_response { TextInteractionMessage }
+import from jivas.agent.action.model_action { ModelAction }
 import from email.mime.text { MIMEText }
 
 node EmailHandleActionInteractAction(InteractAction) {
@@ -15,21 +17,27 @@ node EmailHandleActionInteractAction(InteractAction) {
     static has logger:Logger = logging.getLogger(__name__);
     has sender_email: str = os.getenv("SENDER_EMAIL");
     has sender_password: str = os.getenv("SENDER_PASSWORD");
+    has sender_name: str = os.getenv("SENDER_NAME", "Jivas AI Assistant");
+
     has model_action: str = "LangChainModelAction";
     has model_name:str = "gpt-4o";
     has model_temperature:float = 0.4;
     has model_max_tokens:int = 2048;
-    has prompt: str = """
-        You are an email handler. Your task is to extract the email content, subject, and recipient from the user's message.
-        Respond with a JSON object in this format:
-        {{
-            "email_content": "Content of the email",
-            "email_subject": "Subject of the email",
-            "email_recipient": "Recipient's email address"
-        }}
-        If the user does not provide enough information, return empty strings for each field.
-        No explanations or paragraphs, only valid JSON.
-        """;
+    has prompt_write_email: str = """
+        You are an AI assistant that helps write emails based on user input.
+        You will receive a user's utterance and you need to generate an email content based on that.
+        The email should be clear, concise, and professional.
+        You will return a JSON object with the following structure:
+            {{
+                "email_content": "<content of the email>",
+                "email_subject": "<subject of the email>",
+                "email_recipient": "<recipient email address>"
+            }}
+        Make sure to include all necessary details in the email content.
+        If the user does not provide enough information, keep the missing parts as empty strings.
+        return the JSON object only, no explanations or paragraphs.
+    """;
+        
 
     def touch(visitor: agent_graph_walker) -> bool {
         if visitor.utterance {
@@ -39,51 +47,54 @@ node EmailHandleActionInteractAction(InteractAction) {
     }
 
     def execute(visitor: agent_graph_walker) -> None {
-        utterance = visitor.utterance;
-        prompt_messages = [
-            {"system": self.prompt},
-            {"human": utterance}
-        ];
-
         model_action = self.get_agent().get_actions().get(action_label=self.model_action);
         if not model_action {
             self.logger.error("Model action not found.");
             return;
         }
-        model_result = model_action.call_model(
-            prompt_messages=prompt_messages,
-            prompt_variables={"utterance": utterance},
-            kwargs={
-                "model_name": self.model_name,
-                "model_temperature": self.model_temperature,
-                "model_max_tokens": 100
-            },
-            interaction_node=visitor.interaction_node
-        );
-
-        interaction_message = model_result.get_result();
-        if not interaction_message {
-            visitor.interaction_node.set_message(TextInteractionMessage(content="I couldn't understand the task."));
-            return;
-        }
-
-        raw_message = re.sub(r"^```json|^```|```$", "", interaction_message.strip(), flags=re.MULTILINE).strip();
-        interact_action_json = json.loads(raw_message);
-        
-        email_content = interact_action_json.get("email_content", "");
-        email_subject = interact_action_json.get("email_subject", "New Task Notification");
-        email_recipient = interact_action_json.get("email_recipient", self.sender_email);
-
-        if not email_content or not email_recipient {
-            visitor.interaction_node.set_message(TextInteractionMessage(content="Email content or recipient is missing."));
-            return;
-        }
+        (email_recipient, email_subject, email_content) = self.write_email_content(visitor, model_action);
 
         self.send_email(
             to_email=email_recipient,
             subject=email_subject,
             body=email_content
         );
+        visitor.interaction_node.set_message(
+            TextInteractionMessage(content=f"Email successfully sent to {email_recipient} with subject '{email_subject}'")
+        );
+    }
+
+    def write_email_content(visitor: agent_graph_walker, model_action: ModelAction) -> (str, str, str) {
+        utterance = visitor.utterance;
+        prompt_messages = [
+            {"system": self.prompt_write_email + f"\nSender's name: {self.sender_name}"},
+            {"human": utterance}
+        ];
+
+        model_result = model_action.call_model(
+            prompt_messages=prompt_messages,
+            prompt_variables={"utterance": utterance},
+            kwargs={
+                "model_name": self.model_name,
+                "model_temperature": self.model_temperature,
+                "model_max_tokens": self.model_max_tokens
+            },
+            interaction_node=visitor.interaction_node
+        );
+
+        interaction_message = model_result.get_result();
+        raw_message = re.sub(r"^```json|^```|```$", "", interaction_message.strip(), flags=re.MULTILINE).strip();
+        json_email = json.loads(raw_message);
+
+        email_content = json_email.get("email_content", "");
+        email_subject = json_email.get("email_subject", "New Task Notification");
+        email_recipient = json_email.get("email_recipient", self.sender_email);
+
+        if not email_content or not email_recipient {
+            visitor.interaction_node.set_message(TextInteractionMessage(content="Email content or recipient is missing."));
+            return;
+        }
+        return (email_recipient, email_subject, email_content);
     }
 
     def send_email(to_email: str, subject: str, body: str) -> None {
