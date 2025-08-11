@@ -16,7 +16,6 @@ node memory {
     has created_at: str = "";
     has updated_at: str = "";
     has image_url: str = "";
-    has shared_with: list = [];
     has conversation: list = [];
 }
 
