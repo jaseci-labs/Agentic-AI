@@ -28,16 +28,16 @@ def grant_permission(permission_level: str, node: any, root_id: str) {
     _.allow_root(node, BaseAnchor.ref(root_id), level=permission_level);
 }
 
-def revoke_permission(permission_level: str, node: any, root_id: str) {
-    logger.debug(f"jaseci_sdk | revoke_permission | Revoking permission: {permission_level} from root_id: {root_id}");
+def revoke_permission(node: any, root_id: str) {
+    logger.debug(f"jaseci_sdk | revoke_permission | Revoking permission from root_id: {root_id}");
     owner = User.Collection.find_one(filter={"root_id": root_id});
     if (not root_id.startswith("n:")) {
         root_id = f"n::{root_id}";
     } 
-    _.disallow_root(node, BaseAnchor.ref(root_id), level=permission_level);
+    _.disallow_root(node, BaseAnchor.ref(root_id));
 }
 
-def get_node_ower(node: any) {
+def get_node_owner(node: any) {
     logger.debug("jaseci_sdk | get_node_owner | Fetching node owner");
     root_id = getattr(n.__jac__, "root");
     owner = User.Collection.find_one(filter={"root_id": root_id});

@@ -173,51 +173,59 @@ impl unfriend.unfriend with profile entry {
 }
 
 impl get_received_friend_requests.get_received_friend_requests with profile entry {
-    profile_nodes = [here<-:friend_request:status == FriendRequestStatus.PENDING:<-](`?profile);
+    profile_nodes = [here<-:friend_request:<-](`?profile);
     for profile_node in profile_nodes {
-        logger.debug(f"friends | get_received_friend_requests | Found received friend request from profile: {profile_node.email}");
         received_request_edge = [edge profile_node->:friend_request:->here][0];
-        report {
-            "email": profile_node.email,
-            "first_name": profile_node.first_name,
-            "last_name": profile_node.last_name,
-            "profile_picture_url": profile_node.profile_picture_url,
-            "status": received_request_edge.status.value,
-            "created_at": received_request_edge.created_at
-        };
+        if received_request_edge.status.value == FriendRequestStatus.PENDING.value {
+            logger.debug(f"friends | get_received_friend_requests | Found received friend request from profile: {profile_node.email}");
+            report {
+                "email": profile_node.email,
+                "first_name": profile_node.first_name,
+                "last_name": profile_node.last_name,
+                "profile_picture_url": profile_node.profile_picture_url,
+                "status": received_request_edge.status.value,
+                "created_at": received_request_edge.created_at
+            };
+        }
     }
 }
 
 impl get_sent_friend_requests.get_sent_friend_requests with profile entry {
-    profile_nodes = [here->:friend_request:status == FriendRequestStatus.PENDING:->](`?profile);
+    profile_nodes = [here->:friend_request:->](`?profile);
     for profile_node in profile_nodes {
-        logger.debug(f"friends | get_sent_friend_requests | Found sent friend request to profile: {profile_node.email}");
         sent_request_edge = [edge here->:friend_request:->profile_node][0];
-        report {
-            "email": profile_node.email,
-            "first_name": profile_node.first_name,
-            "last_name": profile_node.last_name,
-            "profile_picture_url": profile_node.profile_picture_url,
-            "status": sent_request_edge.status.value,
-            "created_at": sent_request_edge.created_at
-        };
+        if sent_request_edge.status.value == FriendRequestStatus.PENDING.value {
+            logger.debug(f"friends | get_sent_friend_requests | Found sent friend request to profile: {profile_node.email}");
+            report {
+                "email": profile_node.email,
+                "first_name": profile_node.first_name,
+                "last_name": profile_node.last_name,
+                "profile_picture_url": profile_node.profile_picture_url,
+                "status": sent_request_edge.status.value,
+                "created_at": sent_request_edge.created_at
+            };
+        }
     }
 }
 
 impl get_friends.get_friends with profile entry {
-    friends = [here->:friend_request:status == FriendRequestStatus.ACCEPTED:->](`?profile);
+    friends = [here<-:friend_request:->](`?profile);
     for friend in friends {
-        logger.debug(f"friends | get_friends | Found friend: {friend.email}");
-        friend_edge = [edge here->:friend_request:->friend][0];
-        response = {
-            "email": friend.email,
-            "first_name": friend.first_name,
-            "last_name": friend.last_name,
-            "profile_picture_url": friend.profile_picture_url,
-            "status": friend_edge.status.value,
-            "created_at": friend_edge.created_at
-        };
-        self.friends.append(response);
-        report response;
+        friend_edge = [edge here<-:friend_request:->friend][0];
+        if friend_edge.status.value == FriendRequestStatus.ACCEPTED.value {
+            logger.debug(f"friends | get_friends | Found friend: {friend.email}");
+            response = {
+                "email": friend.email,
+                "first_name": friend.first_name,
+                "last_name": friend.last_name,
+                "profile_picture_url": friend.profile_picture_url,
+                "status": friend_edge.status.value,
+                "created_at": friend_edge.created_at
+            };
+            self.friends.append(response);
+            if self.if_report {
+                report response;
+            }
+        }
     }
 }

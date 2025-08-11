@@ -77,6 +77,7 @@ walker get_sent_friend_requests(visit_profile) {
 
 walker get_friends(visit_profile) {
     has friends: list = [];
+    has if_report: bool = True;
 
     class __specs__ {
         has tags: list = ["friends"];
