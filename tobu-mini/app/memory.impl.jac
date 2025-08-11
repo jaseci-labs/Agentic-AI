@@ -6,3 +6,12 @@ impl visit_memories.visit_memories with `root entry {
         );
     }
 }
+
+impl visit_memory.visit_memory with memories entry {
+    visit [-->](?memory_id==self.memory_id) else {
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Memory not found."
+        );
+    }
+}
