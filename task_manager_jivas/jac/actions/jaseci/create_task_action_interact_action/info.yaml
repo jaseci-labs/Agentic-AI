@@ -5,7 +5,7 @@ package:
   version: "0.1.0"
   meta:
     title: "Create Task Action Interact Action"
-    description: "No description provided."
+    description: "An interact action that enables the agent to create and manage user tasks from natural language input, supporting task scheduling, descriptions, and priority settings in agentic workflows."
     group: "contrib"
     type: "interact_action"
   config:

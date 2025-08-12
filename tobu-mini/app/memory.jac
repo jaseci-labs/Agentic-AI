@@ -16,7 +16,6 @@ node memory {
     has created_at: str = "";
     has updated_at: str = "";
     has image_url: str = "";
-    has shared_with: list = [];
     has conversation: list = [];
 }
 
@@ -27,4 +26,14 @@ walker visit_memories {
     }
     
     can visit_memories with `root entry;
+}
+
+walker visit_memory(visit_memories) {
+    has memory_id: str;
+
+    class __specs__ {
+        has tags: list = ["memory"];
+    }
+
+    can visit_memory with memories entry;
 }
