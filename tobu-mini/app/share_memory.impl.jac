@@ -35,7 +35,7 @@ impl share_memory.share_memory with memory entry {
                 if shared_memory_edge {
                     logger.debug(f"friends | share_memory | Memory shared successfully with {email}");
                     grant_permission(node=shared_memory_edge, permission_level="WRITE", root_id=reciver["root_id"]);
-                    grant_permission(node=here, permission_level="READ", root_id=reciver["root_id"]);
+                    grant_permission(node=here, permission_level="CONNECT", root_id=reciver["root_id"]);
                     response["success"].append(email);
                 }
             } except Exception as e {

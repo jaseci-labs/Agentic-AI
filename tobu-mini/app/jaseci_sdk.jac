@@ -39,7 +39,7 @@ def revoke_permission(node: any, root_id: str) {
 
 def get_node_owner(node: any) {
     logger.debug("jaseci_sdk | get_node_owner | Fetching node owner");
-    root_id = getattr(n.__jac__, "root");
+    root_id = getattr(node.__jac__, "root");
     owner = User.Collection.find_one(filter={"root_id": root_id});
     if owner {
         try {
