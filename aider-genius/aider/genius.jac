@@ -1,4 +1,5 @@
 import json;
+import os;
 import subprocess;
 import time;
 import re;
@@ -1100,43 +1101,55 @@ walker GeniusAgent {
     
     """Generate a comprehensive report of the agent's work"""
     def generate_comprehensive_report() {
-        report_lines = [
-            "Genius Agent Execution Report",
-            "=" * 40,
-            f"Task: {self.task}",
-            f"Iterations completed: {self.current_iteration}/{self.max_iterations}",
-            f"Tasks completed: {len(self.completed_tasks)}",
-            f"Tasks failed: {len(self.failed_tasks)}",
-            ""
+        now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime());
+        report_md = [
+            "# Genius Agent Task Report\n",
+            "**Date/Time:** " + str(now) + "\n",
+            "**Task Description:** " + str(self.task) + "\n",
+            "**Iterations Completed:** " + str(self.current_iteration) + "/" + str(self.max_iterations) + "\n",
+            "**Tasks Completed:** " + str(len(self.completed_tasks)) + "\n",
+            "**Tasks Failed:** " + str(len(self.failed_tasks)) + "\n",
+            "\n---\n"
         ];
-        
+
         if self.completed_tasks {
-            report_lines.append("Completed Tasks:");
+            report_md.append("## Completed Tasks\n");
             for task in self.completed_tasks {
-                report_lines.append(f"  ✅ {task['name']}");
+                report_md.append("- ✅ **" + str(task["name"]) + "**\n  - Type: " + str(task.get("type", "")) + "\n  - Details: " + str(task.get("details", "")) + "\n  - Files Changed: " + str(task.get("file", "N/A")) + "\n");
             }
-            report_lines.append("");
+            report_md.append("\n");
         }
-        
+
         if self.failed_tasks {
-            report_lines.append("Failed Tasks:");
+            report_md.append("## Failed Tasks\n");
             for task in self.failed_tasks {
-                report_lines.append(f"  ❌ {task['name']}");
+                report_md.append("- ❌ **" + str(task["name"]) + "**\n  - Type: " + str(task.get("type", "")) + "\n  - Details: " + str(task.get("details", "")) + "\n  - Files Changed: " + str(task.get("file", "N/A")) + "\n");
             }
-            report_lines.append("");
+            report_md.append("\n");
         }
-        
+
         if self.validation_results {
-            report_lines.extend([
-                "Validation Results:",
-                f"  Lint: {'✅ PASSED' if self.validation_results['lint_passed'] else '❌ FAILED'}",
-                f"  Tests: {'✅ PASSED' if self.validation_results['tests_passed'] else '❌ FAILED'}",
-                f"  Security: {'✅ PASSED' if self.validation_results['security_passed'] else '❌ FAILED'}",
-                ""
-            ]);
+            report_md.append("## Validation Results\n");
+            report_md.append("- Lint: " + ("✅ PASSED" if self.validation_results["lint_passed"] else "❌ FAILED") + "\n");
+            report_md.append("- Tests: " + ("✅ PASSED" if self.validation_results["tests_passed"] else "❌ FAILED") + "\n");
+            report_md.append("- Security: " + ("✅ PASSED" if self.validation_results["security_passed"] else "❌ FAILED") + "\n");
+            report_md.append("\n");
         }
+
+        # Save report to reports/ folder
+        safe_now = str(now).replace(" ", "_").replace(":", "-");
+        report_dir = "aider-genius/reports";
         
-        for line in report_lines {
+        if not os.path.exists(report_dir) {
+            os.makedirs(report_dir);
+        }
+        report_path = report_dir + "/report_" + safe_now + ".md";
+        file = open(report_path, "w");
+        file.write("\n".join(report_md));
+        file.close();
+
+        # Also output to tool_output for visibility
+        for line in report_md {
             self.coder.io.tool_output(line);
         }
     }
