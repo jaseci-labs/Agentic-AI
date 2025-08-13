@@ -3,6 +3,7 @@ import os;
 import subprocess;
 import time;
 import re;
+import mcp_client;
 import from pathlib { Path }
 import from typing { Any, Dict, List, Optional, Tuple }
 import from aider.web_search { web_search, create_web_searcher }
@@ -171,6 +172,22 @@ obj IntelligentIO {
     }
 }
 
+"""Get available MCP tool names."""
+def list_mcp_tools() -> list[str] {
+    return mcp_client.list_mcp_tools();
+}
+
+"""Use MCP tool to perform actions.
+name must be one of available tools from list_mcp_tools(), do not make up any tool names.
+
+Example input for `use_mcp_tool`:
+{"name": "tool_name", "arguments": {"query": "your query"}}
+
+Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper.
+"""
+def use_mcp_tool(name: str, arguments: dict[str, str]) -> str {
+    return mcp_client.call_mcp_tool(name=name, arguments=arguments);
+}  
 
 node PlanningNode {
     has task: str = "";
@@ -274,20 +291,22 @@ node PlanningNode {
         return issues;
     }
 
-    # """Perform background research to gather additional context"""
-    # def background_research(task_description:str) -> str by self.planning_model(method="ReAct", tools=[web_search]);
+    """Perform background research to gather additional context. return a detailed explanation of the task and its requirements, including any relevant details or constraints.
+    Use available mcp tool when needed.Use list_mcp_tools to find out what are the available tools. 
+    Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper."""
+    def background_research(task_description:str) -> str by self.planning_model(method="ReAct", tools=[use_mcp_tool, list_mcp_tools]);
 
     """Generate specific implementation instructions for the user's task, focusing on exact code structure and technologies to use."""
-    def generate_plan(task_description: str, repo_context: str, issues_context: str) -> List[Plan] by self.planning_model(method="Reason"); 
+    def generate_plan(task_description: str, repo_context: str, issues_context: str, web_scraped_info: str) -> List[Plan] by self.planning_model(method="Reason");
 
     """Use LLM to analyze the task and repository context to create an intelligent task plan."""
     def llm_based_task_planning(task: str, repo_context: Dict, issues: List[Dict], planning_model: Any, coder: Any) -> List[Dict] {
         print(f"Consulting planning model for intelligent task breakdown");
         
         try {
-            # web_scraped_info = self.background_research(task);
-            # print(f"Background research results: {web_scraped_info}");
-            plan_objects = self.generate_plan(task, str(repo_context), str(issues)); # , web_scraped_info
+            web_scraped_info = self.background_research(task);
+            print(f"Background research results: {web_scraped_info}");
+            plan_objects = self.generate_plan(task, str(repo_context), str(issues), web_scraped_info); # , web_scraped_info
             print(f"Planning response: {plan_objects}");
             
             if plan_objects {
