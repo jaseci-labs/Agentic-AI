@@ -1,1 +1,1 @@
-import session, memory, user, profile, friends, share_memory, dev_tools;
+import session, memory, user, profile, friends, share_memory, comments, dev_tools;
