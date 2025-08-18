@@ -56,21 +56,44 @@ impl get_memory.check_shared_memories with profile entry {
 impl get_memory.get_memory with memory entry {
     comments = [here-->](`?comment);
     comment_details = [];
+    comment_map = {};
     for comment_node in comments {
         comment_owner = get_node_owner(node=comment_node);
         root_id = comment_owner.get("root_id");
         profile_node = get_node_by_root_id(root_id=root_id, node_type="profile");
+        profile_details = {
+            "email": profile_node.email,
+            "first_name": profile_node.first_name,
+            "last_name": profile_node.last_name,
+            "profile_picture_url": profile_node.profile_picture_url
+        };
         comment_details.append({
             "comment_id": comment_node.comment_id,
             "content": comment_node.content,
             "created_at": comment_node.created_at,
-            "profile": {
-                "email": profile_node.email,
-                "first_name": profile_node.first_name,
-                "last_name": profile_node.last_name,
-                "profile_picture_url": profile_node.profile_picture_url
-            }
+            "profile": profile_details
         });
+        if comment_map.get(profile_node.email) {
+            comment_map[profile_node.email]["comments"].append(comment_node.content);
+        } else {
+            comment_map[profile_node.email] = {
+                "comments": [comment_node.content],
+                "profile": profile_details
+            };
+        }
+    }
+    filtered_comments = {email: {"comments": data["comments"], "name": data["profile"]["first_name"]} for (email, data) in comment_map.items() if data["comments"]};
+    comment_summary_and_povs = generate_comment_summary_and_povs(memory_summary=here.summary, comments=filtered_comments);
+    povs = [];
+    for pov in comment_summary_and_povs.povs {
+        if pov.email in comment_map {
+            povs.append({
+                "pov": pov.pov,
+                "profile": comment_map[pov.email]["profile"]
+            });
+        } else {
+            logger.warning(f"friends | get_memory | POV for email {pov.email} not found");  
+        }
     }
     response = {
         "memory": {
@@ -85,7 +108,9 @@ impl get_memory.get_memory with memory entry {
             "image_url": here.image_url,
             "conversation": here.conversation
         },
-        "comments": comment_details
+        "comments": comment_details,
+        "comment_summary": comment_summary_and_povs.comment_summary,
+        "povs": povs
     };
     report response;
 }
