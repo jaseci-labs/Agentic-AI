@@ -301,7 +301,7 @@ node PlanningNode {
 
     """Perform background research to gather additional context. return a detailed explanation of the task and its requirements, including any relevant details or constraints.
     Use available mcp tool when needed.Use list_mcp_tools to find out what are the available tools. 
-    Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper."""
+    Always pass arguments as a flat dictionary. key is always 'query'. (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper."""
     def background_research(task_description:str) -> str by self.planning_model(method="ReAct", tools=[use_mcp_tool, list_mcp_tools]);
 
     """Generate specific implementation instructions for the user's task, focusing on exact code structure and technologies to use."""
@@ -813,8 +813,6 @@ walker GeniusAgent {
         if not self.task_explicitly_provided {
             while True {  # Loop until we get a valid task (not chat)
                 try {
-                    self.coder.io.tool_output("Genius Agent: A specific task is required to proceed.");
-                    self.coder.io.tool_output("Please describe what you'd like me to work on:");
                     user_input = input("\n> ").strip();
                     
                     if user_input {
