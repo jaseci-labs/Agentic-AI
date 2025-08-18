@@ -95,7 +95,7 @@ const JacChatbot = () => {
         
         {/* Chat Messages */}
         <ScrollArea className="flex-1 p-4 lg:p-6">
-          <div className="max-w-4xl mx-auto space-y-4 lg:pt-0 pt-16">
+          <div className="max-w-4xl mx-auto space-y-1 lg:pt-0 pt-16">
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -106,17 +106,17 @@ const JacChatbot = () => {
             ))}
             
             {isLoading && (
-              <div className="flex gap-4 p-6 animate-fade-in">
-                <div className="w-10 h-10 shrink-0 bg-gray-700 rounded-full animate-pulse flex items-center justify-center p-2">
+              <div className="flex gap-3 p-3 animate-fade-in">
+                <div className="w-8 h-8 shrink-0 bg-gray-700 rounded-full animate-pulse flex items-center justify-center p-1.5">
                   <img src={jacLogo} alt="Typing" className="w-full h-full object-contain opacity-60" />
                 </div>
-                <div className="bg-gray-800 border border-gray-600 rounded-2xl px-5 py-4 shadow-sm">
+                <div className="bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3 shadow-sm">
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
                   </div>
-                  <div className="text-xs text-gray-400 mt-2">Jaseci is thinking...</div>
+                  <div className="text-xs text-gray-400 mt-1">Jaseci is thinking...</div>
                 </div>
               </div>
             )}
