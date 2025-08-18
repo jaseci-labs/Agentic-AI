@@ -10,6 +10,8 @@ import from aider.web_search { web_search, create_web_searcher }
 import from mcp_client { list_mcp_tools, call_mcp_tool }
 import from mtllm {Model}
 
+glob llm = Model(model_name="gpt-4o-mini");
+
 with entry {
     try {
         WEB_SEARCH_AVAILABLE = True;
@@ -53,6 +55,12 @@ sem SecurityScanResult.issues = "List of specific security issues found (empty i
 sem SecurityScanResult.analysis = "Detailed security analysis breakdown by category";
 sem SecurityScanResult.risk_level = "Overall risk assessment: low, medium, high, critical";
 sem SecurityScanResult.recommendations = "List of security improvement recommendations";
+
+"""Classify user input as task or chat."""
+def classify_user_input(user_input: str) -> str by llm();
+
+"""Generate a conversational response for chat inputs"""
+def generate_chat_response(user_input: str) -> str by llm();
 
 node IntelligentDecisionNode {
     has decision_model: Optional[Model] = None;
@@ -341,9 +349,6 @@ node PlanningNode {
         }
     }
 }
-
-
-
 
 node EditorNode {
     has file_path: str = "";
@@ -681,15 +686,15 @@ node UserInputNode {
     def get_user_input(coder: Any) -> Tuple[str, bool] {
         try {
             coder.io.tool_output("\n" + "="*50);
-            coder.io.tool_output("Genius Agent - Task Completed!");
-            coder.io.tool_output("What would you like me to do next?");
-            coder.io.tool_output("Options:");
-            coder.io.tool_output("  - Describe a new task");
+            coder.io.tool_output("Genius Agent - Ready for Interaction!");
+            coder.io.tool_output("You can:");
+            coder.io.tool_output("  - Chat with me casually (I'll respond conversationally)");
+            coder.io.tool_output("  - Give me a specific task to work on");
             coder.io.tool_output("  - Type 'exit' or 'quit' to stop");
             coder.io.tool_output("  - Type 'status' to see current repository state");
             coder.io.tool_output("="*50);
             
-            user_input = input("\nNext task > ").strip();
+            user_input = input("\nChat or Task > ").strip();
             
             if user_input.lower() in ['exit', 'quit', 'stop'] {
                 return ("", False);
@@ -806,30 +811,45 @@ walker GeniusAgent {
         
         # Get task from user if not provided
         if not self.task_explicitly_provided {
-            try {
-                self.coder.io.tool_output("Genius Agent: A specific task is required to proceed.");
-                self.coder.io.tool_output("Please describe what you'd like me to work on:");
-                self.coder.io.tool_output("(Ctrl+C to cancel)");
-                user_input = input("\n> ").strip();
-                if user_input {
-                    self.task = user_input;
-                    self.task_explicitly_provided = True;
-                    here.task = self.task;
-                    here.log_agent_action("Planning", "User task received", f"Updated task to: {self.task}");
-                } else {
-                    self.coder.io.tool_output("No task provided. Cannot proceed without a specific task.");
+            while True {  # Loop until we get a valid task (not chat)
+                try {
+                    self.coder.io.tool_output("Genius Agent: A specific task is required to proceed.");
+                    self.coder.io.tool_output("Please describe what you'd like me to work on:");
+                    self.coder.io.tool_output("(Ctrl+C to cancel)");
+                    user_input = input("\n> ").strip();
+                    
+                    if user_input {
+                        # Classify the input as task or chat
+                        input_type = classify_user_input(user_input);
+                        
+                        if input_type == "chat" {
+                            # Handle as conversation and continue the loop
+                            chat_response = generate_chat_response(user_input);
+                            self.coder.io.tool_output(f"{chat_response}");
+                            continue;  # Ask for input again
+                        } else {
+                            # Handle as task
+                            self.task = user_input;
+                            self.task_explicitly_provided = True;
+                            here.task = self.task;
+                            here.log_agent_action("Planning", "User task received", f"Updated task to: {self.task}");
+                            break;  # Exit the loop, we have a valid task
+                        }
+                    } else {
+                        self.coder.io.tool_output("No task provided. Cannot proceed without a specific task.");
+                        here.status = "failed";
+                        here.error = "No task provided";
+                        return;
+                    }
+                } except (KeyboardInterrupt, EOFError) {
+                    self.coder.io.tool_output("\nTask input cancelled by user.");
                     here.status = "failed";
-                    here.error = "No task provided";
+                    return;
+                } except Exception as e {
+                    self.coder.io.tool_output(f"Error getting user input: {str(e)}");
+                    here.status = "failed";
                     return;
                 }
-            } except (KeyboardInterrupt, EOFError) {
-                self.coder.io.tool_output("\nTask input cancelled by user.");
-                here.status = "failed";
-                return;
-            } except Exception as e {
-                self.coder.io.tool_output(f"Error getting user input: {str(e)}");
-                here.status = "failed";
-                return;
             }
         }
 
@@ -852,13 +872,19 @@ walker GeniusAgent {
         task_graph = here.llm_based_task_planning(self.task, repo_context, issues, self.planning_model, self.coder);
         
         # Store results in the node
-        here.task_graph = task_graph;
+        here.task_graph = task_graph or [];  # Ensure task_graph is never None
         here.repo_context = repo_context;
         here.issues = issues;
         here.status = "completed";
         
         self.planning_complete = True;
-        here.log_agent_action("Planning", "LLM-generated task graph created", f"Generated {len(task_graph)} prioritized tasks using intelligent planning", {'tasks': [task['name'] for task in task_graph]});
+        
+        # Safe logging with None check
+        if task_graph {
+            here.log_agent_action("Planning", "LLM-generated task graph created", f"Generated {len(task_graph)} prioritized tasks using intelligent planning", {'tasks': [task['name'] for task in task_graph]});
+        } else {
+            here.log_agent_action("Planning", "Planning completed", "No specific tasks generated, proceeding with direct execution");
+        }
         
         # Move to next phase
         visit [-->];
@@ -873,7 +899,27 @@ walker GeniusAgent {
         
         # Get planning results from previous node
         planning_node = [<--][0];
-        task_graph = planning_node.task_graph;
+        task_graph = planning_node.task_graph or [];  # Ensure it's never None
+        
+        # Check if we have any tasks to execute
+        if not task_graph {
+            self.coder.io.tool_output("Genius Agent - Phase: Direct Execution | Action: No structured tasks found | Reasoning: Executing task directly without subtask breakdown");
+            
+            # Execute the main task directly
+            message = f"Task: {self.task}\n\nPlease implement this task step by step.";
+            
+            try {
+                self.coder.run(with_message=message);
+                self.coder.io.tool_output("Genius Agent - Phase: Completion | Action: Direct task execution completed | Reasoning: Task completed without structured breakdown");
+            } except Exception as e {
+                self.coder.io.tool_output(f"Genius Agent - Phase: Error | Action: Direct execution failed | Reasoning: {str(e)}");
+            }
+            
+            # Generate report and finish
+            self.generate_comprehensive_report();
+            visit [-->];
+            return;
+        }
         
         # Main execution loop
         for iteration in range(self.max_iterations) {
@@ -1075,33 +1121,44 @@ walker GeniusAgent {
             }
             
             if user_input {
-                # Reset for new task
-                self.task = user_input;
-                self.task_explicitly_provided = True;
-                self.planning_complete = False;
-                self.last_error_context = None;
-                self.current_iteration = 0;
+                # Classify the input as task or chat
+                input_type = classify_user_input(user_input);
                 
-                self.coder.io.tool_output(f"Genius Agent - Phase: New Task | Action: Starting new task | Reasoning: User provided new task: {user_input}");
-                
-                # Reset the intelligent IO context for the new task
-                self.coder.io.set_context(None, None);
-                
-                # Create new nodes for the next cycle
-                planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
-                editor_node = EditorNode(file_path="", content="", changes=[], status="pending", editor_model=self.editor_model);
-                validator_node = ValidatorNode(file_path="", issues=[], status="pending", validation_model=self.editor_model);
-                new_user_input_node = UserInputNode(status="waiting");
-                
-                # Connect the new workflow
-                here ++> planning_node;
-                planning_node ++> editor_node;
-                editor_node ++> validator_node;
-                validator_node ++> new_user_input_node;
-                
-                # Start the new cycle
-                visit [-->];
-                return;
+                if input_type == "chat" {
+                    # Handle as conversation
+                    chat_response = generate_chat_response(user_input);
+                    self.coder.io.tool_output(f"Genius Agent - Chat: {chat_response}");
+                    continue;  # Stay in the input loop for more interaction
+                } else {
+                    # Handle as task
+                    # Reset for new task
+                    self.task = user_input;
+                    self.task_explicitly_provided = True;
+                    self.planning_complete = False;
+                    self.last_error_context = None;
+                    self.current_iteration = 0;
+                    
+                    self.coder.io.tool_output(f"Genius Agent - Phase: New Task | Action: Starting new task | Reasoning: User provided new task: {user_input}");
+                    
+                    # Reset the intelligent IO context for the new task
+                    self.coder.io.set_context(None, None);
+                    
+                    # Create new nodes for the next cycle
+                    planning_node = PlanningNode(task=self.task, status="pending", planning_model=self.planning_model);
+                    editor_node = EditorNode(file_path="", content="", changes=[], status="pending", editor_model=self.editor_model);
+                    validator_node = ValidatorNode(file_path="", issues=[], status="pending", validation_model=self.editor_model);
+                    new_user_input_node = UserInputNode(status="waiting");
+                    
+                    # Connect the new workflow
+                    here ++> planning_node;
+                    planning_node ++> editor_node;
+                    editor_node ++> validator_node;
+                    validator_node ++> new_user_input_node;
+                    
+                    # Start the new cycle
+                    visit [-->];
+                    return;
+                }
             } else {
                 here.show_status(self.coder);
                 self.coder.io.tool_output("Please provide a valid task or type 'exit' to quit.");
