@@ -1,5 +1,5 @@
 import from mtllm.llm  { Model, Image }
-import from typing { List }
+import from typing { List, Dict, Any }
 
 glob llm = Model(model_name="gpt-4.1");
 
@@ -21,6 +21,16 @@ obj ContinueResponse(Response) {
     has show_summary: bool;
 }
 
+obj CommentPOVs {
+    has email: str;
+    has pov: str;
+}
+
+obj CommentSummaryPOVs {
+    has comment_summary: str;
+    has povs: List[CommentPOVs];
+}
+
 sem InitResponse = "Memory details inferred from the image, city, date, and people.";
 sem InitResponse.follow_up_questions = "Ask one follow-up question to continue the conversation.";
 sem InitResponse.summary = "A concise summary of the memory.";
@@ -38,6 +48,14 @@ sem ContinueResponse.where = "List of places relevant to the memory.";
 sem ContinueResponse.what = "What the memory is about.";
 sem ContinueResponse.save_memory = "True if the user asked to save the memory; otherwise false.";
 sem ContinueResponse.show_summary = "True if all required details are present and the summary should be shown.";
+
+sem CommentPOVs = "A comment with a point of view.";
+sem CommentPOVs.email = "Email of the user who made the comment.";
+sem CommentPOVs.pov = "The point of view expressed in the comment.";
+
+sem CommentSummaryPOVs = "A summary of comments and their points of view.";
+sem CommentSummaryPOVs.comment_summary = "A summary of the comments(extention of the memory summary without memory details).";
+sem CommentSummaryPOVs.povs = "List of valuable points of view expressed by each user.";
 
 """ Extract memory details from the image, city, date and people."""
 def extract_memory_details(
@@ -60,3 +78,9 @@ def update_memory_details(
     show_summary: bool = False,
     save_memory: bool = False
 ) -> ContinueResponse by llm();
+
+""" Generate a summary and points of view for each comment."""
+def generate_comment_summary_and_povs(
+    memory_summary: str,
+    comments: Dict[str, Any]
+) -> CommentSummaryPOVs by llm();

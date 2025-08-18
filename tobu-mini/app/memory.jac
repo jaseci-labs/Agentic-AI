@@ -1,23 +1,10 @@
-import from uuid { uuid4 }
 import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
+import from nodes_and_edges { memories, memory, comment, profile, shared_memory }
+import from jaseci_sdk { get_node_owner, get_node_by_root_id }
+import from profile { visit_profile }
+import from mtp { generate_comment_summary_and_povs }
 
-
-node memories {}
-
-node memory {
-    has memory_id: str = uuid4().hex;
-    has session_id: str = "";
-    has summary: str = "";
-    has when: str = "";
-    has who: list = [];
-    has where: list = [];
-    has what: str = "";
-    has created_at: str = "";
-    has updated_at: str = "";
-    has image_url: str = "";
-    has conversation: list = [];
-}
 
 walker visit_memories {
 
@@ -36,4 +23,25 @@ walker visit_memory(visit_memories) {
     }
 
     can visit_memory with memories entry;
+}
+
+walker get_memory(visit_memories) {
+    has memory_id: str;
+
+    class __specs__ {
+        has tags: list = ["memory"];
+    }
+
+    can check_memories with memories entry;
+    can check_shared_memories with profile entry;
+    can get_memory with memory entry;
+}
+
+walker list_memories(visit_memories) {
+
+    class __specs__ {
+        has tags: list = ["memory"];
+    }
+
+    can list_memories with memories entry;
 }

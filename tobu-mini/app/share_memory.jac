@@ -1,15 +1,12 @@
-import from memory { memory, visit_memory }
+import from memory { visit_memory }
 import from pydantic { EmailStr }
 import from jac_cloud.jaseci.utils.logger { logger }
 import from friends { get_friends }
 import from jaseci_sdk { get_user_by_email, get_node_by_root_id, grant_permission, revoke_permission }
-import from profile { visit_profile, profile }
+import from profile { visit_profile }
 import from datetime { datetime }
+import from nodes_and_edges { profile, memory, shared_memory }
 
-
-edge shared_memory {
-    has shared_at: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S");
-}
 
 walker share_memory(visit_memory) {
     has share_with: list[EmailStr];
@@ -50,4 +47,3 @@ walker reject_memory(visit_profile) {
 
     can reject_memory with profile entry;
 }
-

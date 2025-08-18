@@ -5,6 +5,7 @@ impl visit_profile.visit_profile with `root entry {
             detail="Profile not found, please initialize the user first."
         );
     }
+    self.profile_node = [-->](`?profile)[0];
 }
 
 impl update_profile.update_profile with profile entry {

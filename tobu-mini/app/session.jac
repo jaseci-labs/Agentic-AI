@@ -7,23 +7,9 @@ import from utils { convert_date_to_valid_format }
 import from mtp { extract_memory_details, update_memory_details }
 import from mtllm.llm { Image }
 import from google_maps_service { google_location_service }
-import from memory { memory, memories, visit_memories }
+import from memory { visit_memories }
+import from nodes_and_edges { session, sessions, memory, memories }
 
-
-node sessions {}
-
-node session {
-    has session_id: str = uuid4().hex;
-    has summary: str = "";
-    has when: str = "";
-    has who: list = [];
-    has where: list = [];
-    has what: str = "";
-    has conversation : list = [];
-    has image_url: str = "";
-    has save_memory: bool = False;
-    has show_summary: bool = False;
-}
 
 class Location(BaseModel) {
     has latitude: float;

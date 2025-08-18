@@ -1,12 +1,5 @@
 import from fastapi { HTTPException, status }
-
-
-node profile {
-    has email: str = "";
-    has first_name: str = "";
-    has last_name: str = "";
-    has profile_picture_url: str = "";
-}
+import from nodes_and_edges { profile }
 
 walker visit_profile {
 
