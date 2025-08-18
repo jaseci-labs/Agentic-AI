@@ -815,7 +815,6 @@ walker GeniusAgent {
                 try {
                     self.coder.io.tool_output("Genius Agent: A specific task is required to proceed.");
                     self.coder.io.tool_output("Please describe what you'd like me to work on:");
-                    self.coder.io.tool_output("(Ctrl+C to cancel)");
                     user_input = input("\n> ").strip();
                     
                     if user_input {
