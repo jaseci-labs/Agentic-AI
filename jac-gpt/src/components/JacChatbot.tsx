@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import ChatHeader from './ChatHeader';
+import Sidebar from './Sidebar';
+import MobileMenuButton from './MobileMenuButton';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,6 +25,7 @@ const JacChatbot = () => {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSendMessage = async (content: string) => {
     const userMessage: Message = {
@@ -79,39 +81,51 @@ const JacChatbot = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
-      <ChatHeader />
+    <div className="flex h-screen bg-gray-900">
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+      />
       
-      <ScrollArea className="flex-1 p-2">
-        <div className="max-w-5xl mx-auto space-y-2">
-          {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              message={message.content}
-              isUser={message.isUser}
-              timestamp={message.timestamp}
-            />
-          ))}
-          
-          {isLoading && (
-            <div className="flex gap-4 p-6 animate-fade-in">
-              <div className="w-10 h-10 shrink-0 bg-gray-700 rounded-full animate-pulse flex items-center justify-center p-2">
-                <img src={jacLogo} alt="Typing" className="w-full h-full object-contain opacity-60" />
-              </div>
-              <div className="bg-gray-800 border border-gray-600 rounded-2xl px-5 py-4 shadow-sm">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        {/* Mobile Menu Button */}
+        <MobileMenuButton onClick={() => setSidebarOpen(true)} />
+        
+        {/* Chat Messages */}
+        <ScrollArea className="flex-1 p-4 lg:p-6">
+          <div className="max-w-4xl mx-auto space-y-4 lg:pt-0 pt-16">
+            {messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                message={message.content}
+                isUser={message.isUser}
+                timestamp={message.timestamp}
+              />
+            ))}
+            
+            {isLoading && (
+              <div className="flex gap-4 p-6 animate-fade-in">
+                <div className="w-10 h-10 shrink-0 bg-gray-700 rounded-full animate-pulse flex items-center justify-center p-2">
+                  <img src={jacLogo} alt="Typing" className="w-full h-full object-contain opacity-60" />
                 </div>
-                <div className="text-xs text-gray-400 mt-2">Jaseci is thinking...</div>
+                <div className="bg-gray-800 border border-gray-600 rounded-2xl px-5 py-4 shadow-sm">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
+                  </div>
+                  <div className="text-xs text-gray-400 mt-2">Jaseci is thinking...</div>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-      
-      <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+            )}
+          </div>
+        </ScrollArea>
+        
+        {/* Chat Input */}
+        <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+      </div>
     </div>
   );
 };
