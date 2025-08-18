@@ -3,6 +3,7 @@ import ChatHeader from './ChatHeader';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { openaiService, ChatMessage as OpenAIChatMessage } from '@/services/openai';
 // Logo path updated to use public folder
 const jacLogo = "/logo.png";
 
@@ -24,7 +25,7 @@ const JacChatbot = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -35,20 +36,46 @@ const JacChatbot = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Simple mock response for now - we'll add OpenAI back once basic app works
-    setTimeout(() => {
-      const aiResponse = `Thanks for your question about Jac! You asked: "${content}". I'm being configured to use GPT-4o-mini for intelligent responses. This is a temporary response while we troubleshoot the integration.`;
+    try {
+      // Prepare conversation history for OpenAI
+      const conversationHistory: OpenAIChatMessage[] = messages
+        .filter(msg => !msg.content.includes('Hello! I am your Jaseci Assistant')) // Skip initial greeting
+        .map(msg => ({
+          role: msg.isUser ? 'user' : 'assistant',
+          content: msg.content
+        }));
+
+      // Add the current user message
+      conversationHistory.push({
+        role: 'user',
+        content: content
+      });
+
+      // Get response from OpenAI
+      const aiResponseContent = await openaiService.generateResponse(conversationHistory);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: aiResponse,
+        content: aiResponseContent,
         isUser: false,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: 'I apologize, but I encountered an error while processing your request. Please try again.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
