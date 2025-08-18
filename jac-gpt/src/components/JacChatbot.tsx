@@ -27,6 +27,22 @@ const JacChatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const handleNewChat = () => {
+    setMessages([
+      {
+        id: '1',
+        content: 'Hello! I am your Jaseci Assistant. I can help you with Jac programming language questions. What would you like to know about Jac?',
+        isUser: false,
+        timestamp: new Date(),
+      },
+    ]);
+    setIsLoading(false);
+    // Close sidebar on mobile after starting new chat
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  };
+
   const handleSendMessage = async (content: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -85,7 +101,8 @@ const JacChatbot = () => {
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onNewChat={handleNewChat}
       />
       
       {/* Main Chat Area */}
