@@ -2,17 +2,18 @@
 
 import json
 import time
+from io import BytesIO
 from typing import Any, Dict, List, Union
 
 import streamlit as st
 import yaml
 from jvclient.lib.utils import (
     call_api,
+    get_reports_payload,
     call_get_agent,
     call_healthcheck,
     call_import_agent,
     call_update_agent,
-    get_reports_payload,
 )
 from jvclient.lib.widgets import app_controls, app_header
 from streamlit_router import StreamlitRouter
@@ -24,7 +25,7 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
     (model_key, module_root) = app_header(agent_id, action_id, info)
 
     # initialise the agent object by fetching the agent based on agent_id
-    agent_details = call_get_agent(agent_id)
+    agent_details = call_get_agent(agent_id)    
 
     with st.expander("Agent Configuration", False):
 
@@ -82,6 +83,8 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
         )
 
         if st.button("Run Healthcheck", key=f"{model_key}_btn_healthcheck"):
+            # Prepare parameters
+            params = {"session_id": session_id}
 
             # Call the function for healthcheck
             result = call_api(
@@ -92,6 +95,8 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
             # Display results
             if result and result.status_code == 200:
                 result = get_reports_payload(result)
+                # json_result = result.json()
+                # result = json_result.get("reports", [{}])[0]
                 st.success("Memory healthcheck completed successfully!")
 
                 # Dynamically display key-value pairs
@@ -123,8 +128,8 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
             with col1:
                 if st.button("Yes, Purge Frame"):
                     purge_frame_result = call_api(
-                        endpoint="action/walker/agent_utils_action/purge_frame_memory",
-                        json_data={"agent_id": agent_id, "session_id": session_id},
+                        endpoint = "action/walker/agent_utils_action/purge_frame_memory",
+                        json_data = {"agent_id": agent_id, "session_id": session_id},
                     )
                     if purge_frame_result and purge_frame_result.status_code == 200:
                         st.session_state.purge_frame_result = True
@@ -174,11 +179,8 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
             with col1:
                 if st.button("Yes, Purge Collection"):
                     purge_collection_result = call_api(
-                        endpoint="action/walker/agent_utils_action/purge_collection_memory",
-                        json_data={
-                            "agent_id": agent_id,
-                            "collection_name": collection_name,
-                        },
+                        endpoint = "action/walker/agent_utils_action/purge_collection_memory",
+                        json_data = {"agent_id": agent_id, "collection_name": collection_name},
                     )
                     st.session_state.purge_collection_result = purge_collection_result
                     st.session_state.confirm_purge_collection = False
@@ -205,12 +207,11 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
             st.rerun()
 
     with st.expander("Logging", False):
-        _logging = call_api(
-            endpoint="action/walker/agent_utils_action/get_logging",
-            json_data={"agent_id": agent_id},
-        )
+        _logging = call_api(endpoint="action/walker/agent_utils_action/get_logging", json_data={"agent_id": agent_id})
 
         if _logging and _logging.status_code == 200:
+            # _logging = _logging.json()
+            # _logging = _logging.get("reports", [False])[0]
             _logging = get_reports_payload(_logging)
             logging = st.checkbox(
                 "Log Interactions", value=_logging, key=f"{model_key}_logging"
@@ -218,8 +219,7 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
 
             if st.button("Update", key=f"{model_key}_btn_logging_update"):
                 if result := call_api(
-                    endpoint="action/walker/agent_utils_action/set_logging",
-                    json_data={"agent_id": agent_id, "agent_logging": logging},
+                    endpoint="action/walker/agent_utils_action/set_logging", json_data={"agent_id": agent_id, "agent_logging": logging}
                 ):
                     st.success("Agent logging config updated")
                 else:
@@ -261,11 +261,7 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
             # Call the function to import
             if result := call_api(
                 endpoint="action/walker/agent_utils_action/import_memory",
-                json_data={
-                    "agent_id": agent_id,
-                    "data": memory_data,
-                    "overwrite": overwrite,
-                },
+                json_data={"agent_id": agent_id, "data": memory_data, "overwrite": overwrite},
             ):
                 st.success("Agent memory imported successfully")
             else:
@@ -314,49 +310,42 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
                 json_data={"agent_id": agent_id, "session_id": session_id},
             )
 
-            if result and result.status_code == 200:
+            # Log results and provide download options
+            if result and "memory" in result:
+                st.success("Agent memory exported successfully!")
 
-                result = get_reports_payload(result)
-                # Log results and provide download options
-                if result and "memory" in result:
-                    st.success("Agent memory exported successfully!")
+                # Process the first two entries of memory
+                memory_entries = result["memory"][:2]  # First 2 entries
+                if export_json:
+                    # JSON display
+                    st.json(memory_entries)
 
-                    # Process the first two entries of memory
-                    memory_entries = result["memory"][:2]  # First 2 entries
-                    if export_json:
-
-                        # Prepare downloadable JSON file
-                        json_data = json.dumps(result, indent=4)
-                        # json_file = BytesIO(json_data.encode("utf-8"))
-                        st.download_button(
-                            label="Download JSON File",
-                            data=json_data,
-                            file_name="exported_memory.json",
-                            mime="application/json",
-                            key="download_json",
-                        )
-                        # JSON display
-                        st.json(memory_entries)
-                    else:
-
-                        # full memory dump
-                        full_yaml_data = yaml.dump(result, sort_keys=False)
-
-                        # Prepare downloadable YAML file
-                        st.download_button(
-                            label="Download YAML File",
-                            data=full_yaml_data,
-                            file_name="exported_memory.yaml",
-                            mime="application/x-yaml",
-                            key="download_yaml",
-                        )
-
-                        # YAML display
-                        yaml_data = yaml.dump(memory_entries, sort_keys=False)
-                        st.code(yaml_data, language="yaml")
+                    # Prepare downloadable JSON file
+                    json_data = json.dumps(result, indent=4)
+                    # json_file = BytesIO(json_data.encode("utf-8"))
+                    st.download_button(
+                        label="Download JSON File",
+                        data=json_data,
+                        file_name="exported_memory.json",
+                        mime="application/json",
+                        key="download_json",
+                    )
                 else:
-                    st.error(
-                        "Failed to export agent memory. Please check your inputs and try again."
+                    # YAML display
+                    yaml_data = yaml.dump(memory_entries, sort_keys=False)
+                    st.code(yaml_data, language="yaml")
+
+                    # full memory dump
+                    full_yaml_data = yaml.dump(result, sort_keys=False)
+
+                    # Prepare downloadable YAML file
+                    # yaml_file = BytesIO(full_yaml_data.encode("utf-8"))
+                    st.download_button(
+                        label="Download YAML File",
+                        data=full_yaml_data,
+                        file_name="exported_memory.yaml",
+                        mime="application/x-yaml",
+                        key="download_yaml",
                     )
             else:
                 st.error(
@@ -446,6 +435,8 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
             )
             if response is not None and response.status_code == 200:
                 st.success("DAF exported successfully")
+                # result = response.json()
+                # daf_result = result.get("reports", [{}])[0]
                 daf_result = get_reports_payload(response)
                 st.download_button(
                     label="Download DAF",
@@ -454,7 +445,20 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
                     mime="application/json",
                 )
                 st.json(daf_result)
+                # download_url = reports[0] if reports else "#"
 
+                # st.markdown(
+                #     f"""
+                #     <a href="{download_url}" target="_blank">
+                #         <button kind="secondary">
+                #             Download DAF
+                #         </button>
+                #     </a>
+                #     <br>
+                #     <br>
+                #     """,
+                #     unsafe_allow_html=True,
+                # )
             else:
                 st.error("Failed to export DAF.")
 
@@ -476,110 +480,101 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
     with st.expander("Test Interaction", expanded=False):
         selected_interaction: Dict[str, Any] = {}
         interactions: List[Dict[str, Any]] = []
-
+        
         # Configuration section
         col1, col2 = st.columns(2)
         with col1:
             session_id = st.text_input(
-                "Session ID (optional)",
-                value="",
+                "Session ID (optional)", 
+                value="", 
                 key=f"{model_key}_test_interaction_session_id",
-                help="Leave empty to start a new session",
+                help="Leave empty to start a new session"
             )
         with col2:
             max_interactions = st.number_input(
-                "Max Interactions",
+                "Max Interactions", 
                 min_value=1,
-                value=3,
+                value=3, 
                 key=f"{model_key}_test_interaction_max_interactions",
-                help="Maximum number of interactions to retrieve",
+                help="Maximum number of interactions to retrieve"
             )
+
 
         # Action button
         if st.button(
-            "Get Interactions",
+            "Get Interactions", 
             key=f"{model_key}_btn_test_interaction",
-            help="Fetch interaction history for this session",
+            help="Fetch interaction history for this session"
         ):
             with st.spinner("Fetching interactions..."):
                 try:
-                    result = call_api(
+                    result =  call_api(
                         endpoint="action/walker/agent_utils_action/test_interactions",
                         json_data={
                             "agent_id": agent_id,
                             "session_id": session_id,
-                            "max_interactions": max_interactions,
-                        },
+                            "max_interactions": max_interactions
+                        }
                     )
                     if result and result.status_code == 200:
+                        # json_result = result.json()
+                        # interactions = json_result.get("reports", [{}])[0]
                         interactions = get_reports_payload(result)
 
-                        st.session_state["last_interactions"] = interactions
+                        st.session_state['last_interactions'] = interactions
                 except Exception as e:
                     st.error(f"Failed to fetch interactions: {str(e)}")
                     interactions = []
 
         # Display results
-        interactions = st.session_state.get("last_interactions", [])
-
+        interactions = st.session_state.get('last_interactions', [])
+        
         if not interactions:
-            st.info(
-                "No interactions found. Configure and run a test interaction first."
-            )
+            st.info("No interactions found. Configure and run a test interaction first.")
         else:
             # Create a dropdown with all available utterances
             selected_interaction = st.selectbox(
                 "Select an utterance",
                 options=interactions,
-                format_func=lambda x: (
-                    x["utterance"][:50] + "..."
-                    if len(x["utterance"]) > 50
-                    else x["utterance"]
-                ),
+                format_func=lambda x: x["utterance"][:50] + "..." if len(x["utterance"]) > 50 else x["utterance"],
                 help="Select an interaction to inspect",
-                key=f"{model_key}_interaction_select",
+                key=f"{model_key}_interaction_select"
             )
-
+            
             if selected_interaction:
                 # Create a dropdown for ModelActionResults within the selected interaction
                 selected_result_index = st.selectbox(
                     "Select a Result",
-                    options=range(
-                        len(selected_interaction.get("ModelActionResult", []))
-                    ),
+                    options=range(len(selected_interaction.get("ModelActionResult", []))),
                     format_func=lambda i: f"{selected_interaction['ModelActionResult'][i].get('result', 'unknown')}",
                     help="Select a specific result to test",
-                    key=f"{model_key}_result_select",
+                    key=f"{model_key}_result_select"
                 )
-
+                
                 # Display the selected ModelActionResult
                 if selected_interaction["ModelActionResult"]:
-                    selected_result = selected_interaction["ModelActionResult"][
-                        selected_result_index
-                    ]
-
+                    selected_result = selected_interaction["ModelActionResult"][selected_result_index]
+    
         if selected_interaction and selected_interaction["ModelActionResult"]:
             st.write("---")
-            selected_result = selected_interaction["ModelActionResult"][
-                selected_result_index
-            ]
-
+            selected_result = selected_interaction["ModelActionResult"][selected_result_index]
+            
             temperature = st.slider(
                 "Temperature",
                 min_value=0.0,
                 max_value=1.0,
                 value=selected_result.get("temperature", 0.2),
                 step=0.1,
-                key=f"{model_key}_temperature_slider",
+                key=f"{model_key}_temperature_slider"
             )
-
+            
             col1, col2 = st.columns(2)
-
+            
             with col1:
                 model_name = st.text_input(
                     "Model Name",
                     value=selected_result.get("model_name", ""),
-                    key=f"{model_key}_model_name_input",
+                    key=f"{model_key}_model_name_input"
                 )
 
             with col2:
@@ -588,18 +583,21 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
                     min_value=0,
                     value=selected_result.get("max_tokens", 0),
                     step=1,
-                    key=f"{model_key}_max_tokens_input",
+                    key=f"{model_key}_max_tokens_input"
                 )
 
             # Use a regular text_area but with dynamic height calculation
             prompt = selected_result.get("prompt", "")
-            line_count = prompt.count("\n") + 2
+            line_count = prompt.count('\n') + 2
             height = min(max(100, line_count * 20), 600)  # Between 100 and 500 px
 
             edited_prompt = st.text_area(
-                "Prompt", value=prompt, height=height, key=f"{model_key}_prompt_editor"
+                "Prompt",
+                value=prompt,
+                height=height,
+                key=f"{model_key}_prompt_editor"
             )
-
+            
             if st.button("Test Prompt", key=f"{model_key}_save_prompt"):
                 llm_result = call_api(
                     endpoint="action/walker/agent_utils_action/test_llm_call",
@@ -608,11 +606,13 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
                         "llm_prompt_message": edited_prompt,
                         "model_name": model_name,
                         "model_temperature": temperature,
-                        "model_max_tokens": max_tokens,
-                    },
+                        "model_max_tokens": max_tokens
+                    }
                 )
 
                 if llm_result and llm_result.status_code == 200:
+                    # llm_result = llm_result.json()
+                    # llm_result = llm_result.get("reports", [{}])[0]
                     llm_result = get_reports_payload(llm_result)
 
                 result = llm_result.get("result", "No result found")
@@ -622,12 +622,10 @@ def render(router: StreamlitRouter, agent_id: str, action_id: str, info: dict) -
                     st.info("Agent Result:")
                     st.json(selected_result.get("result", {}))
                 else:
-                    st.warning(
-                        f"New Result: {llm_result.get("result", "No result found")}"
-                    )
-                    st.info(
-                        f"Agent Result: {selected_result.get('result', 'No result found')}"
-                    )
+                    st.warning(f"New Result: {llm_result.get("result", "No result found")}")
+                    st.info(f"Agent Result: {selected_result.get('result', 'No result found')}")
+
+        
 
 
 def classify_data(data: Union[Dict[str, Any], List[Dict[str, Any]]]) -> str:
