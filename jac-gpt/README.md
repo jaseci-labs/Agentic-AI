@@ -1,37 +1,47 @@
-# JAC GPT - AI Chatbot with JAC Backend
+# JAC GPT - Jaseci Assistant Chatbot
 
-This project consists of a JAC (Jaseci) backend server and a React frontend that work together to provide an AI-powered chatbot experience. The frontend communicates with the JAC server instead of directly calling OpenAI APIs.
+A sophisticated AI chatbot built with JAC (Jaseci programming language) that specializes in helping users with Jac programming language questions and Jaseci ecosystem guidance. The project features intelligent routing, persistent chat sessions, and comprehensive brand protection.
 
-## Architecture
+## 🚀 Architecture
 
-- **JAC Server**: Handles AI conversations, routing, and session management
-- **React Client**: Modern UI for chatting with the AI assistant
-- **No Direct OpenAI Calls**: All AI interactions go through the JAC backend
+- **JAC Server**: Advanced conversational AI with intelligent routing and session management
+- **React Client**: Modern, responsive UI built with shadcn/ui components
+- **MongoDB Integration**: Persistent chat history and session storage
+- **RAG Engine**: Document retrieval system for enhanced responses (Langchain + ChromaDB)
+- **Smart Routing**: Automatic classification of queries (QA, RAG, OFF_TOPIC)
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 jac-gpt/
 ├── server/
-│   ├── simple_server.jac    # Main JAC server file
-│   └── server.jac          # Original multimodal server (reference)
-└── client/                 # React frontend
+│   ├── server.jac           # Main JAC server with routing and chat logic
+│   ├── database.jac         # MongoDB integration for session persistence
+│   ├── rag_engine.jac       # RAG system for document retrieval
+│   ├── requirements.txt     # Python dependencies
+│   └── docs/               # Documentation files for RAG
+└── client/                 # React frontend with TypeScript
     ├── src/
     │   ├── services/
-    │   │   ├── jacServer.ts    # JAC server API client
-    │   │   └── openai.ts      # Legacy OpenAI service (not used)
-    │   └── components/
-    │       └── JacChatbot.tsx  # Main chat component
-    └── ...
+    │   │   └── jacServer.ts    # JAC server API client
+    │   ├── components/
+    │   │   ├── JacChatbot.tsx  # Main chat interface
+    │   │   ├── ChatMessage.tsx # Message display component
+    │   │   ├── ChatInput.tsx   # Message input component
+    │   │   └── Sidebar.tsx     # Chat session management
+    │   └── pages/
+    └── package.json
 ```
 
-## Setup Instructions
+## 🛠️ Setup Instructions
 
 ### Prerequisites
 
-- Python 3.8+ with JAC installed
-- Node.js 18+ and npm/yarn/bun
-- OpenAI API key (for the JAC server)
+- **Python 3.12+** with JAC installed
+- **Node.js 18+** and npm/yarn/bun
+- **MongoDB** (local or cloud instance)
+- **OpenAI API key** (for the JAC server)
+- **Serper API key** (optional, for web search functionality)
 
 ### 1. JAC Server Setup
 
@@ -40,20 +50,40 @@ jac-gpt/
    cd jac-gpt/server
    ```
 
-2. **Install JAC dependencies:**
+2. **Install dependencies:**
    ```bash
-   # Install jaclang and mtllm if not already installed
-   pip install jaclang mtllm
+   pip install -r requirements.txt
    ```
 
 3. **Set up environment variables:**
+   Create a `.env` file in the server directory:
    ```bash
-   export OPENAI_API_KEY="your-openai-api-key-here"
+   # OpenAI Configuration
+   OPENAI_API_KEY=your-openai-api-key-here
+   
+   # MongoDB Configuration
+   MONGODB_URI=mongodb://localhost:27017/
+   MONGODB_DATABASE=jac_gpt
+   
+   # Optional: Serper API for web search
+   SERPER_API_KEY=your-serper-api-key-here
    ```
 
-4. **Run the JAC server:**
+4. **Start MongoDB** (if using local instance):
    ```bash
-   jac serve simple_server.jac
+   # Ubuntu/Debian
+   sudo systemctl start mongod
+   
+   # macOS with Homebrew
+   brew services start mongodb-community
+   
+   # Docker
+   docker run -d -p 27017:27017 --name mongodb mongo:latest
+   ```
+
+5. **Run the JAC server:**
+   ```bash
+   jac serve server.jac
    ```
 
    The server will start on `http://localhost:8000` by default.
@@ -79,9 +109,12 @@ jac-gpt/
    cp .env.example .env
    ```
    
-   Edit `.env` and update the JAC server URL if needed:
+   Edit `.env` and update the configuration:
    ```env
+   # JAC Server Configuration
    VITE_JAC_SERVER_URL=http://localhost:8000
+   
+   # Authentication (uses defaults if not provided)
    VITE_JAC_USER_EMAIL=test@mail.com
    VITE_JAC_USER_PASSWORD=password
    ```
@@ -95,35 +128,43 @@ jac-gpt/
    bun dev
    ```
 
-   The client will start on `http://localhost:5173` by default.
+   The client will start on `http://localhost:8080` by default.
 
-## How It Works
+## 🧠 How It Works
 
-### JAC Server Features
+### Intelligent Message Routing
 
-1. **Smart Routing**: Messages are automatically classified as either:
-   - `QA`: General questions about Jac programming language
-   - `RAG`: Document-related queries (for future document support)
+The JAC server automatically classifies every incoming message into one of three categories:
 
-2. **Session Management**: Each chat session is tracked with a unique session ID
+1. **QA**: General questions about Jac programming language and Jaseci ecosystem
+2. **RAG**: Document-related queries requiring information retrieval
+3. **OFF_TOPIC**: Non-Jac related messages (handled with brand protection)
 
-3. **Authentication**: Simple email/password authentication with automatic user registration
+### Chat Types & Features
 
-### Frontend Integration
+#### QAChat Node
+- **Purpose**: Handles general Jac/Jaseci questions and greetings
+- **AI Method**: ReAct with up to 3 iterations for complex reasoning
+- **Brand Protection**: Strictly focuses on Jac/Jaseci domain
+- **Examples**: Syntax questions, best practices, code examples
 
-The React frontend interacts with the JAC server through several endpoints:
+#### RagChat Node  
+- **Purpose**: Document-based queries and file content analysis
+- **Integration**: Langchain + ChromaDB for vector search
+- **Document Support**: PDF files in the `docs/` directory
+- **AI Method**: ReAct with document context injection
 
-- `POST /walker/new_session` - Create a new chat session
-- `POST /walker/interact` - Send messages and get AI responses
-- `POST /walker/get_session` - Retrieve session history
+#### OffTopicChat Node
+- **Purpose**: Handles non-Jac related messages
+- **Brand Protection**: Detects negative sentiment about Jac/Jaseci
+- **Response Strategy**: Redirects to Jac-related topics or provides positive information
 
-### API Flow
+### Session Management
 
-1. **Session Creation**: When the app starts, a new session is created
-2. **Authentication**: The client automatically authenticates with the JAC server
-3. **Message Sending**: User messages are sent to `/walker/interact`
-4. **AI Processing**: The JAC server routes the message, processes it with AI, and returns a response
-5. **UI Update**: The React frontend displays the AI response
+- **Persistent Storage**: MongoDB integration for chat history
+- **Session Lifecycle**: Create, interact, retrieve, close operations
+- **Auto-Registration**: Automatic user creation for new sessions
+- **Statistics Tracking**: Message counts and session metadata
 
 ## Key Differences from Original
 
