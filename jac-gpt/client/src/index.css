@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Jac Language Chatbot Design System - Dark theme with orange/red accents */
+
+@layer base {
+  :root {
+    /* Core dark theme colors */
+    --background: 220 13% 6%;
+    --foreground: 220 13% 95%;
+
+    --card: 220 13% 8%;
+    --card-foreground: 220 13% 95%;
+
+    --popover: 220 13% 8%;
+    --popover-foreground: 220 13% 95%;
+
+    /* Jac orange/red brand colors */
+    --primary: 14 100% 60%;
+    --primary-foreground: 220 13% 95%;
+    --primary-glow: 14 100% 65%;
+
+    --secondary: 220 13% 12%;
+    --secondary-foreground: 220 13% 85%;
+
+    --muted: 220 13% 10%;
+    --muted-foreground: 220 13% 65%;
+
+    --accent: 220 13% 14%;
+    --accent-foreground: 220 13% 85%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 220 13% 95%;
+
+    --border: 220 13% 18%;
+    --input: 220 13% 12%;
+    --ring: 14 100% 60%;
+
+    --radius: 0.75rem;
+
+    /* Chat specific colors */
+    --chat-user-bg: 14 100% 60%;
+    --chat-assistant-bg: 220 13% 12%;
+    --chat-code-bg: 220 13% 4%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(14 100% 60%), hsl(14 100% 55%));
+    --gradient-subtle: linear-gradient(180deg, hsl(220 13% 8%), hsl(220 13% 6%));
+    
+    /* Shadows and effects */
+    --shadow-glow: 0 0 20px hsl(14 100% 60% / 0.3);
+    --shadow-card: 0 8px 32px hsl(220 13% 2% / 0.5);
+    
+    /* Animation variables */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Custom animations */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+}
