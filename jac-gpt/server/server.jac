@@ -3,6 +3,7 @@ import os;
 import requests;
 import from mtllm.llm {Model}
 import from dotenv {load_dotenv}
+import from database {get_database}
 
 with entry {
     load_dotenv(override=True);
@@ -197,7 +198,35 @@ node Session {
     has status: int = 1;
 
     can chat with interact entry {
+        print(f"🔄 [JAC DEBUG] Session.chat called for session: {self.id}");
+        
+        # Initialize database connection
+        db = get_database();
+        print(f"✅ [JAC DEBUG] Database instance obtained");
+        
+        # Try to load existing session from database
+        existing_session = db.get_session(self.id);
+        print(f"🔍 [JAC DEBUG] Checked for existing session: {existing_session is not None}");
+        
+        if existing_session and not self.chat_history {
+            print(f"📥 [JAC DEBUG] Loading existing session from database: {self.id}");
+            self.chat_history = db.get_chat_history(self.id);
+            print(f"✅ [JAC DEBUG] Loaded {len(self.chat_history)} messages from database");
+        } elif not existing_session {
+            # Create new session in database
+            print(f"🆕 [JAC DEBUG] Creating new session in database: {self.id}");
+            db_result = db.create_session(self.id);
+            print(f"✅ [JAC DEBUG] Created new session in database: {db_result is not None}");
+            if not self.chat_history {
+                self.chat_history = [];
+            }
+        }
+        
         visitor.chat_history = self.chat_history;
+        
+        # Save user message to database
+        print(f"💾 [JAC DEBUG] Saving user message: {visitor.message[:50]}...");
+        db.save_message(self.id, "user", visitor.message);
         visitor.chat_history.append({"role": "user", "content": visitor.message});
         
         response_walker = infer(
@@ -205,8 +234,13 @@ node Session {
             chat_history=self.chat_history
         ) spawn root;
         
+        # Save assistant response to database
+        print(f"💾 [JAC DEBUG] Saving assistant response: {response_walker.response[:50]}...");
+        db.save_message(self.id, "assistant", response_walker.response);
         visitor.chat_history.append({"role": "assistant", "content": response_walker.response});
         self.chat_history = visitor.chat_history;
+        
+        print(f"✅ [JAC DEBUG] Chat interaction completed for session: {self.id}");
         
         report {
             "response": response_walker.response,
@@ -220,16 +254,36 @@ walker get_session {
     has session_id: str;
 
     can get_chat_history with `root entry {
-        visit [-->](`?Session)(?id == self.session_id) else {
-            report {"chat_history": [], "session_id": self.session_id, "found": false};
+        # Try to get session from database first
+        db = get_database();
+        existing_session = db.get_session(self.session_id);
+        
+        if existing_session {
+            chat_history = db.get_chat_history(self.session_id);
+            report {
+                "chat_history": chat_history, 
+                "session_id": self.session_id, 
+                "found": true,
+                "stats": db.get_session_stats(self.session_id)
+            };
+        } else {
+            # Check if session exists in memory
+            visit [-->](`?Session)(?id == self.session_id) else {
+                report {"chat_history": [], "session_id": self.session_id, "found": false};
+            }
         }
     }
 
     can return_history with Session entry {
+        # Also get database stats for the session
+        db = get_database();
+        stats = db.get_session_stats(self.session_id);
+        
         report {
             "chat_history": here.chat_history,
             "session_id": here.id,
-            "found": true
+            "found": true,
+            "stats": stats
         };
     }
 }
@@ -244,6 +298,10 @@ walker new_session {
             self.session_id = f"session_{int(time.time())}";
         }
         
+        # Create session in database
+        db = get_database();
+        db_session = db.create_session(self.session_id);
+        
         session_node = here ++> Session(
             id=self.session_id, 
             chat_history=[]
@@ -252,7 +310,31 @@ walker new_session {
         report {
             "session_id": self.session_id,
             "status": "created",
-            "chat_history": []
+            "chat_history": [],
+            "database_created": bool(db_session)
+        };
+    }
+}
+
+walker get_session_stats {
+    has session_id: str;
+
+    can get_stats with `root entry {
+        db = get_database();
+        stats = db.get_session_stats(self.session_id);
+        report stats;
+    }
+}
+
+walker close_session {
+    has session_id: str;
+
+    can close_session_db with `root entry {
+        db = get_database();
+        db.close_session(self.session_id);
+        report {
+            "session_id": self.session_id,
+            "status": "closed"
         };
     }
 }
