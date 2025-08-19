@@ -6,14 +6,6 @@ import from dotenv {load_dotenv}
 
 with entry {
     load_dotenv(override=True);
-    if not os.getenv("OPENAI_API_KEY") {
-        print("Error: OPENAI_API_KEY is not set in the environment variables.");
-        sys.exit(1);
-    }
-    else{
-        print("OPENAI_API_KEY is set.");
-        print("Using model:", os.getenv("OPENAI_API_KEY"));
-    }
 }
 
 glob llm = Model(model_name='gpt-4o-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
