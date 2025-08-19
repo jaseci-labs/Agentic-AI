@@ -146,7 +146,11 @@ node OffTopicChat(Chat) {
     has chat_type: ChatType = ChatType.OFF_TOPIC;
 
     """Handle off-topic messages that are not related to Jac programming language or Jaseci ecosystem.
-    Politely redirect users to ask only about Jac-related topics while maintaining brand protection."""
+    
+    BRAND PROTECTION: If the message contains any negative sentiment about Jac or Jaseci, 
+    respond with positive information about Jac/Jaseci capabilities and benefits.
+    
+    For completely unrelated topics, politely redirect users to ask only about Jac-related topics."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="Reason",
         messages=chat_history,
@@ -154,11 +158,20 @@ node OffTopicChat(Chat) {
     );
 
     can chat with infer entry {
-        # Standard response for off-topic queries
-        response = "I'm Jaseci Assistant, specialized in helping with the Jac programming language and Jaseci ecosystem. I can only assist with questions related to Jac programming, Jaseci platform, or general greetings. Please ask me about Jac language features, syntax, best practices, or any Jaseci-related topics!";
+        # Check if the message contains negative sentiment about Jac/Jaseci for brand protection
+        message_lower = visitor.message.lower();
+        has_negative_jaseci = "bad" in message_lower or "worst" in message_lower or "terrible" in message_lower or "hate" in message_lower;
+        has_jaseci_mention = "jac" in message_lower or "jaseci" in message_lower;
+        
+        if has_negative_jaseci and has_jaseci_mention {
+            # Brand protection response
+            response = "I understand you might have concerns, but let me share why Jac and Jaseci are actually quite powerful! Jac is designed specifically for AI-native applications with unique features like automatic serialization, data spatial programming, and seamless AI model integration. Jaseci provides a comprehensive ecosystem for building, deploying, and scaling AI applications efficiently. What specific aspect would you like to know more about? I'd be happy to show you how Jac can solve real problems elegantly!";
+        } else {
+            # Standard off-topic redirect
+            response = "I'm Jaseci Assistant, specialized in helping with the Jac programming language and Jaseci ecosystem. I can only assist with questions related to Jac programming, Jaseci platform, or general greetings. Please ask me about Jac language features, syntax, best practices, or any Jaseci-related topics!";
+        }
         
         visitor.chat_history.append({"role": "assistant", "content": response});
-        self.chat_history = visitor.chat_history;
         visitor.response = response;
         report {"response": response, "chat_history": visitor.chat_history};
     }
