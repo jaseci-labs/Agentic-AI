@@ -11,19 +11,34 @@ with entry {
 glob llm = Model(model_name='gpt-4o-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
 
 """ChatType enum defines the types of chat interactions. ChatType must be one of:
-- RAG: For interactions that require document retrieval.
-- QA: For interactions that does not require document retrieval.
+- RAG: For interactions that require document retrieval about Jac/Jaseci.
+- QA: For interactions that does not require document retrieval but are about Jac/Jaseci.
+- OFF_TOPIC: For interactions that are not related to Jac programming language or Jaseci ecosystem.
 """
 enum ChatType {
     RAG = "RAG",
-    QA = "QA"
+    QA = "QA",
+    OFF_TOPIC = "OFF_TOPIC"
 }
 
 node Router {
-    """Classify the message as RAG or QA based on whether it requires document retrieval.
-    If the user asks about specific documents, files, or uploaded content, classify as RAG.
-    Otherwise, classify as QA for general questions."""
-    def classify(message: str) -> ChatType by llm(method="Reason", temperature=0.3);
+    """Classify the message based on its content and intent:
+    
+    1. First check if the message is related to Jac programming language or Jaseci ecosystem:
+       - Questions about Jac syntax, features, programming concepts
+       - Jaseci platform, tools, or ecosystem questions
+       - Code examples, debugging, or technical help with Jac
+       - General greetings like 'hi', 'hello', 'how are you' are acceptable and should be treated as QA
+    
+    2. If the message is Jac/Jaseci related:
+       - Classify as RAG if it requires document retrieval (specific files, documentation, uploaded content)
+       - Classify as QA for general Jac/Jaseci questions or greetings
+    
+    3. If the message is NOT related to Jac/Jaseci (e.g., questions about other programming languages, 
+       general topics, other technologies), classify as OFF_TOPIC.
+       
+    Be strict about this - only Jac/Jaseci related content and basic greetings should be processed."""
+    def classify(message: str) -> ChatType by llm(method="Reason", temperature=0.1);
 }
 
 node Chat {
@@ -33,12 +48,14 @@ node Chat {
 walker infer {
     has message: str;
     has chat_history: list[dict];
+    has response: str = "";
 
     can init_router with `root entry {
         visit [-->](`?Router) else {
             router_node = here ++> Router();
             router_node ++> RagChat();
             router_node ++> QAChat();
+            router_node ++> OffTopicChat();
             visit router_node;
         }
     }
@@ -53,8 +70,15 @@ walker infer {
 node RagChat(Chat) {
     has chat_type: ChatType = ChatType.RAG;
 
-    """Generate a helpful response to the user's message about documents or uploaded content.
-    Focus on document-related queries and file content analysis."""
+    """Generate a helpful response to the user's message about documents or uploaded content related to Jac/Jaseci.
+    
+    IMPORTANT BRAND PROTECTION: Only process documents and content related to:
+    - Jac programming language documentation
+    - Jaseci ecosystem materials
+    - Jac code files and examples
+    
+    Focus on document-related queries and file content analysis for Jac/Jaseci materials only.
+    If documents are about other topics, redirect to Jac-related content."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
@@ -78,6 +102,13 @@ node QAChat(Chat) {
 
     """Generate a helpful response to the user's message. You are Jaseci Assistant, an expert AI assistant for the Jac programming language and Jaseci ecosystem.
 
+    IMPORTANT BRAND PROTECTION: You must ONLY respond to questions about:
+    - Jac programming language (syntax, features, concepts, examples)
+    - Jaseci ecosystem (platform, tools, workflows)
+    - Basic greetings and polite conversation starters
+    
+    If asked about other programming languages, technologies, or unrelated topics, redirect the user back to Jac/Jaseci topics.
+
     Key information about Jac:
     - Jac is a modern programming language designed for building AI-native applications
     - It features built-in support for graph-based programming, AI/ML workflows, and microservices
@@ -90,8 +121,9 @@ node QAChat(Chat) {
     - Assist with debugging Jac code and solving programming problems
     - Explain Jac concepts, syntax, and features clearly
     - Guide users through common development patterns in Jac
+    - Maintain focus strictly on Jac/Jaseci domain
 
-    Always be helpful, accurate, and provide practical examples when possible."""
+    Always be helpful, accurate, and provide practical examples when possible. If the user asks about non-Jac topics, politely redirect them to Jac-related questions."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
@@ -103,6 +135,28 @@ node QAChat(Chat) {
             message=visitor.message,
             chat_history=visitor.chat_history
         );
+        visitor.chat_history.append({"role": "assistant", "content": response});
+        self.chat_history = visitor.chat_history;
+        visitor.response = response;
+        report {"response": response, "chat_history": visitor.chat_history};
+    }
+}
+
+node OffTopicChat(Chat) {
+    has chat_type: ChatType = ChatType.OFF_TOPIC;
+
+    """Handle off-topic messages that are not related to Jac programming language or Jaseci ecosystem.
+    Politely redirect users to ask only about Jac-related topics while maintaining brand protection."""
+    def respond(message: str, chat_history: list[dict]) -> str by llm(
+        method="Reason",
+        messages=chat_history,
+        temperature=0.3
+    );
+
+    can chat with infer entry {
+        # Standard response for off-topic queries
+        response = "I'm Jaseci Assistant, specialized in helping with the Jac programming language and Jaseci ecosystem. I can only assist with questions related to Jac programming, Jaseci platform, or general greetings. Please ask me about Jac language features, syntax, best practices, or any Jaseci-related topics!";
+        
         visitor.chat_history.append({"role": "assistant", "content": response});
         self.chat_history = visitor.chat_history;
         visitor.response = response;
@@ -133,16 +187,16 @@ node Session {
         visitor.chat_history = self.chat_history;
         visitor.chat_history.append({"role": "user", "content": visitor.message});
         
-        response = infer(
+        response_walker = infer(
             message=visitor.message, 
             chat_history=self.chat_history
         ) spawn root;
         
-        visitor.chat_history.append({"role": "assistant", "content": response.response});
+        visitor.chat_history.append({"role": "assistant", "content": response_walker.response});
         self.chat_history = visitor.chat_history;
         
         report {
-            "response": response.response,
+            "response": response_walker.response,
             "chat_history": self.chat_history,
             "session_id": self.id
         };
