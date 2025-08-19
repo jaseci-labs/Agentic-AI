@@ -195,25 +195,17 @@ node Session {
     has status: int = 1;
 
     can chat with interact entry {
-        print(f"🔄 [JAC DEBUG] Session.chat called for session: {self.id}");
         
         # Initialize database connection
         db = get_database();
-        print(f"✅ [JAC DEBUG] Database instance obtained");
         
         # Try to load existing session from database
         existing_session = db.get_session(self.id);
-        print(f"🔍 [JAC DEBUG] Checked for existing session: {existing_session is not None}");
         
         if existing_session and not self.chat_history {
-            print(f"📥 [JAC DEBUG] Loading existing session from database: {self.id}");
             self.chat_history = db.get_chat_history(self.id);
-            print(f"✅ [JAC DEBUG] Loaded {len(self.chat_history)} messages from database");
         } elif not existing_session {
-            # Create new session in database
-            print(f"🆕 [JAC DEBUG] Creating new session in database: {self.id}");
             db_result = db.create_session(self.id);
-            print(f"✅ [JAC DEBUG] Created new session in database: {db_result is not None}");
             if not self.chat_history {
                 self.chat_history = [];
             }
@@ -222,7 +214,6 @@ node Session {
         visitor.chat_history = self.chat_history;
         
         # Save user message to database
-        print(f"💾 [JAC DEBUG] Saving user message: {visitor.message[:50]}...");
         db.save_message(self.id, "user", visitor.message);
         visitor.chat_history.append({"role": "user", "content": visitor.message});
         
@@ -232,12 +223,9 @@ node Session {
         ) spawn root;
         
         # Save assistant response to database
-        print(f"💾 [JAC DEBUG] Saving assistant response: {response_walker.response[:50]}...");
         db.save_message(self.id, "assistant", response_walker.response);
         visitor.chat_history.append({"role": "assistant", "content": response_walker.response});
         self.chat_history = visitor.chat_history;
-        
-        print(f"✅ [JAC DEBUG] Chat interaction completed for session: {self.id}");
         
         report {
             "response": response_walker.response,
