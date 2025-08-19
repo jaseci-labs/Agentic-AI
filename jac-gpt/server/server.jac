@@ -9,7 +9,7 @@ with entry {
     load_dotenv(override=True);
 }
 
-glob llm = Model(model_name='gpt-4o-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
+glob llm = Model(model_name='gpt-4o-mini', verbose=False, api_key=os.getenv("OPENAI_API_KEY"));
 
 """ChatType enum defines the types of chat interactions. ChatType must be one of:
 - RAG: For interactions that require document retrieval about Jac/Jaseci.
