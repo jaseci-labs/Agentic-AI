@@ -12,18 +12,17 @@ with entry {
     logger = logging.getLogger(__name__);
     _database_instance = None;
 }
-"MongoDB connection and operations handler for chat sessions."
-class MongoDB {
-    "Initialize MongoDB connection."
-    def __init__(self: MongoDB) {
-        self.client = None;
-        self.db = None;
-        self.sessions_collection = None;
-        self.messages_collection = None;
+
+obj MongoDB {
+    has client: object = None;
+    has db: object = None;
+    has sessions: object = None;
+    has messages: object = None;
+
+    def postinit {
         self.connect();
     }
-    "Establish connection to MongoDB."
-    def connect(self: MongoDB) {
+    def connect {
         try {
             mongo_uri = os.getenv("MONGODB_URI");
             if not mongo_uri {
@@ -42,8 +41,7 @@ class MongoDB {
             raise ;
         }
     }
-    "Create a new session in the database."
-    def create_session(self: MongoDB, session_id: str) -> <>dict {
+    def create_session(session_id: str) -> <>dict {
         try {
             session_data =
 
@@ -61,8 +59,7 @@ class MongoDB {
             return None;
         }
     }
-    "Get session data from the database."
-    def get_session(self: MongoDB, session_id: str) -> <>dict {
+    def get_session(session_id: str) -> <>dict {
         try {
             session = self.sessions.find_one({"_id" : session_id });
             if session {
@@ -76,8 +73,7 @@ class MongoDB {
             return None;
         }
     }
-    "Save a message to the database."
-    def save_message(self: MongoDB, session_id: str, role: str, content: str) -> bool {
+    def save_message(session_id: str, role: str, content: str) -> bool {
         try {
             message_data =
 
@@ -99,8 +95,7 @@ class MongoDB {
             return False;
         }
     }
-    "Retrieve chat history for a session."
-    def get_chat_history(self: MongoDB, session_id: str, limit: int = 50) -> List[Dict] {
+    def get_chat_history(session_id: str, limit: int = 50) -> List[Dict] {
         try {
             messages =
                 <>list(
@@ -125,8 +120,7 @@ class MongoDB {
             return [];
         }
     }
-    "Get statistics for a session."
-    def get_session_stats(self: MongoDB, session_id: str) -> Dict {
+    def get_session_stats(session_id: str) -> Dict {
         try {
             session = self.get_session(session_id);
             if not session {
@@ -151,8 +145,7 @@ class MongoDB {
             return {};
         }
     }
-    "Mark a session as closed."
-    def close_session(self: MongoDB, session_id: str) {
+    def close_session(session_id: str) {
         try {
             self.sessions.update_one(
                 {"_id" : session_id },
@@ -165,19 +158,18 @@ class MongoDB {
             logger.error(f"Error closing session { session_id }: { e }");
         }
     }
-    "Close the MongoDB connection."
-    def close_connection(self: MongoDB) {
+    def close_connection {
         if self.client {
             self.client.close();
             logger.info("MongoDB connection closed");
         }
     }
 }
-with entry {
-    _db_instance = None;
-}
-'"""Get database instance."""'
-def get_database()  -> MongoDB {
+
+
+
+
+def get_database() -> MongoDB {
     global _database_instance;
     if (_database_instance is None) {
         _database_instance = MongoDB();
@@ -186,7 +178,6 @@ def get_database()  -> MongoDB {
     }
     return _database_instance;
 }
-'"""Close the global database connection."""'
 def close_database() {
     global _db_instance;
     if _db_instance {
