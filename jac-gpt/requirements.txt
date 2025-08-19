@@ -1,3 +1,0 @@
-jaclang
-jac-cloud
-python-dotenv
