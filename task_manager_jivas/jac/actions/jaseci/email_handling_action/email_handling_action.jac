@@ -6,13 +6,13 @@ import logging;
 import traceback;
 import from typing { Union }
 import from logging { Logger }
-import from jivas.agent.action.interact_action { InteractAction }
+import from jivas.agent.action.action { Action }
 import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
 import from jivas.agent.memory.interaction_response { TextInteractionMessage }
 import from jivas.agent.action.model_action { ModelAction }
 import from email.mime.text { MIMEText }
 
-node EmailHandleActionInteractAction(InteractAction) {
+node EmailHandlingction(Action) {
 
     static has logger:Logger = logging.getLogger(__name__);
     has sender_email: str = os.getenv("SENDER_EMAIL");
@@ -37,14 +37,6 @@ node EmailHandleActionInteractAction(InteractAction) {
         If the user does not provide enough information, keep the missing parts as empty strings.
         return the JSON object only, no explanations or paragraphs.
     """;
-        
-
-    def touch(visitor: agent_graph_walker) -> bool {
-        if visitor.utterance {
-            return True;
-        }
-        return False;
-    }
 
     def execute(visitor: agent_graph_walker) -> None {
         model_action = self.get_agent().get_actions().get(action_label=self.model_action);
