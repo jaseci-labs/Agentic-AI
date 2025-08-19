@@ -31,6 +31,10 @@ obj CommentSummaryPOVs {
     has povs: List[CommentPOVs];
 }
 
+obj IDResponse {
+    has ids: List[int];
+}
+
 sem InitResponse = "Memory details inferred from the image, city, date, and people.";
 sem InitResponse.follow_up_questions = "Ask one follow-up question to continue the conversation.";
 sem InitResponse.summary = "A concise summary of the memory.";
@@ -56,6 +60,9 @@ sem CommentPOVs.pov = "The point of view expressed in the comment.";
 sem CommentSummaryPOVs = "A summary of comments and their points of view.";
 sem CommentSummaryPOVs.comment_summary = "A summary of the comments(extention of the memory summary without memory details).";
 sem CommentSummaryPOVs.povs = "List of valuable points of view expressed by each user.";
+
+sem IDResponse = "A response containing a list of IDs.";
+sem IDResponse.ids = "List of IDs matching the query.";
 
 """ Extract memory details from the image, city, date and people."""
 def extract_memory_details(
@@ -84,3 +91,9 @@ def generate_comment_summary_and_povs(
     memory_summary: str,
     comments: Dict[str, Any]
 ) -> CommentSummaryPOVs by llm();
+
+""" Search for memories matching the query."""
+def search_memories_from_query(
+    memories: List[Dict[str, str]], 
+    query: str
+) -> IDResponse by llm();
