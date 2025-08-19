@@ -118,8 +118,10 @@ walker export_agent(agent_graph_walker) {
             data = json.loads(json.dumps(data));
             self.response = yaml.dump(data, Dumper=LongStringDumper, sort_keys=False);
         }
-
+        
         if self.reporting {
+            self.logger.warning(self.response);
+            self.logger.warning("self.response");
             report self.response;
         }
     }
