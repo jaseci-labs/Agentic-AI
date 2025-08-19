@@ -1,3 +1,7 @@
+// DEPRECATED: This OpenAI service is no longer used in the new architecture
+// The application now uses the JAC server backend instead of direct OpenAI calls
+// See src/services/jacServer.ts for the new implementation
+
 import OpenAI from 'openai';
 
 // Initialize OpenAI client

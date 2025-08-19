@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import MobileMenuButton from './MobileMenuButton';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { openaiService, ChatMessage as OpenAIChatMessage } from '@/services/openai';
+import { jacServerService, ChatMessage as JacChatMessage } from '@/services/jacServer';
 // Logo path updated to use public folder
 const jacLogo = "/logo.png";
 
@@ -26,24 +26,67 @@ const JacChatbot = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
 
-  const handleNewChat = () => {
-    setMessages([
-      {
-        id: '1',
-        content: 'Hello! I am your Jaseci Assistant. I can help you with Jac programming language questions. What would you like to know about Jac?',
-        isUser: false,
-        timestamp: new Date(),
-      },
-    ]);
-    setIsLoading(false);
-    // Close sidebar on mobile after starting new chat
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
+  // Initialize session on component mount
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        const newSessionId = jacServerService.generateSessionId();
+        await jacServerService.createSession(newSessionId);
+        setSessionId(newSessionId);
+        console.log('Session initialized:', newSessionId);
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+        // Fallback to a simple session ID if server is not available
+        setSessionId(jacServerService.generateSessionId());
+      }
+    };
+
+    initializeSession();
+  }, []);
+
+  const handleNewChat = async () => {
+    try {
+      // Create a new session
+      const newSessionId = jacServerService.generateSessionId();
+      await jacServerService.createSession(newSessionId);
+      setSessionId(newSessionId);
+      
+      setMessages([
+        {
+          id: '1',
+          content: 'Hello! I am your Jaseci Assistant. I can help you with Jac programming language questions. What would you like to know about Jac?',
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
+      setIsLoading(false);
+      
+      // Close sidebar on mobile after starting new chat
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to create new session:', error);
+      // Fallback to resetting messages without server interaction
+      setMessages([
+        {
+          id: '1',
+          content: 'Hello! I am your Jaseci Assistant. I can help you with Jac programming language questions. What would you like to know about Jac?',
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
     }
   };
 
   const handleSendMessage = async (content: string) => {
+    if (!sessionId) {
+      console.error('No session ID available');
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -55,26 +98,12 @@ const JacChatbot = () => {
     setIsLoading(true);
 
     try {
-      // Prepare conversation history for OpenAI
-      const conversationHistory: OpenAIChatMessage[] = messages
-        .filter(msg => !msg.content.includes('Hello! I am your Jaseci Assistant')) // Skip initial greeting
-        .map(msg => ({
-          role: msg.isUser ? 'user' : 'assistant',
-          content: msg.content
-        }));
-
-      // Add the current user message
-      conversationHistory.push({
-        role: 'user',
-        content: content
-      });
-
-      // Get response from OpenAI
-      const aiResponseContent = await openaiService.generateResponse(conversationHistory);
+      // Send message to JAC server
+      const jacResponse = await jacServerService.sendMessage(content, sessionId);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: aiResponseContent,
+        content: jacResponse.response,
         isUser: false,
         timestamp: new Date(),
       };
@@ -85,7 +114,7 @@ const JacChatbot = () => {
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'I apologize, but I encountered an error while processing your request. Please try again.',
+        content: 'I apologize, but I encountered an error while processing your request. Please check if the JAC server is running and try again.',
         isUser: false,
         timestamp: new Date(),
       };
