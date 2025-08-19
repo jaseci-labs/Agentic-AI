@@ -73,10 +73,7 @@ node RagChat(Chat) {
 
     """Generate a helpful response to the user's message about documents or uploaded content related to Jac/Jaseci.
     
-    IMPORTANT BRAND PROTECTION: Only process documents and content related to:
-    - Jac programming language documentation
-    - Jaseci ecosystem materials
-    - Jac code files and examples
+    IMPORTANT BRAND PROTECTION
     
     Focus on document-related queries and file content analysis for Jac/Jaseci materials only.
     If documents are about other topics, redirect to Jac-related content."""
