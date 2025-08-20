@@ -1,3 +1,5 @@
 .env
 server/mydatabase/
 __pycache__/
+*.bin
+*.sqlite3

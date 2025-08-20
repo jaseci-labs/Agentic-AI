@@ -1,6 +1,7 @@
 import os;
 import requests;
-import from langchain_community.document_loaders {PyPDFDirectoryLoader, PyPDFLoader}
+import from langchain_community.document_loaders {PyPDFDirectoryLoader, PyPDFLoader, DirectoryLoader}
+import from langchain_community.document_loaders.text {TextLoader}
 import from langchain_text_splitters {RecursiveCharacterTextSplitter}
 import from langchain.schema.document {Document}
 import from langchain_openai {OpenAIEmbeddings}
@@ -9,7 +10,7 @@ import from langchain_chroma {Chroma}
 glob SERPER_API_KEY: str = os.getenv('SERPER_API_KEY', '');
 
 obj RagEngine {
-    has file_path: str = "docs";
+    has file_path: str = "jac-syntax-cheatsheets";
     has chroma_path: str = "chroma";
 
     def postinit {
@@ -22,12 +23,45 @@ obj RagEngine {
     }
 
     def load_documents {
-        document_loader = PyPDFDirectoryLoader(self.file_path);
-        return document_loader.load();
+        documents = [];
+        
+        # Load PDF files
+        try {
+            pdf_loader = PyPDFDirectoryLoader(self.file_path);
+            pdf_docs = pdf_loader.load();
+            documents.extend(pdf_docs);
+            print(f"Loaded {len(pdf_docs)} PDF documents");
+        } except Exception as e {
+            print(f"No PDF files found or error loading PDFs: {e}");
+        }
+        
+        # Load Markdown files
+        try {
+            md_loader = DirectoryLoader(
+                self.file_path,
+                glob="**/*.md",
+                loader_cls=TextLoader,
+                loader_kwargs={"encoding": "utf-8"}
+            );
+            md_docs = md_loader.load();
+            documents.extend(md_docs);
+            print(f"Loaded {len(md_docs)} Markdown documents");
+        } except Exception as e {
+            print(f"No Markdown files found or error loading Markdown: {e}");
+        }
+        
+        print(f"Total documents loaded: {len(documents)}");
+        return documents;
     }
 
     def load_document(file_path: str) {
-        loader = PyPDFLoader(file_path);
+        if file_path.endswith('.pdf') {
+            loader = PyPDFLoader(file_path);
+        } elif file_path.endswith('.md') {
+            loader = TextLoader(file_path, encoding="utf-8");
+        } else {
+            raise ValueError(f"Unsupported file type: {file_path}");
+        }
         return loader.load();
     }
 
@@ -57,7 +91,13 @@ obj RagEngine {
         for chunk in chunks {
             source = chunk.metadata.get('source');
             page = chunk.metadata.get('page');
-            current_page_id = f'{source}:{page}';
+            
+            # Handle markdown files (no page numbers)
+            if page is None {
+                current_page_id = f'{source}:0';
+            } else {
+                current_page_id = f'{source}:{page}';
+            }
 
             if current_page_id == last_page_id {
                 current_chunk_index +=1;
@@ -113,7 +153,14 @@ obj RagEngine {
             page = doc.metadata.get('page');
             source = doc.metadata.get('source');
             chunk_txt = doc.page_content[:400];
-            summary += f"{source} page {page}: {chunk_txt}\n";
+            
+            # Handle display for different file types
+            if page is not None {
+                summary += f"{source} page {page}: {chunk_txt}\n";
+            } else {
+                # For markdown files without page numbers
+                summary += f"{source}: {chunk_txt}\n";
+            }
         }
         return summary;
     }
