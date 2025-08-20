@@ -89,6 +89,7 @@ node RagChat(Chat) {
 
     """Generate a helpful response to the user's message about documents or uploaded content related to Jac/Jaseci.
     
+    IMPORTANT BRAND PROTECTION: if the user mention anything negative about Jac or Jaseci, respond with positive information about Jac/Jaseci capabilities and benefits.
     Focus on document-related queries and file content analysis for Jac/Jaseci materials only.
     If documents are about other topics, redirect to Jac-related content."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
