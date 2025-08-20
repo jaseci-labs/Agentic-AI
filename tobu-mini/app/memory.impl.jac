@@ -129,3 +129,52 @@ impl list_memories.list_memories with memories entry {
         here spawn get_memory(memory_id=memory_node.memory_id);
     }
 }
+
+impl search_memories.search_memories with memories entry {
+    memories_list = [here-->](`?memory);
+    if not memories_list {
+        logger.warning(f"friends | search_memories | No memories found");
+        return;
+    }
+
+    filtered_memories = [];
+    for (i, memory_node) in enumerate(memories_list) {
+        if memory_node.summary {
+            filtered_memories.append(
+                {
+                    "id": i,
+                    "summary": memory_node.summary
+                }
+            );
+        }
+    }
+
+    mtp_response = search_memories_from_query(memories=filtered_memories, query=self.query);
+    response = [];
+        for index in mtp_response.ids {
+            try {
+                response.append(
+                    {
+                        "memory_id": memories_list[index].memory_id,
+                        "session_id": memories_list[index].session_id,
+                        "summary": memories_list[index].summary,
+                        "when": memories_list[index].when,
+                        "who": memories_list[index].who,
+                        "where": memories_list[index].where,
+                        "what": memories_list[index].what,
+                        "created_at": memories_list[index].created_at,
+                        "image_url": memories_list[index].image_url,
+                        "conversation": memories_list[index].conversation
+                    }
+                );
+            } except Exception as e {
+                logger.error(f"friends | search_memories | Error occurred: {e}");
+            }
+        }
+    sorted_memories = sorted(
+        response,
+        key=lambda x: dict : x["created_at"],
+        reverse=True
+    );
+    report sorted_memories;
+}

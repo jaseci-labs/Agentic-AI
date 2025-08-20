@@ -3,7 +3,7 @@ import from jac_cloud.jaseci.utils.logger { logger }
 import from nodes_and_edges { memories, memory, comment, profile, shared_memory }
 import from jaseci_sdk { get_node_owner, get_node_by_root_id }
 import from profile { visit_profile }
-import from mtp { generate_comment_summary_and_povs }
+import from mtp { generate_comment_summary_and_povs, search_memories_from_query }
 
 
 walker visit_memories {
@@ -44,4 +44,14 @@ walker list_memories(visit_memories) {
     }
 
     can list_memories with memories entry;
+}
+
+walker search_memories(visit_memories) {
+    has query: str;
+
+    class __specs__ {
+        has tags: list = ["memory"];
+    }
+
+    can search_memories with memories entry;
 }
