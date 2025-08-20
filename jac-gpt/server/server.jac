@@ -4,12 +4,14 @@ import requests;
 import from mtllm.llm {Model}
 import from dotenv {load_dotenv}
 import from database {get_database}
+import from rag_engine {RagEngine}
 
 with entry {
     load_dotenv(override=True);
 }
 
-glob llm = Model(model_name='gpt-4o-mini', verbose=False, api_key=os.getenv("OPENAI_API_KEY"));
+glob llm = Model(model_name='gpt-4o-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
+glob rag_engine: RagEngine = RagEngine();
 
 """ChatType enum defines the types of chat interactions. ChatType must be one of:
 - RAG: For interactions that require document retrieval about Jac/Jaseci.
@@ -68,19 +70,32 @@ walker infer {
     }
 }
 
+"""Search for relevant documents using the RAG engine.
+    
+    Args:
+        query: The search query string
+        chunck_nos: Number of document chunks to retrieve (default: 5)
+        
+    Returns:
+        String containing relevant document content
+"""
+def search_docs(query: str, chunck_nos: int = 5) -> str {
+    results = rag_engine.search(query=query, chunck_nos=chunck_nos);
+    return results;
+}
+
 node RagChat(Chat) {
     has chat_type: ChatType = ChatType.RAG;
 
     """Generate a helpful response to the user's message about documents or uploaded content related to Jac/Jaseci.
-    
-    IMPORTANT BRAND PROTECTION
     
     Focus on document-related queries and file content analysis for Jac/Jaseci materials only.
     If documents are about other topics, redirect to Jac-related content."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        max_react_iterations=3
+        max_react_iterations=3,
+        tools = [search_docs]
     );
 
     can chat with infer entry {

@@ -16,14 +16,7 @@ interface Message {
 }
 
 const JacChatbot = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: 'Hello! I am your Jaseci Assistant. I can help you with Jac programming language questions. What would you like to know about Jac?',
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
@@ -53,14 +46,7 @@ const JacChatbot = () => {
       await jacServerService.createSession(newSessionId);
       setSessionId(newSessionId);
       
-      setMessages([
-        {
-          id: '1',
-          content: 'Hello! I am your Jaseci Assistant. I can help you with Jac programming language questions. What would you like to know about Jac?',
-          isUser: false,
-          timestamp: new Date(),
-        },
-      ]);
+      setMessages([]);
       setIsLoading(false);
       
       // Close sidebar on mobile after starting new chat
@@ -70,14 +56,7 @@ const JacChatbot = () => {
     } catch (error) {
       console.error('Failed to create new session:', error);
       // Fallback to resetting messages without server interaction
-      setMessages([
-        {
-          id: '1',
-          content: 'Hello! I am your Jaseci Assistant. I can help you with Jac programming language questions. What would you like to know about Jac?',
-          isUser: false,
-          timestamp: new Date(),
-        },
-      ]);
+      setMessages([]);
     }
   };
 
@@ -142,6 +121,18 @@ const JacChatbot = () => {
         {/* Chat Messages */}
         <ScrollArea className="flex-1 p-4 lg:p-6">
           <div className="max-w-4xl mx-auto space-y-1 lg:pt-0 pt-16">
+            {messages.length === 0 && !isLoading && (
+              <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
+                    <img src={jacLogo} alt="Jac Logo" className="w-10 h-10 object-contain opacity-60" />
+                  </div>
+                  <p className="text-xl text-gray-300 font-medium">Ask me anything about Jac</p>
+                  <p className="text-sm text-gray-500 mt-2">Start a conversation about Jac programming language</p>
+                </div>
+              </div>
+            )}
+            
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
