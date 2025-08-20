@@ -12,7 +12,7 @@ import from jivas.agent.memory.interaction_response { TextInteractionMessage }
 import from jivas.agent.action.model_action { ModelAction }
 import from email.mime.text { MIMEText }
 
-node EmailHandlingction(Action) {
+node EmailHandlingAction(Action) {
 
     static has logger:Logger = logging.getLogger(__name__);
     has sender_email: str = os.getenv("SENDER_EMAIL");

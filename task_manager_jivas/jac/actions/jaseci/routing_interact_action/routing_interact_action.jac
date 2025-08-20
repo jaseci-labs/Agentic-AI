@@ -13,9 +13,9 @@ node RoutingInteractAction(InteractAction) {
     has model_max_tokens:int = 2048;
     has prompt_routing: str = """
         Analyze the user's message and determine the appropriate action to take.
-        Return only the action name. All action names are as follows.
+        Return only the action name. The list of action names are as follows.
     """;
-    has all_actions: list[str] = ["TasksHandlingAction", "EmailHandlingction"];
+    has all_actions: list[str] = ["TasksHandlingAction", "EmailHandlingAction"];
 
     # set up logger
     static has logger:Logger = logging.getLogger(__name__);
