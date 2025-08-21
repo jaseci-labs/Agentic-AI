@@ -1,0 +1,15 @@
+package:
+  name: "jaseci/routing_interact_action"
+  author: "jaseci"
+  archetype: "RoutingInteractAction"
+  version: "0.1.0"
+  meta:
+    title: "Routing Interact Action"
+    description: "No description provided."
+    group: "contrib"
+    type: "interact_action"
+    is_custom: "false"
+  config:
+    singleton: "true"
+  dependencies:
+    jivas: "~2.1.2"

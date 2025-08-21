@@ -44,7 +44,7 @@ st.markdown("""
 # --- CONSTANTS ---
 BASE_URL = "http://localhost:8000"
 LOGIN_ENDPOINT = f"{BASE_URL}/user/login"
-CHAT_ENDPOINT = f"{BASE_URL}/walker/interact/interact"
+CHAT_ENDPOINT = f"{BASE_URL}/interact"
 
 # --- SESSION STATE INIT ---
 if 'token' not in st.session_state:

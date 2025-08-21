@@ -1,0 +1,15 @@
+package:
+  name: "jaseci/email_handling_action"
+  author: "jaseci"
+  archetype: "EmailHandlingAction"
+  version: "0.1.0"
+  meta:
+    title: "Email Handle Action"
+    description: "An action for handling email-related intents in agentic conversations, such as sending, retrieving, and managing emails through natural language interaction."
+    group: "contrib"
+    type: "action"
+    is_custom: "true"
+  config:
+    singleton: "true"
+  dependencies:
+    jivas: "~2.1.2"

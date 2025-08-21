@@ -28,11 +28,15 @@ actions:
       version: "0.1.0"
       enabled: true
       api_key: ""
-  - action: jaseci/create_task_action_interact_action
+  - action: jaseci/routing_interact_action
     context:
       version: "0.1.0"
       enabled: true
-  - action: jaseci/email_handle_action_interact_action
+  - action: jaseci/tasks_handling_action
+    context:
+      version: "0.1.0"
+      enabled: true
+  - action: jaseci/email_handling_action
     context:
       version: "0.1.0"
       enabled: true

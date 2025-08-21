@@ -18,7 +18,7 @@ with entry {
     agent = agents[0] ++> Agent();
     memory = agent[0] ++> Memory();
     actions = agent[0] ++> Actions();
-    action = actions[0] ++> Action(label='CreateTaskActionInteractAction');
+    action = actions[0] ++> Action(label='TasksHandlingAction');
     action[0].agent_id = agent[0].id;
 }
 

@@ -1,11 +1,11 @@
-import from jivas.agent.action.interact_action { InteractAction }
+import from jivas.agent.action.action { Action }
 import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
-import from actions.jaseci.create_task_action_interact_action.task { Task }
+import from actions.jaseci.tasks_handling_action.task { Task }
 import from jivas.agent.memory.interaction_response { TextInteractionMessage, SilentInteractionMessage }
 import json;
 import re;
 
-node CreateTaskActionInteractAction(InteractAction) {
+node TasksHandlingAction(Action) {
     has model_action: str = "LangChainModelAction";
     has model_name:str = "gpt-4o";
     has model_temperature:float = 0.4;
@@ -36,13 +36,6 @@ node CreateTaskActionInteractAction(InteractAction) {
         The following is a list of scheduled tasks. Create a brief human-friendly summary in natural language.
         Format it in a helpful way for the user. Use bullet points or paragraph form.
     """;
-
-    def touch(visitor:agent_graph_walker) -> bool {
-        if visitor.utterance {
-            return True;
-        }
-        return False;
-    }
 
     def execute(visitor:agent_graph_walker) -> None {
         utterance = visitor.utterance;

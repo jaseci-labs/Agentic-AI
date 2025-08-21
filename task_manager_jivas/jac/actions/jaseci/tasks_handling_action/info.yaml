@@ -1,0 +1,18 @@
+package:
+  name: "jaseci/tasks_handling_action"
+  author: "jaseci"
+  archetype: "TasksHandlingAction"
+  version: "0.1.0"
+  meta:
+    title: "Tasks Handling Action"
+    description: "An action that enables the agent to create and manage user tasks from natural language input, supporting task scheduling, descriptions, and priority settings in agentic workflows."
+    group: "contrib"
+    type: "action"
+    is_custom: "true"
+  config:
+    singleton: "true"
+    order:
+      weight: 0
+      before: jivas/persona_interact_action
+  dependencies:
+    jivas: "~2.1.0"
