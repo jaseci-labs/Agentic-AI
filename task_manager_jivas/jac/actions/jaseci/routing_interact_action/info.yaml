@@ -8,6 +8,7 @@ package:
     description: "No description provided."
     group: "contrib"
     type: "interact_action"
+    is_custom: "false"
   config:
     singleton: "true"
   dependencies:

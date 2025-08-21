@@ -8,6 +8,7 @@ package:
     description: "An action for handling email-related intents in agentic conversations, such as sending, retrieving, and managing emails through natural language interaction."
     group: "contrib"
     type: "action"
+    is_custom: "true"
   config:
     singleton: "true"
   dependencies:

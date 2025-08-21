@@ -8,6 +8,7 @@ package:
     description: "An action that enables the agent to create and manage user tasks from natural language input, supporting task scheduling, descriptions, and priority settings in agentic workflows."
     group: "contrib"
     type: "action"
+    is_custom: "true"
   config:
     singleton: "true"
     order:
