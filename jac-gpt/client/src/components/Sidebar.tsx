@@ -1,6 +1,16 @@
 import { useState } from 'react';
-import { Menu, X, Plus, MessageSquare, Settings, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, X, Plus, MessageSquare, Settings, HelpCircle, ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 // Logo path updated to use public folder
 const jacLogo = "/logo.png";
 
@@ -12,9 +22,24 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const { user, logout } = useAuth();
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  const getUserInitials = (name?: string, email?: string) => {
+    if (name) {
+      return name.split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (email) {
+      return email[0].toUpperCase();
+    }
+    return 'U';
   };
 
   return (
@@ -141,15 +166,97 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
 
           {/* Footer */}
           <div className="p-4 border-t border-gray-700 space-y-2">
-            <Button 
-              variant="ghost" 
-              className={`w-full justify-start gap-3 text-gray-400 hover:text-white hover:bg-gray-800 ${!isExpanded ? 'px-2' : ''}`}
-              size="sm"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4 shrink-0" />
-              {isExpanded && "Settings"}
-            </Button>
+            {/* User Profile */}
+            {isExpanded && user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start gap-3 text-gray-300 hover:text-white hover:bg-gray-800 p-3"
+                  >
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src="" />
+                      <AvatarFallback className="text-xs bg-orange-500 text-white">
+                        {getUserInitials(user.name, user.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start flex-1 min-w-0">
+                      <span className="text-sm font-medium truncate">
+                        {user.name || user.email}
+                      </span>
+                      {user.name && (
+                        <span className="text-xs text-gray-400 truncate">
+                          {user.email}
+                        </span>
+                      )}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="start" side="top">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
+            {!isExpanded && user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full px-2 py-2 text-gray-300 hover:text-white hover:bg-gray-800"
+                    title={user.name || user.email}
+                  >
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src="" />
+                      <AvatarFallback className="text-xs bg-orange-500 text-white">
+                        {getUserInitials(user.name, user.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="start" side="right">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span>{user.name || user.email}</span>
+                      {user.name && (
+                        <span className="text-xs text-gray-400 font-normal">
+                          {user.email}
+                        </span>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             <Button 
               variant="ghost" 
               className={`w-full justify-start gap-3 text-gray-400 hover:text-white hover:bg-gray-800 ${!isExpanded ? 'px-2' : ''}`}

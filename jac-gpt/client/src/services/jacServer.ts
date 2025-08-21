@@ -19,7 +19,6 @@ export interface SessionResponse {
 
 class JacServerService {
   private baseUrl: string;
-  private token: string | null = null;
   private defaultEmail: string;
   private defaultPassword: string;
 
@@ -29,7 +28,19 @@ class JacServerService {
     this.defaultPassword = import.meta.env.VITE_JAC_USER_PASSWORD || 'password';
   }
 
-  // Authenticate with the JAC server
+  // Get authentication token from localStorage or authenticate
+  private async getAuthToken(): Promise<string> {
+    // First try to get token from localStorage (from auth context)
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      return token;
+    }
+
+    // Fallback to default authentication for backwards compatibility
+    return await this.authenticate();
+  }
+
+  // Authenticate with the JAC server (fallback method)
   async authenticate(email?: string, password?: string): Promise<string> {
     const authEmail = email || this.defaultEmail;
     const authPassword = password || this.defaultPassword;
@@ -69,8 +80,7 @@ class JacServerService {
       }
 
       const data = await response.json();
-      this.token = data.token;
-      return this.token;
+      return data.token;
     } catch (error) {
       console.error('Authentication error:', error);
       throw error;
@@ -78,22 +88,20 @@ class JacServerService {
   }
 
   // Ensure authentication before making requests
-  private async ensureAuthenticated(): Promise<void> {
-    if (!this.token) {
-      await this.authenticate();
-    }
+  private async ensureAuthenticated(): Promise<string> {
+    return await this.getAuthToken();
   }
 
   // Create a new session
   async createSession(sessionId?: string): Promise<SessionResponse> {
-    await this.ensureAuthenticated();
+    const token = await this.ensureAuthenticated();
 
     try {
       const response = await fetch(`${this.baseUrl}/walker/new_session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           session_id: sessionId || '',
@@ -114,14 +122,14 @@ class JacServerService {
 
   // Get existing session
   async getSession(sessionId: string): Promise<SessionResponse> {
-    await this.ensureAuthenticated();
+    const token = await this.ensureAuthenticated();
 
     try {
       const response = await fetch(`${this.baseUrl}/walker/get_session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           session_id: sessionId,
@@ -142,14 +150,14 @@ class JacServerService {
 
   // Send a message and get response
   async sendMessage(message: string, sessionId: string): Promise<JacResponse> {
-    await this.ensureAuthenticated();
+    const token = await this.ensureAuthenticated();
 
     try {
       const response = await fetch(`${this.baseUrl}/walker/interact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           message,
