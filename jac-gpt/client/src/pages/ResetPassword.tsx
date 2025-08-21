@@ -78,14 +78,14 @@ const ResetPassword = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+        <Card className="w-full max-w-md bg-gray-800 border-gray-700">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
               <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
             </div>
-            <CardTitle className="text-2xl text-center">Password reset successful</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl text-center text-white">Password reset successful</CardTitle>
+            <CardDescription className="text-center text-gray-400">
               Your password has been successfully reset
             </CardDescription>
           </CardHeader>
@@ -97,7 +97,7 @@ const ResetPassword = () => {
             </Alert>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" asChild>
+            <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white" asChild>
               <Link to="/login">
                 Sign in
               </Link>
@@ -113,14 +113,14 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
           </div>
-          <CardTitle className="text-2xl text-center">Reset your password</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl text-center text-white">Reset your password</CardTitle>
+          <CardDescription className="text-center text-gray-400">
             Enter your new password below
           </CardDescription>
         </CardHeader>
@@ -132,7 +132,7 @@ const ResetPassword = () => {
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
+              <Label htmlFor="password" className="text-gray-300">New Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -142,13 +142,14 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-400">
                 Password must be at least 6 characters long
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Label htmlFor="confirmPassword" className="text-gray-300">Confirm New Password</Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -158,13 +159,14 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white" 
               disabled={isLoading}
             >
               {isLoading ? (
@@ -176,7 +178,7 @@ const ResetPassword = () => {
                 'Reset password'
               )}
             </Button>
-            <Button variant="outline" className="w-full" asChild>
+            <Button variant="outline" className="w-full bg-gray-700 border-gray-600 text-white hover:bg-gray-600" asChild>
               <Link to="/login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to login
