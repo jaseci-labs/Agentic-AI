@@ -1,4 +1,4 @@
-# tobu-mini
+# FriendZone
 
 ## Prerequisites
 
@@ -137,7 +137,7 @@ Replace `{{HOST}}` with your server's host URL (e.g., `http://localhost:8000`)
 - **Payload:**
 ```json
 {
-    "image_url": "https://tobu-jac2-dev.s3.amazonaws.com/pat@tobu.life_66a2b7ce09aff5bf6392db85/10114394-511E-46E0-8D31-F77D6842FFF7.png",
+    "image_url": "https://example.com/image.jpg",
     "location": {
         "latitude": 33.601836666666664,
         "longitude": -117.87143
