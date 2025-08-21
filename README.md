@@ -19,4 +19,4 @@ See the [Task Manager using JIVAS README](./task_manager_jivas/README.md) for mo
 
 ---
 
-### Tobu - MTP Integrated
+### FriendZone - MTP Integrated
