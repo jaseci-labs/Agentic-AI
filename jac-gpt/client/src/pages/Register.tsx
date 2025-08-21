@@ -51,14 +51,14 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
           </div>
-          <CardTitle className="text-2xl text-center">Create an account</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl text-center text-white">Create an account</CardTitle>
+          <CardDescription className="text-center text-gray-400">
             Enter your details to get started
           </CardDescription>
         </CardHeader>
@@ -70,7 +70,7 @@ const Register = () => {
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="text-gray-300">Full Name</Label>
               <Input
                 id="name"
                 name="name"
@@ -80,10 +80,11 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-gray-300">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -93,10 +94,11 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-gray-300">Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -106,13 +108,14 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-400">
                 Password must be at least 6 characters long
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -122,13 +125,14 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white" 
               disabled={isLoading}
             >
               {isLoading ? (
@@ -141,10 +145,10 @@ const Register = () => {
               )}
             </Button>
             <div className="text-center text-sm">
-              <span className="text-muted-foreground">Already have an account? </span>
+              <span className="text-gray-400">Already have an account? </span>
               <Link 
                 to="/login" 
-                className="text-primary hover:underline font-medium"
+                className="text-orange-500 hover:text-orange-400 hover:underline font-medium"
               >
                 Sign in
               </Link>

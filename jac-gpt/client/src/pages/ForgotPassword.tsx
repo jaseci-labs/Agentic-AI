@@ -42,14 +42,14 @@ const ForgotPassword = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+        <Card className="w-full max-w-md bg-gray-800 border-gray-700">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
               <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
             </div>
-            <CardTitle className="text-2xl text-center">Check your email</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl text-center text-white">Check your email</CardTitle>
+            <CardDescription className="text-center text-gray-400">
               We've sent a password reset link to {email}
             </CardDescription>
           </CardHeader>
@@ -61,7 +61,7 @@ const ForgotPassword = () => {
             </Alert>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full" asChild>
+            <Button variant="outline" className="w-full bg-gray-700 border-gray-600 text-white hover:bg-gray-600" asChild>
               <Link to="/login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to login
