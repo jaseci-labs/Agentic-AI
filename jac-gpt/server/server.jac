@@ -194,12 +194,13 @@ node OffTopicChat(Chat) {
 walker interact {
     has message: str;
     has session_id: str;
+    has user_email: str = "";
     has chat_history: list[dict] = [];
 
     can init_session with `root entry {
         visit [-->](`?Session)(?id == self.session_id) else {
-            session_node = here ++> Session(id=self.session_id, chat_history=[]);
-            print("Session Node Created for:", self.session_id);
+            session_node = here ++> Session(id=self.session_id, user_email=self.user_email, chat_history=[]);
+            print("Session Node Created for:", self.session_id, "User:", self.user_email);
             visit session_node;
         }
     }
@@ -207,10 +208,16 @@ walker interact {
 
 node Session {
     has id: str;
-    has chat_history: list[dict];
+    has user_email: str = "";
+    has chat_history: list[dict] = [];
     has status: int = 1;
 
     can chat with interact entry {
+        
+        # Store user email from visitor if provided
+        if visitor.user_email and not self.user_email {
+            self.user_email = visitor.user_email;
+        }
         
         # Initialize database connection
         db = get_database();
@@ -221,7 +228,8 @@ node Session {
         if existing_session and not self.chat_history {
             self.chat_history = db.get_chat_history(self.id);
         } elif not existing_session {
-            db_result = db.create_session(self.id);
+            # Create session with user email if available
+            db_result = db.create_session(self.id, self.user_email);
             if not self.chat_history {
                 self.chat_history = [];
             }
@@ -336,6 +344,225 @@ walker close_session {
         report {
             "session_id": self.session_id,
             "status": "closed"
+        };
+    }
+}
+
+# User management walkers
+walker register_user {
+    has email: str;
+    has password: str;
+    has name: str = "";
+
+    can create_user with `root entry {
+        db = get_database();
+        
+        # Special case for admin@jaseci.org - make it admin
+        role = "admin" if self.email == "admin@jaseci.org" else "user";
+        
+        user = db.create_or_update_user(self.email, self.password, self.name, role);
+        
+        if user {
+            report {
+                "message": "Successfully Registered!",
+                "user": {
+                    "email": user["email"],
+                    "name": user["name"],
+                    "role": user["role"]
+                }
+            };
+        } else {
+            report {
+                "error": "Registration failed"
+            };
+        }
+    }
+}
+
+
+
+# Admin walkers
+walker get_user_profile {
+    has email: str;
+
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
+    can fetch_profile with `root entry {
+        db = get_database();
+        
+        # Get or create user profile
+        profile = db.get_user_profile(self.email);
+        if not profile {
+            # Create default profile, admin for admin@jaseci.org
+            role = "admin" if self.email == "admin@jaseci.org" else "user";
+            name = "Admin User" if role == "admin" else "User";
+            db.create_user_profile(self.email, name, role);
+            profile = {
+                "email": self.email,
+                "name": name,
+                "role": role
+            };
+        }
+        
+        report {
+            "user": profile,
+            "isAdmin": profile.get("role") == "admin"
+        };
+    }
+}
+
+walker create_user_profile {
+    has email: str;
+    has name: str = "";
+
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
+    can setup_profile with `root entry {
+        db = get_database();
+        
+        # Determine role based on email
+        role = "admin" if self.email == "admin@jaseci.org" else "user";
+        display_name = self.name if self.name else ("Admin User" if role == "admin" else "User");
+        
+        # Create or update user profile
+        db.create_user_profile(self.email, display_name, role);
+        
+        report {
+            "success": True,
+            "message": "Profile created successfully",
+            "user": {
+                "email": self.email,
+                "name": display_name,
+                "role": role
+            }
+        };
+    }
+}
+
+walker get_all_users {
+    has requester_email: str = "";
+
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
+    can list_users with `root entry {
+        db = get_database();
+        
+        # Check if requester is admin
+        requester = db.get_user_profile(self.requester_email);
+        if not requester or requester.get("role") != "admin" {
+            report {
+                "error": "Unauthorized: Admin access required"
+            };
+            return;
+        }
+        
+        users = db.get_all_users();
+        
+        report {
+            "users": users,
+            "total": len(users)
+        };
+    }
+}
+
+walker get_all_sessions_admin {
+    has requester_email: str = "";
+
+    can list_all_sessions with `root entry {
+        db = get_database();
+        
+        # Check if requester is admin
+        requester = db.get_user_profile(self.requester_email);
+        if not requester or requester.get("role") != "admin" {
+            report {
+                "error": "Unauthorized: Admin access required"
+            };
+            return;
+        }
+        
+        sessions = db.get_all_sessions_with_users();
+        
+        report {
+            "sessions": sessions,
+            "total": len(sessions)
+        };
+    }
+}
+
+walker get_session_messages_admin {
+    has session_id: str;
+    has requester_email: str = "";
+
+    can get_session_chat with `root entry {
+        db = get_database();
+        
+        # Check if requester is admin
+        requester = db.get_user_profile(self.requester_email);
+        if not requester or requester.get("role") != "admin" {
+            report {
+                "error": "Unauthorized: Admin access required"
+            };
+            return;
+        }
+        
+        messages = db.get_all_messages_by_session(self.session_id);
+        session_stats = db.get_session_stats(self.session_id);
+        
+        report {
+            "session_id": self.session_id,
+            "messages": [
+                {
+                    "role": msg["role"],
+                    "content": msg["content"],
+                    "timestamp": msg["timestamp"]
+                }
+                for msg in messages
+            ],
+            "stats": session_stats,
+            "total_messages": len(messages)
+        };
+    }
+}
+
+walker get_user_info {
+    has email: str;
+    has requester_email: str = "";
+
+    can get_user_details with `root entry {
+        db = get_database();
+        
+        # Check if requester is admin or requesting their own info
+        requester = db.get_user_profile(self.requester_email);
+        if not requester or (requester.get("role") != "admin" and self.requester_email != self.email) {
+            report {
+                "error": "Unauthorized"
+            };
+            return;
+        }
+        
+        user = db.get_user_profile(self.email);
+        if not user {
+            report {
+                "error": "User not found"
+            };
+            return;
+        }
+        
+        user_sessions = db.get_user_sessions(self.email);
+        
+        report {
+            "user": user,
+            "sessions": user_sessions,
+            "total_sessions": len(user_sessions)
         };
     }
 }

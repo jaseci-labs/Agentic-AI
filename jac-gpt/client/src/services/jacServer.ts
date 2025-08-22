@@ -149,20 +149,27 @@ class JacServerService {
   }
 
   // Send a message and get response
-  async sendMessage(message: string, sessionId: string): Promise<JacResponse> {
+  async sendMessage(message: string, sessionId: string, userEmail?: string): Promise<JacResponse> {
     const token = await this.ensureAuthenticated();
 
     try {
+      const requestBody: any = {
+        message,
+        session_id: sessionId,
+      };
+
+      // Include user email if provided
+      if (userEmail) {
+        requestBody.user_email = userEmail;
+      }
+
       const response = await fetch(`${this.baseUrl}/walker/interact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          message,
-          session_id: sessionId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

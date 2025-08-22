@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from './Sidebar';
 import MobileMenuButton from './MobileMenuButton';
 import ChatMessage from './ChatMessage';
@@ -16,6 +17,7 @@ interface Message {
 }
 
 const JacChatbot = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,8 +79,8 @@ const JacChatbot = () => {
     setIsLoading(true);
 
     try {
-      // Send message to JAC server
-      const jacResponse = await jacServerService.sendMessage(content, sessionId);
+      // Send message to JAC server with user email
+      const jacResponse = await jacServerService.sendMessage(content, sessionId, user?.email);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),

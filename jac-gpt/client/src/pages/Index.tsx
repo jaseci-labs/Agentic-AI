@@ -1,7 +1,7 @@
-import JacChatbot from "@/components/JacChatbot";
+import Dashboard from "@/components/Dashboard";
 
 const Index = () => {
-  return <JacChatbot />;
+  return <Dashboard />;
 };
 
 export default Index;
