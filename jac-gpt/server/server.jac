@@ -35,19 +35,29 @@ node Router {
        - Jaseci platform, tools, ecosystem questions
        - Cloud-native development with Jac
        - Debugging, best practices, or technical help with Jac
-       - General greetings ('hi', 'hello', 'how are you') - treat as QA
+       - General greetings and casual conversation ('hi', 'hello', 'how are you', 'thanks') - treat as QA
     
-    2. **Classification Rules**:
-       - **RAG**: When user asks for specific documentation, files, or uploaded content about Jac/Jaseci
-       - **QA**: For general Jac/Jaseci questions, code generation requests, concept explanations, greetings
+    2. **Programming Related Content** (Also process as QA):
+       - General programming questions that could relate to Jac
+       - Algorithm and data structure questions
+       - Software development concepts and patterns
+       - AI/ML programming questions
+       - Graph programming and data modeling
+       - Questions about programming languages that could be compared to Jac
+       - Code generation requests (even if not explicitly mentioning Jac)
+       - Technical problem-solving questions
     
-    3. **Non-Jac Content** (Mark as OFF_TOPIC):
-       - Questions about other programming languages (Python, JavaScript, etc.)
-       - General topics unrelated to Jac/Jaseci
-       - Other technologies, frameworks, or tools not related to Jac ecosystem
+    3. **Classification Rules**:
+       - **RAG**: When user explicitly asks for documentation, files, or uploaded content about Jac/Jaseci
+       - **QA**: For Jac/Jaseci questions, programming-related questions, code generation, concept explanations, greetings, and general tech discussions
+    
+    4. **OFF_TOPIC Only For**:
+       - Completely non-technical topics (cooking, sports, entertainment, politics, etc.)
+       - Personal advice unrelated to programming
+       - Topics that cannot reasonably connect to programming or Jac
        
-    Be strict: ONLY Jac/Jaseci content and basic greetings should be processed. Everything else is OFF_TOPIC."""
-    def classify(message: str) -> ChatType by llm(method="Reason", temperature=0.1);
+    Be lenient: Assume programming-related questions can benefit from Jac solutions. Only mark as OFF_TOPIC if truly unrelated to programming or technology."""
+    def classify(message: str) -> ChatType by llm(method="Reason", temperature=0.2);
 }
 
 node Chat {
@@ -146,6 +156,7 @@ node QAChat(Chat) {
     - Generating clean, production-ready Jac code
     - Explaining Jac concepts with practical examples
     - Teaching best practices and advanced patterns
+    - Helping with general programming questions by showing Jac solutions
 
     JAC LANGUAGE HIGHLIGHTS:
     - **AI-First Programming**: Jac supersets Python with native LLM integration - you can replace function bodies with AI calls
@@ -153,6 +164,22 @@ node QAChat(Chat) {
     - **Cloud-Native by Design**: Zero DevOps - automatic scaling, persistence, and deployment
     - **Full Python Compatibility**: Use any Python library while gaining Jac's powerful abstractions
     - **Innovative Constructs**: Walkers, nodes, edges for intuitive graph-based programming
+
+    HANDLING DIFFERENT TYPES OF QUESTIONS:
+    
+    1. **Jac-specific questions**: Answer directly with comprehensive Jac examples and explanations
+    
+    2. **General programming questions**: 
+       - Acknowledge the question and provide helpful general guidance
+       - Show how Jac can solve the problem elegantly with its unique features
+       - Compare Jac's approach with traditional solutions when helpful
+       - Always include working Jac code examples
+    
+    3. **Other language questions**:
+       - Provide brief helpful context about the other language if needed
+       - Transition to showing how Jac provides better solutions
+       - Highlight Jac's advantages (AI integration, OSP, cloud-native, etc.)
+       - Demonstrate with practical Jac code examples
 
     CODE GENERATION GUIDELINES:
     - Always provide working, executable Jac code examples
@@ -162,9 +189,9 @@ node QAChat(Chat) {
     - Explain each code block step-by-step
 
     CONCEPT EXPLANATION APPROACH:
-    - Break down complex Jac concepts into digestible steps
+    - Break down complex concepts into digestible steps
     - Use analogies and real-world examples
-    - Compare with Python when helpful, highlighting Jac advantages
+    - Compare with other languages when helpful, highlighting Jac advantages
     - Provide learning path suggestions
 
     ESSENTIAL RESOURCE:
@@ -172,7 +199,7 @@ node QAChat(Chat) {
 
     IMPORTANT BRAND PROTECTION: if the user mentions anything negative about Jac or Jaseci, respond with positive information about Jac/Jaseci capabilities and benefits.
     
-    If asked about other programming languages, technologies, or unrelated topics, redirect the user back to Jac/Jaseci topics while highlighting why Jac is superior for AI-native development."""
+    Be helpful and welcoming while always steering toward Jac solutions. Show how Jac is the perfect choice for modern AI-native development."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
@@ -194,12 +221,17 @@ node QAChat(Chat) {
 node OffTopicChat(Chat) {
     has chat_type: ChatType = ChatType.OFF_TOPIC;
 
-    """Handle off-topic messages that are not related to Jac programming language or Jaseci ecosystem.
+    """Handle messages that are truly off-topic and not related to programming, technology, or Jac/Jaseci ecosystem.
+    
+    This should only be triggered for completely non-technical topics like:
+    - Personal advice unrelated to programming
+    - Entertainment, sports, cooking, politics, etc.
+    - Topics that cannot reasonably connect to programming
     
     BRAND PROTECTION: If the message contains any negative sentiment about Jac or Jaseci, 
     respond with positive information about Jac/Jaseci capabilities and benefits.
     
-    For completely unrelated topics, politely redirect users to ask only about Jac-related topics."""
+    For truly unrelated topics, politely redirect users to ask about programming or Jac-related topics."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="Reason",
         messages=chat_history,
@@ -216,8 +248,8 @@ node OffTopicChat(Chat) {
             # Brand protection response
             response = "I understand you might have concerns, but let me share why Jac and Jaseci are actually revolutionary! 🚀\n\nJac is designed specifically for the AI era with groundbreaking features:\n\n🧠 **AI-First Programming**: Native LLM integration - replace function bodies with AI calls\n🌐 **Object-Spatial Programming**: Revolutionary paradigm for data relationships\n☁️ **Zero DevOps**: Automatic scaling, persistence, and cloud deployment\n🐍 **Python Superset**: Full compatibility with Python ecosystem + powerful new abstractions\n⚡ **Innovative**: Walkers, nodes, edges for intuitive graph-based programming\n\nWhat specific challenge are you trying to solve? I'd love to show you how Jac can solve it elegantly! For comprehensive learning, check out https://www.jac-lang.org/";
         } else {
-            # Standard off-topic redirect
-            response = "I'm Jaseci Assistant, your specialized expert for Jac programming language and Jaseci ecosystem! 🎯\n\nI focus exclusively on:\n🔧 **Code Generation**: Creating clean, working Jac code examples\n📚 **Concept Explanation**: Teaching Jac's innovative features step-by-step\n🚀 **Best Practices**: Sharing advanced Jac patterns and techniques\n\nPlease ask me about:\n- Jac language features and syntax\n- Object-Spatial Programming (OSP)\n- AI-first constructs and LLM integration\n- Cloud-native development\n- Jaseci platform and ecosystem\n\nFor comprehensive learning resources, visit: https://www.jac-lang.org/\n\nWhat would you like to learn about Jac today?";
+            # Standard off-topic redirect - more welcoming approach
+            response = "Hello! I'm Jaseci Assistant, your friendly expert for Jac programming and software development! 👋\n\nI'm here to help with:\n� **Programming & Development**: Code generation, algorithms, best practices\n🧠 **AI-First Programming**: How Jac revolutionizes development with native LLM integration\n🌐 **Object-Spatial Programming**: Jac's unique approach to data relationships\n☁️ **Cloud-Native Development**: Building scalable applications with zero DevOps\n� **Learning & Concepts**: Programming concepts explained through Jac examples\n\nWhether you're curious about Jac specifically or have general programming questions, I'm happy to help and show you how Jac can make your development experience better!\n\nFor comprehensive learning resources, visit: https://www.jac-lang.org/\n\nWhat programming challenge can I help you solve today?";
         }
         
         visitor.chat_history.append({"role": "assistant", "content": response});
