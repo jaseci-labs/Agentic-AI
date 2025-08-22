@@ -37,6 +37,20 @@ node EmailHandlingAction(Action) {
         If the user does not provide enough information, keep the missing parts as empty strings.
         return the JSON object only, no explanations or paragraphs.
     """;
+    has select_tool_prompt: str = """
+        Please select a tool to use for email composition.
+        The order of user interaction is as follows:
+        1. Write email content
+        2. Get confirmation from user
+        3. Send email - You should select this tool only if the user confirms the email details.
+        Return only the tool name. No explanations or paragraphs. If there is no tool can be selected return "no_selected_tool"
+        Tools names are as follows.
+        """;
+    has tools: list[str] = ["write_email_content", "send_email"];
+
+    has email_recipient: str = "";
+    has email_subject: str = "";
+    has email_content: str = "";
 
     def execute(visitor: agent_graph_walker) -> None {
         model_action = self.get_agent().get_actions().get(action_label=self.model_action);
@@ -44,19 +58,38 @@ node EmailHandlingAction(Action) {
             self.logger.error("Model action not found.");
             return;
         }
-        (email_recipient, email_subject, email_content) = self.write_email_content(visitor, model_action);
 
-        self.send_email(
-            to_email=email_recipient,
-            subject=email_subject,
-            body=email_content
+        utterance = visitor.utterance;
+        prompt_messages = [
+            {"system": self.select_tool_prompt + ", ".join(self.tools)},
+            {"human": utterance}
+        ];
+
+        model_result = model_action.call_model(
+            prompt_messages=prompt_messages,
+            prompt_variables={"utterance": utterance},
+            kwargs={
+                "model_name": self.model_name,
+                "model_temperature": self.model_temperature,
+                "model_max_tokens": self.model_max_tokens
+            },
+            interaction_node=visitor.interaction_node
         );
-        visitor.interaction_node.set_message(
-            TextInteractionMessage(content=f"Email successfully sent to {email_recipient} with subject '{email_subject}'")
-        );
+
+        selected_tool = model_result.get_result();
+        self.logger.info(f"Model result: {selected_tool}");
+
+        if selected_tool != "no_selected_tool" {
+            if selected_tool == "write_email_content" {
+                self.write_email_content(visitor, model_action);
+            }
+            elif selected_tool == "send_email" {
+                self.send_email();
+            }
+        }
     }
 
-    def write_email_content(visitor: agent_graph_walker, model_action: ModelAction) -> (str, str, str) {
+    def write_email_content(visitor: agent_graph_walker, model_action: ModelAction) -> None {
         utterance = visitor.utterance;
         prompt_messages = [
             {"system": self.prompt_write_email + f"\nSender's name: {self.sender_name}"},
@@ -78,33 +111,44 @@ node EmailHandlingAction(Action) {
         raw_message = re.sub(r"^```json|^```|```$", "", interaction_message.strip(), flags=re.MULTILINE).strip();
         json_email = json.loads(raw_message);
 
-        email_content = json_email.get("email_content", "");
-        email_subject = json_email.get("email_subject", "New Task Notification");
-        email_recipient = json_email.get("email_recipient", self.sender_email);
+        self.email_content = json_email.get("email_content", "");
+        self.email_subject = json_email.get("email_subject", "New Task Notification");
+        self.email_recipient = json_email.get("email_recipient", self.sender_email);
 
-        if not email_content or not email_recipient {
+        if not self.email_content or not self.email_recipient {
             visitor.interaction_node.set_message(TextInteractionMessage(content="Email content or recipient is missing."));
             return;
         }
-        return (email_recipient, email_subject, email_content);
+        self.get_confirmation_from_user(visitor);
     }
 
-    def send_email(to_email: str, subject: str, body: str) -> None {
-        msg = MIMEText(body);
-        msg["Subject"] = subject;
+    def get_confirmation_from_user(visitor: agent_graph_walker) -> bool {
+        confirmation_prompt = (
+            "Do you want to send the email with the following details?\n"
+            f"Recipient: {self.email_recipient}\n"
+            f"Subject: {self.email_subject}\n"
+            f"Content: {self.email_content}"
+        );
+        visitor.interaction_node.set_message(TextInteractionMessage(content=confirmation_prompt));
+    }
+
+    def send_email() -> None {
+        msg = MIMEText(self.email_content);
+        msg["Subject"] = self.email_subject;
         msg["From"] = self.sender_email;
-        msg["To"] = to_email;
+
+        msg["To"] = self.email_recipient;
 
         try {
             server = smtplib.SMTP("smtp.gmail.com", 587);
             server.starttls();
             server.login(self.sender_email, self.sender_password);
-            server.sendmail(self.sender_email, to_email, msg.as_string());
+            server.sendmail(self.sender_email, self.email_recipient, msg.as_string());
             server.quit();
-            self.logger.info(f"Email sent to {to_email} with subject '{subject}'");
+            self.logger.info(f"Email sent to {self.email_recipient} with subject '{self.email_subject}'");
         }
         except Exception as e {
-            self.logger.error(f"Failed to send email to {to_email} with subject '{subject}': {e}");
+            self.logger.error(f"Failed to send email to {self.email_recipient} with subject '{self.email_subject}': {e}");
         }
     }
 }
