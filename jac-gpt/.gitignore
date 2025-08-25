@@ -3,3 +3,4 @@ server/mydatabase/
 __pycache__/
 *.bin
 *.sqlite3
+*.pickle
