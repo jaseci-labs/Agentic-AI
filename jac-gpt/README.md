@@ -112,7 +112,7 @@ jac-gpt/
    Edit `.env` and update the configuration:
    ```env
    # JAC Server Configuration
-   VITE_JAC_SERVER_URL=http://localhost:8000
+   VITE_API_URL=http://localhost:8000
    
    # Authentication (uses defaults if not provided)
    VITE_JAC_USER_EMAIL=test@mail.com

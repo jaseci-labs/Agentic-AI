@@ -23,7 +23,7 @@ class JacServerService {
   private defaultPassword: string;
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_JAC_SERVER_URL || 'http://localhost:8000';
+    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     this.defaultEmail = import.meta.env.VITE_JAC_USER_EMAIL || 'test@mail.com';
     this.defaultPassword = import.meta.env.VITE_JAC_USER_PASSWORD || 'password';
   }
