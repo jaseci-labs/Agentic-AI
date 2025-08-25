@@ -10,7 +10,7 @@ import from langchain_chroma {Chroma}
 glob SERPER_API_KEY: str = os.getenv('SERPER_API_KEY', '');
 
 obj RagEngine {
-    has file_path: str = "jac-syntax-cheatsheets";
+    has file_path: str = "docs";
     has chroma_path: str = "chroma";
 
     def postinit {
