@@ -4,6 +4,7 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -13,6 +14,7 @@ interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,27 +29,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check for existing token on app start
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      // You might want to validate the token with the server
-      // For now, we'll just set a dummy user
+    const checkExistingAuth = async () => {
+      const token = localStorage.getItem('auth_token');
       const userData = localStorage.getItem('user_data');
-      if (userData) {
+      
+      if (token && userData) {
         try {
-          setUser(JSON.parse(userData));
+          const parsedUser = JSON.parse(userData);
+          
+          // If user doesn't have role, fetch it from profile
+          if (!parsedUser.role) {
+            try {
+              const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: parsedUser.email }),
+              });
+              
+              if (profileResponse.ok) {
+                const profileData = await profileResponse.json();
+                if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
+                  parsedUser.role = profileData.reports[0].user.role || 'user';
+                  localStorage.setItem('user_data', JSON.stringify(parsedUser));
+                }
+              }
+            } catch (error) {
+              console.error('Error fetching user profile:', error);
+              // Default to user role if profile fetch fails
+              parsedUser.role = 'user';
+            }
+          }
+          
+          setUser(parsedUser);
         } catch (error) {
           console.error('Error parsing user data:', error);
           localStorage.removeItem('auth_token');
           localStorage.removeItem('user_data');
         }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    checkExistingAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+    const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      // Use the built-in login endpoint
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/login`, {
         method: 'POST',
         headers: {
@@ -65,35 +96,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Handle different response formats
       let token = data.token || data.access_token;
-      let userInfo = data.user;
-      
-      // If user info is not in the response, create a basic user object
-      if (!userInfo && token) {
-        userInfo = {
-          id: email, // Use email as fallback ID
-          email: email,
-          name: data.name || null
-        };
-      }
       
       // If no token in response but login was successful, generate a temporary token
       if (!token && data.message && data.message.includes('success')) {
         token = `temp_${Date.now()}`; // Temporary token for demo purposes
-        userInfo = {
-          id: email,
-          email: email,
-          name: data.name || null
-        };
       }
 
       if (!token) {
         throw new Error('No authentication token received');
       }
 
+      // Now get the user profile to determine role
+      const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      let userRole = 'user';
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
+          userRole = profileData.reports[0].user.role || 'user';
+        }
+      }
+
       const userData: User = {
-        id: userInfo.id || email,
-        email: userInfo.email || email,
-        name: userInfo.name,
+        id: data.user?.id || email,
+        email: data.user?.email || email,
+        name: data.user?.name || data.name,
+        role: userRole as 'user' | 'admin',
       };
 
       setUser(userData);
@@ -105,11 +139,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const register = async (email: string, password: string, name?: string) => {
+  };  const register = async (email: string, password: string, name?: string) => {
     setIsLoading(true);
     try {
+      // Use the built-in register endpoint
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/register`, {
         method: 'POST',
         headers: {
@@ -125,6 +158,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json();
       
+      // Create user profile after successful registration
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/create_user_profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, name: name || '' }),
+      });
+      
       // Handle case where registration is successful but we need to login separately
       if (data.message && data.message.includes('Successfully Registered')) {
         // After successful registration, attempt to login
@@ -138,6 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           id: data.user.id,
           email: data.user.email,
           name: data.user.name,
+          role: email === 'admin@jaseci.org' ? 'admin' : 'user',
         };
 
         setUser(userData);
@@ -168,6 +211,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     isAuthenticated: !!user,
+    isAdmin: user?.role === 'admin',
   };
 
   return (
