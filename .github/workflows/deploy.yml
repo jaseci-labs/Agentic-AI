@@ -1,0 +1,83 @@
+name: Build and Deploy JAC-GPT
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-jac-gpt:
+    if: startsWith(github.ref, 'refs/tags/jac-gpt-') || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up QEMU for multi-architecture builds
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # Set up Docker Buildx for multi-architecture builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.0
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions
+          audience: sts.amazonaws.com
+
+      - name: Debug AWS Credentials
+        run: |
+          aws sts get-caller-identity
+
+      - name: Debug OIDC Token
+        run: |
+          echo "OIDC_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com"
+      
+      # Login to AWS ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Extract tag name from GitHub ref
+      - name: Get tag name
+        id: tag
+        run: |
+          # Get the tag name
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          # Remove prefixes (v, jac-gpt-) to get clean version number
+          CLEAN_VERSION=$(echo $TAG_NAME | sed -E 's/^(v|jac-gpt-)//g')
+        
+          # Set as output and also print for debugging
+          echo "Clean TAG version: $CLEAN_VERSION"
+          echo "tag=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+
+      # Build and push Docker image
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: jac-gpt/jac
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          # Build and push multi-architecture image with timestamp tag
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            --push \
+            .
+        working-directory: jac-gpt/server
