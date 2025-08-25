@@ -12,8 +12,8 @@ node RoutingInteractAction(InteractAction) {
     has model_temperature:float = 0.4;
     has model_max_tokens:int = 2048;
     has prompt_routing: str = """
-        Analyze the user's message and determine the appropriate action to take.
-        Return only the action name. If the message is not relevant to any action return "NoCustomAction".
+        Analyze the user's chat and determine the appropriate action to take.
+        Return only the action name. If the chat is not relevant to any action return "NoCustomAction".
         The list of action names are as follows.
     """;
     
@@ -28,11 +28,21 @@ node RoutingInteractAction(InteractAction) {
     }
 
     def execute(visitor: agent_graph_walker) -> None {
+        prompt_messages: list = [];
         utterance = visitor.utterance;
-        prompt_messages = [
-            {"system": self.prompt_routing + ", ".join(self.get_actions_list())},
-            {"human": utterance}
-        ];
+        statements = visitor.frame_node.get_transcript_statements(interactions = 10, max_statement_length = 500, with_events = True);
+        system_prompt = self.prompt_routing + ", ".join(self.get_actions_list());
+        
+        prompt_messages.append({"system": system_prompt});
+        for stmt in statements {
+            for role in ("system", "human", "ai") {
+                if role in stmt and stmt[role] {
+                    prompt_messages.append({role: stmt[role]});
+                }
+            }
+        }
+        prompt_messages.append({"human": utterance});
+        self.logger.info(f"Prompt messages: {prompt_messages}");
 
         model_action = self.get_agent().get_actions().get(action_label=self.model_action);
         if not model_action {

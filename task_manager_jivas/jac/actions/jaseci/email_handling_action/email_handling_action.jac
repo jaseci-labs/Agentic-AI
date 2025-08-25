@@ -59,11 +59,20 @@ node EmailHandlingAction(Action) {
             return;
         }
 
+        prompt_messages: list = [];
         utterance = visitor.utterance;
-        prompt_messages = [
-            {"system": self.select_tool_prompt + ", ".join(self.tools)},
-            {"human": utterance}
-        ];
+        statements = visitor.frame_node.get_transcript_statements(interactions = 10, max_statement_length = 500, with_events = True);
+        system_prompt = self.select_tool_prompt + ", ".join(self.tools);
+        
+        prompt_messages.append({"system": system_prompt});
+        for stmt in statements {
+            for role in ("system", "human", "ai") {
+                if role in stmt and stmt[role] {
+                    prompt_messages.append({role: stmt[role]});
+                }
+            }
+        }
+        prompt_messages.append({"human": utterance});
 
         model_result = model_action.call_model(
             prompt_messages=prompt_messages,
@@ -76,15 +85,17 @@ node EmailHandlingAction(Action) {
             interaction_node=visitor.interaction_node
         );
 
-        selected_tool = model_result.get_result();
+        selected_tool = (model_result.get_result() or "").strip();
         self.logger.info(f"Model result: {selected_tool}");
 
-        if selected_tool != "no_selected_tool" {
-            if selected_tool == "write_email_content" {
-                self.write_email_content(visitor, model_action);
-            }
-            elif selected_tool == "send_email" {
-                self.send_email();
+        if selected_tool in self.tools {
+            tool_fn = getattr(self, selected_tool, None);
+            if callable(tool_fn) {
+                try {
+                    tool_fn(visitor, model_action);
+                } except Exception as e {
+                    self.logger.error(f"Error occurred while executing {selected_tool}: {e}");
+                }
             }
         }
     }
@@ -124,7 +135,7 @@ node EmailHandlingAction(Action) {
 
     def get_confirmation_from_user(visitor: agent_graph_walker) -> bool {
         confirmation_prompt = (
-            "Do you want to send the email with the following details?\n"
+            "Please confirm to send the email with the following details?\n"
             f"Recipient: {self.email_recipient}\n"
             f"Subject: {self.email_subject}\n"
             f"Content: {self.email_content}"
@@ -132,11 +143,10 @@ node EmailHandlingAction(Action) {
         visitor.interaction_node.set_message(TextInteractionMessage(content=confirmation_prompt));
     }
 
-    def send_email() -> None {
+    def send_email(visitor: agent_graph_walker, model_action: ModelAction) -> None {
         msg = MIMEText(self.email_content);
         msg["Subject"] = self.email_subject;
         msg["From"] = self.sender_email;
-
         msg["To"] = self.email_recipient;
 
         try {
@@ -146,6 +156,7 @@ node EmailHandlingAction(Action) {
             server.sendmail(self.sender_email, self.email_recipient, msg.as_string());
             server.quit();
             self.logger.info(f"Email sent to {self.email_recipient} with subject '{self.email_subject}'");
+            visitor.interaction_node.set_message(TextInteractionMessage(content=f"Email sent successfully to {self.email_recipient}"));
         }
         except Exception as e {
             self.logger.error(f"Failed to send email to {self.email_recipient} with subject '{self.email_subject}': {e}");
