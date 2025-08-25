@@ -1,24 +1,39 @@
+# Import necessary modules
+
+# Define the Calculator node
 node Calculator {
-    has current_value: float = 0.0;
-
-    def add(value: float) -> float {
-        current_value += value;
-        return current_value;
+    # Function to add two numbers
+    def add(a: int, b: int) -> int {
+        return a + b;
     }
 
-    def multiply(value: float) -> float {
-        current_value *= value;
-        return current_value;
+    # Function to subtract two numbers
+    def subtract(a: int, b: int) -> int {
+        return a - b;
     }
 
-    def get_result() -> float {
-        return current_value;
+    # Function to multiply two numbers
+    def multiply(a: int, b: int) -> int {
+        return a * b;
+    }
+
+    # Function to divide two numbers
+    def divide(a: int, b: int) -> float {
+        if b == 0 {
+            # Handle division by zero
+            return 0.0;
+        }
+        return a / b;
     }
 }
 
+# Main entry point
 with entry {
-    let calc = Calculator();
-    print(calc.add(5));        # Adds 5
-    print(calc.multiply(2));   # Multiplies by 2
-    print(calc.get_result());   # Displays the current value
+    # Create an instance of the Calculator
+    calc: Calculator = Calculator();
+    # Example usage
+    let sum: int = calc.add(5, 3);
+    let difference: int = calc.subtract(5, 3);
+    let product: int = calc.multiply(5, 3);
+    let quotient: float = calc.divide(5, 0);
 }

@@ -119,7 +119,7 @@ obj LevelManager {
     has current_level: int = 0, current_difficulty: int = 1,
         prev_levels: list[Level] = [], prev_level_maps: list[Map] = [];
 
-    // ...by llm methods defined above...
+    # ...by llm methods defined above...
 
     def get_next_level -> tuple(Level, Map) {
         self.current_level += 1;

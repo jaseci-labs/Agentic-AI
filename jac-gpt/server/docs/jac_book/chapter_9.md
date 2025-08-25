@@ -349,8 +349,8 @@ Jac provides powerful and expressive syntax for navigating and querying graph st
 
 These can be wrapped in a visit statement to direct walker movement:
 ```jac
-visit [-->];   // Move to all connected child nodes
-visit [<--];   // Move to all parent nodes
+visit [-->];   # Move to all connected child nodes
+visit [<--];   # Move to all parent nodes
 ```
 
 
