@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Users, MessageSquare, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Users, MessageSquare, Calendar, Eye, EyeOff, LogOut } from 'lucide-react';
 
 interface User {
   email: string;
@@ -41,7 +41,7 @@ interface SessionDetail {
 }
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<SessionDetail | null>(null);
@@ -172,13 +172,23 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Welcome, {user.name || user.email}. Monitor all user activity and chat sessions.
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+            <p className="text-gray-600">
+              Welcome, {user.name || user.email}. Monitor all user activity and chat sessions.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={logout}
+            className="flex items-center space-x-2 border-gray-300 hover:bg-gray-50"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </Button>
         </div>
 
         {error && (
@@ -214,42 +224,42 @@ const AdminDashboard = () => {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+            <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-orange-50 to-orange-100 rounded-t-lg">
+                <CardTitle className="text-sm font-medium text-gray-900">Total Users</CardTitle>
+                <Users className="h-5 w-5 text-orange-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{users.length}</div>
-                <p className="text-xs text-muted-foreground">
+              <CardContent className="p-4">
+                <div className="text-3xl font-bold text-gray-900">{users.length}</div>
+                <p className="text-sm text-gray-600 mt-1">
                   {users.filter(u => u.role === 'admin').length} admin(s), {users.filter(u => u.role === 'user').length} user(s)
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-lg">
+                <CardTitle className="text-sm font-medium text-gray-900">Total Sessions</CardTitle>
+                <MessageSquare className="h-5 w-5 text-blue-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{sessions.length}</div>
-                <p className="text-xs text-muted-foreground">
+              <CardContent className="p-4">
+                <div className="text-3xl font-bold text-gray-900">{sessions.length}</div>
+                <p className="text-sm text-gray-600 mt-1">
                   {sessions.filter(s => s.status === 'active').length} active sessions
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-green-50 to-green-100 rounded-t-lg">
+                <CardTitle className="text-sm font-medium text-gray-900">Total Messages</CardTitle>
+                <Calendar className="h-5 w-5 text-green-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="p-4">
+                <div className="text-3xl font-bold text-gray-900">
                   {sessions.reduce((total, session) => total + session.message_count, 0)}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-gray-600 mt-1">
                   Across all sessions
                 </p>
               </CardContent>
@@ -259,26 +269,29 @@ const AdminDashboard = () => {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Users</CardTitle>
-              <CardDescription>Manage and monitor all registered users</CardDescription>
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader className="bg-gray-50 border-b border-gray-200">
+              <CardTitle className="text-gray-900">Users</CardTitle>
+              <CardDescription className="text-gray-600">Manage and monitor all registered users</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               <div className="space-y-4">
                 {users.map((user, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium">{user.email}</span>
-                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                        <span className="font-medium text-gray-900">{user.email}</span>
+                        <Badge 
+                          variant={user.role === 'admin' ? 'default' : 'secondary'}
+                          className={user.role === 'admin' ? 'bg-orange-500 hover:bg-orange-600' : ''}
+                        >
                           {user.role}
                         </Badge>
                       </div>
                       {user.name && (
-                        <p className="text-sm text-gray-500">{user.name}</p>
+                        <p className="text-sm text-gray-600">{user.name}</p>
                       )}
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-gray-500 mt-1">
                         <span>Created: {formatDate(user.created_at)}</span>
                         {user.last_login && (
                           <span className="ml-4">Last login: {formatDate(user.last_login)}</span>
@@ -295,12 +308,12 @@ const AdminDashboard = () => {
         {/* Sessions Tab */}
         {activeTab === 'sessions' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Chat Sessions</CardTitle>
-                <CardDescription>Click on a session to view conversation details</CardDescription>
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardHeader className="bg-gray-50 border-b border-gray-200">
+                <CardTitle className="text-gray-900">Chat Sessions</CardTitle>
+                <CardDescription className="text-gray-600">Click on a session to view conversation details</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <ScrollArea className="h-96">
                   <div className="space-y-2">
                     {sessions.map((session, index) => (
@@ -308,35 +321,38 @@ const AdminDashboard = () => {
                         key={index}
                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                           selectedSession?.session_id === session.session_id
-                            ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                            ? 'bg-orange-50 border-orange-200'
+                            : 'bg-white hover:bg-gray-50 border-gray-200'
                         }`}
                         onClick={() => fetchSessionMessages(session.session_id)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">
+                            <span className="text-sm font-medium text-gray-900">
                               {session.session_id.substring(0, 12)}...
                             </span>
-                            <Badge variant={session.status === 'active' ? 'default' : 'secondary'}>
+                            <Badge 
+                              variant={session.status === 'active' ? 'default' : 'secondary'}
+                              className={session.status === 'active' ? 'bg-orange-500 hover:bg-orange-600' : ''}
+                            >
                               {session.status}
                             </Badge>
                             {session.user_email && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
                                 {session.user_email}
                               </Badge>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-600">
                             {session.message_count} messages
                           </span>
                         </div>
                         {session.first_message && (
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-gray-600 mt-1">
                             "{truncateText(session.first_message, 60)}"
                           </p>
                         )}
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="text-xs text-gray-500 mt-1">
                           <span>Created: {formatDate(session.created_at)}</span>
                           <span className="ml-2">Updated: {formatDate(session.updated_at)}</span>
                         </div>
@@ -348,17 +364,17 @@ const AdminDashboard = () => {
             </Card>
 
             {/* Session Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Session Details</CardTitle>
-                <CardDescription>
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardHeader className="bg-gray-50 border-b border-gray-200">
+                <CardTitle className="text-gray-900">Session Details</CardTitle>
+                <CardDescription className="text-gray-600">
                   {selectedSession 
                     ? `Viewing conversation: ${selectedSession.session_id.substring(0, 12)}...`
                     : 'Select a session to view conversation details'
                   }
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 {loading ? (
                   <div className="flex items-center justify-center h-64">
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -367,20 +383,23 @@ const AdminDashboard = () => {
                   <ScrollArea className="h-96">
                     <div className="space-y-4">
                       {selectedSession.messages.map((message, index) => (
-                        <div key={index} className={`p-3 rounded-lg ${
+                        <div key={index} className={`p-4 rounded-lg border ${
                           message.role === 'user' 
-                            ? 'bg-blue-50 dark:bg-blue-900/20 ml-4' 
-                            : 'bg-gray-50 dark:bg-gray-800 mr-4'
+                            ? 'bg-orange-50 border-orange-200 ml-4' 
+                            : 'bg-white border-gray-200 mr-4'
                         }`}>
                           <div className="flex items-center justify-between mb-2">
-                            <Badge variant={message.role === 'user' ? 'default' : 'secondary'}>
+                            <Badge 
+                              variant={message.role === 'user' ? 'default' : 'secondary'}
+                              className={message.role === 'user' ? 'bg-orange-500 hover:bg-orange-600' : ''}
+                            >
                               {message.role}
                             </Badge>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-600">
                               {formatDate(message.timestamp)}
                             </span>
                           </div>
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-sm whitespace-pre-wrap text-gray-900">{message.content}</p>
                         </div>
                       ))}
                     </div>

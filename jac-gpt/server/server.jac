@@ -477,6 +477,11 @@ walker get_all_users {
 walker get_all_sessions_admin {
     has requester_email: str = "";
 
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
     can list_all_sessions with `root entry {
         db = get_database();
         
@@ -501,6 +506,11 @@ walker get_all_sessions_admin {
 walker get_session_messages_admin {
     has session_id: str;
     has requester_email: str = "";
+
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
 
     can get_session_chat with `root entry {
         db = get_database();
