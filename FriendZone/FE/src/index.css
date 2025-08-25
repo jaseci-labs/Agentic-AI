@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* FriendZone Design System - Warm, memory-focused social platform
+All colors MUST be HSL. Focus on memories, friendships, and photo sharing.
+*/
+
+@layer base {
+  :root {
+    /* Base colors - dark mode with warm accents */
+    --background: 240 10% 8%;
+    --foreground: 25 15% 95%;
+
+    /* Card and surface colors */
+    --card: 240 8% 12%;
+    --card-foreground: 25 15% 95%;
+
+    --popover: 240 8% 12%;
+    --popover-foreground: 25 15% 95%;
+
+    /* Brand colors - warm coral and purple tones for memories */
+    --primary: 320 65% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 320 30% 25%;
+    --primary-glow: 320 80% 70%;
+
+    /* Secondary - soft coral for accents */
+    --secondary: 15 60% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-soft: 15 20% 20%;
+
+    /* Accent - gentle purple for highlights */
+    --accent: 280 30% 25%;
+    --accent-foreground: 25 15% 95%;
+
+    /* Muted tones for subtle elements */
+    --muted: 240 6% 15%;
+    --muted-foreground: 240 5% 65%;
+
+    /* Utility colors */
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 18%;
+    --input: 240 6% 15%;
+    --ring: 320 65% 60%;
+
+    /* Enhanced border radius for friendly feel */
+    --radius: 0.75rem;
+
+    /* Custom gradients for FriendZone - Dark Mode */
+    --gradient-primary: linear-gradient(135deg, hsl(320 65% 60%), hsl(280 60% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(15 60% 55%), hsl(25 50% 60%));
+    --gradient-soft: linear-gradient(180deg, hsl(240 10% 8%), hsl(240 8% 12%));
+    --gradient-hero: linear-gradient(135deg, hsl(320 65% 60%) 0%, hsl(280 60% 65%) 50%, hsl(15 60% 55%) 100%);
+
+    /* Shadows with brand colors - Dark Mode */
+    --shadow-soft: 0 2px 10px -2px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 8px 30px -8px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 40px hsl(320 65% 60% / 0.4);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease-out;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
