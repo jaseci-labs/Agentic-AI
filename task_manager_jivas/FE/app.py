@@ -4,7 +4,7 @@ import requests
 # --- PAGE CONFIG ---
 st.set_page_config(
     page_title="Jivas Assistant",
-    layout="wide",  # This will make the central part wider
+    layout="wide",
 )
 
 # --- CSS STYLING ---
@@ -45,6 +45,7 @@ st.markdown("""
 BASE_URL = "http://localhost:8000"
 LOGIN_ENDPOINT = f"{BASE_URL}/user/login"
 CHAT_ENDPOINT = f"{BASE_URL}/interact"
+TASKS_ENDPOINT = f"{BASE_URL}/action/walker/tasks_handling_action/list_tasks"
 
 # --- SESSION STATE INIT ---
 if 'token' not in st.session_state:
@@ -133,16 +134,55 @@ with tab1:
 # ========================
 with tab2:
     st.header("📋 All Scheduled Tasks")
-    st.info("This is a sample placeholder. Replace it once your API is ready.")
 
-    sample_tasks = """
-    ### 🗓️ Upcoming Tasks:
-    - **October 26, 2023**
-        - 📝 Finish marking all the papers by **11:59 PM**
-    - **October 30, 2023**
-        - 👬 Meet best friend at **8:00 AM**
-        - 📄 Submit EE1234 first draft by **11:59 PM**
-    - **November 2, 2023**
-        - 📚 Finish all homework by **11:59 PM**
-    """
-    st.markdown(sample_tasks, unsafe_allow_html=True)
+    if not st.session_state.token:
+        st.warning("Please login first using the sidebar.")
+    else:
+        cols = st.columns([1, 3])
+        with cols[0]:
+            refresh = st.button("🔄 Refresh")
+
+        # Auto-load once on first view, or when Refresh is clicked
+        should_load = st.session_state.get("_reload_tasks_once", True) or refresh
+
+        if should_load:
+            with st.spinner("Loading tasks..."):
+                try:
+                    headers = {"Authorization": f"Bearer {st.session_state.token}"}
+                    payload = {
+                        "agent_id": st.session_state.agent_id,
+                    }
+                    res = requests.post(TASKS_ENDPOINT, headers=headers, json=payload)
+
+                    if res.status_code == 200:
+                        data = res.json()
+                        reports = data.get("reports", [])
+                        tasks = reports[0] if reports and isinstance(reports[0], list) else []
+
+                        # Sort by date then time
+                        tasks_sorted = sorted(
+                            tasks,
+                            key=lambda t: (t.get("date", ""), t.get("time", ""))
+                        )
+
+                        if tasks_sorted:
+                            import pandas as pd
+                            df = pd.DataFrame(tasks_sorted)
+                            df.rename(
+                                columns={
+                                    "task": "Task",
+                                    "date": "Date",
+                                    "time": "Time",
+                                },
+                                inplace=True,
+                            )
+                            st.dataframe(df, use_container_width=True, hide_index=True)
+                        else:
+                            st.info("No scheduled tasks found.")
+                    else:
+                        st.error(f"Error fetching tasks: {res.status_code}")
+                except Exception as e:
+                    st.error(f"Failed to load tasks: {e}")
+
+            # only auto-load once
+            st.session_state._reload_tasks_once = False
