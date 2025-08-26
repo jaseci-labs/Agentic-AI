@@ -159,6 +159,7 @@ node RagChat(Chat) {
     
     JAC-SPECIFIC FEATURES TO SHOWCASE:
     - Use node for data entities with spatial relationships
+    - The `node` declaration should NOT be followed by a semicolon.
     - Use walker for traversing and processing data
     - Use obj for traditional object-oriented patterns
     - Use edge for defining relationships between nodes
