@@ -199,7 +199,7 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
 
             {/* Guest User Actions */}
             {isExpanded && !isAuthenticated && (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div className="text-xs text-gray-400 bg-gray-800/50 px-3 py-2 rounded-lg">
                   Free messages: {messageCount}/{maxFreeMessages}
                 </div>
@@ -209,12 +209,14 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
                     Sign Up
                   </Button>
                 </Link>
-                <Link to="/login">
-                  <Button variant="outline" className="w-full text-orange-500 border-orange-500 hover:bg-orange-500 hover:text-white">
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Sign In
-                  </Button>
-                </Link>
+                <div className="pt-2">
+                  <Link to="/login">
+                    <Button variant="outline" className="w-full text-orange-500 border-orange-500 hover:bg-orange-500 hover:text-white">
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
             
@@ -264,7 +266,7 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
             )}
 
             {!isExpanded && !isAuthenticated && (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Link to="/register">
                   <Button 
                     variant="ghost" 
