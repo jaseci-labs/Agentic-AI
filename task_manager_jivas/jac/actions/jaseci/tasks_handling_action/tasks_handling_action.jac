@@ -2,6 +2,7 @@ import from jivas.agent.action.action { Action }
 import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
 import from actions.jaseci.tasks_handling_action.task { Task }
 import from jivas.agent.memory.interaction_response { TextInteractionMessage, SilentInteractionMessage }
+import from datetime { datetime }
 import json;
 import re;
 
@@ -72,9 +73,10 @@ node TasksHandlingAction(Action) {
     }
 
     def handle_task_creation(visitor:agent_graph_walker) -> None {
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M");
         utterance = visitor.utterance;
         prompt_messages = [
-            {"system": self.prompt_extracting_task},
+            {"system": self.prompt_extracting_task + f"\nCurrent time: {current_time}"},
             {"human": utterance}
         ];
 
