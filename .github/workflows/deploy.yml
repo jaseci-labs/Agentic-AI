@@ -3,6 +3,7 @@ name: Build and Deploy JAC-GPT
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -12,6 +13,8 @@ jobs:
   deploy-jac-gpt:
     if: startsWith(github.ref, 'refs/tags/jac-gpt-') || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
 
     permissions:
       id-token: write
@@ -34,8 +37,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4.2.0
         with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-2
+          role-to-assume: arn:aws:iam::776241927220:role/GitHubActionsSharedECRRole
           role-session-name: GitHubActions
           audience: sts.amazonaws.com
 
@@ -57,23 +60,42 @@ jobs:
       - name: Get tag name
         id: tag
         run: |
-          # Get the tag name
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          # Remove prefixes (v, jac-gpt-) to get clean version number
-          CLEAN_VERSION=$(echo $TAG_NAME | sed -E 's/^(v|jac-gpt-)//g')
-        
-          # Set as output and also print for debugging
-          echo "Clean TAG version: $CLEAN_VERSION"
-          echo "tag=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual dispatch - use timestamp
+            TAG="manual-$(date +%Y%m%d-%H%M%S)"
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            # Release event - clean tag name
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            
+            # Remove prefixes: jac-gpt-v1.2.3 -> v1.2.3 or jac-gpt-1.2.3 -> 1.2.3
+            if [[ $TAG_NAME =~ ^jac-gpt-(.+)$ ]]; then
+              TAG="${BASH_REMATCH[1]}"
+            elif [[ $TAG_NAME =~ ^v(.+)$ ]]; then
+              TAG="$TAG_NAME"
+            else
+              # Use tag as-is if no prefix
+              TAG="$TAG_NAME"
+            fi
+          else
+            # Fallback
+            TAG="latest"
+          fi
+          
+          echo "Tag: $TAG"
+          echo "Event: ${{ github.event_name }}"
+          echo "Original Tag Name: ${TAG_NAME:-N/A}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       # Build and push Docker image
       - name: Build and push Docker image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REGISTRY: 776241927220.dkr.ecr.us-east-2.amazonaws.com
           ECR_REPOSITORY: jac-gpt/jac
           IMAGE_TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          # Build and push multi-architecture image with timestamp tag
+          echo "Building and pushing to: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          
+          # Build and push multi-architecture image
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
@@ -81,3 +103,18 @@ jobs:
             --push \
             .
         working-directory: jac-gpt/server
+
+  summary:
+    needs: deploy-jac-gpt
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Build and Push Summary
+        run: |
+          echo "## JAC-GPT Build and Push Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${{ needs.deploy-jac-gpt.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ECR Repository**: 776241927220.dkr.ecr.us-east-2.amazonaws.com/jac-gpt/jac" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ needs.deploy-jac-gpt.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Endpoint**: https://jac-gpt-api.jaseci.org" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note**: Deployment will be handled automatically by Flux in the infrastructure repository." >> $GITHUB_STEP_SUMMARY
