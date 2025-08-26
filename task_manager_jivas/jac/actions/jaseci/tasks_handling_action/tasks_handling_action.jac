@@ -164,6 +164,16 @@ node TasksHandlingAction(Action) {
     def check_scheduled_tasks() -> list {
         collection = self.get_collection();
         scheduled_tasks = [collection --> (`?Task)];
-        return scheduled_tasks;
+        result:list = [];
+        
+        for task in scheduled_tasks {
+            result.append({
+                "task_id": task.id,
+                "task": task.task,
+                "date": task.date,
+                "time": task.time
+            });
+        }
+        return result;
     }
 }
