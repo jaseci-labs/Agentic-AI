@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import MobileMenuButton from './MobileMenuButton';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
+import LimitReachedModal from './LimitReachedModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { jacServerService, ChatMessage as JacChatMessage } from '@/services/jacServer';
 // Logo path updated to use public folder
@@ -17,11 +18,12 @@ interface Message {
 }
 
 const JacChatbot = () => {
-  const { user } = useAuth();
+  const { user, messageCount, incrementMessageCount, canSendMessage, maxFreeMessages, isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Initialize session on component mount
   useEffect(() => {
@@ -68,6 +70,12 @@ const JacChatbot = () => {
       return;
     }
 
+    // Check if user can send message
+    if (!canSendMessage) {
+      setShowLimitModal(true);
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -77,6 +85,11 @@ const JacChatbot = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+
+    // Increment message count for non-authenticated users
+    if (!isAuthenticated) {
+      incrementMessageCount();
+    }
 
     try {
       // Send message to JAC server with user email
@@ -119,6 +132,14 @@ const JacChatbot = () => {
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* Mobile Menu Button */}
         <MobileMenuButton onClick={() => setSidebarOpen(true)} />
+
+        {/* Limit Reached Modal */}
+        <LimitReachedModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          messageCount={messageCount}
+          maxFreeMessages={maxFreeMessages}
+        />
         
         {/* Chat Messages */}
         <ScrollArea className="flex-1 p-4 lg:p-6">
@@ -163,7 +184,15 @@ const JacChatbot = () => {
         </ScrollArea>
         
         {/* Chat Input */}
-        <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+        <ChatInput 
+          onSendMessage={handleSendMessage} 
+          disabled={isLoading || !canSendMessage} 
+          placeholder={
+            !canSendMessage 
+              ? "Sign up to continue chatting..." 
+              : "Type your message..."
+          }
+        />
       </div>
     </div>
   );

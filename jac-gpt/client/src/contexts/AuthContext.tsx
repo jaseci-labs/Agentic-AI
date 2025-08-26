@@ -15,6 +15,11 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  messageCount: number;
+  incrementMessageCount: () => void;
+  resetMessageCount: () => void;
+  canSendMessage: boolean;
+  maxFreeMessages: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +31,26 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [messageCount, setMessageCount] = useState(0);
+  const maxFreeMessages = 10;
+
+  // For development/testing purposes - expose reset function globally
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      (window as any).resetMessageCount = resetMessageCount;
+      console.log('Development mode: Use window.resetMessageCount() to reset guest message count');
+    }
+  }, []);
+
+  // Load message count from localStorage for non-authenticated users
+  useEffect(() => {
+    if (!user) {
+      const storedCount = localStorage.getItem('guest_message_count');
+      if (storedCount) {
+        setMessageCount(parseInt(storedCount, 10));
+      }
+    }
+  }, [user]);
 
   // Check for existing token on app start
   useEffect(() => {
@@ -133,6 +158,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(userData);
       localStorage.setItem('auth_token', token);
       localStorage.setItem('user_data', JSON.stringify(userData));
+      
+      // Reset message count when user logs in
+      resetMessageCount();
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -186,9 +214,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(userData);
         localStorage.setItem('auth_token', data.token);
         localStorage.setItem('user_data', JSON.stringify(userData));
+        
+        // Reset message count when user registers
+        resetMessageCount();
       } else {
         // Fallback: try to login after registration
         await login(email, password);
+        // Reset message count is handled in login function
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -198,10 +230,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const incrementMessageCount = () => {
+    if (!user) {
+      const newCount = messageCount + 1;
+      setMessageCount(newCount);
+      localStorage.setItem('guest_message_count', newCount.toString());
+    }
+  };
+
+  const resetMessageCount = () => {
+    setMessageCount(0);
+    localStorage.removeItem('guest_message_count');
+    console.log('Guest message count has been reset to 0');
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
+    // Reset message count when logging out
+    resetMessageCount();
   };
 
   const value: AuthContextType = {
@@ -212,6 +260,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
+    messageCount,
+    incrementMessageCount,
+    resetMessageCount,
+    canSendMessage: !!user || messageCount < maxFreeMessages,
+    maxFreeMessages,
   };
 
   return (
