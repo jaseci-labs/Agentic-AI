@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from streamlit.components.v1 import html as components_html
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -17,26 +18,79 @@ st.markdown("""
             padding-right: 50px;
         }
 
-        /* Push chat input to the bottom */
+        /* Full height layout */
         .block-container {
             display: flex;
             flex-direction: column;
-            height: 95vh;
+            height: 100vh;
+            padding-top: 1rem;
+            padding-bottom: 0;
         }
 
-        .chat-container {
-            flex-grow: 1;
+        /* Ensure tabs stay at top */
+        .stTabs {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: white;
+            padding-bottom: 1rem;
+        }
+
+        /* Chat wrapper with proper flex layout */
+        .chat-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+            overflow: hidden;
+        }
+
+        /* Scrollable chat messages area */
+        .chat-scroll {
+            flex: 1;
             overflow-y: auto;
+            padding: 1rem 0;
             margin-bottom: 1rem;
+            max-height: calc(100vh - 300px);
         }
 
         .chat-input {
-            margin-top: auto;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            padding: 1rem 0;
+            border-top: 1px solid #e0e0e0;
+            z-index: 50;
         }
 
-        /* Optional: slightly reduce margins for better space */
+        /* Style adjustments for better spacing */
         .stChatInput {
-            margin-bottom: 10px !important;
+            margin: 0 !important;
+        }
+
+        /* Custom scrollbar for chat area */
+        .chat-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .chat-scroll::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Ensure message spacing */
+        .stChatMessage {
+            margin-bottom: 1rem;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -53,7 +107,7 @@ if 'token' not in st.session_state:
 if 'session_id' not in st.session_state:
     st.session_state.session_id = ""
 if 'agent_id' not in st.session_state:
-    st.session_state.agent_id = "n:Agent:688361e9c59dc3acab815526"
+    st.session_state.agent_id = "n:Agent:68addbb5148f9ebad6bc30ed"
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
@@ -83,23 +137,51 @@ with tab1:
     if not st.session_state.token:
         st.warning("Please login first using the sidebar.")
     else:
-        # Layout container
-        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        # Create the main chat wrapper
+        chat_container = st.container()
+        
+        with chat_container:
+            # Scrollable messages area
+            messages_container = st.container()
+            with messages_container:
+                st.markdown('<div id="chat-scroll" class="chat-scroll">', unsafe_allow_html=True)
+                
+                # Display all chat messages
+                for entry in st.session_state.chat_history:
+                    with st.chat_message(entry["role"]):
+                        st.markdown(entry["content"], unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
 
-        # Chat history first (top area)
-        for entry in st.session_state.chat_history:
-            with st.chat_message(entry["role"]):
-                st.markdown(entry["content"], unsafe_allow_html=True)
+            # Auto-scroll to newest message
+            if st.session_state.chat_history:
+                components_html(
+                    """
+                    <script>
+                      setTimeout(() => {
+                        const el = window.parent.document.getElementById('chat-scroll');
+                        if (el) { 
+                          el.scrollTop = el.scrollHeight; 
+                        }
+                      }, 100);
+                    </script>
+                    """,
+                    height=0,
+                )
 
-        st.markdown('</div>', unsafe_allow_html=True)  # End chat-container
+        # Fixed typing bar at bottom (outside the scrollable area)
+        input_container = st.container()
+        with input_container:
+            st.markdown('<div class="chat-input">', unsafe_allow_html=True)
+            prompt = st.chat_input("Ask me anything...")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        # Chat input at the bottom
-        prompt = st.chat_input("Ask me anything...")
+        # Handle new messages
         if prompt:
-            st.chat_message("user").markdown(prompt)
+            # Add user message to history
             st.session_state.chat_history.append({"role": "user", "content": prompt})
 
-            # Backend request
+            # Make API call
             headers = {"Authorization": f"Bearer {st.session_state.token}"}
             payload = {
                 "utterance": prompt,
@@ -108,26 +190,30 @@ with tab1:
                 "tts": "false",
                 "data": {},
                 "verbose": "false",
-                "streaming": "false"
+                "streaming": "false",
             }
 
-            res = requests.post(CHAT_ENDPOINT, headers=headers, json=payload)
-
-            if res.status_code == 200:
-                try:
-                    reports = res.json().get("reports", [])
-                    if reports:
-                        message = reports[0]["response"]["message"]["content"]
-                        session_id = reports[0]["response"]["session_id"]
-                        st.session_state.session_id = session_id  # Save session
-                        st.chat_message("assistant").markdown(message)
-                        st.session_state.chat_history.append({"role": "assistant", "content": message})
-                    else:
-                        st.error("No response from assistant.")
-                except Exception as e:
-                    st.error(f"Error parsing response: {e}")
-            else:
-                st.error(f"Error: {res.status_code}")
+            with st.spinner("Thinking..."):
+                res = requests.post(CHAT_ENDPOINT, headers=headers, json=payload)
+                if res.status_code == 200:
+                    try:
+                        reports = res.json().get("reports", [])
+                        if reports:
+                            message = reports[0]["response"]["message"]["content"]
+                            session_id = reports[0]["response"]["session_id"]
+                            st.session_state.session_id = session_id
+                            st.session_state.chat_history.append(
+                                {"role": "assistant", "content": message}
+                            )
+                        else:
+                            st.error("No response from assistant.")
+                    except Exception as e:
+                        st.error(f"Error parsing response: {e}")
+                else:
+                    st.error(f"Error: {res.status_code}")
+            
+            # Rerun to show new messages
+            st.rerun()
 
 # ========================
 #    SCHEDULED TASKS
