@@ -144,22 +144,6 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
                   <MessageSquare className="w-4 h-4 text-orange-500" />
                   <span className="text-sm truncate">Jac Code Generation</span>
                 </div>
-                
-                {/* Example previous chats */}
-                {[
-                  'Graph Traversal in Jac',
-                  'Function Definitions',
-                  'Class Structure Help',
-                  'Loop Examples'
-                ].map((chat, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white cursor-pointer transition-colors"
-                  >
-                    <MessageSquare className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm truncate">{chat}</span>
-                  </div>
-                ))}
               </div>
             </div>
           )}
