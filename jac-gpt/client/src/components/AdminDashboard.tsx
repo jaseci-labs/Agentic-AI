@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Users, MessageSquare, Calendar, Eye, EyeOff, LogOut } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Users, MessageSquare, Calendar, Eye, EyeOff, LogOut, HelpCircle } from 'lucide-react';
 
 interface User {
   email: string;
@@ -40,14 +41,24 @@ interface SessionDetail {
   total_messages: number;
 }
 
+interface UserQuestion {
+  question: string;
+  user_email?: string;
+  user_name?: string;
+  session_id: string;
+  timestamp: string;
+}
+
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [userQuestions, setUserQuestions] = useState<UserQuestion[]>([]);
+  const [questionSearchTerm, setQuestionSearchTerm] = useState('');
   const [selectedSession, setSelectedSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions' | 'questions'>('overview');
 
   const fetchUsers = async () => {
     try {
@@ -130,6 +141,59 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchUserQuestions = async () => {
+    try {
+      const questions: UserQuestion[] = [];
+      
+      // First get all sessions with their messages
+      for (const session of sessions) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              session_id: session.session_id,
+              requester_email: user?.email 
+            }),
+          });
+
+          const data = await response.json();
+          if (data.reports && data.reports[0] && data.reports[0].messages) {
+            const sessionMessages = data.reports[0].messages;
+            
+            // Filter only user messages (questions)
+            const userMessages = sessionMessages.filter((msg: Message) => msg.role === 'user');
+            
+            // Find user name from users array
+            const sessionUser = users.find(u => u.email === session.user_email);
+            
+            userMessages.forEach((msg: Message) => {
+              questions.push({
+                question: msg.content,
+                user_email: session.user_email,
+                user_name: sessionUser?.name,
+                session_id: session.session_id,
+                timestamp: msg.timestamp
+              });
+            });
+          }
+        } catch (err) {
+          console.error(`Error fetching messages for session ${session.session_id}:`, err);
+        }
+      }
+      
+      // Sort questions by timestamp (newest first)
+      questions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      setUserQuestions(questions);
+    } catch (error) {
+      console.error('Error fetching user questions:', error);
+      setError('Failed to fetch user questions');
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -141,6 +205,13 @@ const AdminDashboard = () => {
       loadData();
     }
   }, [user]);
+
+  // Separate useEffect to fetch user questions after sessions and users are loaded
+  useEffect(() => {
+    if (sessions.length > 0 && users.length > 0 && user?.role === 'admin') {
+      fetchUserQuestions();
+    }
+  }, [sessions, users]);
 
   if (!user || user.role !== 'admin') {
     return (
@@ -169,6 +240,14 @@ const AdminDashboard = () => {
 
   const truncateText = (text: string, maxLength: number = 100) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
+
+  const getFilteredQuestions = () => {
+    return userQuestions.filter(question => 
+      question.question.toLowerCase().includes(questionSearchTerm.toLowerCase()) ||
+      question.user_email?.toLowerCase().includes(questionSearchTerm.toLowerCase()) ||
+      question.user_name?.toLowerCase().includes(questionSearchTerm.toLowerCase())
+    );
   };
 
   return (
@@ -218,6 +297,13 @@ const AdminDashboard = () => {
           >
             <MessageSquare className="w-4 h-4 mr-2" />
             Sessions ({sessions.length})
+          </Button>
+          <Button
+            variant={activeTab === 'questions' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('questions')}
+          >
+            <HelpCircle className="w-4 h-4 mr-2" />
+            Questions ({userQuestions.length})
           </Button>
         </div>
 
@@ -415,6 +501,86 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Questions Tab */}
+        {activeTab === 'questions' && (
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader className="bg-gray-50 border-b border-gray-200">
+              <CardTitle className="text-gray-900">User Questions</CardTitle>
+              <CardDescription className="text-gray-600">
+                All questions asked by users across all chat sessions
+                {questionSearchTerm && (
+                  <span className="ml-2 text-orange-600">
+                    • {getFilteredQuestions().length} of {userQuestions.length} questions shown
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="mb-4">
+                <Input
+                  placeholder="Search questions..."
+                  value={questionSearchTerm}
+                  onChange={(e) => setQuestionSearchTerm(e.target.value)}
+                  className="max-w-md bg-gray-50 border-gray-200 text-gray-700 placeholder:text-gray-500 focus:bg-white focus:border-orange-300 focus:ring-orange-200"
+                />
+              </div>
+              <ScrollArea className="h-96">
+                <div className="space-y-4">
+                  {userQuestions.length > 0 ? (
+                    getFilteredQuestions().length > 0 ? (
+                      getFilteredQuestions().map((question, index) => (
+                        <div key={index} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              {question.user_name && (
+                                <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                                  {question.user_name}
+                                </Badge>
+                              )}
+                              {question.user_email && (
+                                <Badge variant="outline" className="border-gray-300 text-gray-700">
+                                  {question.user_email}
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="border-orange-300 text-orange-700 bg-orange-50">
+                                {question.session_id.substring(0, 8)}...
+                              </Badge>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {formatDate(question.timestamp)}
+                            </span>
+                          </div>
+                          <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-orange-400">
+                            <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                              {question.question}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-center justify-center h-64 text-gray-500">
+                        <div className="text-center">
+                          <HelpCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No questions match your search</p>
+                          <p className="text-sm mt-2">Try different search terms</p>
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <div className="flex items-center justify-center h-64 text-gray-500">
+                      <div className="text-center">
+                        <HelpCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No user questions found</p>
+                        <p className="text-sm mt-2">Questions will appear here once users start chatting</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
