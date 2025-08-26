@@ -306,6 +306,11 @@ walker interact {
     has user_email: str = "";
     has chat_history: list[dict] = [];
 
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
     can init_session with `root entry {
         visit [-->](`?Session)(?id == self.session_id) else {
             session_node = here ++> Session(id=self.session_id, user_email=self.user_email, chat_history=[]);
@@ -371,6 +376,11 @@ node Session {
 walker get_session {
     has session_id: str;
 
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
     can get_chat_history with `root entry {
         # Try to get session from database first
         db = get_database();
@@ -408,6 +418,11 @@ walker get_session {
 
 walker new_session {
     has session_id: str = "";
+
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
 
     can create_session with `root entry {
         if not self.session_id {

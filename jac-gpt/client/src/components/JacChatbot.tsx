@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import MobileMenuButton from './MobileMenuButton';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
+import LimitReachedModal from './LimitReachedModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { jacServerService, ChatMessage as JacChatMessage } from '@/services/jacServer';
+import { MessageCircle, UserPlus } from 'lucide-react';
 // Logo path updated to use public folder
 const jacLogo = "/logo.png";
 
@@ -17,11 +22,12 @@ interface Message {
 }
 
 const JacChatbot = () => {
-  const { user } = useAuth();
+  const { user, messageCount, incrementMessageCount, canSendMessage, maxFreeMessages, isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Initialize session on component mount
   useEffect(() => {
@@ -68,6 +74,12 @@ const JacChatbot = () => {
       return;
     }
 
+    // Check if user can send message
+    if (!canSendMessage) {
+      setShowLimitModal(true);
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -77,6 +89,11 @@ const JacChatbot = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+
+    // Increment message count for non-authenticated users
+    if (!isAuthenticated) {
+      incrementMessageCount();
+    }
 
     try {
       // Send message to JAC server with user email
@@ -120,6 +137,43 @@ const JacChatbot = () => {
         {/* Mobile Menu Button */}
         <MobileMenuButton onClick={() => setSidebarOpen(true)} />
         
+        {/* Message Limit Alert for Non-authenticated Users */}
+        {!isAuthenticated && (
+          <div className="border-b border-gray-700 bg-gray-800">
+            <div className="max-w-4xl mx-auto p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <MessageCircle className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm text-gray-300">
+                    Free messages: {messageCount}/{maxFreeMessages}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Link to="/login">
+                    <Button variant="outline" size="sm" className="text-orange-500 border-orange-500 hover:bg-orange-500 hover:text-white">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Sign Up for Unlimited
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Limit Reached Modal */}
+        <LimitReachedModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          messageCount={messageCount}
+          maxFreeMessages={maxFreeMessages}
+        />
+        
         {/* Chat Messages */}
         <ScrollArea className="flex-1 p-4 lg:p-6">
           <div className="max-w-4xl mx-auto space-y-1 lg:pt-0 pt-16">
@@ -131,6 +185,11 @@ const JacChatbot = () => {
                   </div>
                   <p className="text-xl text-gray-300 font-medium">Ask me anything about Jac</p>
                   <p className="text-sm text-gray-500 mt-2">Start a conversation about Jac programming language</p>
+                  {!isAuthenticated && (
+                    <p className="text-xs text-orange-400 mt-2">
+                      Try {maxFreeMessages} messages free, then sign up for unlimited access
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -163,7 +222,15 @@ const JacChatbot = () => {
         </ScrollArea>
         
         {/* Chat Input */}
-        <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+        <ChatInput 
+          onSendMessage={handleSendMessage} 
+          disabled={isLoading || !canSendMessage} 
+          placeholder={
+            !canSendMessage 
+              ? "Sign up to continue chatting..." 
+              : "Type your message..."
+          }
+        />
       </div>
     </div>
   );

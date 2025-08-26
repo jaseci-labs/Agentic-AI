@@ -6,10 +6,13 @@ import { Send } from 'lucide-react';
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   disabled?: boolean;
+  placeholder?: string;
 }
 
-const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
+const ChatInput = ({ onSendMessage, disabled = false, placeholder }: ChatInputProps) => {
   const [message, setMessage] = useState('');
+
+  const defaultPlaceholder = "Ask about Jac syntax, functions, loops, classes, or request code examples...";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +37,7 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about Jac syntax, functions, loops, classes, or request code examples..."
+            placeholder={placeholder || defaultPlaceholder}
             className="min-h-[60px] max-h-[200px] resize-none bg-background/80 border-border/50 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 rounded-xl text-base leading-relaxed"
             disabled={disabled}
           />

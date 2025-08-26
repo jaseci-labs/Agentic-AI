@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Menu, X, Plus, MessageSquare, Settings, HelpCircle, ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
+import { Menu, X, Plus, MessageSquare, Settings, HelpCircle, ChevronLeft, ChevronRight, LogOut, User, UserPlus, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +23,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated, messageCount, maxFreeMessages } = useAuth();
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -150,8 +151,8 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
 
           {/* Footer */}
           <div className="p-4 border-t border-gray-700 space-y-2">
-            {/* User Profile */}
-            {isExpanded && user && (
+            {/* Authenticated User Profile */}
+            {isExpanded && isAuthenticated && user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
@@ -195,8 +196,29 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+
+            {/* Guest User Actions */}
+            {isExpanded && !isAuthenticated && (
+              <div className="space-y-2">
+                <div className="text-xs text-gray-400 bg-gray-800/50 px-3 py-2 rounded-lg">
+                  Free messages: {messageCount}/{maxFreeMessages}
+                </div>
+                <Link to="/register">
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Sign Up
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="outline" className="w-full text-orange-500 border-orange-500 hover:bg-orange-500 hover:text-white">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
+            )}
             
-            {!isExpanded && user && (
+            {!isExpanded && isAuthenticated && user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
@@ -241,6 +263,29 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
               </DropdownMenu>
             )}
 
+            {!isExpanded && !isAuthenticated && (
+              <div className="space-y-1">
+                <Link to="/register">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full px-2 py-2 text-orange-500 hover:text-white hover:bg-orange-600"
+                    title="Sign Up"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full px-2 py-2 text-gray-400 hover:text-white hover:bg-gray-800"
+                    title="Sign In"
+                  >
+                    <LogIn className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+
             <Button 
               variant="ghost" 
               className={`w-full justify-start gap-3 text-gray-400 hover:text-white hover:bg-gray-800 ${!isExpanded ? 'px-2' : ''}`}
@@ -254,8 +299,8 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
             {/* Status indicator */}
             {isExpanded && (
               <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-800/50 px-3 py-2 rounded-lg mt-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                Ready to help
+                <div className={`w-2 h-2 rounded-full animate-pulse ${isAuthenticated ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                {isAuthenticated ? 'Ready to help' : 'Guest mode'}
               </div>
             )}
           </div>

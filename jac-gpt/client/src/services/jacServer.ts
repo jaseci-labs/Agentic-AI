@@ -28,16 +28,16 @@ class JacServerService {
     this.defaultPassword = import.meta.env.VITE_JAC_USER_PASSWORD || 'password';
   }
 
-  // Get authentication token from localStorage or authenticate
-  private async getAuthToken(): Promise<string> {
-    // First try to get token from localStorage (from auth context)
+  // Get authentication token from localStorage (no fallback authentication)
+  private async getAuthToken(): Promise<string | null> {
+    // Only get token from localStorage (from auth context)
     const token = localStorage.getItem('auth_token');
-    if (token) {
-      return token;
-    }
+    return token;
+  }
 
-    // Fallback to default authentication for backwards compatibility
-    return await this.authenticate();
+  // Check if user is authenticated
+  private isAuthenticated(): boolean {
+    return !!localStorage.getItem('auth_token');
   }
 
   // Authenticate with the JAC server (fallback method)
@@ -87,22 +87,33 @@ class JacServerService {
     }
   }
 
-  // Ensure authentication before making requests
+  // Ensure authentication before making requests (only for authenticated users)
   private async ensureAuthenticated(): Promise<string> {
-    return await this.getAuthToken();
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    return token;
   }
 
   // Create a new session
   async createSession(sessionId?: string): Promise<SessionResponse> {
-    const token = await this.ensureAuthenticated();
-
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add auth header only if user is authenticated
+      if (this.isAuthenticated()) {
+        const token = await this.getAuthToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${this.baseUrl}/walker/new_session`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           session_id: sessionId || '',
         }),
@@ -122,15 +133,22 @@ class JacServerService {
 
   // Get existing session
   async getSession(sessionId: string): Promise<SessionResponse> {
-    const token = await this.ensureAuthenticated();
-
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add auth header only if user is authenticated
+      if (this.isAuthenticated()) {
+        const token = await this.getAuthToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${this.baseUrl}/walker/get_session`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           session_id: sessionId,
         }),
@@ -150,9 +168,19 @@ class JacServerService {
 
   // Send a message and get response
   async sendMessage(message: string, sessionId: string, userEmail?: string): Promise<JacResponse> {
-    const token = await this.ensureAuthenticated();
-
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add auth header only if user is authenticated
+      if (this.isAuthenticated()) {
+        const token = await this.getAuthToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const requestBody: any = {
         message,
         session_id: sessionId,
@@ -165,10 +193,7 @@ class JacServerService {
 
       const response = await fetch(`${this.baseUrl}/walker/interact`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify(requestBody),
       });
 
