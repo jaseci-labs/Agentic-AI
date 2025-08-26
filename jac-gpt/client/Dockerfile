@@ -13,6 +13,9 @@ RUN bun install
 # Copy source code
 COPY . .
 
+# Accept build arguments
+ARG VITE_API_URL=http://localhost:8000
+
 # Build the application
 RUN bun run build
 
