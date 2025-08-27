@@ -33,7 +33,7 @@ content_creator_v1_jac/
 
 - **agents/**  
   Contains specialized agents, each responsible for a specific aspect of content creation:
-  - `trend_agent.jac`: Analyzes trends to inform content strategy.
-  - `writer_agent.jac`: Generates written content.
-  - `editor_agent.py`: Edits and refines content by `write_agent`.
-  - `media_agent.py`: Handles image integration using DALL-E 2.
+  - **`trend_agent.jac`: Analyzes trends to inform content strategy.**
+  - **`writer_agent.jac`: Generates written content.**
+  - `editor_agent.jac`: Edits and refines content by `write_agent`.
+  - `media_agent.jac`: Handles image integration using DALL-E 2.
