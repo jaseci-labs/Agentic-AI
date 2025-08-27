@@ -62,8 +62,8 @@ jac-gpt/
    OPENAI_API_KEY=your-openai-api-key-here
    
    # MongoDB Configuration
-   MONGODB_URI=mongodb://localhost:27017/
-   MONGODB_DATABASE=jac_gpt
+   DATABASE_HOST=mongodb://localhost:27017/
+   DATABASE_NAME=jac_gpt
    
    # Optional: Serper API for web search
    SERPER_API_KEY=your-serper-api-key-here
