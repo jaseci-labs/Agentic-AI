@@ -1,0 +1,12 @@
+# Environment variables
+.env
+*.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Project-specific
+content_creator_v1/.env
+content_creator_v1/__pycache__/
