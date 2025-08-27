@@ -10,3 +10,5 @@ __pycache__/
 # Project-specific
 content_creator_v1/.env
 content_creator_v1/__pycache__/
+content_creator_v1_jac/env
+content_creator_v1_jac/__pycache__/
