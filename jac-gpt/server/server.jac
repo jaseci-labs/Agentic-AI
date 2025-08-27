@@ -5,6 +5,7 @@ import from mtllm.llm {Model}
 import from dotenv {load_dotenv}
 import from database {get_database}
 import from rag_engine {RagEngine}
+import from simple_docs {get_sitemap, get_doc_content, suggest_docs}
 
 with entry {
     load_dotenv(override=True);
@@ -699,4 +700,240 @@ walker get_user_info {
             "total_sessions": len(user_sessions)
         };
     }
+}
+
+# Documentation-related walkers
+walker get_documentation_urls {
+    """Get all documentation URLs from sitemap.xml"""
+    
+    obj __specs__ {
+        static has methods: list = ["get"];
+        static has auth: bool = False;
+    }
+
+    can extract_urls with `root entry {
+        import xml.etree.ElementTree as ET;
+        import os;
+        
+        try {
+            # Read sitemap.xml file
+            sitemap_path = os.path.join(os.path.dirname(__file__), "sitemap.xml");
+            tree = ET.parse(sitemap_path);
+            root_element = tree.getroot();
+            
+            # Extract URLs and their metadata
+            urls = [];
+            namespace = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'};
+            
+            for url_element in root_element.findall('ns:url', namespace) {
+                loc = url_element.find('ns:loc', namespace);
+                lastmod = url_element.find('ns:lastmod', namespace);
+                priority = url_element.find('ns:priority', namespace);
+                
+                if loc is not None {
+                    url_info = {
+                        "url": loc.text,
+                        "lastmod": lastmod.text if lastmod is not None else "",
+                        "priority": float(priority.text) if priority is not None else 0.5
+                    };
+                    urls.append(url_info);
+                }
+            }
+            
+            # Sort by priority (highest first) and then by URL structure
+            def sort_key(x: dict) -> tuple {
+                return (-x["priority"], x["url"]);
+            }
+            urls.sort(key=sort_key);
+            
+            report {
+                "success": True,
+                "urls": urls,
+                "total": len(urls)
+            };
+        } except Exception as e {
+            report {
+                "success": False,
+                "error": str(e),
+                "urls": [],
+                "total": 0
+            };
+        }
+    }
+}
+
+walker get_documentation_content {
+    """Fetch documentation content from a given URL"""
+    has url: str;
+    
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
+    can fetch_content with `root entry {
+        import requests;
+        import os;
+        import urllib.parse;
+        
+        try {
+            # Check if it's a jac-lang.org URL
+            parsed_url = urllib.parse.urlparse(self.url);
+            if "jac-lang.org" not in parsed_url.netloc {
+                report {
+                    "success": False,
+                    "error": "Only jac-lang.org URLs are supported",
+                    "content": "",
+                    "title": ""
+                };
+                return;
+            }
+            
+            # Try to serve from local docs first
+            url_path = parsed_url.path.strip('/');
+            local_doc_path = os.path.join(os.path.dirname(__file__), "docs", url_path);
+            
+            # Check for index.html in the directory
+            if os.path.isdir(local_doc_path) {
+                index_path = os.path.join(local_doc_path, "index.html");
+                if os.path.exists(index_path) {
+                    local_doc_path = index_path;
+                }
+            }
+            
+            # Check for .html extension
+            if not local_doc_path.endswith('.html') and os.path.exists(local_doc_path + '.html') {
+                local_doc_path += '.html';
+            }
+            
+            content = "";
+            title = "";
+            
+            if os.path.exists(local_doc_path) {
+                # Read local file
+                with open(local_doc_path, 'r', encoding='utf-8') as f {
+                    content = f.read();
+                }
+                title = self._extract_title_from_html(content);
+            } else {
+                # Fallback to fetching from remote URL
+                response = requests.get(self.url, timeout=10);
+                response.raise_for_status();
+                content = response.text;
+                title = self._extract_title_from_html(content);
+            }
+            
+            # Clean up the content for better display
+            cleaned_content = self._clean_html_content(content);
+            
+            report {
+                "success": True,
+                "content": cleaned_content,
+                "title": title,
+                "url": self.url,
+                "source": "local" if os.path.exists(local_doc_path) else "remote"
+            };
+            
+        } except Exception as e {
+            report {
+                "success": False,
+                "error": str(e),
+                "content": "",
+                "title": "",
+                "url": self.url
+            };
+        }
+    }
+}
+
+walker suggest_documentation {
+    """Suggest relevant documentation based on chat message using AI"""
+    has message: str;
+    has chat_history: list[dict] = [];
+    
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
+    """Analyze the user's message and suggest the most relevant Jac documentation URLs.
+    
+    Based on the message content, suggest 1-3 most relevant documentation pages from the Jac ecosystem:
+    
+    DOCUMENTATION CATEGORIES AND THEIR URLS:
+    
+    **Getting Started & Basics:**
+    - Introduction: https://www.jac-lang.org/learn/introduction/
+    - Getting Started: https://www.jac-lang.org/learn/getting_started/
+    - Installation: https://www.jac-lang.org/learn/installation/
+    - Jac in a Flash: https://www.jac-lang.org/learn/jac_in_a_flash/
+    
+    **Core Language Features:**
+    - Keywords: https://www.jac-lang.org/learn/keywords/
+    - Big Features: https://www.jac-lang.org/learn/bigfeatures/
+    - Jac Reference: https://www.jac-lang.org/learn/jac_ref/
+    
+    **Object-Spatial Programming:**
+    - Nodes and Edges: https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/
+    - Walkers: https://www.jac-lang.org/learn/data_spatial/walkers/
+    - Filtering: https://www.jac-lang.org/learn/data_spatial/filtering/
+    - Sequence: https://www.jac-lang.org/learn/data_spatial/sequence/
+    - FAQ: https://www.jac-lang.org/learn/data_spatial/FAQ/
+    
+    **AI Integration (Jac-MTLLM):**
+    - Quickstart: https://www.jac-lang.org/learn/jac-mtllm/quickstart/
+    - With LLM: https://www.jac-lang.org/learn/jac-mtllm/with_llm/
+    - Usage: https://www.jac-lang.org/learn/jac-mtllm/usage/
+    - Python Integration: https://www.jac-lang.org/learn/jac-mtllm/python_integration/
+    - Multimodality: https://www.jac-lang.org/learn/jac-mtllm/multimodality/
+    - Creating MTLLM Plugins: https://www.jac-lang.org/learn/jac-mtllm/creating_mtllm_plugins/
+    
+    **Cloud Development (Jac-Cloud):**
+    - Introduction: https://www.jac-lang.org/learn/jac-cloud/introduction/
+    - Quickstart: https://www.jac-lang.org/learn/jac-cloud/quickstart/
+    - Deployment: https://www.jac-lang.org/learn/jac-cloud/deployment/
+    - WebSocket: https://www.jac-lang.org/learn/jac-cloud/websocket/
+    - Webhook: https://www.jac-lang.org/learn/jac-cloud/webhook/
+    - Async Walker: https://www.jac-lang.org/learn/jac-cloud/async_walker/
+    
+    **Jac Book (Comprehensive Tutorial):**
+    - Chapters 1-20: https://www.jac-lang.org/jac_book/chapter_X/ (where X is 1-20)
+    
+    **Examples:**
+    - RAG Chatbot: https://www.jac-lang.org/learn/examples/rag_chatbot/Overview/
+    - RPG Game: https://www.jac-lang.org/learn/examples/mtp_examples/rpg_game/
+    - Fantasy Trading Game: https://www.jac-lang.org/learn/examples/mtp_examples/fantasy_trading_game/
+    
+    **Tools:**
+    - CLI: https://www.jac-lang.org/learn/tools/cli/
+    - Playground: https://www.jac-lang.org/playground/
+    - Jac Playground: https://www.jac-lang.org/learn/jac_playground/
+    
+    **Advanced Topics:**
+    - DSP Foundation: https://www.jac-lang.org/learn/dspfoundation/
+    - Jac Lens: https://www.jac-lang.org/learn/jac-lens/
+    - Research: https://www.jac-lang.org/learn/research/
+    
+    **Community:**
+    - Roadmap: https://www.jac-lang.org/communityhub/roadmap/
+    - Top Contributors: https://www.jac-lang.org/communityhub/top_contributors/
+    - Release Notes: https://www.jac-lang.org/communityhub/release_notes/
+    
+    **Instructions:**
+    1. Analyze the user's message for key topics and intent
+    2. Suggest the 1-3 most relevant documentation URLs
+    3. Provide a brief explanation for each suggestion
+    4. Return as a JSON list with this structure:
+       [{"url": "...", "title": "...", "reason": "..."}]
+    
+    **Examples of good suggestions:**
+    - For "How do I create nodes?" → suggest nodes_and_edges documentation
+    - For "AI integration in Jac" → suggest jac-mtllm quickstart
+    - For "Getting started" → suggest introduction and getting_started
+    - For "Cloud deployment" → suggest jac-cloud introduction and deployment
+    - For "Examples" → suggest relevant example documentation"""
+    def suggest(message: str, chat_history: list[dict]) -> str by llm(
+        method="Reason",
+        temperature=0.1
+    );
 }
