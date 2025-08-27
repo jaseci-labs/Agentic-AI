@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Users, User, Settings } from "lucide-react";
+import { Heart, Users, User } from "lucide-react";
 
 const Navigation = () => {
   return (
@@ -32,7 +32,7 @@ const Navigation = () => {
           </Button>
         </div>
 
-        {/* User Avatar */}
+        {/* User Actions */}
         <div className="flex items-center space-x-3">
           <Button variant="hero" size="sm">
             Share Memory
