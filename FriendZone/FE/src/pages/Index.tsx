@@ -1,21 +1,117 @@
-import { useState } from "react";
+import React, { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
 import Navigation from "@/components/Navigation";
 import MemoryFeed from "@/components/MemoryFeed";
 import SharedMemoriesFeed from "@/components/SharedMemoriesFeed";
 import FriendsSection from "@/components/FriendsSection";
 import ProfileSection from "@/components/ProfileSection";
-import { Heart, Users, Camera, Sparkles, Share2, User } from "lucide-react";
+import { Heart, Users, Camera, Share2, User } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { HOST } from "@/lib/config";
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("memories");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = React.useState("memories");
+  // Log active tab changes
+  React.useEffect(() => {
+    console.log("Index.tsx: activeTab changed to", activeTab);
+  }, [activeTab]);
+
+  // Fetch user data to confirm authentication and display user info
+  const { data: user, isLoading, error } = useQuery<User, Error>({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      console.log("Index.tsx: Fetching user data with token:", token); // Debug: Log token
+      if (!token) {
+        throw new Error("No token found");
+      }
+      const response = await fetch(`${HOST}/walker/get_profile`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      console.log("Index.tsx: User data response:", data); // Debug: Log user data
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch user data");
+      }
+      return data;
+    },
+    retry: false,
+  });
+
+  // Handle authentication errors
+  useEffect(() => {
+    if (error) {
+      console.error("Index.tsx: User data fetch error:", error.message); // Debug: Log error
+      toast({
+        title: "Authentication Error",
+        description: error.message || "Your session has expired. Please log in again.",
+        variant: "destructive",
+      });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login", { replace: true });
+    }
+  }, [error, navigate]);
+
+  // Logout handler
+  const handleLogout = () => {
+    console.log("Index.tsx: Logging out user"); // Debug: Log logout
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully.",
+    });
+    navigate("/login", { replace: true });
+  };
+
+  if (isLoading) {
+    console.log("Index.tsx: Rendering loading state"); // Debug: Log loading
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <svg
+          className="animate-spin h-8 w-8 text-primary"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  console.log("Index.tsx: Rendering with user:", user); // Debug: Log user
 
   return (
     <div className="min-h-screen bg-gradient-soft">
-      <Navigation />
+      <Navigation onLogout={handleLogout} /> {/* Pass logout handler */}
       
       {/* Hero Section */}
       <section className="pt-24 pb-8 px-4">
@@ -23,10 +119,10 @@ const Index = () => {
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               <span className="bg-gradient-hero bg-clip-text text-transparent">
-                Share Memories
+                Welcome, {user?.name || user?.email || "User"}!
               </span>
               <br />
-              <span className="text-foreground">Build Friendships</span>
+              <span className="text-foreground">Share Memories, Build Friendships</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               FriendZone is where authentic connections happen. Share your favorite memories, 
@@ -81,20 +177,20 @@ const Index = () => {
             </TabsList>
 
             <TabsContent value="memories" className="mt-6">
-              <MemoryFeed />
+              <MemoryFeed token={localStorage.getItem("token") || ""} user={user} />
             </TabsContent>
 
             <TabsContent value="shared" className="mt-6">
-              <SharedMemoriesFeed />
+              <SharedMemoriesFeed token={localStorage.getItem("token") || ""} user={user} />
             </TabsContent>
 
             <TabsContent value="friends" className="mt-6">
-              <FriendsSection />
+              <FriendsSection token={localStorage.getItem("token") || ""} user={user} />
             </TabsContent>
 
             <TabsContent value="profile" className="mt-6">
               <div className="max-w-2xl mx-auto">
-                <ProfileSection />
+                <ProfileSection token={localStorage.getItem("token") || ""} user={user} />
               </div>
             </TabsContent>
           </Tabs>

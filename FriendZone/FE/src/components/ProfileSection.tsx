@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Users, Heart, Settings } from "lucide-react";
 
-const ProfileSection = () => {
+const ProfileSection = ({ token, user }: { token: string; user: any }) => {
+  console.log("ProfileSection: rendering with token:", token, "and user:", user);
   return (
     <div className="space-y-6">
       {/* Profile Header Card */}

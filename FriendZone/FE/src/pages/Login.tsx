@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HOST } from "@/lib/config";
+import { toast } from "@/components/ui/use-toast";
 
 interface LoginFormValues {
   email: string;
@@ -22,6 +23,7 @@ interface LoginFormValues {
 interface LoginResponse {
   token: string;
   message?: string;
+  user?: { id: string; email: string; name?: string }; // Added user field
 }
 
 const Login: React.FC = () => {
@@ -32,23 +34,43 @@ const Login: React.FC = () => {
   });
 
   const mutation = useMutation<LoginResponse, Error, LoginFormValues>({
-    mutationFn: (values) =>
-      fetch(`${HOST}/user/login/`, {
+    mutationFn: (values) => {
+      console.log("Login attempt with values:", values); // Debug: Log form values
+      return fetch(`${HOST}/user/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       }).then(async (res) => {
         const data = await res.json();
+        console.log("Login response:", data); // Debug: Log server response
         if (!res.ok) {
           throw new Error(data.message || "Invalid email or password");
         }
         return data;
-      }),
+      });
+    },
     onSuccess: (data) => {
+      console.log("Login successful, token:", data.token);
       localStorage.setItem("token", data.token);
+      if (data.user) {
+        console.log("User data:", data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+      toast({
+        title: "Login Successful",
+        description: "You have been logged in successfully.",
+      });
+      // Redirect to home and reload to update authentication state
       navigate("/", { replace: true });
+      window.location.reload();
     },
     onError: (error) => {
+      console.error("Login error:", error.message); // Debug: Log error
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
       form.setError("root", { message: error.message });
     },
   });
@@ -84,9 +106,7 @@ const Login: React.FC = () => {
                       aria-describedby="email-error"
                       {...field}
                     />
-                 
-
- </FormControl>
+                  </FormControl>
                   <FormMessage id="email-error" />
                 </FormItem>
               )}

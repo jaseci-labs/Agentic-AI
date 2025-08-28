@@ -140,7 +140,8 @@ const RequestCard = ({ request }: { request: FriendRequest }) => {
   );
 };
 
-const FriendsSection = () => {
+const FriendsSection = ({ token, user }: { token: string; user: any }) => {
+  console.log("FriendsSection: rendering with token:", token, "and user:", user);
   const [searchQuery, setSearchQuery] = useState("");
 
   return (

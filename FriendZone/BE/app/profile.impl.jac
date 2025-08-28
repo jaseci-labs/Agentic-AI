@@ -35,3 +35,13 @@ impl update_profile.update_profile with profile entry {
     };
     report response;
 }
+
+impl get_profile.get_profile with profile entry {
+    response = {
+        "email": here.email,
+        "first_name": here.first_name,
+        "last_name": here.last_name,
+        "profile_picture_url": here.profile_picture_url
+    };
+    report response;
+}
