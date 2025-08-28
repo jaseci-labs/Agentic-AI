@@ -124,7 +124,8 @@ const JacChatbot = () => {
 
       setMessages(prev => [...prev, botMessage]);
       
-      if (isAuthenticated) {
+      // Increment message count for guest users (non-authenticated users)
+      if (!isAuthenticated) {
         incrementMessageCount();
       }
     } catch (error) {
