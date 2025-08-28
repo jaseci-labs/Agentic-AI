@@ -116,58 +116,6 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
       </div>
 
       <div className="flex-1 flex">
-        {/* Suggestions Sidebar */}
-        <div className="w-80 border-r border-gray-700 p-4">
-          <h3 className="text-sm font-medium text-gray-300 mb-3">Suggested Topics</h3>
-          <div className="space-y-2">
-            {displaySuggestions.map((suggestion, index) => (
-              <Card 
-                key={index}
-                className={`p-3 cursor-pointer transition-colors border-gray-600 hover:border-orange-500 ${
-                  selectedDoc?.url === suggestion.url ? 'border-orange-500 bg-gray-800' : 'bg-gray-800'
-                }`}
-                onClick={() => fetchDocumentation(suggestion.url)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-white truncate">
-                      {suggestion.title}
-                    </h4>
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                      {suggestion.reason}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-500 ml-2 flex-shrink-0" />
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-gray-700">
-            <h4 className="text-sm font-medium text-gray-300 mb-2">Quick Links</h4>
-            <div className="space-y-2">
-              <a 
-                href="https://www.jac-lang.org/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-orange-500 transition-colors"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Official Documentation
-              </a>
-              <a 
-                href="https://www.jac-lang.org/playground/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-orange-500 transition-colors"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Try Jac Playground
-              </a>
-            </div>
-          </div>
-        </div>
-
         {/* Content Area */}
         <div className="flex-1 flex flex-col">
           {loading && (
