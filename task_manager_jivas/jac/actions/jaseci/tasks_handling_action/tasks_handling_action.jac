@@ -3,6 +3,7 @@ import from jivas.agent.action.agent_graph_walker { agent_graph_walker }
 import from actions.jaseci.tasks_handling_action.task { Task }
 import from jivas.agent.memory.interaction_response { TextInteractionMessage, SilentInteractionMessage }
 import from datetime { datetime }
+import from operator { itemgetter }
 import json;
 import re;
 
@@ -173,9 +174,12 @@ node TasksHandlingAction(Action) {
                 "task_id": task.id,
                 "task": task.task,
                 "date": task.date,
-                "time": task.time
+                "time": task.time,
+                "status": task.status
             });
         }
+
+        result = sorted(result, key=itemgetter("date", "time"));
         return result;
     }
 }
