@@ -34,6 +34,7 @@ with entry {
 #     def run(self: TrendAgent, state: AgentState) {
 #         print('---EXECUTING TREND AGENT---');
 #         user_input = state[ 'user_input' ];
+#         print("state is", state);
 #         result =
 #             self.chain.invoke(
 
@@ -63,6 +64,7 @@ obj TrendAgent {
     def run(state: AgentState) {
         print('---EXECUTING TREND AGENT---');
         user_input = state[ 'user_input' ];
+        print("state is", state);
         result =
             self.chain.invoke(
 

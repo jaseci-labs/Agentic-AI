@@ -6,7 +6,7 @@ with entry {
     initial_input = {
         'user_input': {
             'field': 'Artificial Intelligence',
-            'topic': 'Latest updates on Agentic AI',
+            'topic': 'Agentic AI',
             'expected_output': 'A detailed README.md style blog post'
         }
     };
@@ -21,5 +21,10 @@ with entry {
             f.write(topic + '\n');
         }
     }
-    print('\nTrending Topics saved to trending_topics.md');
+    print('\Trending Topics saved to trending_topics.md');
+
+    with open("generated_article_final.md", "w") as f {
+        f.write(final_state["article"]);
+    }
+    print('\nArticle saved to generated_article_final.md');
 }
