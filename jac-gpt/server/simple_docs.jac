@@ -169,78 +169,187 @@ walker suggest_docs {
     }
 
     can get_suggestions with `root entry {
-        # Simple keyword-based suggestions
+        # Enhanced keyword-based suggestions with priority scoring
         message_lower = self.message.lower();
         suggestions = [];
         
-        # Helper function to check if message contains keywords
-        def has_keywords(text: str, words: list[str]) -> bool {
+        # Helper function to check if message contains keywords and return score
+        def has_keywords_with_score(text: str, words: list[str]) -> int {
+            score = 0;
             for word in words {
                 if word in text {
-                    return True;
+                    score += 1;
                 }
             }
-            return False;
+            return score;
         }
         
-        # Getting started
-        start_words = ["start", "begin", "new", "intro", "hello", "hi"];
-        if has_keywords(message_lower, start_words) {
+        # MTLLM/MTP specific - High priority for AI/LLM related queries
+        mtllm_words = ["mtllm", "mtp", "multi-turn", "conversation", "context", "llm integration", "language model"];
+        mtllm_score = has_keywords_with_score(message_lower, mtllm_words);
+        if mtllm_score > 0 {
             suggestions.append({
-                "url": "https://www.jac-lang.org/learn/introduction/",
-                "title": "Introduction to Jac",
-                "reason": "Perfect starting point for learning Jac programming language"
+                "url": "https://www.jac-lang.org/learn/jac-mtllm/with_llm/",
+                "title": "Working with LLMs - MTLLM",
+                "reason": "Complete guide to Multi-Turn LLM integration and context management",
+                "score": mtllm_score + 10  # High priority
+            });
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/jac-mtllm/quickstart/",
+                "title": "AI Integration Quickstart",
+                "reason": "Quick start guide for integrating AI capabilities in Jac",
+                "score": mtllm_score + 8
+            });
+        }
+        
+        # AI and LLM integration - General
+        ai_words = ["ai", "llm", "intelligence", "model", "gpt", "claude", "openai", "artificial intelligence", "machine learning"];
+        ai_score = has_keywords_with_score(message_lower, ai_words);
+        if ai_score > 0 {
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/jac-mtllm/with_llm/",
+                "title": "Working with LLMs",
+                "reason": "Deep dive into using Large Language Models in Jac applications",
+                "score": ai_score + 9
+            });
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/jac-mtllm/quickstart/",
+                "title": "AI Integration Quickstart",
+                "reason": "Learn how to integrate AI and LLM capabilities in your Jac applications",
+                "score": ai_score + 7
             });
         }
         
         # Object-Spatial Programming
-        spatial_words = ["node", "edge", "graph", "spatial", "object"];
-        if has_keywords(message_lower, spatial_words) {
+        spatial_words = ["node", "edge", "graph", "spatial", "object", "relationship", "data structure"];
+        spatial_score = has_keywords_with_score(message_lower, spatial_words);
+        if spatial_score > 0 {
             suggestions.append({
                 "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
                 "title": "Nodes and Edges",
-                "reason": "Learn about Object-Spatial Programming with nodes and edges"
+                "reason": "Learn about Object-Spatial Programming with nodes and edges",
+                "score": spatial_score + 8
             });
-        }
-        
-        # AI and LLM integration
-        ai_words = ["ai", "llm", "intelligence", "model", "gpt", "claude"];
-        if has_keywords(message_lower, ai_words) {
             suggestions.append({
-                "url": "https://www.jac-lang.org/learn/jac-mtllm/quickstart/",
-                "title": "AI Integration Quickstart",
-                "reason": "Learn how to integrate AI and LLM capabilities in your Jac applications"
-            });
-        }
-        
-        # Cloud and deployment
-        cloud_words = ["cloud", "deploy", "server", "scale", "production"];
-        if has_keywords(message_lower, cloud_words) {
-            suggestions.append({
-                "url": "https://www.jac-lang.org/learn/jac-cloud/introduction/",
-                "title": "Jac Cloud Introduction",
-                "reason": "Learn about cloud deployment and scaling with Jac"
+                "url": "https://www.jac-lang.org/learn/data_spatial/",
+                "title": "Data-Spatial Programming",
+                "reason": "Complete guide to data-spatial programming concepts",
+                "score": spatial_score + 6
             });
         }
         
         # Walkers
-        walker_words = ["walker", "walk", "traverse", "visit"];
-        if has_keywords(message_lower, walker_words) {
+        walker_words = ["walker", "walk", "traverse", "visit", "navigation", "path"];
+        walker_score = has_keywords_with_score(message_lower, walker_words);
+        if walker_score > 0 {
             suggestions.append({
                 "url": "https://www.jac-lang.org/learn/data_spatial/walkers/",
                 "title": "Walkers Guide",
-                "reason": "Complete guide to using walkers for data traversal and processing"
+                "reason": "Complete guide to using walkers for data traversal and processing",
+                "score": walker_score + 8
+            });
+        }
+        
+        # Cloud and deployment
+        cloud_words = ["cloud", "deploy", "server", "scale", "production", "hosting", "deployment"];
+        cloud_score = has_keywords_with_score(message_lower, cloud_words);
+        if cloud_score > 0 {
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/jac-cloud/introduction/",
+                "title": "Jac Cloud Introduction",
+                "reason": "Learn about cloud deployment and scaling with Jac",
+                "score": cloud_score + 7
+            });
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/jac-cloud/deployment/",
+                "title": "Deployment Guide",
+                "reason": "Step-by-step deployment instructions for production",
+                "score": cloud_score + 6
             });
         }
         
         # Examples and tutorials
-        example_words = ["example", "tutorial", "sample", "demo", "project"];
-        if has_keywords(message_lower, example_words) {
+        example_words = ["example", "tutorial", "sample", "demo", "project", "build", "create"];
+        example_score = has_keywords_with_score(message_lower, example_words);
+        if example_score > 0 {
             suggestions.append({
                 "url": "https://www.jac-lang.org/learn/examples/rag_chatbot/Overview/",
                 "title": "RAG Chatbot Example",
-                "reason": "Build a complete RAG-powered chatbot with Jac"
+                "reason": "Build a complete RAG-powered chatbot with Jac",
+                "score": example_score + 7
             });
+            suggestions.append({
+                "url": "https://www.jac-lang.org/jac_book/chapter_1/",
+                "title": "Jac Book - Examples",
+                "reason": "Comprehensive examples and tutorials",
+                "score": example_score + 6
+            });
+        }
+        
+        # Syntax and language features
+        syntax_words = ["syntax", "code", "function", "class", "variable", "programming", "keyword"];
+        syntax_score = has_keywords_with_score(message_lower, syntax_words);
+        if syntax_score > 0 {
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/keywords/",
+                "title": "Jac Keywords Reference",
+                "reason": "Complete reference for Jac language keywords and syntax",
+                "score": syntax_score + 6
+            });
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/jac_ref/",
+                "title": "Language Reference",
+                "reason": "Complete Jac language reference and syntax guide",
+                "score": syntax_score + 5
+            });
+        }
+        
+        # Getting started
+        start_words = ["start", "begin", "new", "intro", "hello", "hi", "getting started"];
+        start_score = has_keywords_with_score(message_lower, start_words);
+        if start_score > 0 {
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/introduction/",
+                "title": "Introduction to Jac",
+                "reason": "Perfect starting point for learning Jac programming language",
+                "score": start_score + 6
+            });
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/getting_started/",
+                "title": "Getting Started Guide",
+                "reason": "Step-by-step guide to set up and start coding in Jac",
+                "score": start_score + 5
+            });
+        }
+        
+        # Tools and development
+        tools_words = ["tool", "cli", "debug", "development", "playground", "ide"];
+        tools_score = has_keywords_with_score(message_lower, tools_words);
+        if tools_score > 0 {
+            suggestions.append({
+                "url": "https://www.jac-lang.org/playground/",
+                "title": "Jac Playground",
+                "reason": "Try Jac code online without any setup",
+                "score": tools_score + 6
+            });
+            suggestions.append({
+                "url": "https://www.jac-lang.org/learn/tools/cli/",
+                "title": "CLI Tools",
+                "reason": "Learn about Jac command-line tools and utilities",
+                "score": tools_score + 5
+            });
+        }
+        
+        # Sort suggestions by score (highest first) - Manual sorting for Jac
+        # Simple bubble sort by score
+        for i in range(len(suggestions)) {
+            for j in range(len(suggestions) - 1 - i) {
+                if suggestions[j]["score"] < suggestions[j + 1]["score"] {
+                    temp = suggestions[j];
+                    suggestions[j] = suggestions[j + 1];
+                    suggestions[j + 1] = temp;
+                }
+            }
         }
         
         # Default suggestions if no specific keywords found
@@ -248,26 +357,34 @@ walker suggest_docs {
             suggestions.append({
                 "url": "https://www.jac-lang.org/learn/introduction/",
                 "title": "Introduction to Jac",
-                "reason": "Perfect starting point for learning Jac programming language"
+                "reason": "Perfect starting point for learning Jac programming language",
+                "score": 1
             });
             suggestions.append({
                 "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
                 "title": "Nodes and Edges",
-                "reason": "Learn about Object-Spatial Programming core concepts"
+                "reason": "Learn about Object-Spatial Programming core concepts",
+                "score": 1
             });
             suggestions.append({
                 "url": "https://www.jac-lang.org/learn/jac-mtllm/quickstart/",
                 "title": "AI Integration",
-                "reason": "Discover how to integrate AI capabilities in Jac"
+                "reason": "Discover how to integrate AI capabilities in Jac",
+                "score": 1
             });
         }
         
-        # Return top 3 suggestions
+        # Return top 3 suggestions without score in the response
         limited_suggestions = [];
         count = 0;
         for suggestion in suggestions {
             if count < 3 {
-                limited_suggestions.append(suggestion);
+                clean_suggestion = {
+                    "url": suggestion["url"],
+                    "title": suggestion["title"],
+                    "reason": suggestion["reason"]
+                };
+                limited_suggestions.append(clean_suggestion);
                 count += 1;
             }
         }

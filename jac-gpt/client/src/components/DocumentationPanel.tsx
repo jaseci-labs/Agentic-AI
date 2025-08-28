@@ -28,6 +28,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
   const [selectedDoc, setSelectedDoc] = useState<DocumentationContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentSuggestions, setCurrentSuggestions] = useState<DocumentationSuggestion[]>([]);
 
   // Default documentation suggestions
   const defaultSuggestions: DocumentationSuggestion[] = [
@@ -48,7 +49,17 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
     }
   ];
 
-  const displaySuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
+  // Update current suggestions when props change
+  useEffect(() => {
+    const newSuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
+    setCurrentSuggestions(newSuggestions);
+    
+    // Auto-load the first suggestion when new suggestions come in
+    if (suggestions.length > 0 && isVisible) {
+      const firstSuggestion = suggestions[0];
+      fetchDocumentation(firstSuggestion.url);
+    }
+  }, [suggestions, isVisible]);
 
   const fetchDocumentation = async (url: string) => {
     setLoading(true);
@@ -69,9 +80,16 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
           title: url.includes('/introduction/') ? 'Introduction to Jac' : 
                  url.includes('/nodes_and_edges/') ? 'Nodes and Edges' :
                  url.includes('/quickstart/') ? 'AI Integration Quickstart' :
+                 url.includes('/with_llm/') ? 'Working with LLMs - MTLLM' :
                  url.includes('/jac-cloud/') ? 'Jac Cloud Introduction' :
                  url.includes('/walkers/') ? 'Walkers Guide' :
                  url.includes('/rag_chatbot/') ? 'RAG Chatbot Example' :
+                 url.includes('/deployment/') ? 'Deployment Guide' :
+                 url.includes('/keywords/') ? 'Jac Keywords Reference' :
+                 url.includes('/jac_ref/') ? 'Language Reference' :
+                 url.includes('/getting_started/') ? 'Getting Started Guide' :
+                 url.includes('/playground/') ? 'Jac Playground' :
+                 url.includes('/cli/') ? 'CLI Tools' :
                  'Jac Documentation',
           url: url
         });
@@ -85,13 +103,13 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
     }
   };
 
-  // Auto-select first suggestion when suggestions change
+  // Auto-select first suggestion when component becomes visible and no doc is selected
   useEffect(() => {
-    if (displaySuggestions.length > 0 && !selectedDoc && isVisible) {
-      const firstSuggestion = displaySuggestions[0];
+    if (currentSuggestions.length > 0 && !selectedDoc && isVisible) {
+      const firstSuggestion = currentSuggestions[0];
       fetchDocumentation(firstSuggestion.url);
     }
-  }, [displaySuggestions, isVisible]);
+  }, [currentSuggestions, isVisible]);
 
   if (!isVisible) {
     return null;
