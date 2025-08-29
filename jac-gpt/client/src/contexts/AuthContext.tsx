@@ -131,28 +131,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('No authentication token received');
       }
 
-      // Now get the user profile to determine role
-      const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      let userRole = 'user';
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json();
-        if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
-          userRole = profileData.reports[0].user.role || 'user';
-        }
-      }
-
+      // Use JAC Cloud's user data directly - no need for separate profile call
       const userData: User = {
         id: data.user?.id || email,
         email: data.user?.email || email,
-        name: data.user?.name || data.name,
-        role: userRole as 'user' | 'admin',
+        name: data.user?.name || '',
+        role: data.user?.is_admin ? 'admin' : 'user',
       };
 
       setUser(userData);
@@ -170,7 +154,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };  const register = async (email: string, password: string, name?: string) => {
     setIsLoading(true);
     try {
-      // Use the built-in register endpoint
+      // Use JAC Cloud's built-in register endpoint
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/register`, {
         method: 'POST',
         headers: {
@@ -186,18 +170,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json();
       
-      // Create user profile after successful registration
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/create_user_profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, name: name || '' }),
-      });
-      
-      // Handle case where registration is successful but we need to login separately
+      // JAC Cloud handles user creation automatically
+      // After successful registration, login to get the token and user data
       if (data.message && data.message.includes('Successfully Registered')) {
-        // After successful registration, attempt to login
         await login(email, password);
         return;
       }
@@ -207,8 +182,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const userData: User = {
           id: data.user.id,
           email: data.user.email,
-          name: data.user.name,
-          role: email === 'admin@jaseci.org' ? 'admin' : 'user',
+          name: data.user.name || name || '',
+          role: data.user.is_admin ? 'admin' : 'user',
         };
 
         setUser(userData);
@@ -220,7 +195,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         // Fallback: try to login after registration
         await login(email, password);
-        // Reset message count is handled in login function
       }
     } catch (error) {
       console.error('Registration error:', error);

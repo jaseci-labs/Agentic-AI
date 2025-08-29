@@ -473,36 +473,8 @@ walker close_session {
     }
 }
 
-# User management walkers
-walker register_user {
-    has email: str;
-    has password: str;
-    has name: str = "";
-
-    can create_user with `root entry {
-        db = get_database();
-        
-        # Special case for admin@jaseci.org - make it admin
-        role = "admin" if self.email == "admin@jaseci.org" else "user";
-        
-        user = db.create_or_update_user(self.email, self.password, self.name, role);
-        
-        if user {
-            report {
-                "message": "Successfully Registered!",
-                "user": {
-                    "email": user["email"],
-                    "name": user["name"],
-                    "role": user["role"]
-                }
-            };
-        } else {
-            report {
-                "error": "Registration failed"
-            };
-        }
-    }
-}
+# User management walkers - Using JAC Cloud built-in authentication
+# The register_user walker is removed as we now use JAC Cloud's built-in /user/register endpoint
 
 
 
@@ -583,9 +555,22 @@ walker get_all_users {
         
         # Check if requester is admin
         requester = db.get_user_profile(self.requester_email);
-        if not requester or requester.get("role") != "admin" {
+        
+        # Debug information
+        if not requester {
             report {
-                "error": "Unauthorized: Admin access required"
+                "error": "Unauthorized: User profile not found",
+                "requester_email": self.requester_email
+            };
+            return;
+        }
+        
+        if requester.get("role") != "admin" {
+            report {
+                "error": "Unauthorized: Admin access required",
+                "requester_email": self.requester_email,
+                "user_role": requester.get("role"),
+                "is_admin": requester.get("is_admin")
             };
             return;
         }
