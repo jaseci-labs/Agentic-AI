@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -15,6 +15,31 @@ const App = () => {
     const token = localStorage.getItem("token");
     return Boolean(token);
   });
+
+  // Listen for storage changes to update authentication state
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem("token");
+      const newAuthState = Boolean(token);
+      if (newAuthState !== isAuthenticated) {
+        setIsAuthenticated(newAuthState);
+      }
+    };
+
+    // Check immediately
+    handleStorageChange();
+
+    // Listen for storage events (when localStorage is changed from another tab)
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Custom event for same-tab localStorage changes
+    window.addEventListener("authStateChange", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("authStateChange", handleStorageChange);
+    };
+  }, [isAuthenticated]);
 
 
   return (
@@ -36,13 +61,8 @@ const App = () => {
                 isAuthenticated ? <Navigate to="/" replace /> : <Register />
               }
             />
-            {/* Protected Index Route */}
-            <Route
-              path="/"
-              element={
-                isAuthenticated ? <Index /> : <Navigate to="/login" replace />
-              }
-            />
+            {/* Index Route - Shows landing page or main app based on auth */}
+            <Route path="/" element={<Index />} />
             {/* NotFound Route (public) */}
             <Route path="*" element={<NotFound />} />
           </Routes>

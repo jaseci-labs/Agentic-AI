@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Users, User } from "lucide-react";
+import { Heart, Users, User, LogOut } from "lucide-react";
 
-const Navigation = () => {
+interface NavigationProps {
+  onLogout: () => void;
+}
+
+const Navigation: React.FC<NavigationProps> = ({ onLogout }) => {
   console.log("Navigation: rendering");
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
@@ -37,6 +41,10 @@ const Navigation = () => {
         <div className="flex items-center space-x-3">
           <Button variant="hero" size="sm">
             Share Memory
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onLogout} className="text-foreground hover:text-destructive">
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
           </Button>
           <Avatar className="w-8 h-8">
             <AvatarImage src="/placeholder-avatar.jpg" />

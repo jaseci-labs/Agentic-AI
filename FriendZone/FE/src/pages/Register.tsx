@@ -1,7 +1,6 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Form,
   FormField,
@@ -12,73 +11,29 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { HOST } from "@/lib/config";
-import { toast } from "@/components/ui/use-toast"; // Assuming a toast component for notifications
+import { useRegister } from "@/hooks/useRegister";
+import { RegisterRequest } from "@/lib/api";
 
-// Define form values with TypeScript
-interface RegisterFormValues {
-  name: string;
-  email: string;
-  password: string;
+interface RegisterFormValues extends RegisterRequest {
   confirmPassword: string;
 }
 
-// Define API response type
-interface RegisterResponse {
-  message: string;
-  // Add other expected fields from your API
-}
-
 const Register: React.FC = () => {
-  const navigate = useNavigate();
   const form = useForm<RegisterFormValues>({
     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
-    mode: "onChange", // Validate on change for better UX
+    mode: "onChange",
   });
 
-  // Register API call
-  const registerUser = async (values: RegisterFormValues): Promise<RegisterResponse> => {
-    const response = await fetch(`${HOST}/user/register/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: values.name.trim(),
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Registration failed");
-    }
-    return data;
-  };
-
-  const mutation = useMutation({
-    mutationFn: registerUser,
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Registration successful! Redirecting to login...",
-      });
-      setTimeout(() => navigate("/login"), 1500); // Delay for user to see toast
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "An unexpected error occurred",
-      });
-    },
-  });
+  const mutation = useRegister();
 
   const onSubmit = (values: RegisterFormValues) => {
     if (values.password !== values.confirmPassword) {
       form.setError("confirmPassword", { message: "Passwords do not match" });
       return;
     }
-    mutation.mutate(values);
+    
+    const { confirmPassword, ...registerData } = values;
+    mutation.mutate(registerData);
   };
 
   return (
