@@ -146,3 +146,7 @@ walker task_manager {
         }
     }
 }
+
+with entry {
+    load_dotenv();
+}
