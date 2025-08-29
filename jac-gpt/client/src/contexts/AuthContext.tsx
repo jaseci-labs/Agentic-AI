@@ -197,53 +197,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             resetMessageCount();
             return; // Success with JAC Cloud login
           }
+        } else {
+          // JAC Cloud login failed
+          throw new Error('Login failed. Please check your credentials.');
         }
       } catch (jacCloudError) {
-        console.warn('JAC Cloud login failed, trying custom login:', jacCloudError);
-      }
-
-      // If JAC Cloud login fails (due to location field issue), try our custom login
-      try {
-        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/custom_login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Custom login failed');
-        }
-
-        data = await response.json();
-        
-        // Check if custom login was successful
-        if (data.reports && data.reports[0] && data.reports[0].success) {
-          const loginData = data.reports[0];
-          token = loginData.token;
-          
-          userData = {
-            id: loginData.user?.email || email,
-            email: loginData.user?.email || email,
-            name: loginData.user?.name || '',
-            role: loginData.user?.role || 'user',
-          };
-
-          setUser(userData);
-          localStorage.setItem('auth_token', token);
-          localStorage.setItem('user_data', JSON.stringify(userData));
-          
-          // Reset message count when user logs in
-          resetMessageCount();
-          return; // Success with custom login
-        } else {
-          const loginData = data.reports?.[0] || {};
-          throw new Error(loginData?.error || 'Custom login failed');
-        }
-      } catch (customLoginError) {
-        console.error('Custom login also failed:', customLoginError);
+        console.error('JAC Cloud login failed:', jacCloudError);
         throw new Error('Login failed. Please check your credentials.');
       }
 
