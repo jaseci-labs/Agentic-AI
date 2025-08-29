@@ -293,6 +293,7 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
               className={`w-full justify-start gap-3 text-gray-400 hover:text-white hover:bg-gray-800 ${!isExpanded ? 'px-2' : ''}`}
               size="sm"
               title="Help & FAQ"
+              onClick={() => window.open('https://www.jac-lang.org/learn/data_spatial/FAQ/', '_blank')}
             >
               <HelpCircle className="w-4 h-4 shrink-0" />
               {isExpanded && "Help & FAQ"}

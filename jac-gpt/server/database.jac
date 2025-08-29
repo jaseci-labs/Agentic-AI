@@ -30,7 +30,7 @@ obj MongoDB {
                 logger.warning("DATABASE_HOST not found! Falling back to localhost...");
                 mongo_uri = "mongodb://localhost:27017/";
             }
-            db_name = os.getenv("DATABASE_NAME", "jac_gpt");
+            db_name = os.getenv("DATABASE_NAME", "jac_gpt_prod4");
             self.client = MongoClient(mongo_uri);
             self.db = self.client[db_name];
             self.sessions = self.db.sessions;
