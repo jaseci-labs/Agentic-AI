@@ -12,7 +12,7 @@ export interface ChatMessage {
 }
 
 export class OpenAIService {
-  private systemPrompt = `You are Jaseci Assistant, an expert AI assistant for the Jac programming language and Jaseci ecosystem. 
+  private systemPrompt = `You are Jac GPT, an expert AI assistant for the Jac programming language and Jaseci ecosystem. 
 
 Key information about Jac:
 - Jac is a modern programming language designed for building AI-native applications

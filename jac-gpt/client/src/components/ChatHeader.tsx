@@ -16,7 +16,7 @@ const ChatHeader = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-1">
-              Jaseci Assistant
+              Jac GPT
             </h1>
             <p className="text-muted-foreground">
               Your AI companion for mastering the Jac programming language

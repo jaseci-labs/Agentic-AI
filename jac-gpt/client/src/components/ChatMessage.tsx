@@ -25,7 +25,7 @@ const ChatMessage = ({ message, isUser, timestamp }: ChatMessageProps) => {
           <div className="w-full h-full bg-muted/50 rounded-full flex items-center justify-center p-1.5">
             <img 
               src={jacLogo} 
-              alt="Jaseci Assistant" 
+              alt="Jac GPT" 
               className="w-full h-full object-contain"
             />
           </div>
