@@ -370,8 +370,10 @@ obj MongoDB {
                     "role": role,
                     "is_admin": is_admin,
                     "is_activated": user.get("is_activated", True),
+                    "location": user.get("location", {}),  # Include location data
                     "created_at": user.get("created_at"),
-                    "updated_at": user.get("updated_at")
+                    "updated_at": user.get("updated_at"),
+                    "location_updated_at": user.get("location_updated_at")
                 });
             }
             logger.info(f"Retrieved {len(user_list)} users from JAC Cloud user collection");
@@ -379,6 +381,38 @@ obj MongoDB {
         } except Exception as e {
             logger.error(f"Error getting all users: {e}");
             return [];
+        }
+    }
+    
+    def save_user_location(email: str, location: dict) -> bool {
+        try {
+            # Update user with location data in JAC Cloud's user collection
+            update_data = {
+                "location": {
+                    "latitude": location.get("latitude"),
+                    "longitude": location.get("longitude"),
+                    "city": location.get("city", ""),
+                    "country": location.get("country", ""),
+                    "ip": location.get("ip", "")
+                },
+                "location_updated_at": datetime.utcnow()
+            };
+            
+            result = self.users.update_one(
+                {"email": email},
+                {"$set": update_data}
+            );
+            
+            if result.modified_count > 0 {
+                logger.info(f"Location saved for user: {email}");
+                return True;
+            } else {
+                logger.warning(f"No user found to update location: {email}");
+                return False;
+            }
+        } except Exception as e {
+            logger.error(f"Error saving location for {email}: {e}");
+            return False;
         }
     }
     

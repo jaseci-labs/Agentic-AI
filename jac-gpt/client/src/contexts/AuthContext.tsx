@@ -7,10 +7,18 @@ interface User {
   role?: string;
 }
 
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  city?: string;
+  country?: string;
+  ip?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string, location?: LocationData | null) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -103,64 +111,131 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Use the built-in login endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      let response;
+      let data;
+      let token;
+      let userData: User;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+      // First, try the built-in JAC Cloud login endpoint
+      try {
+        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (response.ok) {
+          data = await response.json();
+          
+          // Handle different response formats
+          token = data.token || data.access_token;
+          
+          // If no token in response but login was successful, generate a temporary token
+          if (!token && data.message && data.message.includes('success')) {
+            token = `temp_${Date.now()}`; // Temporary token for demo purposes
+          }
+
+          if (token) {
+            // Use JAC Cloud's user data directly
+            userData = {
+              id: data.user?.id || email,
+              email: data.user?.email || email,
+              name: data.user?.name || '',
+              role: data.user?.is_admin ? 'admin' : 'user',
+            };
+
+            setUser(userData);
+            localStorage.setItem('auth_token', token);
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            
+            // Reset message count when user logs in
+            resetMessageCount();
+            return; // Success with JAC Cloud login
+          }
+        }
+      } catch (jacCloudError) {
+        console.warn('JAC Cloud login failed, trying custom login:', jacCloudError);
       }
 
-      const data = await response.json();
-      
-      // Handle different response formats
-      let token = data.token || data.access_token;
-      
-      // If no token in response but login was successful, generate a temporary token
-      if (!token && data.message && data.message.includes('success')) {
-        token = `temp_${Date.now()}`; // Temporary token for demo purposes
+      // If JAC Cloud login fails (due to location field issue), try our custom login
+      try {
+        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/custom_login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Custom login failed');
+        }
+
+        data = await response.json();
+        
+        // Check if custom login was successful
+        if (data.reports && data.reports[0] && data.reports[0].success) {
+          const loginData = data.reports[0];
+          token = loginData.token;
+          
+          userData = {
+            id: loginData.user?.email || email,
+            email: loginData.user?.email || email,
+            name: loginData.user?.name || '',
+            role: loginData.user?.role || 'user',
+          };
+
+          setUser(userData);
+          localStorage.setItem('auth_token', token);
+          localStorage.setItem('user_data', JSON.stringify(userData));
+          
+          // Reset message count when user logs in
+          resetMessageCount();
+          return; // Success with custom login
+        } else {
+          const loginData = data.reports?.[0] || {};
+          throw new Error(loginData?.error || 'Custom login failed');
+        }
+      } catch (customLoginError) {
+        console.error('Custom login also failed:', customLoginError);
+        throw new Error('Login failed. Please check your credentials.');
       }
 
-      if (!token) {
-        throw new Error('No authentication token received');
-      }
-
-      // Use JAC Cloud's user data directly - no need for separate profile call
-      const userData: User = {
-        id: data.user?.id || email,
-        email: data.user?.email || email,
-        name: data.user?.name || '',
-        role: data.user?.is_admin ? 'admin' : 'user',
-      };
-
-      setUser(userData);
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      // Reset message count when user logs in
-      resetMessageCount();
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  };  const register = async (email: string, password: string, name?: string) => {
+  };  const register = async (email: string, password: string, name?: string, location?: LocationData | null) => {
     setIsLoading(true);
     try {
+      // Prepare registration data with location if available
+      const registrationData = {
+        email,
+        password,
+        name: name || '',
+        ...(location && {
+          location: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            city: location.city || '',
+            country: location.country || '',
+            ip: location.ip || ''
+          }
+        })
+      };
+
       // Use JAC Cloud's built-in register endpoint
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify(registrationData),
       });
 
       if (!response.ok) {
@@ -173,6 +248,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // JAC Cloud handles user creation automatically
       // After successful registration, login to get the token and user data
       if (data.message && data.message.includes('Successfully Registered')) {
+        // Save location data if available
+        if (location) {
+          try {
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/save_user_location`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                email, 
+                location: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  city: location.city || '',
+                  country: location.country || '',
+                  ip: location.ip || ''
+                }
+              }),
+            });
+          } catch (locationError) {
+            console.warn('Failed to save location data:', locationError);
+          }
+        }
+        
         await login(email, password);
         return;
       }

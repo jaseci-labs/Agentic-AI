@@ -15,6 +15,16 @@ interface User {
   role: string;
   created_at: string;
   last_login?: string;
+  location?: {
+    city?: string;
+    region?: string;
+    country?: string;
+    country_code?: string;
+    latitude?: number;
+    longitude?: number;
+    source?: string;
+  };
+  location_updated_at?: string;
 }
 
 interface Session {
@@ -381,6 +391,14 @@ const AdminDashboard = () => {
                         <span>Created: {formatDate(user.created_at)}</span>
                         {user.last_login && (
                           <span className="ml-4">Last login: {formatDate(user.last_login)}</span>
+                        )}
+                        {user.location && (
+                          <div className="mt-1">
+                            <span className="text-blue-600">📍 {user.location.city ? `${user.location.city}, ` : ''}{user.location.country || 'Unknown location'}</span>
+                            {user.location_updated_at && (
+                              <span className="ml-2 text-gray-400">({formatDate(user.location_updated_at)})</span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
