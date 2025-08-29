@@ -1,6 +1,7 @@
 import from mtllm.llm { Model }
+include utils;
 
-glob llm = Model(model_name="gpt-4o-mini", verbose=False);
+glob llm = Model(model_name="gpt-4o", verbose=False);
 
 node Task {
     has task:str = "";
@@ -11,29 +12,33 @@ node Task {
 
 node TaskHandling {
     def add_task(task: Task) -> str {
-        print("**********0");
-        root ++> task;
+        self ++> task;
         return "Task added successfully";
-    }
-    def greet_user() -> str {
-        return "Hello! How can I assist you with your tasks today?";
     }
     def check_scheduled_tasks -> list[Task] {
         return [self --> (`?Task)];
     }
     def extract_task_info(utterance: str) -> Task by llm(
         method="ReAct",
-        tools=([self.add_task])
+        tools=([self.add_task, get_current_datetime])
     );
     def summarize_tasks() -> str by llm(
         method="ReAct",
-        tools=([self.greet_user])
+        tools=([self.check_scheduled_tasks])
     );
-
+    def route_and_run(utterance: str) -> str by llm(
+        method="ReAct",
+        tools=([self.extract_task_info, self.summarize_tasks])
+    );
     can execute with task_manager entry {
-        print(self.extract_task_info(visitor.utterance));
+        report self.route_and_run(visitor.utterance);
     }
 }
+
+sem TaskHandling.extract_task_info = "time and date should be extracted in the format of 'YYYY-MM-DD HH:MM:SS'.";
+sem TaskHandling.route_and_run = "Select and Execute only one tool provided.";
+sem TaskHandling.summarize_tasks = "Summarize the tasks in a concise manner. But all relevant task information should be included.";
+
 
 node EmailHandling {
     def write_email(utterance: str) -> str by llm();
@@ -44,8 +49,11 @@ node EmailHandling {
 }
 
 node GeneralChat {
+    def chat(utterance: str) -> str by llm();
+
     can execute with task_manager entry {
-        print("***********2");
+        print("*********** general chat");
+        report self.chat(visitor.utterance);
     }
 }
 
