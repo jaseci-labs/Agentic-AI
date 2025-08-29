@@ -31,7 +31,7 @@ obj MongoDB {
                 logger.warning("DATABASE_HOST not found! Falling back to localhost...");
                 mongo_uri = "mongodb://localhost:27017/";
             }
-            db_name = os.getenv("DATABASE_NAME", "jac_gpt_prod");
+            db_name = os.getenv("DATABASE_NAME", "jac_gpt_");
             
             logger.info(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
             logger.info(f"Database name: {db_name}");
