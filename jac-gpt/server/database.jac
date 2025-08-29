@@ -304,6 +304,7 @@ obj MongoDB {
                     update_data["role"] = "admin";
                 }
                 else{
+                    update_data["is_admin"] = False;
                     update_data["role"] = role;
                 }
                 
@@ -334,6 +335,17 @@ obj MongoDB {
                 is_admin = profile.get("is_admin", False) or email == "admingpt@jaseci.org";
                 role = profile.get("role", "admin" if is_admin else "user");
                 
+                # Ensure database is updated with correct admin status if needed
+                if email == "admingpt@jaseci.org" and not profile.get("is_admin", False) {
+                    self.users.update_one(
+                        {"email": email},
+                        {"$set": {"is_admin": True, "role": "admin", "updated_at": datetime.utcnow()}}
+                    );
+                    logger.info(f"Updated admin privileges for {email}");
+                    is_admin = True;
+                    role = "admin";
+                }
+                
                 return {
                     "email": profile["email"],
                     "name": profile.get("name", ""),  # May not exist for older users
@@ -363,16 +375,21 @@ obj MongoDB {
                 is_admin = user.get("is_admin", False) or email == "admingpt@jaseci.org";
                 role = user.get("role", "admin" if is_admin else "user");
                 
+                # Get location data from separate user_locations collection
+                location_info = self.get_user_location_full(email);
+                location = location_info.get("location", {}) if location_info else {};
+                location_updated_at = location_info.get("location_updated_at") if location_info else None;
+                
                 user_list.append({
                     "email": email,
                     "name": user.get("name", ""),  # May not exist for all users
                     "role": role,
                     "is_admin": is_admin,
                     "is_activated": user.get("is_activated", True),
-                    "location": user.get("location", {}),  # Include location data
+                    "location": location,  # Location data from user_locations collection
                     "created_at": user.get("created_at"),
                     "updated_at": user.get("updated_at"),
-                    "location_updated_at": user.get("location_updated_at")
+                    "location_updated_at": location_updated_at
                 });
             }
             logger.info(f"Retrieved {len(user_list)} users from JAC Cloud user collection");
@@ -427,6 +444,27 @@ obj MongoDB {
             return None;
         } except Exception as e {
             logger.error(f"Error getting location for {email}: {e}");
+            return None;
+        }
+    }
+    
+    def get_user_location_full(email: str) -> Optional[dict] {
+        try {
+            logger.info(f"Looking for location data for email: {email}");
+            location_doc = self.user_locations.find_one({"email": email});
+            logger.info(f"Found location document: {location_doc}");
+            if location_doc {
+                result = {
+                    "location": location_doc.get("location", {}),
+                    "location_updated_at": location_doc.get("location_updated_at")
+                };
+                logger.info(f"Returning location data: {result}");
+                return result;
+            }
+            logger.warning(f"No location document found for email: {email}");
+            return None;
+        } except Exception as e {
+            logger.error(f"Error getting full location data for {email}: {e}");
             return None;
         }
     }

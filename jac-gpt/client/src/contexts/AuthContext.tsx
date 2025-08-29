@@ -70,27 +70,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const parsedUser = JSON.parse(userData);
           
-          // If user doesn't have role, fetch it from profile
-          if (!parsedUser.role) {
-            try {
-              const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email: parsedUser.email }),
-              });
-              
-              if (profileResponse.ok) {
-                const profileData = await profileResponse.json();
-                if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
-                  parsedUser.role = profileData.reports[0].user.role || 'user';
-                  localStorage.setItem('user_data', JSON.stringify(parsedUser));
-                }
+          // Always fetch the latest user profile to ensure correct role
+          try {
+            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: parsedUser.email }),
+            });
+            
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
+                const userProfile = profileData.reports[0].user;
+                parsedUser.role = userProfile.role || 'user';
+                parsedUser.name = userProfile.name || parsedUser.name || '';
+                localStorage.setItem('user_data', JSON.stringify(parsedUser));
               }
-            } catch (error) {
-              console.error('Error fetching user profile:', error);
-              // Default to user role if profile fetch fails
+            }
+          } catch (error) {
+            console.error('Error fetching user profile:', error);
+            // Use existing role if profile fetch fails
+            if (!parsedUser.role) {
               parsedUser.role = 'user';
             }
           }
@@ -138,13 +140,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
 
           if (token) {
-            // Use JAC Cloud's user data directly
-            userData = {
-              id: data.user?.id || email,
-              email: data.user?.email || email,
-              name: data.user?.name || '',
-              role: data.user?.is_admin ? 'admin' : 'user',
-            };
+            // Fetch the complete user profile from our custom endpoint to get correct role
+            try {
+              const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: data.user?.email || email }),
+              });
+              
+              if (profileResponse.ok) {
+                const profileData = await profileResponse.json();
+                if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
+                  const userProfile = profileData.reports[0].user;
+                  userData = {
+                    id: data.user?.id || email,
+                    email: userProfile.email,
+                    name: userProfile.name || data.user?.name || '',
+                    role: userProfile.role || 'user',
+                  };
+                } else {
+                  // Fallback to JAC Cloud data if profile fetch fails
+                  userData = {
+                    id: data.user?.id || email,
+                    email: data.user?.email || email,
+                    name: data.user?.name || '',
+                    role: data.user?.is_admin ? 'admin' : 'user',
+                  };
+                }
+              } else {
+                // Fallback to JAC Cloud data if profile fetch fails
+                userData = {
+                  id: data.user?.id || email,
+                  email: data.user?.email || email,
+                  name: data.user?.name || '',
+                  role: data.user?.is_admin ? 'admin' : 'user',
+                };
+              }
+            } catch (profileError) {
+              console.error('Error fetching user profile:', profileError);
+              // Fallback to JAC Cloud data if profile fetch fails
+              userData = {
+                id: data.user?.id || email,
+                email: data.user?.email || email,
+                name: data.user?.name || '',
+                role: data.user?.is_admin ? 'admin' : 'user',
+              };
+            }
 
             setUser(userData);
             localStorage.setItem('auth_token', token);
