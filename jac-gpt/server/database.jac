@@ -297,8 +297,8 @@ obj MongoDB {
                 if name and not existing_user.get("name"){
                     update_data["name"] = name;
                 }
-                # Set admin role for admin@jaseci.org or if explicitly specified as admin
-                if email == "admin@jaseci.org" or role == "admin"{
+                # Set admin role for admin-gpt@jaseci.org or if explicitly specified as admin
+                if email == "admin-gpt@jaseci.org" or role == "admin"{
                     update_data["is_admin"] = True;
                     update_data["role"] = "admin";
                 }
@@ -330,8 +330,8 @@ obj MongoDB {
             if profile {
                 logger.info(f"Found user profile: {email}");
                 
-                # Special handling for admin@jaseci.org - always treat as admin
-                is_admin = profile.get("is_admin", False) or email == "admin@jaseci.org";
+                # Special handling for admin-gpt@jaseci.org - always treat as admin
+                is_admin = profile.get("is_admin", False) or email == "admin-gpt@jaseci.org";
                 role = profile.get("role", "admin" if is_admin else "user");
                 
                 return {
@@ -360,8 +360,8 @@ obj MongoDB {
             user_list = [];
             for user in users {
                 email = user["email"];
-                # Special handling for admin@jaseci.org - always treat as admin
-                is_admin = user.get("is_admin", False) or email == "admin@jaseci.org";
+                # Special handling for admin-gpt@jaseci.org - always treat as admin
+                is_admin = user.get("is_admin", False) or email == "admin-gpt@jaseci.org";
                 role = user.get("role", "admin" if is_admin else "user");
                 
                 user_list.append({

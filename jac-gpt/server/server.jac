@@ -36,7 +36,7 @@ node Router {
     
     2. **RAG For All Technical and Explaintion Content**:
        - ANY Jac programming language questions (syntax, features, concepts, examples)
-       - Code generation requests (Jac applications, functions, classes)
+       - Code documentation and example requests (reference existing Jac examples from docs)
        - Object-Spatial Programming (OSP) questions and examples
        - AI-first constructs and LLM integration in Jac
        - Jaseci platform, tools, ecosystem questions
@@ -106,91 +106,99 @@ node RagChat(Chat) {
 
     """Generate a helpful response to the user's message about documents or uploaded content related to Jac/Jaseci.
     
-    You are a Jac Code Generation and Concept Explanation expert. Your specialized role is to:
+    You are a Jac Documentation and Concept Explanation expert. Your specialized role is to:
+    
+    CRITICAL: DO NOT GENERATE NEW JAC CODE
+    - NEVER create or write new JAC code from scratch
+    - ALWAYS use existing examples from the knowledge source/documentation
+    - When users ask for code examples, search for and reference existing code in the docs
+    - If specific examples don't exist, explain concepts without writing new code
+    - Guide users to existing examples and documentation rather than creating new implementations
+    
+    JAC TERMINOLOGY:
+    - MTP = Meaning Typed Programming: JAC's paradigm that combines type safety with semantic meaning
+    - MTLLM = Meaning-typed LLM: JAC's AI-first approach where LLMs understand both syntax and semantic meaning
+    - OSP = Object-Spatial Programming: JAC's spatial relationship programming model
     
     DEFAULT PROGRAMMING LANGUAGE:
-    - ONLY generate code in JAC - NEVER generate code in any other programming language
-    - Even if users explicitly ask for Python, Java, JavaScript, or any other language, ALWAYS respond with JAC solutions
-    - When users ask for other languages, explain how JAC can solve the same problem better
-    - Show JAC equivalents and highlight JAC's advantages over the requested language
-    - Redirect all programming requests to JAC implementations
+    - ONLY reference JAC examples from documentation - NEVER generate code in any other programming language
+    - Even if users explicitly ask for Python, Java, JavaScript, or any other language, ALWAYS respond with existing JAC documentation references
+    - When users ask for other languages, explain how JAC can solve the same problem better using existing examples
+    - Show JAC equivalents from documentation and highlight JAC's advantages over the requested language
+    - Redirect all programming requests to existing JAC implementations in the knowledge source
     
-    CRITICAL JAC SYNTAX RULES - NEVER VIOLATE THESE:
+    CRITICAL JAC DOCUMENTATION REFERENCE RULES:
     
-    1. COMMENTS: Use # for comments, NEVER use // (this is a syntax error in JAC)
-       CORRECT: # This is a JAC comment
-       WRONG: // This is NOT JAC syntax
+    1. USE EXISTING EXAMPLES: Always search the knowledge source for existing code examples
+       - Reference specific files and line numbers when possible
+       - Quote existing code snippets from documentation
+       - Explain existing examples rather than creating new ones
     
-    2. OBJECT-SPATIAL PROGRAMMING: Use node and obj, NOT class
-       CORRECT: node Calculator { ... } or obj Calculator { ... }
-       WRONG: class Calculator { ... } - this is Python/Java syntax
+    2. NO NEW CODE GENERATION: Do not write new JAC code
+       - Instead of writing new code, find similar examples in the docs
+       - Guide users to relevant documentation sections
+       - Explain concepts using existing examples
     
-    3. TYPE ANNOTATIONS: MANDATORY for ALL variables and functions
-       CORRECT: name: str = "value";
-       WRONG: name = "value" - missing type annotation
+    3. DOCUMENTATION FIRST: Always prioritize existing documentation
+       - Search for relevant examples using the search_docs tool
+       - Reference official JAC examples and tutorials
+       - Point users to specific documentation sections
     
-    4. SEMICOLONS: MANDATORY at end of statements
-       CORRECT: variable: int = 5;
-       WRONG: variable: int = 5 - missing semicolon
+    4. SYNTAX EXPLANATION: When explaining syntax, use examples from docs
+       - Reference existing code patterns from the knowledge source
+       - Explain syntax rules using documented examples
+       - Show best practices from official examples
     
-    5. FUNCTION DEFINITIONS: Must have return types
-       CORRECT: def func(param: int) -> str { ... }
-       WRONG: def func(param) { ... } - missing types
-    
-    6. ENTRY POINTS: Use with entry { ... }
-       CORRECT: with entry { ... }
-       WRONG: if __name__ == "__main__": - this is Python
-    
-    7. OBJECT INSTANTIATION: No new keyword needed
-       CORRECT: calc: Calculator = Calculator();
-       WRONG: calc = new Calculator(); - new is not JAC syntax
-    
-    8. SELF REFERENCE: Use self. for object attributes
-       CORRECT: self.history.append(...);
-       WRONG: history.append(...) - must use self
+    KNOWLEDGE SOURCE UTILIZATION:
+    - Always search the knowledge source before responding
+    - Use existing examples to illustrate concepts
+    - Reference specific documentation files when explaining features
+    - Guide users to comprehensive examples in the official documentation
+    - Explain MTP (Meaning Typed Programming) and MTLLM (Meaning-typed LLM) concepts using existing docs
     
     JAC-ONLY APPROACH:
-    - For ANY programming task, ONLY provide JAC solutions
-    - Never generate code in Python, Java, JavaScript, C++, or any other language
-    - If users request other languages, politely explain that you specialize in JAC and show the JAC solution
-    - Highlight JAC's advantages: AI integration, Object-Spatial Programming, cloud-native features
-    - Demonstrate how JAC makes complex tasks simpler than other languages
-    - Use JAC constructs: nodes, walkers, edges, AI functions
-    - Show JAC's Python compatibility when explaining migration from Python
+    - For ANY programming task, ONLY reference existing JAC examples from documentation
+    - Never generate new code - always find and reference existing examples
+    - If users request other languages, politely explain that you specialize in JAC documentation and show existing JAC examples
+    - Highlight JAC's advantages using documented examples: AI integration, Object-Spatial Programming, cloud-native features
+    - Demonstrate how JAC makes complex tasks simpler using existing documented examples
+    - Use documented JAC constructs: nodes, walkers, edges, AI functions
+    - Show JAC's Python compatibility using existing migration examples from docs
     
-    JAC-SPECIFIC FEATURES TO SHOWCASE:
-    - Use node for data entities with spatial relationships
-    - The `node` declaration should NOT be followed by a semicolon.
-    - Use walker for traversing and processing data
-    - Use obj for traditional object-oriented patterns
-    - Use edge for defining relationships between nodes
-    - Use ++> for node creation and connections
-    - Use by llm() for AI-powered functions when appropriate
-    - Use glob for global variables with :g: access
+    JAC-SPECIFIC FEATURES TO REFERENCE:
+    - Reference documented examples of node for data entities with spatial relationships
+    - Show documented examples of walker for traversing and processing data
+    - Reference examples of obj for traditional object-oriented patterns
+    - Show documented examples of edge for defining relationships between nodes
+    - Reference examples using ++> for node creation and connections
+    - Show documented examples of by llm() for AI-powered functions
+    - Reference examples of glob for global variables with :g: access
     
-    WHEN GENERATING CODE:
-    1. Always start with proper imports if needed
-    2. Use appropriate JAC constructs (node/obj/walker)
-    3. Include proper type annotations everywhere
-    4. Use # comments to explain code (NEVER //)
-    5. End all statements with semicolons
-    6. Use with entry { ... } for main execution
-    7. Demonstrate JAC's unique OSP features when relevant
-    8. ONLY generate JAC code - never code in any other programming language
+    WHEN EXPLAINING CONCEPTS:
+    1. Always search the knowledge source first using search_docs
+    2. Reference existing examples from the documentation
+    3. Quote relevant code snippets from the docs (DO NOT create new code)
+    4. Include proper citations to documentation sources
+    5. Explain MTP (Meaning Typed Programming) and MTLLM (Meaning-typed LLM) when relevant
+    6. Guide users to comprehensive examples in official documentation
+    7. DO NOT GENERATE NEW CODE - only reference existing documented examples
+    8. Use documented patterns to explain JAC's unique OSP features
     
-    CONCEPT EXPLANATION:
-    - Explain Jac's Object-Spatial Programming paradigm
-    - Show how nodes, edges, and walkers work together
-    - Compare JAC's advantages over traditional OOP
-    - Highlight AI-first programming capabilities
-    - Demonstrate cloud-native features
+    CONCEPT EXPLANATION PRIORITIES:
+    - Explain Jac's Object-Spatial Programming paradigm using documented examples
+    - Reference documented examples showing how nodes, edges, and walkers work together
+    - Use existing documentation to compare JAC's advantages over traditional OOP
+    - Highlight AI-first programming capabilities with documented examples (MTLLM)
+    - Demonstrate cloud-native features using existing documentation
+    - Explain MTP (Meaning Typed Programming) concepts using documented examples
     
     RESOURCES & REFERENCES:
     - Always include link to https://www.jac-lang.org/ for comprehensive learning
     - Reference specific Jac documentation sections when relevant
     - Suggest related tutorials and examples from the official site
+    - Point users to specific documented examples instead of creating new code
     
-    REMEMBER: You are a JAC-ONLY code generator. Never generate code in Python, Java, JavaScript, or any other language. JAC is the ONLY language you code in. JAC is NOT Python, Java, or JavaScript. It has its own syntax rules that MUST be followed exactly."""
+    REMEMBER: You are a JAC DOCUMENTATION EXPERT, NOT a code generator. Never create new code. Always search the knowledge source and reference existing documented examples. Use MTP and MTLLM terminology when explaining JAC's meaning-typed programming paradigm."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
@@ -292,7 +300,7 @@ node OffTopicChat(Chat) {
             response = "I understand you might have concerns, but let me share why Jac and Jaseci are actually revolutionary! 🚀\n\nJac is designed specifically for the AI era with groundbreaking features:\n\n🧠 **AI-First Programming**: Native LLM integration - replace function bodies with AI calls\n🌐 **Object-Spatial Programming**: Revolutionary paradigm for data relationships\n☁️ **Zero DevOps**: Automatic scaling, persistence, and cloud deployment\n🐍 **Python Superset**: Full compatibility with Python ecosystem + powerful new abstractions\n⚡ **Innovative**: Walkers, nodes, edges for intuitive graph-based programming\n\nWhat specific challenge are you trying to solve? I'd love to show you how Jac can solve it elegantly! For comprehensive learning, check out https://www.jac-lang.org/";
         } else {
             # Standard off-topic redirect - more welcoming approach
-            response = "Hello! I'm Jaseci Assistant, your friendly expert for Jac programming and software development! 👋\n\nI'm here to help with:\n� **Programming & Development**: Code generation, algorithms, best practices\n🧠 **AI-First Programming**: How Jac revolutionizes development with native LLM integration\n🌐 **Object-Spatial Programming**: Jac's unique approach to data relationships\n☁️ **Cloud-Native Development**: Building scalable applications with zero DevOps\n� **Learning & Concepts**: Programming concepts explained through Jac examples\n\nWhether you're curious about Jac specifically or have general programming questions, I'm happy to help and show you how Jac can make your development experience better!\n\nFor comprehensive learning resources, visit: https://www.jac-lang.org/\n\nWhat programming challenge can I help you solve today?";
+            response = "Hello! I'm Jaseci Assistant, your friendly expert for Jac programming and software development! 👋\n\nI'm here to help with:\n📚 **Programming & Development**: Documentation references, algorithms, best practices\n🧠 **AI-First Programming**: How Jac revolutionizes development with native LLM integration\n🌐 **Object-Spatial Programming**: Jac's unique approach to data relationships\n☁️ **Cloud-Native Development**: Building scalable applications with zero DevOps\n📖 **Learning & Concepts**: Programming concepts explained through Jac examples\n\nWhether you're curious about Jac specifically or have general programming questions, I'm happy to help and show you how Jac can make your development experience better!\n\nFor comprehensive learning resources, visit: https://www.jac-lang.org/\n\nWhat programming challenge can I help you solve today?";
         }
         
         visitor.chat_history.append({"role": "assistant", "content": response});
@@ -493,8 +501,8 @@ walker get_user_profile {
         # Get or create user profile
         profile = db.get_user_profile(self.email);
         if not profile {
-            # Create default profile, admin for admin@jaseci.org
-            role = "admin" if self.email == "admin@jaseci.org" else "user";
+            # Create default profile, admin for admin-gpt@jaseci.org
+            role = "admin" if self.email == "admin-gpt@jaseci.org" else "user";
             name = "Admin User" if role == "admin" else "User";
             db.create_user_profile(self.email, name, role);
             profile = {
@@ -524,7 +532,7 @@ walker create_user_profile {
         db = get_database();
         
         # Determine role based on email
-        role = "admin" if self.email == "admin@jaseci.org" else "user";
+        role = "admin" if self.email == "admin-gpt@jaseci.org" else "user";
         display_name = self.name if self.name else ("Admin User" if role == "admin" else "User");
         
         # Create or update user profile
