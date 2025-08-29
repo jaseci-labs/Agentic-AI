@@ -299,7 +299,7 @@ obj MongoDB {
                 if name and not existing_user.get("name"){
                     update_data["name"] = name;
                 }
-                if email == "admin.gpt@jaseci.org" or role == "admin"{
+                if email == "admin.jacgpt@jaseci.org" or role == "admin"{
                     update_data["is_admin"] = True;
                     update_data["role"] = "admin";
                 }
@@ -332,11 +332,11 @@ obj MongoDB {
             if profile {
                 logger.info(f"Found user profile: {email}");
                 
-                is_admin = profile.get("is_admin", False) or email == "admin.gpt@jaseci.org";
+                is_admin = profile.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
                 role = profile.get("role", "admin" if is_admin else "user");
                 
                 # Ensure database is updated with correct admin status if needed
-                if email == "admin.gpt@jaseci.org" and not profile.get("is_admin", False) {
+                if email == "admin.jacgpt@jaseci.org" and not profile.get("is_admin", False) {
                     self.users.update_one(
                         {"email": email},
                         {"$set": {"is_admin": True, "role": "admin", "updated_at": datetime.utcnow()}}
@@ -372,7 +372,7 @@ obj MongoDB {
             user_list = [];
             for user in users {
                 email = user["email"];
-                is_admin = user.get("is_admin", False) or email == "admin.gpt@jaseci.org";
+                is_admin = user.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
                 role = user.get("role", "admin" if is_admin else "user");
                 
                 # Get location data from separate user_locations collection
