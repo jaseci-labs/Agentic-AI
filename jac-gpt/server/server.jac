@@ -502,8 +502,7 @@ walker get_user_profile {
         # Get or create user profile
         profile = db.get_user_profile(self.email);
         if not profile {
-            # Create default profile, admin for admin_gpt@jaseci.org
-            role = "admin" if self.email == "admin_gpt@jaseci.org" else "user";
+            role = "admin" if self.email == "admingpt@jaseci.org" else "user";
             name = "Admin User" if role == "admin" else "User";
             db.create_user_profile(self.email, name, role);
             profile = {
@@ -533,7 +532,7 @@ walker create_user_profile {
         db = get_database();
         
         # Determine role based on email
-        role = "admin" if self.email == "admin_gpt@jaseci.org" else "user";
+        role = "admin" if self.email == "admingpt@jaseci.org" else "user";
         display_name = self.name if self.name else ("Admin User" if role == "admin" else "User");
         
         # Create or update user profile
