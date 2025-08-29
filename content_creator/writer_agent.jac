@@ -6,6 +6,7 @@ import from tavily { TavilyClient }
 import from state { AgentState }
 
 import from dotenv { load_dotenv }
+
 with entry {
     load_dotenv();
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY');

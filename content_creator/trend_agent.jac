@@ -5,13 +5,11 @@ import from state { AgentState }
 
 import from tavily { TavilyClient }
 import from dotenv { load_dotenv }
-with entry {
-    load_dotenv();
-}
 import os;
 
 
 with entry {
+    load_dotenv();
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY');
     tavily_client = TavilyClient(api_key=os.getenv('TAVILY_API_KEY'));
 }

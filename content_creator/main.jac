@@ -1,15 +1,12 @@
 import from dotenv { load_dotenv }
 import from graph { WorkflowGraph }
 import from state { AgentState }
+import from json { load as json_load }
 
 with entry {
-    initial_input = {
-        'user_input': {
-            'field': 'Artificial Intelligence',
-            'topic': 'Agentic AI',
-            'expected_output': 'A detailed README.md style blog post'
-        }
-    };
+    with open("input.json", "r") as f {
+        initial_input = json_load(f);
+    }
     graph_builder = WorkflowGraph();
     app = graph_builder.app;
     print('--- STARTING WORKFLOW ---');
