@@ -19,6 +19,7 @@ obj MongoDB {
     has sessions: object = None;
     has messages: object = None;
     has users: object = None;  # This will point to JAC Cloud's built-in 'user' collection
+    has user_locations: object = None;  # Separate collection for user location data
 
     def postinit {
         self.connect();
@@ -40,6 +41,7 @@ obj MongoDB {
             self.sessions = self.db.sessions;
             self.messages = self.db.messages;
             self.users = self.db.user;  # Use JAC Cloud's built-in 'user' collection
+            self.user_locations = self.db.user_locations;  # Separate collection for location data
             self.client.admin.command("ping");
             logger.info(f"Connected to MongoDB: { db_name }");
         } except Exception as e {
@@ -383,8 +385,9 @@ obj MongoDB {
     
     def save_user_location(email: str, location: dict) -> bool {
         try {
-            # Update user with location data in JAC Cloud's user collection
-            update_data = {
+            # Save location data to separate collection instead of modifying user document
+            location_data = {
+                "email": email,
                 "location": {
                     "latitude": location.get("latitude"),
                     "longitude": location.get("longitude"),
@@ -395,21 +398,36 @@ obj MongoDB {
                 "location_updated_at": datetime.utcnow()
             };
             
-            result = self.users.update_one(
+            # Use upsert to update existing or create new location record
+            result = self.user_locations.update_one(
                 {"email": email},
-                {"$set": update_data}
+                {"$set": location_data, "$setOnInsert": {"created_at": datetime.utcnow()}},
+                upsert=True
             );
             
-            if result.modified_count > 0 {
+            if result.upserted_id or result.modified_count > 0 {
                 logger.info(f"Location saved for user: {email}");
                 return True;
             } else {
-                logger.warning(f"No user found to update location: {email}");
+                logger.warning(f"Failed to save location for user: {email}");
                 return False;
             }
         } except Exception as e {
             logger.error(f"Error saving location for {email}: {e}");
             return False;
+        }
+    }
+    
+    def get_user_location(email: str) -> Optional[dict] {
+        try {
+            location_doc = self.user_locations.find_one({"email": email});
+            if location_doc {
+                return location_doc.get("location", {});
+            }
+            return None;
+        } except Exception as e {
+            logger.error(f"Error getting location for {email}: {e}");
+            return None;
         }
     }
     
@@ -443,9 +461,6 @@ obj MongoDB {
         }
     }
 }
-
-
-
 
 def get_database() -> MongoDB {
     global _database_instance;
