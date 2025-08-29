@@ -75,7 +75,7 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
                 {isExpanded && (
                   <div>
                     <h1 className="text-lg font-bold text-white">
-                      Jaseci Assistant
+                      Jac GPT
                     </h1>
                     <p className="text-xs text-gray-400">
                       Jac programming companion

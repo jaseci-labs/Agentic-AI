@@ -165,7 +165,7 @@ const JacChatbot = () => {
           <div className="hidden lg:flex items-center justify-between p-4 border-b border-gray-700">
             <div className="flex items-center gap-3">
               <img src={jacLogo} alt="Jac Logo" className="w-8 h-8 object-contain" />
-              <h1 className="text-xl font-semibold text-white">Jac Assistant</h1>
+              <h1 className="text-xl font-semibold text-white">Jac GPT</h1>
             </div>
             
             <Button
