@@ -14,6 +14,7 @@ with entry {
 glob llm = Model(model_name='gpt-4o-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
 glob rag_engine: RagEngine = RagEngine();
 
+
 """ChatType enum defines the types of chat interactions. ChatType must be one of:
 - RAG: For interactions that require more knowledge (syntaxes) about Jac/Jaseci.
 - QA: For interactions that does not require more knowledge (syntax updates) about Jac/Jaseci.
@@ -501,8 +502,8 @@ walker get_user_profile {
         # Get or create user profile
         profile = db.get_user_profile(self.email);
         if not profile {
-            # Create default profile, admin for admin-gpt@jaseci.org
-            role = "admin" if self.email == "admin-gpt@jaseci.org" else "user";
+            # Create default profile, admin for admin_gpt@jaseci.org
+            role = "admin" if self.email == "admin_gpt@jaseci.org" else "user";
             name = "Admin User" if role == "admin" else "User";
             db.create_user_profile(self.email, name, role);
             profile = {
