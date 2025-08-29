@@ -28,7 +28,7 @@ const JacChatbot = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [docPanelOpen, setDocPanelOpen] = useState(true);
+  const [docPanelOpen, setDocPanelOpen] = useState(false);
   const [docSuggestions, setDocSuggestions] = useState<DocumentationSuggestion[]>([]);
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
 
@@ -103,12 +103,16 @@ const JacChatbot = () => {
       })));
       setDocSuggestions(suggestions);
       
-      // Auto-open documentation panel if it's closed and we have good suggestions
-      if (!docPanelOpen && suggestions.length > 0) {
+      // Auto-open documentation panel when user sends a message
+      if (!docPanelOpen) {
         setDocPanelOpen(true);
       }
     } catch (error) {
       console.warn('Failed to get documentation suggestions:', error);
+      // Still open the panel even if suggestions fail
+      if (!docPanelOpen) {
+        setDocPanelOpen(true);
+      }
     }
 
     try {
@@ -194,11 +198,9 @@ const JacChatbot = () => {
                     </div>
                     <p className="text-xl text-gray-300 font-medium">Ask me anything about Jac</p>
                     <p className="text-sm text-gray-500 mt-2">Start a conversation about Jac programming language</p>
-                    {docPanelOpen && (
-                      <p className="text-xs text-gray-600 mt-3">
-                        💡 Relevant documentation will appear in the panel on the right
-                      </p>
-                    )}
+                    <p className="text-xs text-gray-600 mt-3">
+                      💡 Relevant documentation will appear when you ask a question
+                    </p>
                   </div>
                 </div>
               )}
