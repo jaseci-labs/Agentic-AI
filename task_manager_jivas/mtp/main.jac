@@ -147,6 +147,20 @@ walker task_manager {
     }
 }
 
+walker get_all_tasks {
+    obj __specs__ {
+        static has auth: bool = False;
+    }
+    can get_all_tasks with `root entry {
+        task_handling_node = [root --> (`?TaskHandling)];
+        if not task_handling_node {
+            report "No tasks found.";
+            disengage;
+        }
+        report [task_handling_node[0] --> (`?Task)];
+    }
+}
+
 with entry {
     load_dotenv();
 }
