@@ -130,8 +130,7 @@ node TasksHandlingAction(Action) {
             return;
         }
 
-        tasks_text = "\n".join([f"- {t.task} on {t.date} at {t.time}" for t in scheduled_tasks]);
-
+        tasks_text = "\n".join([f"- {t.get("task","")} on {t.get("date","")} at {t.get("time","")}" for t in scheduled_tasks]);
         prompt_messages = [
             {"system": self.prompt_summarize_all_tasks},
             {"human": tasks_text}
