@@ -14,14 +14,17 @@ node Task {
     has status: str = "pending";
 }
 
-node Memory {
-    has history: list = [];
+node Memory {}
 
-    def add_memory(entry: str) {
+node Session {
+    has history: list = [];
+    has created_at: str = get_current_datetime();
+
+    def add_history(entry: str) {
         self.history = self.history + [entry];
     }
-    def get_memory -> str {
-        return "\n".join(self.history);
+    def get_history -> str {
+        return "\n".join(self.history[-10:]);
     }
 }
 
@@ -41,12 +44,21 @@ node TaskHandling {
         method="ReAct",
         tools=([self.check_scheduled_tasks])
     );
-    def route_and_run(utterance: str) -> str by llm(
+    def route_and_run(utterance: str, history: str) -> str by llm(
         method="ReAct",
         tools=([self.extract_task_info, self.summarize_tasks])
     );
     can execute with task_manager entry {
-        report self.route_and_run(visitor.utterance);
+        session = visitor.session;
+        response = self.route_and_run(visitor.utterance, session.get_history());
+        session.add_history(
+            "user: " + visitor.utterance + "\nai: " + response
+        );
+        report {
+            "session_id": jid(visitor.session),
+            "created_at": visitor.session.created_at,
+            "response": response
+        };
     }
 }
 sem TaskHandling.extract_task_info = "time and date should be extracted in the format of 'YYYY-MM-DD HH:MM:SS'.";
@@ -58,7 +70,7 @@ node EmailHandling {
     has sender_password: str = os.getenv("SENDER_PASSWORD");
     has sender_name: str = os.getenv("SENDER_NAME");
 
-    def write_email_content(utterance: str, memory: str) -> str by llm();
+    def write_email_content(utterance: str, history: str) -> str by llm();
     def send_email(email_content: str, email_subject: str, email_to: str) {
         msg = MIMEText(email_content);
         msg["Subject"] = email_subject;
@@ -76,17 +88,21 @@ node EmailHandling {
             print(f"Failed to send email to {email_to} with subject '{email_subject}': {e}");
         }
     }
-    def route_and_run(utterance: str, memory: str) -> str by llm(
+    def route_and_run(utterance: str, history: str) -> str by llm(
         method="ReAct",
         tools=([self.write_email_content, self.send_email])
     );
     can execute with task_manager entry {
-        memory = visitor.memory;
-        response = self.route_and_run(visitor.utterance, memory.get_memory());
-        memory.add_memory(
+        session = visitor.session;
+        response = self.route_and_run(visitor.utterance, session.get_history());
+        session.add_history(
             "user: " + visitor.utterance + "\nai: " + response
         );
-        report response;
+        report {
+            "session_id": jid(visitor.session),
+            "created_at": visitor.session.created_at,
+            "response": response
+        };
     }
 }
 
@@ -102,15 +118,19 @@ Never send without explicit confirmation.
 """;
 
 node GeneralChat {
-    def chat(utterance: str, memory: str) -> str by llm();
+    def chat(utterance: str, history: str) -> str by llm();
 
     can execute with task_manager entry {
-        memory = visitor.memory;
-        response = self.chat(visitor.utterance, memory.get_memory());
-        memory.add_memory(
+        session = visitor.session;
+        response = self.chat(visitor.utterance, session.get_history());
+        session.add_history(
             "user: " + visitor.utterance + "\nai: " + response
         );
-        report response;
+        report {
+            "session_id": jid(visitor.session),
+            "created_at": visitor.session.created_at,
+            "response": response
+        };
     }
 }
 
@@ -122,19 +142,25 @@ enum RoutingNodes{
 
 walker task_manager {
     has utterance: str = "";
+    has session_id: str = "";
     
     obj __specs__ {
         static has auth: bool = False;
     }
-
-    def route_to_node(utterance: str, memory: str) -> RoutingNodes by llm();
+    def route_to_node(utterance: str, history: str) -> RoutingNodes by llm();
     can execute with `root entry {
         memory_list = [root --> (`?Memory)];
         if not memory_list {
             memory_list = root ++> Memory();
         }
-        self.memory = memory_list[0];
-        routed_node = self.route_to_node(self.utterance, self.memory.get_memory());
+        memory = memory_list[0];
+        if not self.session_id {
+            session_list = memory ++> Session();
+            self.session = session_list[0];
+        } else {
+            self.session = &(self.session_id);
+        }
+        routed_node = self.route_to_node(self.utterance, self.session.get_history());
         node_cls = globals().get(routed_node.value, "");
         if not node_cls {
             return;
@@ -158,6 +184,25 @@ walker get_all_tasks {
             disengage;
         }
         report [task_handling_node[0] --> (`?Task)];
+    }
+}
+
+walker get_all_sessions {
+    obj __specs__ {
+        static has auth: bool = False;
+    }
+    can get_all_sessions with `root entry {
+        memory_list = [here --> (`?Memory)];
+        if not memory_list {
+            report "No sessions found.";
+            disengage;
+        }
+        memory = memory_list[0];
+        session_list = [memory --> (`?Session)];
+        report [{
+            "id": jid(session),
+            "created_at": session.created_at
+        } for session in session_list];
     }
 }
 
