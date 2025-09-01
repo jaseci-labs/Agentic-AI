@@ -20,13 +20,8 @@ node Task {
 }
 
 node TaskHandling(Toolbox) {
-    def add_task(task: Task) -> str {
-        self ++> task;
-        return "Task added successfully";
-    }
-    def check_scheduled_tasks -> list[Task] {
-        return [self --> (`?Task)];
-    }
+    def add_task(task: Task) -> str;
+    def check_scheduled_tasks -> list[Task];
     def extract_task_info(utterance: str) -> Task by llm(
         method="ReAct",
         tools=([self.add_task, get_current_datetime])
@@ -41,49 +36,18 @@ node TaskHandling(Toolbox) {
     );
 }
 
-sem TaskHandling.extract_task_info = "time and date should be extracted in the format of 'YYYY-MM-DD HH:MM:SS'.";
-sem TaskHandling.route_and_run = "Select and Execute only one tool provided.";
-sem TaskHandling.summarize_tasks = "Summarize the tasks in a concise manner. But all relevant task information should be included.";
-
 node EmailHandling(Toolbox) {
     has sender_email: str = os.getenv("SENDER_EMAIL");
     has sender_password: str = os.getenv("SENDER_PASSWORD");
     has sender_name: str = os.getenv("SENDER_NAME");
 
     def write_email_content(utterance: str, history: str) -> str by llm();
-    def send_email(email_content: str, email_subject: str, email_to: str) {
-        msg = MIMEText(email_content);
-        msg["Subject"] = email_subject;
-        msg["From"] = self.sender_email;
-        msg["To"] = email_to;
-
-        try {
-            server = smtplib.SMTP("smtp.gmail.com", 587);
-            server.starttls();
-            server.login(self.sender_email, self.sender_password);
-            server.sendmail(self.sender_email, email_to, msg.as_string());
-            server.quit();
-        }
-        except Exception as e {
-            print(f"Failed to send email to {email_to} with subject '{email_subject}': {e}");
-        }
-    }
+    def send_email(email_content: str, email_subject: str, email_to: str) -> None;
     def route_and_run(utterance: str, history: str) -> str by llm(
         method="ReAct",
         tools=([self.write_email_content, self.send_email])
     );
 }
-
-sem EmailHandling.route_and_run = """
-Step 1: Extract the email content, subject, and recipient from the user's utterance.
-- Generate a complete draft of the email. 
-- Use 'Hi' as the greeting if the recipient name is not mentioned.
-- Show the draft to the user and ask for confirmation (e.g., 'Do you want me to send this email?').
-
-Step 2: If the user confirms (yes), send the email. 
-If the user says no, either re-draft based on feedback or cancel.
-Never send without explicit confirmation.
-""";
 
 node GeneralChat(Toolbox) {
     def chat(utterance: str, history: str) -> str by llm();
@@ -101,12 +65,5 @@ walker get_all_tasks {
     obj __specs__ {
         static has auth: bool = False;
     }
-    can get_all_tasks with `root entry {
-        task_handling_node = [root --> (`?TaskHandling)];
-        if not task_handling_node {
-            report "No tasks found.";
-            disengage;
-        }
-        report [task_handling_node[0] --> (`?Task)];
-    }
+    can get_all_tasks with `root entry;
 }
