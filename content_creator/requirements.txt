@@ -1,0 +1,4 @@
+python-dotenv
+openai
+jac-streamlit
+tavily-python

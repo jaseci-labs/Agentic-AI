@@ -8,8 +8,8 @@ __pycache__/
 *$py.class
 
 # Project-specific
-content_creator_v1/.env
-content_creator_v1/__pycache__/
-content_creator_v1_jac/env
-content_creator_v2_jac/__pycache__/
-content_creator_v2_jac/__pycache__/
+generated_article_final.md
+generated_article_image.png
+trending_topics.md
+input.json
+Jac_Content_Generator.pdf

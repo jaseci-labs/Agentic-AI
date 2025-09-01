@@ -1,39 +1,63 @@
-# Multi-Agent Content Creator
-# Content Creator v1
+# Content Creator (Agentic-AI)
 
-A modular, agent-based content creation system built in Jac.
+An agentic, modular content creation pipeline built with Jac and Python. This project automates the generation of trending topics, detailed articles, and media assets using a graph-based workflow and multiple specialized agents.
+
+---
+
+## Features
+
+- **Agentic Workflow:** Modular Jac agents for trend detection, writing, editing, and media generation.
+- **Graph-Based Orchestration:** Flexible workflow defined in `graph.jac` and `app.jac`.
+- **Automated Content Generation:** Produces trending topics, detailed articles, and associated images.
+- **State Management:** Tracks workflow state and results in `state.jac`.
+- **Extensible:** Easily add or modify agents for new content types or workflows.
+
+---
 
 ## Project Structure
 
+| File/Folder              | Description                                      |
+|--------------------------|--------------------------------------------------|
+| `main.jac`               | Entry point Jac script for running the workflow  |
+| `app.jac`                | Application logic and workflow orchestration     |
+| `graph.jac`              | Defines the workflow graph and agent connections |
+| `state.jac`              | State management for the workflow                |
+| `trend_agent.jac`        | Agent for detecting trending topics              |
+| `writer_agent.jac`       | Agent for generating article content             |
+| `editor_agent.jac`       | Agent for editing and refining articles          |
+| `media_agent.jac`        | Agent for generating images/media                |
+| `input.json`             | Example input for workflow                       |
+| `generated_article_final.md` | Output: generated article                    |
+| `generated_article_image.png` | Output: generated image                     |
+| `trending_topics.md`     | Output: trending topics list                     |
+| `requirements.txt`       | Python dependencies                              |
+| `.env`                   | Environment variables (API keys, etc.)           |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10+
+- [Jac language](https://www.jac-lang.org/) (install via `pip install jac[all]`)
+- Required API keys (set in `.env` if using LLMs or image generation)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <this-repo-url>
+cd content_creator
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Running the Workflow
+jac streamlit app.jac
 ```
-content_creator_v1_jac/
-│
-├── .env                   # Environment variables
-├── main.jac              # Entry point for the application
-├── requirements.txt       
-├── state.jac             # State management logic
-│
-├── agents/                # Specialized agents for content creation
-│   ├── editor_agent.jac
-│   ├── media_agent.jac
-│   ├── trend_agent.jac
-│   └── writer_agent.jac
-│
-└── core/                  # Core logic and utilities
-    └── graph.jac
-```
 
-## Architecture Overview
-
-- **main.jac**  
-  Orchestrates the content creation workflow by coordinating agents and managing state.
-
-- **state.jac**  
-  Handles the application's state, including data persistence and transitions.
-
-- **agents/**  
-  Contains specialized agents, each responsible for a specific aspect of content creation:
-  - **`trend_agent.jac`: Analyzes trends to inform content strategy.**
-  - **`writer_agent.jac`: Generates written content.**
-  - `editor_agent.jac`: Edits and refines content by `write_agent`.
-  - `media_agent.jac`: Handles image integration using DALL-E 2.
+### Outputs
+- generated_article_final.md — The final generated article.
+- generated_article_image.png — Associated image for the article.
+- trending_topics.md — List of trending topics detected.
