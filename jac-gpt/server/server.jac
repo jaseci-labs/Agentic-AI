@@ -586,20 +586,31 @@ walker get_all_users {
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
+        static has auth: bool = True;
     }
 
     can list_users with `root entry {
         db = get_database();
         
+        # Get the authenticated user from JAC Cloud context
+        # If no requester_email provided, try to get it from auth context
+        auth_email = self.requester_email;
+        if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
+            auth_email = here.info["auth_user"]["email"];
+        }
+        
+        print(f"🔍 [DEBUG] Server: get_all_users called with auth_email: {auth_email}");
+        print(f"🔍 [DEBUG] Server: self.requester_email: {self.requester_email}");
+        
         # Check if requester is admin
-        requester = db.get_user_profile(self.requester_email);
+        requester = db.get_user_profile(auth_email);
         
         # Debug information
         if not requester {
             report {
                 "error": "Unauthorized: User profile not found",
-                "requester_email": self.requester_email
+                "requester_email": auth_email,
+                "provided_email": self.requester_email
             };
             return;
         }
@@ -628,14 +639,22 @@ walker get_all_sessions_admin {
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
+        static has auth: bool = True;
     }
 
     can list_all_sessions with `root entry {
         db = get_database();
         
+        # Get the authenticated user from JAC Cloud context
+        auth_email = self.requester_email;
+        if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
+            auth_email = here.info["auth_user"]["email"];
+        }
+        
+        print(f"🔍 [DEBUG] Server: get_all_sessions_admin called with auth_email: {auth_email}");
+        
         # Check if requester is admin
-        requester = db.get_user_profile(self.requester_email);
+        requester = db.get_user_profile(auth_email);
         if not requester or requester.get("role") != "admin" {
             report {
                 "error": "Unauthorized: Admin access required"
@@ -658,14 +677,20 @@ walker get_session_messages_admin {
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
+        static has auth: bool = True;
     }
 
     can get_session_chat with `root entry {
         db = get_database();
         
+        # Get the authenticated user from JAC Cloud context
+        auth_email = self.requester_email;
+        if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
+            auth_email = here.info["auth_user"]["email"];
+        }
+        
         # Check if requester is admin
-        requester = db.get_user_profile(self.requester_email);
+        requester = db.get_user_profile(auth_email);
         if not requester or requester.get("role") != "admin" {
             report {
                 "error": "Unauthorized: Admin access required"

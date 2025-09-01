@@ -75,11 +75,22 @@ const AdminDashboard = () => {
       console.log('🔍 Fetching users with requester_email:', user?.email);
       console.log('🔍 API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
       
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      console.log('🔍 Auth token exists:', !!token);
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log('🔍 Added Authorization header');
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_users`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
@@ -114,11 +125,22 @@ const AdminDashboard = () => {
     try {
       console.log('🔍 Fetching sessions with requester_email:', user?.email);
       
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      console.log('🔍 Auth token exists:', !!token);
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log('🔍 Added Authorization header');
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_sessions_admin`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
@@ -152,11 +174,21 @@ const AdminDashboard = () => {
   const fetchSessionMessages = async (sessionId: string) => {
     try {
       setLoading(true);
+      
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ 
           session_id: sessionId,
           requester_email: user?.email 
@@ -184,14 +216,23 @@ const AdminDashboard = () => {
     try {
       const questions: UserQuestion[] = [];
       
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       // First get all sessions with their messages
       for (const session of sessions) {
         try {
           const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify({ 
               session_id: session.session_id,
               requester_email: user?.email 
