@@ -15,6 +15,16 @@ interface User {
   role: string;
   created_at: string;
   last_login?: string;
+  location?: {
+    city?: string;
+    region?: string;
+    country?: string;
+    country_code?: string;
+    latitude?: number;
+    longitude?: number;
+    source?: string;
+  };
+  location_updated_at?: string;
 }
 
 interface Session {
@@ -62,50 +72,101 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log('🔍 Fetching users with requester_email:', user?.email);
+      console.log('🔍 API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+      
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      console.log('🔍 Auth token exists:', !!token);
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log('🔍 Added Authorization header');
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_users`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
+      console.log('🔍 Users API response status:', response.status);
+      console.log('🔍 Users API response ok:', response.ok);
+
       const data = await response.json();
+      console.log('🔍 Users API response data:', data);
+      
       if (data.reports && data.reports[0]) {
         const result = data.reports[0];
+        console.log('🔍 Users API result:', result);
+        
         if (result.error) {
+          console.error('❌ Users API error:', result.error);
           setError(result.error);
         } else {
+          console.log('✅ Users fetched successfully:', result.users?.length || 0, 'users');
           setUsers(result.users || []);
         }
+      } else {
+        console.error('❌ Unexpected users response structure:', data);
+        setError('Unexpected response structure from users API');
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('❌ Error fetching users:', error);
       setError('Failed to fetch users');
     }
   };
 
   const fetchSessions = async () => {
     try {
+      console.log('🔍 Fetching sessions with requester_email:', user?.email);
+      
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      console.log('🔍 Auth token exists:', !!token);
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log('🔍 Added Authorization header');
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_sessions_admin`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
+      console.log('🔍 Sessions API response status:', response.status);
+      console.log('🔍 Sessions API response ok:', response.ok);
+
       const data = await response.json();
+      console.log('🔍 Sessions API response data:', data);
+      
       if (data.reports && data.reports[0]) {
         const result = data.reports[0];
+        console.log('🔍 Sessions API result:', result);
+        
         if (result.error) {
+          console.error('❌ Sessions API error:', result.error);
           setError(result.error);
         } else {
+          console.log('✅ Sessions fetched successfully:', result.sessions?.length || 0, 'sessions');
           setSessions(result.sessions || []);
         }
+      } else {
+        console.error('❌ Unexpected sessions response structure:', data);
+        setError('Unexpected response structure from sessions API');
       }
     } catch (error) {
-      console.error('Error fetching sessions:', error);
+      console.error('❌ Error fetching sessions:', error);
       setError('Failed to fetch sessions');
     }
   };
@@ -113,11 +174,21 @@ const AdminDashboard = () => {
   const fetchSessionMessages = async (sessionId: string) => {
     try {
       setLoading(true);
+      
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ 
           session_id: sessionId,
           requester_email: user?.email 
@@ -145,14 +216,23 @@ const AdminDashboard = () => {
     try {
       const questions: UserQuestion[] = [];
       
+      // Get auth token for headers
+      const token = localStorage.getItem('auth_token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       // First get all sessions with their messages
       for (const session of sessions) {
         try {
           const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify({ 
               session_id: session.session_id,
               requester_email: user?.email 
@@ -195,14 +275,24 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+    console.log('🔍 AdminDashboard useEffect triggered');
+    console.log('🔍 Current user:', user);
+    console.log('🔍 User role:', user?.role);
+    console.log('🔍 Is admin?', user?.role === 'admin');
+    
     const loadData = async () => {
+      console.log('🔍 Loading admin data...');
       setLoading(true);
       await Promise.all([fetchUsers(), fetchSessions()]);
       setLoading(false);
+      console.log('✅ Admin data loading completed');
     };
 
     if (user?.role === 'admin') {
+      console.log('✅ User is admin, loading data...');
       loadData();
+    } else {
+      console.log('❌ User is not admin or user is null');
     }
   }, [user]);
 
@@ -381,6 +471,14 @@ const AdminDashboard = () => {
                         <span>Created: {formatDate(user.created_at)}</span>
                         {user.last_login && (
                           <span className="ml-4">Last login: {formatDate(user.last_login)}</span>
+                        )}
+                        {user.location && (
+                          <div className="mt-1">
+                            <span className="text-blue-600">📍 {user.location.city ? `${user.location.city}, ` : ''}{user.location.country || 'Unknown location'}</span>
+                            {user.location_updated_at && (
+                              <span className="ml-2 text-gray-400">({formatDate(user.location_updated_at)})</span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

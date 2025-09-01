@@ -18,24 +18,30 @@ obj MongoDB {
     has db: object = None;
     has sessions: object = None;
     has messages: object = None;
-    has users: object = None;
+    has users: object = None;  # This will point to JAC Cloud's built-in 'user' collection
+    has user_locations: object = None;  # Separate collection for user location data
 
     def postinit {
         self.connect();
     }
     def connect {
         try {
-            mongo_uri = os.getenv("MONGODB_URI");
+            mongo_uri = os.getenv("DATABASE_HOST");
             if not mongo_uri {
-                logger.warning("MONGODB_URI not found! Falling back to localhost...");
+                logger.warning("DATABASE_HOST not found! Falling back to localhost...");
                 mongo_uri = "mongodb://localhost:27017/";
             }
-            db_name = os.getenv("MONGODB_DATABASE", "jac_gpt");
+            db_name = os.getenv("DATABASE_NAME", "jac_gpt_prod4");
+            
+            logger.info(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
+            logger.info(f"Database name: {db_name}");
+            
             self.client = MongoClient(mongo_uri);
             self.db = self.client[db_name];
             self.sessions = self.db.sessions;
             self.messages = self.db.messages;
-            self.users = self.db.users;
+            self.users = self.db.user;  # Use JAC Cloud's built-in 'user' collection
+            self.user_locations = self.db.user_locations;  # Separate collection for location data
             self.client.admin.command("ping");
             logger.info(f"Connected to MongoDB: { db_name }");
         } except Exception as e {
@@ -172,58 +178,14 @@ obj MongoDB {
         }
     }
     
-    def create_or_update_user(email: str, password: str, name: str = "", role: str = "user") -> <>dict {
-        try {
-            existing_user = self.users.find_one({"email": email});
-            if existing_user {
-                logger.info(f"User { email } already exists");
-                return existing_user;
-            }
-            
-            user_data = {
-                "email": email,
-                "password": password,  # In real app, this should be hashed
-                "name": name,
-                "role": role,
-                "created_at": datetime.utcnow(),
-                "last_login": datetime.utcnow()
-            };
-            
-            result = self.users.insert_one(user_data);
-            user_data["_id"] = result.inserted_id;
-            logger.info(f"Created new user: { email }");
-            return user_data;
-        } except Exception as e {
-            logger.error(f"Error creating user { email }: { e }");
-            return None;
-        }
-    }
-    
-    def get_user_by_email(email: str) -> <>dict {
-        try {
-            user = self.users.find_one({"email": email});
-            return user;
-        } except Exception as e {
-            logger.error(f"Error getting user { email }: { e }");
-            return None;
-        }
-    }
-    
-    def update_user_login(email: str) -> bool {
-        try {
-            self.users.update_one(
-                {"email": email},
-                {"$set": {"last_login": datetime.utcnow()}}
-            );
-            return True;
-        } except Exception as e {
-            logger.error(f"Error updating login for { email }: { e }");
-            return False;
-        }
-    }
+    # User management methods removed - now using JAC Cloud's built-in user management
+    # The built-in /user/register and /user/login endpoints handle user creation and authentication
+    # User data is automatically stored in the 'user' collection by JAC Cloud
     
     def get_all_users(limit: int = 100) -> List[Dict] {
         try {
+            # Query JAC Cloud's built-in user collection
+            # JAC Cloud users have different structure than custom users
             users = <>list(
                 self.users.find({}, {"password": 0}).limit(limit)
             );
@@ -319,30 +281,41 @@ obj MongoDB {
         }
     }
     
-    def create_user_profile(email: str, name: str, role: str = "user") -> bool {
+    def create_user_profile(email: str, name: str = "", role: str = "user") -> bool {
         try {
-            profile_data = {
-                "_id": email,
-                "email": email,
-                "name": name,
-                "role": role,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
-            };
+            # JAC Cloud automatically creates users in the 'user' collection
+            # We can add additional profile information by updating the existing user record
+            # Or create a separate profile collection if needed
             
-            # Check if profile already exists
-            existing = self.users.find_one({"_id": email});
-            if existing {
-                # Update existing profile
+            # Check if user exists in JAC Cloud's user collection
+            existing_user = self.users.find_one({"email": email});
+            if existing_user {
+                # Update the existing user with additional profile info
+                update_data = {
+                    "updated_at": datetime.utcnow()
+                };
+                
+                # Add name if provided and not already exists
+                if name and not existing_user.get("name"){
+                    update_data["name"] = name;
+                }
+                if email == "admin.jacgpt@jaseci.org" or role == "admin"{
+                    update_data["is_admin"] = True;
+                    update_data["role"] = "admin";
+                }
+                else{
+                    update_data["is_admin"] = False;
+                    update_data["role"] = role;
+                }
+                
                 self.users.update_one(
-                    {"_id": email},
-                    {"$set": {"name": name, "role": role, "updated_at": datetime.utcnow()}}
+                    {"email": email},
+                    {"$set": update_data}
                 );
-                logger.info(f"Updated user profile for: {email}");
+                logger.info(f"Updated user profile for: {email} with role: {role}");
             } else {
-                # Create new profile
-                self.users.insert_one(profile_data);
-                logger.info(f"Created user profile for: {email} with role: {role}");
+                logger.warning(f"User {email} not found in JAC Cloud user collection");
+                return False;
             }
             
             return True;
@@ -354,13 +327,31 @@ obj MongoDB {
     
     def get_user_profile(email: str) -> <>dict {
         try {
-            profile = self.users.find_one({"_id": email});
+            # Query JAC Cloud's user collection
+            profile = self.users.find_one({"email": email});
             if profile {
                 logger.info(f"Found user profile: {email}");
+                
+                is_admin = profile.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
+                role = profile.get("role", "admin" if is_admin else "user");
+                
+                # Ensure database is updated with correct admin status if needed
+                if email == "admin.jacgpt@jaseci.org" and not profile.get("is_admin", False) {
+                    self.users.update_one(
+                        {"email": email},
+                        {"$set": {"is_admin": True, "role": "admin", "updated_at": datetime.utcnow()}}
+                    );
+                    logger.info(f"Updated admin privileges for {email}");
+                    is_admin = True;
+                    role = "admin";
+                }
+                
                 return {
                     "email": profile["email"],
-                    "name": profile["name"],
-                    "role": profile["role"],
+                    "name": profile.get("name", ""),  # May not exist for older users
+                    "role": role,
+                    "is_admin": is_admin,
+                    "is_activated": profile.get("is_activated", True),
                     "created_at": profile.get("created_at"),
                     "updated_at": profile.get("updated_at")
                 };
@@ -376,22 +367,105 @@ obj MongoDB {
     
     def get_all_users() -> List[Dict] {
         try {
+            # Query JAC Cloud's user collection
             users = <>list(self.users.find({}));
             user_list = [];
             for user in users {
+                email = user["email"];
+                is_admin = user.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
+                role = user.get("role", "admin" if is_admin else "user");
+                
+                # Get location data from separate user_locations collection
+                location_info = self.get_user_location_full(email);
+                location = location_info.get("location", {}) if location_info else {};
+                location_updated_at = location_info.get("location_updated_at") if location_info else None;
+                
                 user_list.append({
-                    "email": user["email"],
-                    "name": user["name"],
-                    "role": user["role"],
+                    "email": email,
+                    "name": user.get("name", ""),  # May not exist for all users
+                    "role": role,
+                    "is_admin": is_admin,
+                    "is_activated": user.get("is_activated", True),
+                    "location": location,  # Location data from user_locations collection
                     "created_at": user.get("created_at"),
-                    "updated_at": user.get("updated_at")
+                    "updated_at": user.get("updated_at"),
+                    "location_updated_at": location_updated_at
                 });
             }
-            logger.info(f"Retrieved {len(user_list)} users");
+            logger.info(f"Retrieved {len(user_list)} users from JAC Cloud user collection");
             return user_list;
         } except Exception as e {
             logger.error(f"Error getting all users: {e}");
             return [];
+        }
+    }
+    
+    def save_user_location(email: str, location: dict) -> bool {
+        try {
+            # Save location data to separate collection instead of modifying user document
+            location_data = {
+                "email": email,
+                "location": {
+                    "latitude": location.get("latitude"),
+                    "longitude": location.get("longitude"),
+                    "city": location.get("city", ""),
+                    "country": location.get("country", ""),
+                    "ip": location.get("ip", "")
+                },
+                "location_updated_at": datetime.utcnow()
+            };
+            
+            # Use upsert to update existing or create new location record
+            result = self.user_locations.update_one(
+                {"email": email},
+                {"$set": location_data, "$setOnInsert": {"created_at": datetime.utcnow()}},
+                upsert=True
+            );
+            
+            if result.upserted_id or result.modified_count > 0 {
+                logger.info(f"Location saved for user: {email}");
+                return True;
+            } else {
+                logger.warning(f"Failed to save location for user: {email}");
+                return False;
+            }
+        } except Exception as e {
+            logger.error(f"Error saving location for {email}: {e}");
+            return False;
+        }
+    }
+    
+    def get_user_location(email: str) -> Optional[dict] {
+        try {
+            location_doc = self.user_locations.find_one({"email": email});
+            if location_doc {
+                return location_doc.get("location", {});
+            }
+            return None;
+        } except Exception as e {
+            logger.error(f"Error getting location for {email}: {e}");
+            return None;
+        }
+    }
+    
+    def get_user_location_full(email: str) -> Optional[dict] {
+        try {
+            logger.info(f"Looking for location data for email: {email}");
+            location_doc = self.user_locations.find_one({"email": email});
+            logger.info(f"Found location document: {location_doc}");
+            if location_doc {
+                result = {
+                    "location": location_doc.get("location", {}),
+                    "location_updated_at": location_doc.get("location_updated_at")
+                };
+                logger.info(f"Returning location data: {result}");
+                return result;
+            }
+            logger.warning(f"No location document found for email: {email}");
+            return None;
+        } except Exception as e {
+            logger.error(f"Error getting full location data for {email}: {e}");
+            return None;
         }
     }
     
@@ -425,9 +499,6 @@ obj MongoDB {
         }
     }
 }
-
-
-
 
 def get_database() -> MongoDB {
     global _database_instance;

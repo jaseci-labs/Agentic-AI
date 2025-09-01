@@ -7,10 +7,18 @@ interface User {
   role?: string;
 }
 
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  city?: string;
+  country?: string;
+  ip?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string, location?: LocationData | null) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -62,31 +70,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const parsedUser = JSON.parse(userData);
           
-          // If user doesn't have role, fetch it from profile
-          if (!parsedUser.role) {
-            try {
-              const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email: parsedUser.email }),
-              });
-              
-              if (profileResponse.ok) {
-                const profileData = await profileResponse.json();
-                if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
-                  parsedUser.role = profileData.reports[0].user.role || 'user';
-                  localStorage.setItem('user_data', JSON.stringify(parsedUser));
-                }
+          // Always fetch the latest user profile to ensure correct role
+          try {
+            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: parsedUser.email }),
+            });
+            
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
+                const userProfile = profileData.reports[0].user;
+                parsedUser.role = userProfile.role || 'user';
+                parsedUser.name = userProfile.name || parsedUser.name || '';
+                localStorage.setItem('user_data', JSON.stringify(parsedUser));
               }
-            } catch (error) {
-              console.error('Error fetching user profile:', error);
-              // Default to user role if profile fetch fails
+            }
+          } catch (error) {
+            console.error('Error fetching user profile:', error);
+            // Use existing role if profile fetch fails
+            if (!parsedUser.role) {
               parsedUser.role = 'user';
             }
           }
           
+          console.log('🔍 AuthContext: Setting user after profile check:', parsedUser);
           setUser(parsedUser);
         } catch (error) {
           console.error('Error parsing user data:', error);
@@ -103,80 +114,131 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Use the built-in login endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      let response;
+      let data;
+      let token;
+      let userData: User;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
-      }
+      // First, try the built-in JAC Cloud login endpoint
+      try {
+        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
 
-      const data = await response.json();
-      
-      // Handle different response formats
-      let token = data.token || data.access_token;
-      
-      // If no token in response but login was successful, generate a temporary token
-      if (!token && data.message && data.message.includes('success')) {
-        token = `temp_${Date.now()}`; // Temporary token for demo purposes
-      }
+        if (response.ok) {
+          data = await response.json();
+          
+          // Handle different response formats
+          token = data.token || data.access_token;
+          
+          // If no token in response but login was successful, generate a temporary token
+          if (!token && data.message && data.message.includes('success')) {
+            token = `temp_${Date.now()}`; // Temporary token for demo purposes
+          }
 
-      if (!token) {
-        throw new Error('No authentication token received');
-      }
+          if (token) {
+            // Fetch the complete user profile from our custom endpoint to get correct role
+            try {
+              const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: data.user?.email || email }),
+              });
+              
+              if (profileResponse.ok) {
+                const profileData = await profileResponse.json();
+                if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
+                  const userProfile = profileData.reports[0].user;
+                  userData = {
+                    id: data.user?.id || email,
+                    email: userProfile.email,
+                    name: userProfile.name || data.user?.name || '',
+                    role: userProfile.role || 'user',
+                  };
+                } else {
+                  // Fallback to JAC Cloud data if profile fetch fails
+                  userData = {
+                    id: data.user?.id || email,
+                    email: data.user?.email || email,
+                    name: data.user?.name || '',
+                    role: data.user?.is_admin ? 'admin' : 'user',
+                  };
+                }
+              } else {
+                // Fallback to JAC Cloud data if profile fetch fails
+                userData = {
+                  id: data.user?.id || email,
+                  email: data.user?.email || email,
+                  name: data.user?.name || '',
+                  role: data.user?.is_admin ? 'admin' : 'user',
+                };
+              }
+            } catch (profileError) {
+              console.error('Error fetching user profile:', profileError);
+              // Fallback to JAC Cloud data if profile fetch fails
+              userData = {
+                id: data.user?.id || email,
+                email: data.user?.email || email,
+                name: data.user?.name || '',
+                role: data.user?.is_admin ? 'admin' : 'user',
+              };
+            }
 
-      // Now get the user profile to determine role
-      const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      let userRole = 'user';
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json();
-        if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
-          userRole = profileData.reports[0].user.role || 'user';
+            setUser(userData);
+            localStorage.setItem('auth_token', token);
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            
+            // Reset message count when user logs in
+            resetMessageCount();
+            return; // Success with JAC Cloud login
+          }
+        } else {
+          // JAC Cloud login failed
+          throw new Error('Login failed. Please check your credentials.');
         }
+      } catch (jacCloudError) {
+        console.error('JAC Cloud login failed:', jacCloudError);
+        throw new Error('Login failed. Please check your credentials.');
       }
 
-      const userData: User = {
-        id: data.user?.id || email,
-        email: data.user?.email || email,
-        name: data.user?.name || data.name,
-        role: userRole as 'user' | 'admin',
-      };
-
-      setUser(userData);
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      // Reset message count when user logs in
-      resetMessageCount();
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  };  const register = async (email: string, password: string, name?: string) => {
+  };  const register = async (email: string, password: string, name?: string, location?: LocationData | null) => {
     setIsLoading(true);
     try {
-      // Use the built-in register endpoint
+      // Prepare registration data with location if available
+      const registrationData = {
+        email,
+        password,
+        name: name || '',
+        ...(location && {
+          location: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            city: location.city || '',
+            country: location.country || '',
+            ip: location.ip || ''
+          }
+        })
+      };
+
+      // Use JAC Cloud's built-in register endpoint
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify(registrationData),
       });
 
       if (!response.ok) {
@@ -186,18 +248,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json();
       
-      // Create user profile after successful registration
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/create_user_profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, name: name || '' }),
-      });
-      
-      // Handle case where registration is successful but we need to login separately
+      // JAC Cloud handles user creation automatically
+      // After successful registration, login to get the token and user data
       if (data.message && data.message.includes('Successfully Registered')) {
-        // After successful registration, attempt to login
+        // Save location data if available
+        if (location) {
+          try {
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/save_user_location`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                email, 
+                location: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  city: location.city || '',
+                  country: location.country || '',
+                  ip: location.ip || ''
+                }
+              }),
+            });
+          } catch (locationError) {
+            console.warn('Failed to save location data:', locationError);
+          }
+        }
+        
         await login(email, password);
         return;
       }
@@ -207,8 +284,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const userData: User = {
           id: data.user.id,
           email: data.user.email,
-          name: data.user.name,
-          role: email === 'admin@jaseci.org' ? 'admin' : 'user',
+          name: data.user.name || name || '',
+          role: data.user.is_admin ? 'admin' : 'user',
         };
 
         setUser(userData);
@@ -220,7 +297,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         // Fallback: try to login after registration
         await login(email, password);
-        // Reset message count is handled in login function
       }
     } catch (error) {
       console.error('Registration error:', error);
