@@ -594,16 +594,16 @@ walker get_all_users {
         
         # Get the authenticated user from JAC Cloud context
         # If no requester_email provided, try to get it from auth context
-        auth_email = self.requester_email;
-        if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
-            auth_email = here.info["auth_user"]["email"];
-        }
+        # auth_email = self.requester_email;
+        # if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
+        #     auth_email = here.info["auth_user"]["email"];
+        # }
         
-        print(f"🔍 [DEBUG] Server: get_all_users called with auth_email: {auth_email}");
-        print(f"🔍 [DEBUG] Server: self.requester_email: {self.requester_email}");
+        # print(f"🔍 [DEBUG] Server: get_all_users called with auth_email: {auth_email}");
+        # print(f"🔍 [DEBUG] Server: self.requester_email: {self.requester_email}");
         
         # Check if requester is admin
-        requester = db.get_user_profile(auth_email);
+        # requester = db.get_user_profile(auth_email);
         
         # Debug information
         # if not requester {
