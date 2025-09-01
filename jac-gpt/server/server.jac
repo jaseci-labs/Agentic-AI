@@ -499,23 +499,42 @@ walker get_user_profile {
     can fetch_profile with `root entry {
         db = get_database();
         
+        print(f"🔍 [DEBUG] Server: get_user_profile called for email: {self.email}");
+        print(f"🔍 [DEBUG] Server: Database instance: {db}");
+        
         # Get or create user profile
+        print(f"🔍 [DEBUG] Server: Calling db.get_user_profile for: {self.email}");
         profile = db.get_user_profile(self.email);
+        
+        print(f"🔍 [DEBUG] Server: profile result: {profile}");
+        
         if not profile {
+            print(f"⚠️ [DEBUG] Server: No profile found, creating new one...");
             role = "admin" if self.email == "admin.jacgpt@jaseci.org" else "user";
             name = "Admin User" if role == "admin" else "User";
-            db.create_user_profile(self.email, name, role);
+            
+            print(f"🔍 [DEBUG] Server: Creating profile with role: {role}, name: {name}");
+            create_result = db.create_user_profile(self.email, name, role);
+            print(f"🔍 [DEBUG] Server: Create profile result: {create_result}");
+            
             profile = {
                 "email": self.email,
                 "name": name,
                 "role": role
             };
+            print(f"✅ [DEBUG] Server: Created fallback profile: {profile}");
+        } else {
+            print(f"✅ [DEBUG] Server: Profile found: {profile}");
         }
         
-        report {
+        response = {
             "user": profile,
             "isAdmin": profile.get("role") == "admin"
         };
+        
+        print(f"✅ [DEBUG] Server: Returning response: {response}");
+        
+        report response;
     }
 }
 
@@ -592,34 +611,61 @@ walker get_all_users {
     can list_users with `root entry {
         db = get_database();
         
+        print(f"🔍 [DEBUG] Server: get_all_users called with requester_email: {self.requester_email}");
+        print(f"🔍 [DEBUG] Server: Database instance: {db}");
+        
         # Check if requester is admin
+        print(f"🔍 [DEBUG] Server: Calling db.get_user_profile for: {self.requester_email}");
         requester = db.get_user_profile(self.requester_email);
+        
+        print(f"🔍 [DEBUG] Server: requester result: {requester}");
         
         # Debug information
         if not requester {
-            report {
+            error_response = {
                 "error": "Unauthorized: User profile not found",
-                "requester_email": self.requester_email
+                "requester_email": self.requester_email,
+                "debug_info": {
+                    "database_connected": db is not None,
+                    "requester_email_type": type(self.requester_email).__name__,
+                    "requester_email_length": len(self.requester_email) if self.requester_email else 0
+                }
             };
+            print(f"🚨 [DEBUG] Server: Returning error response: {error_response}");
+            report error_response;
             return;
         }
         
+        print(f"✅ [DEBUG] Server: User found, checking admin role...");
+        print(f"🔍 [DEBUG] Server: User role: {requester.get('role')}");
+        print(f"🔍 [DEBUG] Server: Is admin: {requester.get('is_admin')}");
+        
         if requester.get("role") != "admin" {
-            report {
+            error_response = {
                 "error": "Unauthorized: Admin access required",
                 "requester_email": self.requester_email,
                 "user_role": requester.get("role"),
-                "is_admin": requester.get("is_admin")
+                "is_admin": requester.get("is_admin"),
+                "debug_info": {
+                    "full_user_profile": requester
+                }
             };
+            print(f"🚨 [DEBUG] Server: Returning role error response: {error_response}");
+            report error_response;
             return;
         }
         
+        print(f"✅ [DEBUG] Server: Admin access confirmed, fetching all users...");
         users = db.get_all_users();
+        print(f"✅ [DEBUG] Server: Found {len(users) if users else 0} users");
         
-        report {
+        success_response = {
             "users": users,
             "total": len(users)
         };
+        print(f"✅ [DEBUG] Server: Returning success response with {success_response['total']} users");
+        
+        report success_response;
     }
 }
 
@@ -634,21 +680,39 @@ walker get_all_sessions_admin {
     can list_all_sessions with `root entry {
         db = get_database();
         
+        print(f"🔍 [DEBUG] Server: get_all_sessions_admin called with requester_email: {self.requester_email}");
+        
         # Check if requester is admin
+        print(f"🔍 [DEBUG] Server: Calling db.get_user_profile for: {self.requester_email}");
         requester = db.get_user_profile(self.requester_email);
+        
+        print(f"🔍 [DEBUG] Server: requester result: {requester}");
+        
         if not requester or requester.get("role") != "admin" {
-            report {
-                "error": "Unauthorized: Admin access required"
+            error_response = {
+                "error": "Unauthorized: Admin access required",
+                "debug_info": {
+                    "requester_found": requester is not None,
+                    "requester_role": requester.get("role") if requester else None,
+                    "requester_email": self.requester_email
+                }
             };
+            print(f"🚨 [DEBUG] Server: Returning error response: {error_response}");
+            report error_response;
             return;
         }
         
+        print(f"✅ [DEBUG] Server: Admin access confirmed, fetching all sessions...");
         sessions = db.get_all_sessions_with_users();
+        print(f"✅ [DEBUG] Server: Found {len(sessions) if sessions else 0} sessions");
         
-        report {
+        success_response = {
             "sessions": sessions,
             "total": len(sessions)
         };
+        print(f"✅ [DEBUG] Server: Returning success response with {success_response['total']} sessions");
+        
+        report success_response;
     }
 }
 

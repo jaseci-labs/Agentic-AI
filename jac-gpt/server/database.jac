@@ -33,6 +33,10 @@ obj MongoDB {
             }
             db_name = os.getenv("DATABASE_NAME", "jac_gpt_prod4");
             
+            print(f"🔍 [DEBUG] Database: Attempting to connect to MongoDB");
+            print(f"🔍 [DEBUG] Database: URI: {mongo_uri[:50]}...");
+            print(f"🔍 [DEBUG] Database: Database name: {db_name}");
+            
             logger.info(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
             logger.info(f"Database name: {db_name}");
             
@@ -42,10 +46,34 @@ obj MongoDB {
             self.messages = self.db.messages;
             self.users = self.db.user;  # Use JAC Cloud's built-in 'user' collection
             self.user_locations = self.db.user_locations;  # Separate collection for location data
+            
+            print(f"🔍 [DEBUG] Database: Collections initialized");
+            print(f"🔍 [DEBUG] Database: Users collection: {self.users}");
+            print(f"🔍 [DEBUG] Database: Users collection name: {self.users.name}");
+            
             self.client.admin.command("ping");
             logger.info(f"Connected to MongoDB: { db_name }");
+            print(f"✅ [DEBUG] Database: Successfully connected to MongoDB: {db_name}");
+            
+            # Debug: Check if admin user exists
+            admin_exists = self.users.find_one({"email": "admin.jacgpt@jaseci.org"});
+            print(f"🔍 [DEBUG] Database: Admin user exists: {admin_exists is not None}");
+            if admin_exists {
+                print(f"🔍 [DEBUG] Database: Admin user data: {admin_exists}");
+            } else {
+                # Check total users
+                total_users = self.users.count_documents({});
+                print(f"🔍 [DEBUG] Database: Total users in collection: {total_users}");
+                # Sample some users to see the structure
+                sample_users = list(self.users.find({}).limit(3));
+                print(f"🔍 [DEBUG] Database: Sample users: {sample_users}");
+            }
+            
         } except Exception as e {
             logger.error(f"Failed to connect to MongoDB: { e }");
+            print(f"🚨 [DEBUG] Database: Failed to connect to MongoDB: {e}");
+            import traceback;
+            print(f"🚨 [DEBUG] Database: Traceback: {traceback.format_exc()}");
             raise ;
         }
     }
@@ -327,26 +355,38 @@ obj MongoDB {
     
     def get_user_profile(email: str) -> <>dict {
         try {
+            print(f"🔍 [DEBUG] Database: Getting user profile for email: {email}");
+            print(f"🔍 [DEBUG] Database: Using collection: {self.users}");
+            print(f"🔍 [DEBUG] Database: Collection name: {self.users.name}");
+            
             # Query JAC Cloud's user collection
             profile = self.users.find_one({"email": email});
+            print(f"🔍 [DEBUG] Database: Raw profile found: {profile}");
+            
             if profile {
                 logger.info(f"Found user profile: {email}");
+                print(f"✅ [DEBUG] Database: Profile found for {email}");
                 
                 is_admin = profile.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
                 role = profile.get("role", "admin" if is_admin else "user");
                 
+                print(f"🔍 [DEBUG] Database: is_admin check: {is_admin} (from profile: {profile.get('is_admin', False)}, hardcoded check: {email == 'admin.jacgpt@jaseci.org'})");
+                print(f"🔍 [DEBUG] Database: role: {role}");
+                
                 # Ensure database is updated with correct admin status if needed
                 if email == "admin.jacgpt@jaseci.org" and not profile.get("is_admin", False) {
+                    print(f"🔍 [DEBUG] Database: Updating admin privileges for {email}");
                     self.users.update_one(
                         {"email": email},
                         {"$set": {"is_admin": True, "role": "admin", "updated_at": datetime.utcnow()}}
                     );
                     logger.info(f"Updated admin privileges for {email}");
+                    print(f"✅ [DEBUG] Database: Admin privileges updated for {email}");
                     is_admin = True;
                     role = "admin";
                 }
                 
-                return {
+                result = {
                     "email": profile["email"],
                     "name": profile.get("name", ""),  # May not exist for older users
                     "role": role,
@@ -355,32 +395,66 @@ obj MongoDB {
                     "created_at": profile.get("created_at"),
                     "updated_at": profile.get("updated_at")
                 };
+                
+                print(f"✅ [DEBUG] Database: Returning profile: {result}");
+                return result;
             } else {
                 logger.warning(f"User profile not found: {email}");
+                print(f"❌ [DEBUG] Database: No profile found for {email}");
+                
+                # Let's also check if there are any users at all in the collection
+                total_users = self.users.count_documents({});
+                print(f"🔍 [DEBUG] Database: Total users in collection: {total_users}");
+                
+                # Let's check if there are any users with similar emails
+                similar_users = list(self.users.find({"email": {"$regex": "admin", "$options": "i"}}).limit(5));
+                print(f"🔍 [DEBUG] Database: Users with 'admin' in email: {similar_users}");
+                
                 return None;
             }
         } except Exception as e {
             logger.error(f"Error getting user profile {email}: {e}");
+            print(f"🚨 [DEBUG] Database: Exception in get_user_profile: {e}");
+            import traceback;
+            print(f"🚨 [DEBUG] Database: Traceback: {traceback.format_exc()}");
             return None;
         }
     }
     
     def get_all_users() -> List[Dict] {
         try {
+            print(f"🔍 [DEBUG] Database: get_all_users called");
+            print(f"🔍 [DEBUG] Database: Users collection: {self.users}");
+            print(f"🔍 [DEBUG] Database: Collection name: {self.users.name}");
+            
             # Query JAC Cloud's user collection
+            print(f"🔍 [DEBUG] Database: Executing find({}) on users collection");
             users = <>list(self.users.find({}));
+            print(f"🔍 [DEBUG] Database: Found {len(users)} users");
+            
             user_list = [];
             for user in users {
+                print(f"🔍 [DEBUG] Database: Processing user: {user.get('email', 'NO_EMAIL')}");
+                
                 email = user["email"];
                 is_admin = user.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
                 role = user.get("role", "admin" if is_admin else "user");
                 
-                # Get location data from separate user_locations collection
-                location_info = self.get_user_location_full(email);
-                location = location_info.get("location", {}) if location_info else {};
-                location_updated_at = location_info.get("location_updated_at") if location_info else None;
+                print(f"🔍 [DEBUG] Database: User {email} - role: {role}, is_admin: {is_admin}");
                 
-                user_list.append({
+                # Get location data from separate user_locations collection
+                try {
+                    location_info = self.get_user_location_full(email);
+                    location = location_info.get("location", {}) if location_info else {};
+                    location_updated_at = location_info.get("location_updated_at") if location_info else None;
+                    print(f"🔍 [DEBUG] Database: Location info for {email}: {location_info is not None}");
+                } except Exception as loc_e {
+                    print(f"⚠️ [DEBUG] Database: Location fetch failed for {email}: {loc_e}");
+                    location = {};
+                    location_updated_at = None;
+                }
+                
+                user_data = {
                     "email": email,
                     "name": user.get("name", ""),  # May not exist for all users
                     "role": role,
@@ -390,12 +464,19 @@ obj MongoDB {
                     "created_at": user.get("created_at"),
                     "updated_at": user.get("updated_at"),
                     "location_updated_at": location_updated_at
-                });
+                };
+                
+                print(f"🔍 [DEBUG] Database: Created user data for {email}: {user_data}");
+                user_list.append(user_data);
             }
+            print(f"✅ [DEBUG] Database: Processed {len(user_list)} users successfully");
             logger.info(f"Retrieved {len(user_list)} users from JAC Cloud user collection");
             return user_list;
         } except Exception as e {
             logger.error(f"Error getting all users: {e}");
+            print(f"🚨 [DEBUG] Database: Exception in get_all_users: {e}");
+            import traceback;
+            print(f"🚨 [DEBUG] Database: Traceback: {traceback.format_exc()}");
             return [];
         }
     }
@@ -502,10 +583,15 @@ obj MongoDB {
 
 def get_database() -> MongoDB {
     global _database_instance;
+    print(f"🔍 [DEBUG] get_database called, current instance: {_database_instance}");
+    
     if (_database_instance is None) {
+        print(f"🔍 [DEBUG] Creating new database instance...");
         _database_instance = MongoDB();
+        print(f"✅ [DEBUG] Database instance created: {_database_instance}");
     } else {
         logger.info("Using existing database instance");
+        print(f"✅ [DEBUG] Using existing database instance: {_database_instance}");
     }
     return _database_instance;
 }

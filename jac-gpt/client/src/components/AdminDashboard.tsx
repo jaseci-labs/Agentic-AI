@@ -72,6 +72,9 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log('🔍 [DEBUG] Fetching users with requester_email:', user?.email);
+      console.log('🔍 [DEBUG] API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_users`, {
         method: 'POST',
         headers: {
@@ -80,23 +83,38 @@ const AdminDashboard = () => {
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
+      console.log('🔍 [DEBUG] Users response status:', response.status);
+      console.log('🔍 [DEBUG] Users response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('🔍 [DEBUG] Users response data:', JSON.stringify(data, null, 2));
+      
       if (data.reports && data.reports[0]) {
         const result = data.reports[0];
+        console.log('🔍 [DEBUG] Users result:', JSON.stringify(result, null, 2));
+        
         if (result.error) {
+          console.error('🚨 [DEBUG] Users API error:', result.error);
           setError(result.error);
         } else {
+          console.log('✅ [DEBUG] Users fetched successfully:', result.users?.length || 0, 'users');
           setUsers(result.users || []);
         }
+      } else {
+        console.error('🚨 [DEBUG] Unexpected users response structure:', data);
+        setError('Unexpected response structure from users API');
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('🚨 [DEBUG] Error fetching users:', error);
       setError('Failed to fetch users');
     }
   };
 
   const fetchSessions = async () => {
     try {
+      console.log('🔍 [DEBUG] Fetching sessions with requester_email:', user?.email);
+      console.log('🔍 [DEBUG] API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_sessions_admin`, {
         method: 'POST',
         headers: {
@@ -105,17 +123,29 @@ const AdminDashboard = () => {
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
+      console.log('🔍 [DEBUG] Sessions response status:', response.status);
+      console.log('🔍 [DEBUG] Sessions response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('🔍 [DEBUG] Sessions response data:', JSON.stringify(data, null, 2));
+      
       if (data.reports && data.reports[0]) {
         const result = data.reports[0];
+        console.log('🔍 [DEBUG] Sessions result:', JSON.stringify(result, null, 2));
+        
         if (result.error) {
+          console.error('🚨 [DEBUG] Sessions API error:', result.error);
           setError(result.error);
         } else {
+          console.log('✅ [DEBUG] Sessions fetched successfully:', result.sessions?.length || 0, 'sessions');
           setSessions(result.sessions || []);
         }
+      } else {
+        console.error('🚨 [DEBUG] Unexpected sessions response structure:', data);
+        setError('Unexpected response structure from sessions API');
       }
     } catch (error) {
-      console.error('Error fetching sessions:', error);
+      console.error('🚨 [DEBUG] Error fetching sessions:', error);
       setError('Failed to fetch sessions');
     }
   };
@@ -123,6 +153,9 @@ const AdminDashboard = () => {
   const fetchSessionMessages = async (sessionId: string) => {
     try {
       setLoading(true);
+      console.log('🔍 [DEBUG] Fetching session messages for session:', sessionId);
+      console.log('🔍 [DEBUG] Requester email:', user?.email);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
         method: 'POST',
         headers: {
@@ -134,17 +167,29 @@ const AdminDashboard = () => {
         }),
       });
 
+      console.log('🔍 [DEBUG] Session messages response status:', response.status);
+      console.log('🔍 [DEBUG] Session messages response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('🔍 [DEBUG] Session messages response data:', JSON.stringify(data, null, 2));
+      
       if (data.reports && data.reports[0]) {
         const result = data.reports[0];
+        console.log('🔍 [DEBUG] Session messages result:', JSON.stringify(result, null, 2));
+        
         if (result.error) {
+          console.error('🚨 [DEBUG] Session messages API error:', result.error);
           setError(result.error);
         } else {
+          console.log('✅ [DEBUG] Session messages fetched successfully');
           setSelectedSession(result);
         }
+      } else {
+        console.error('🚨 [DEBUG] Unexpected session messages response structure:', data);
+        setError('Unexpected response structure from session messages API');
       }
     } catch (error) {
-      console.error('Error fetching session messages:', error);
+      console.error('🚨 [DEBUG] Error fetching session messages:', error);
       setError('Failed to fetch session messages');
     } finally {
       setLoading(false);
@@ -206,13 +251,21 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      console.log('🔍 [DEBUG] AdminDashboard useEffect triggered');
+      console.log('🔍 [DEBUG] Current user:', JSON.stringify(user, null, 2));
+      console.log('🔍 [DEBUG] User role:', user?.role);
+      console.log('🔍 [DEBUG] Is admin?', user?.role === 'admin');
+      
       setLoading(true);
       await Promise.all([fetchUsers(), fetchSessions()]);
       setLoading(false);
     };
 
     if (user?.role === 'admin') {
+      console.log('✅ [DEBUG] User is admin, loading data...');
       loadData();
+    } else {
+      console.log('❌ [DEBUG] User is not admin or user is null:', user);
     }
   }, [user]);
 

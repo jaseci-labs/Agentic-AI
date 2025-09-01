@@ -63,15 +63,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing token on app start
   useEffect(() => {
     const checkExistingAuth = async () => {
+      console.log('🔍 [DEBUG] AuthContext: Checking existing auth...');
+      
       const token = localStorage.getItem('auth_token');
       const userData = localStorage.getItem('user_data');
+      
+      console.log('🔍 [DEBUG] AuthContext: Token exists:', !!token);
+      console.log('🔍 [DEBUG] AuthContext: User data exists:', !!userData);
       
       if (token && userData) {
         try {
           const parsedUser = JSON.parse(userData);
+          console.log('🔍 [DEBUG] AuthContext: Parsed user data:', JSON.stringify(parsedUser, null, 2));
           
           // Always fetch the latest user profile to ensure correct role
           try {
+            console.log('🔍 [DEBUG] Fetching user profile for:', parsedUser.email);
+            console.log('🔍 [DEBUG] API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+            
             const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
               method: 'POST',
               headers: {
@@ -80,30 +89,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               body: JSON.stringify({ email: parsedUser.email }),
             });
             
+            console.log('🔍 [DEBUG] Profile response status:', profileResponse.status);
+            console.log('🔍 [DEBUG] Profile response headers:', Object.fromEntries(profileResponse.headers.entries()));
+            
             if (profileResponse.ok) {
               const profileData = await profileResponse.json();
+              console.log('🔍 [DEBUG] Profile response data:', JSON.stringify(profileData, null, 2));
+              
               if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
                 const userProfile = profileData.reports[0].user;
+                console.log('✅ [DEBUG] User profile found:', JSON.stringify(userProfile, null, 2));
+                
                 parsedUser.role = userProfile.role || 'user';
                 parsedUser.name = userProfile.name || parsedUser.name || '';
                 localStorage.setItem('user_data', JSON.stringify(parsedUser));
+                
+                console.log('✅ [DEBUG] Updated user data:', JSON.stringify(parsedUser, null, 2));
+              } else {
+                console.error('🚨 [DEBUG] No user profile in response:', profileData);
               }
+            } else {
+              console.error('🚨 [DEBUG] Profile fetch failed with status:', profileResponse.status);
+              const errorText = await profileResponse.text();
+              console.error('🚨 [DEBUG] Profile error response:', errorText);
             }
           } catch (error) {
-            console.error('Error fetching user profile:', error);
+            console.error('🚨 [DEBUG] Error fetching user profile:', error);
             // Use existing role if profile fetch fails
             if (!parsedUser.role) {
               parsedUser.role = 'user';
             }
           }
           
+          console.log('✅ [DEBUG] AuthContext: Setting user:', JSON.stringify(parsedUser, null, 2));
           setUser(parsedUser);
         } catch (error) {
-          console.error('Error parsing user data:', error);
+          console.error('🚨 [DEBUG] AuthContext: Error parsing user data:', error);
           localStorage.removeItem('auth_token');
           localStorage.removeItem('user_data');
         }
+      } else {
+        console.log('ℹ️ [DEBUG] AuthContext: No existing auth found');
       }
+      
+      console.log('✅ [DEBUG] AuthContext: Auth check complete, setting loading to false');
       setIsLoading(false);
     };
 
@@ -142,6 +171,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (token) {
             // Fetch the complete user profile from our custom endpoint to get correct role
             try {
+              console.log('🔍 [DEBUG] Login: Fetching user profile for:', data.user?.email || email);
+              console.log('🔍 [DEBUG] Login: API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+              
               const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
                 method: 'POST',
                 headers: {
@@ -150,17 +182,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 body: JSON.stringify({ email: data.user?.email || email }),
               });
               
+              console.log('🔍 [DEBUG] Login: Profile response status:', profileResponse.status);
+              console.log('🔍 [DEBUG] Login: Profile response headers:', Object.fromEntries(profileResponse.headers.entries()));
+              
               if (profileResponse.ok) {
                 const profileData = await profileResponse.json();
+                console.log('🔍 [DEBUG] Login: Profile response data:', JSON.stringify(profileData, null, 2));
+                
                 if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
                   const userProfile = profileData.reports[0].user;
+                  console.log('✅ [DEBUG] Login: User profile found:', JSON.stringify(userProfile, null, 2));
+                  
                   userData = {
                     id: data.user?.id || email,
                     email: userProfile.email,
                     name: userProfile.name || data.user?.name || '',
                     role: userProfile.role || 'user',
                   };
+                  console.log('✅ [DEBUG] Login: Created userData from profile:', JSON.stringify(userData, null, 2));
                 } else {
+                  console.log('⚠️ [DEBUG] Login: No user profile in response, using fallback');
                   // Fallback to JAC Cloud data if profile fetch fails
                   userData = {
                     id: data.user?.id || email,
@@ -168,8 +209,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     name: data.user?.name || '',
                     role: data.user?.is_admin ? 'admin' : 'user',
                   };
+                  console.log('⚠️ [DEBUG] Login: Fallback userData:', JSON.stringify(userData, null, 2));
                 }
               } else {
+                console.error('🚨 [DEBUG] Login: Profile fetch failed with status:', profileResponse.status);
+                const errorText = await profileResponse.text();
+                console.error('🚨 [DEBUG] Login: Profile error response:', errorText);
+                
                 // Fallback to JAC Cloud data if profile fetch fails
                 userData = {
                   id: data.user?.id || email,
@@ -177,9 +223,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   name: data.user?.name || '',
                   role: data.user?.is_admin ? 'admin' : 'user',
                 };
+                console.log('⚠️ [DEBUG] Login: Fallback userData after error:', JSON.stringify(userData, null, 2));
               }
             } catch (profileError) {
-              console.error('Error fetching user profile:', profileError);
+              console.error('🚨 [DEBUG] Login: Error fetching user profile:', profileError);
               // Fallback to JAC Cloud data if profile fetch fails
               userData = {
                 id: data.user?.id || email,
@@ -187,6 +234,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 name: data.user?.name || '',
                 role: data.user?.is_admin ? 'admin' : 'user',
               };
+              console.log('⚠️ [DEBUG] Login: Fallback userData after exception:', JSON.stringify(userData, null, 2));
             }
 
             setUser(userData);
