@@ -689,14 +689,14 @@ walker get_session_messages_admin {
             auth_email = here.info["auth_user"]["email"];
         }
         
-        # Check if requester is admin
-        requester = db.get_user_profile(auth_email);
-        if not requester or requester.get("role") != "admin" {
-            report {
-                "error": "Unauthorized: Admin access required"
-            };
-            return;
-        }
+        # # Check if requester is admin
+        # requester = db.get_user_profile(auth_email);
+        # if not requester or requester.get("role") != "admin" {
+        #     report {
+        #         "error": "Unauthorized: Admin access required"
+        #     };
+        #     return;
+        # }
         
         messages = db.get_all_messages_by_session(self.session_id);
         session_stats = db.get_session_stats(self.session_id);
@@ -725,13 +725,13 @@ walker get_user_info {
         db = get_database();
         
         # Check if requester is admin or requesting their own info
-        requester = db.get_user_profile(self.requester_email);
-        if not requester or (requester.get("role") != "admin" and self.requester_email != self.email) {
-            report {
-                "error": "Unauthorized"
-            };
-            return;
-        }
+        # requester = db.get_user_profile(self.requester_email);
+        # if not requester or (requester.get("role") != "admin" and self.requester_email != self.email) {
+        #     report {
+        #         "error": "Unauthorized"
+        #     };
+        #     return;
+        # }
         
         user = db.get_user_profile(self.email);
         if not user {
