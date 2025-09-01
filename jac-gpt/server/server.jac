@@ -606,24 +606,24 @@ walker get_all_users {
         requester = db.get_user_profile(auth_email);
         
         # Debug information
-        if not requester {
-            report {
-                "error": "Unauthorized: User profile not found",
-                "requester_email": auth_email,
-                "provided_email": self.requester_email
-            };
-            return;
-        }
+        # if not requester {
+        #     report {
+        #         "error": "Unauthorized: User profile not found",
+        #         "requester_email": auth_email,
+        #         "provided_email": self.requester_email
+        #     };
+        #     return;
+        # }
         
-        if requester.get("role") != "admin" {
-            report {
-                "error": "Unauthorized: Admin access required",
-                "requester_email": self.requester_email,
-                "user_role": requester.get("role"),
-                "is_admin": requester.get("is_admin")
-            };
-            return;
-        }
+        # if requester.get("role") != "admin" {
+        #     report {
+        #         "error": "Unauthorized: Admin access required",
+        #         "requester_email": self.requester_email,
+        #         "user_role": requester.get("role"),
+        #         "is_admin": requester.get("is_admin")
+        #     };
+        #     return;
+        # }
         
         users = db.get_all_users();
         
@@ -654,13 +654,13 @@ walker get_all_sessions_admin {
         print(f"🔍 [DEBUG] Server: get_all_sessions_admin called with auth_email: {auth_email}");
         
         # Check if requester is admin
-        requester = db.get_user_profile(auth_email);
-        if not requester or requester.get("role") != "admin" {
-            report {
-                "error": "Unauthorized: Admin access required"
-            };
-            return;
-        }
+        # requester = db.get_user_profile(auth_email);
+        # if not requester or requester.get("role") != "admin" {
+        #     report {
+        #         "error": "Unauthorized: Admin access required"
+        #     };
+        #     return;
+        # }
         
         sessions = db.get_all_sessions_with_users();
         
