@@ -199,7 +199,7 @@ const JacChatbot = () => {
                     <p className="text-xl text-gray-300 font-medium">Ask me anything about Jac</p>
                     <p className="text-sm text-gray-500 mt-2">Start a conversation about Jac programming language</p>
                     <p className="text-xs text-gray-600 mt-3">
-                      💡 Relevant documentation will appear when you ask a question.
+                      💡 Relevant documentation will appear when you ask a question
                     </p>
                   </div>
                 </div>

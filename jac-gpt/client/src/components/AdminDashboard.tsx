@@ -72,6 +72,9 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log('🔍 Fetching users with requester_email:', user?.email);
+      console.log('🔍 API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_users`, {
         method: 'POST',
         headers: {
@@ -80,23 +83,37 @@ const AdminDashboard = () => {
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
+      console.log('🔍 Users API response status:', response.status);
+      console.log('🔍 Users API response ok:', response.ok);
+
       const data = await response.json();
+      console.log('🔍 Users API response data:', data);
+      
       if (data.reports && data.reports[0]) {
         const result = data.reports[0];
+        console.log('🔍 Users API result:', result);
+        
         if (result.error) {
+          console.error('❌ Users API error:', result.error);
           setError(result.error);
         } else {
+          console.log('✅ Users fetched successfully:', result.users?.length || 0, 'users');
           setUsers(result.users || []);
         }
+      } else {
+        console.error('❌ Unexpected users response structure:', data);
+        setError('Unexpected response structure from users API');
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('❌ Error fetching users:', error);
       setError('Failed to fetch users');
     }
   };
 
   const fetchSessions = async () => {
     try {
+      console.log('🔍 Fetching sessions with requester_email:', user?.email);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_sessions_admin`, {
         method: 'POST',
         headers: {
@@ -105,17 +122,29 @@ const AdminDashboard = () => {
         body: JSON.stringify({ requester_email: user?.email }),
       });
 
+      console.log('🔍 Sessions API response status:', response.status);
+      console.log('🔍 Sessions API response ok:', response.ok);
+
       const data = await response.json();
+      console.log('🔍 Sessions API response data:', data);
+      
       if (data.reports && data.reports[0]) {
         const result = data.reports[0];
+        console.log('🔍 Sessions API result:', result);
+        
         if (result.error) {
+          console.error('❌ Sessions API error:', result.error);
           setError(result.error);
         } else {
+          console.log('✅ Sessions fetched successfully:', result.sessions?.length || 0, 'sessions');
           setSessions(result.sessions || []);
         }
+      } else {
+        console.error('❌ Unexpected sessions response structure:', data);
+        setError('Unexpected response structure from sessions API');
       }
     } catch (error) {
-      console.error('Error fetching sessions:', error);
+      console.error('❌ Error fetching sessions:', error);
       setError('Failed to fetch sessions');
     }
   };
@@ -205,14 +234,24 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+    console.log('🔍 AdminDashboard useEffect triggered');
+    console.log('🔍 Current user:', user);
+    console.log('🔍 User role:', user?.role);
+    console.log('🔍 Is admin?', user?.role === 'admin');
+    
     const loadData = async () => {
+      console.log('🔍 Loading admin data...');
       setLoading(true);
       await Promise.all([fetchUsers(), fetchSessions()]);
       setLoading(false);
+      console.log('✅ Admin data loading completed');
     };
 
     if (user?.role === 'admin') {
+      console.log('✅ User is admin, loading data...');
       loadData();
+    } else {
+      console.log('❌ User is not admin or user is null');
     }
   }, [user]);
 

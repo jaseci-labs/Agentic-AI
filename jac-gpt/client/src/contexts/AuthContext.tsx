@@ -97,6 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }
           
+          console.log('🔍 AuthContext: Setting user after profile check:', parsedUser);
           setUser(parsedUser);
         } catch (error) {
           console.error('Error parsing user data:', error);
