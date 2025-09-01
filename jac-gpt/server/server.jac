@@ -586,7 +586,7 @@ walker get_all_users {
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = True;
+        static has auth: bool = False;
     }
 
     can list_users with `root entry {
@@ -639,7 +639,7 @@ walker get_all_sessions_admin {
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = True;
+        static has auth: bool = False;
     }
 
     can list_all_sessions with `root entry {
@@ -677,7 +677,7 @@ walker get_session_messages_admin {
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = True;
+        static has auth: bool = False;
     }
 
     can get_session_chat with `root entry {
