@@ -83,7 +83,7 @@ jvcli create agent --name task_manager
 This will create the following structure inside the `daf` folder:
 
 ```
-daf/jaseci/task_manager
+daf/{your_name_space}/task_manager
 ├── descriptor.yaml
 ├── info.yml
 ├── knowledge.yaml
