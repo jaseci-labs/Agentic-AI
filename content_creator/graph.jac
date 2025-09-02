@@ -1,18 +1,18 @@
 import from langgraph.graph { START, StateGraph, END }
 import from state { AgentState }
-import from trend_agent { TrendAgent }
-import from writer_agent { WriterAgent }
+import from blog_writer_agent { WriterAgent }
 import from media_agent { MediaAgent }
 import from editor_agent { EditorAgent }
+import from planner_agent { ContentPlannerAgent }
 
 
 class WorkflowGraph {
     def init(self: WorkflowGraph) {
         print("Initializing WorkflowGraph");
-        self.trend_agent = TrendAgent();
         self.writer_agent = WriterAgent();
         self.media_agent = MediaAgent();
         self.editor_agent = EditorAgent();
+        self.planner_agent = ContentPlannerAgent();
         self.app = self._build_graph();
     }
 
@@ -41,13 +41,13 @@ class WorkflowGraph {
 
     def _build_graph(self: WorkflowGraph) {
         workflow = StateGraph(AgentState);
-        workflow.add_node('trend_agent', self.trend_agent.run);
         workflow.add_node('writer_agent', self.writer_agent.run);
         workflow.add_node('media_agent', self.media_agent.run);
         workflow.add_node('editor_agent', self.editor_agent.run);
+        workflow.add_node('planner_agent', self.planner_agent.run);
         print("entered workflow");
-        workflow.add_edge(START,'trend_agent');
-        workflow.add_edge('trend_agent', 'writer_agent');
+        workflow.add_edge(START,'planner_agent');
+        workflow.add_edge('planner_agent', 'writer_agent');
         workflow.add_edge('writer_agent', 'editor_agent');
         workflow.add_conditional_edges(
             'editor_agent',
