@@ -97,32 +97,22 @@ st.markdown("""
 
 # --- CONSTANTS ---
 BASE_URL = "http://localhost:8000"
-LOGIN_ENDPOINT = f"{BASE_URL}/user/login"
-CHAT_ENDPOINT = f"{BASE_URL}/interact"
-TASKS_ENDPOINT = f"{BASE_URL}/action/walker/tasks_handling_action/list_tasks"
+TASK_MANAGER_ENDPOINT = f"{BASE_URL}/walker/task_manager"
+GET_ALL_TASKS_ENDPOINT = f"{BASE_URL}/walker/get_all_tasks"
 
 # --- SESSION STATE INIT ---
-if 'token' not in st.session_state:
-    st.session_state.token = None
 if 'session_id' not in st.session_state:
     st.session_state.session_id = ""
-if 'agent_id' not in st.session_state:
-    st.session_state.agent_id = "n:Agent:68addbb5148f9ebad6bc30ed"
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# --- SIDEBAR LOGIN ---
 with st.sidebar:
-    st.title("🔐 Login")
-    email = st.text_input("Email", value="admin@jivas.com")
-    password = st.text_input("Password", type="password", value="password")
-    if st.button("Login"):
-        res = requests.post(LOGIN_ENDPOINT, json={"email": email, "password": password})
-        if res.status_code == 200:
-            st.session_state.token = res.json().get("token")
-            st.success("Logged in successfully!")
-        else:
-            st.error("Login failed")
+    st.title("Session Management")
+    if st.button("Start New Session"):
+        # Just reset the virtual session and chat history
+        st.session_state.session_id = ""
+        st.session_state.chat_history = []
+        st.success("Virtual session reset!")
 
 # --- TITLE ---
 st.title("🤖 Jivas Assistant")
@@ -134,141 +124,107 @@ tab1, tab2 = st.tabs(["💬 Chat", "📅 Scheduled Tasks"])
 #       CHAT INTERFACE
 # ========================
 with tab1:
-    if not st.session_state.token:
-        st.warning("Please login first using the sidebar.")
-    else:
-        # Create the main chat wrapper
-        chat_container = st.container()
-        
-        with chat_container:
-            # Scrollable messages area
-            messages_container = st.container()
-            with messages_container:
-                st.markdown('<div id="chat-scroll" class="chat-scroll">', unsafe_allow_html=True)
-                
-                # Display all chat messages
-                for entry in st.session_state.chat_history:
-                    with st.chat_message(entry["role"]):
-                        st.markdown(entry["content"], unsafe_allow_html=True)
-                
-                st.markdown("</div>", unsafe_allow_html=True)
+    # Do not call backend until user sends first message
 
-            # Auto-scroll to newest message
-            if st.session_state.chat_history:
-                components_html(
-                    """
-                    <script>
-                      setTimeout(() => {
-                        const el = window.parent.document.getElementById('chat-scroll');
-                        if (el) { 
-                          el.scrollTop = el.scrollHeight; 
-                        }
-                      }, 100);
-                    </script>
-                    """,
-                    height=0,
-                )
-
-        # Fixed typing bar at bottom (outside the scrollable area)
-        input_container = st.container()
-        with input_container:
-            st.markdown('<div class="chat-input">', unsafe_allow_html=True)
-            prompt = st.chat_input("Ask me anything...")
+    # Create the main chat wrapper
+    chat_container = st.container()
+    with chat_container:
+        # Scrollable messages area
+        messages_container = st.container()
+        with messages_container:
+            st.markdown('<div id="chat-scroll" class="chat-scroll">', unsafe_allow_html=True)
+            # Display all chat messages
+            for entry in st.session_state.chat_history:
+                with st.chat_message(entry["role"]):
+                    st.markdown(entry["content"], unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # Handle new messages
-        if prompt:
-            # Add user message to history
-            st.session_state.chat_history.append({"role": "user", "content": prompt})
+        # Auto-scroll to newest message
+        if st.session_state.chat_history:
+            components_html(
+                """
+                <script>
+                  setTimeout(() => {
+                    const el = window.parent.document.getElementById('chat-scroll');
+                    if (el) { 
+                      el.scrollTop = el.scrollHeight; 
+                    }
+                  }, 100);
+                </script>
+                """,
+                height=0,
+            )
 
-            # Make API call
-            headers = {"Authorization": f"Bearer {st.session_state.token}"}
-            payload = {
-                "utterance": prompt,
-                "session_id": st.session_state.session_id,
-                "agent_id": st.session_state.agent_id,
-                "tts": "false",
-                "data": {},
-                "verbose": "false",
-                "streaming": "false",
-            }
+    # Fixed typing bar at bottom (outside the scrollable area)
+    input_container = st.container()
+    with input_container:
+        st.markdown('<div class="chat-input">', unsafe_allow_html=True)
+        prompt = st.chat_input("Ask me anything...")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-            with st.spinner("Thinking..."):
-                res = requests.post(CHAT_ENDPOINT, headers=headers, json=payload)
-                if res.status_code == 200:
-                    try:
-                        reports = res.json().get("reports", [])
-                        if reports:
-                            message = reports[0]["response"]["message"]["content"]
-                            session_id = reports[0]["response"]["session_id"]
-                            st.session_state.session_id = session_id
-                            st.session_state.chat_history.append(
-                                {"role": "assistant", "content": message}
-                            )
-                        else:
-                            st.error("No response from assistant.")
-                    except Exception as e:
-                        st.error(f"Error parsing response: {e}")
-                else:
-                    st.error(f"Error: {res.status_code}")
-            
-            # Rerun to show new messages
-            st.rerun()
+    # Handle new messages
+    if prompt:
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        # If no session_id, create session with first message
+        if not st.session_state.session_id:
+            payload = {"utterance": prompt, "session_id": ""}
+        else:
+            payload = {"utterance": prompt, "session_id": st.session_state.session_id}
+        with st.spinner("Thinking..."):
+            res = requests.post(TASK_MANAGER_ENDPOINT, json=payload)
+            if res.status_code == 200:
+                try:
+                    reports = res.json().get("reports", [])
+                    if reports:
+                        message = reports[0]["response"]
+                        session_id = reports[0]["session_id"]
+                        st.session_state.session_id = session_id
+                        st.session_state.chat_history.append({"role": "assistant", "content": message})
+                    else:
+                        st.error("No response from assistant.")
+                except Exception as e:
+                    st.error(f"Error parsing response: {e}")
+            else:
+                st.error(f"Error: {res.status_code}")
+        st.rerun()
 
 # ========================
 #    SCHEDULED TASKS
 # ========================
 with tab2:
     st.header("📋 All Scheduled Tasks")
+    cols = st.columns([1, 3])
+    with cols[0]:
+        refresh = st.button("🔄 Refresh")
 
-    if not st.session_state.token:
-        st.warning("Please login first using the sidebar.")
-    else:
-        cols = st.columns([1, 3])
-        with cols[0]:
-            refresh = st.button("🔄 Refresh")
-
-        # Auto-load once on first view, or when Refresh is clicked
-        should_load = st.session_state.get("_reload_tasks_once", True) or refresh
-
-        if should_load:
-            with st.spinner("Loading tasks..."):
-                try:
-                    headers = {"Authorization": f"Bearer {st.session_state.token}"}
-                    payload = {
-                        "agent_id": st.session_state.agent_id,
-                    }
-                    res = requests.post(TASKS_ENDPOINT, headers=headers, json=payload)
-
-                    if res.status_code == 200:
-                        data = res.json()
-                        reports = data.get("reports", [])
-                        tasks = reports[0] if reports and isinstance(reports[0], list) else []
-
-                        # Sort by date then time
-                        tasks_sorted = sorted(
-                            tasks,
-                            key=lambda t: (t.get("date", ""), t.get("time", ""))
-                        )
-
-                        if tasks_sorted:
-                            import pandas as pd
-                            df = pd.DataFrame(tasks_sorted)
-                            df.rename(
-                                columns={
-                                    "task": "Task",
-                                    "date": "Date",
-                                    "time": "Time",
-                                },
-                                inplace=True,
-                            )
-                            st.dataframe(df, use_container_width=True, hide_index=True)
-                        else:
-                            st.info("No scheduled tasks found.")
+    should_load = st.session_state.get("_reload_tasks_once", True) or refresh
+    if should_load:
+        with st.spinner("Loading tasks..."):
+            try:
+                res = requests.post(GET_ALL_TASKS_ENDPOINT)
+                if res.status_code == 200:
+                    data = res.json()
+                    reports = data.get("reports", [])
+                    tasks = reports[0] if reports and isinstance(reports[0], list) else []
+                    if tasks:
+                        import pandas as pd
+                        # Flatten each task to extract id and context fields
+                        flat_tasks = []
+                        for t in tasks:
+                            context = t.get('context', {})
+                            flat_tasks.append({
+                                'id': t.get('id', ''),
+                                'task': context.get('task', ''),
+                                'date': context.get('date', ''),
+                                'time': context.get('time', ''),
+                                'status': context.get('status', '')
+                            })
+                        df = pd.DataFrame(flat_tasks)
+                        st.dataframe(df[['task', 'date', 'time', 'status']], use_container_width=True, hide_index=True)
                     else:
-                        st.error(f"Error fetching tasks: {res.status_code}")
-                except Exception as e:
-                    st.error(f"Failed to load tasks: {e}")
-
-            # only auto-load once
-            st.session_state._reload_tasks_once = False
+                        st.info("No scheduled tasks found.")
+                else:
+                    st.error(f"Error fetching tasks: {res.status_code}")
+            except Exception as e:
+                st.error(f"Failed to load tasks: {e}")
+        st.session_state._reload_tasks_once = False
