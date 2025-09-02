@@ -17,10 +17,6 @@ Welcome to the step-by-step guide for building a Task Manager agent using Jivas.
 ## Introduction
 Jivas is a framework for building agentic AI systems. In this tutorial, you'll learn how to create a Task Manager agent, customize actions, and integrate them with Jivas.
 
-## Architecture Overview
-- **actions/jaseci/**: Your custom actions (e.g., task handling, email, routing)
-- **actions/jivas/**: Default actions provided by Jivas
-- **daf/**: Agent definitions and action registrations
-- **main.jac**: Entry point for running the agent
+--- 
 
 Continue to [Environment Setup](setup.md) to get started.

@@ -190,3 +190,7 @@ POST /interact
 If you receive a valid response, your setup is complete and actions are registered successfully.
 
 > **Note:** Only call the import agent endpoint when registering new actions. Re-importing is not needed unless you update the agent or actions.
+
+---
+
+Continue to [Architecture Overview](./architcture.md).
