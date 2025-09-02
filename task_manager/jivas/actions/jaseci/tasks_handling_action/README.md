@@ -172,4 +172,8 @@ actions:
 
 ---
 
-This README explains the code, flow, and integration for the `tasks_handling_action`. Adjust prompts and logic as needed for your application.
+---
+
+**Next:** Return to the [Main Tutorial Table of Contents](../../../docs/README.md) to continue with the next action or section.
+
+> **Important:** After creating or modifying this action, call the `/walker/import_agent` endpoint to register it with your agent. Only then can you use this action in your workflow.
