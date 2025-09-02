@@ -1,47 +1,48 @@
-# Task Manager using JIVAS
+# Task Manager - Overview
 
-**Task Manager using JIVAS** is a task manager application being developed using the [Jivas](https://github.com/TruSelph/jivas) platform. It allows users to manage tasks through a chat interface. The system identifies when the user is referring to a task, checks existing tasks for scheduling conflicts, and suggests or creates new tasks accordingly.
+The **Task Manager** is an example agentic application built in jaclang to demonstrate how  tasks can be managed through natural conversation with an agent.  
 
----
+It is implemented in two different ways using the frameworks available in the Jaseci ecosystem: [**JIVAS**](https://github.com/TrueSelph/jivas) and [**byLLM (MTP)**](https://www.jac-lang.org/learn/jac-byllm/with_llm).
 
-## Overview
-
-Task Manager using JIVAS is designed to simplify task management through natural conversation.
-
-- When a user mentions a task in chat:
-  - The system detects and extracts task details
-  - It checks current tasks to find any scheduling conflicts
-  - It suggests free time slots or directly adds the task
-
-Planned features include:
-- Summarizing scheduled tasks
-- Responding to questions about the current schedule
-- Allowing task edits and deletions via chat
+Both frameworks are based on the [**Object Spatial Programming (OSP)**](https://www.jac-lang.org/jac_book/chapter_8) paradigm that JacLang introduces, which makes it possible to model agents, sessions, and tools as connected objects in a **graph-like space.**
 
 ---
 
-## Key Features (Planned)
+## What It Can Do
 
-- Chat-based task creation
-- Conflict checking and time slot suggestions
-- Viewing and summarizing tasks
-- Agent-driven task updates and logic
+The application works like a **chatbot with agentic capabilities**. Based on the user's message and conversation history, the agent decides what to do:
+
+- **General Chat**  
+  When the user asks a normal question, the agent simply chats with the LLM and responds naturally.
+
+- **Task Handling**  
+  If the user says something like *“I have to submit my report tomorrow at 5 PM”*, the agent extracts the details and creates a new task.
+
+- **Task Summaries**  
+  If the user asks *“What tasks are scheduled?”*, the agent retrieves all tasks from memory and provides a concise summary.
+
+- **Email Handling**  
+  If the user says *“Send an email to John with the meeting notes”*, the agent drafts the email and shows it for confirmation.  
+  Only after explicit confirmation does the agent send the email.
+
+All of these decisions are made dynamically based on **conversation context and history**.
 
 ---
 
-## Architecture Overview
+## Framework Implementations
 
-<img src="assets/task_manager_jivas_architecture.png" alt="Task Manager using JIVAS Architecture" width="500"/>
+The same Task Manager is implemented in two different ways:
 
----
+- [**JIVAS**](./jivas/README.md)
+- [**byLLM (Multi-Tool Prompting)**](./byllm/README.md) 
 
-## Repositories
-
-- Implementation: [chat-powered-task-agent](jac/README.md)
-- Based on: [Jivas](https://github.com/TrueSelph/jivas.git)
+Both versions provide the same functionality, but follow different architectural approaches.
 
 ---
 
-## Project Status
+## How to Set Up
 
-This repository is for documentation and planning. Development will take place in the implementation repository.
+Each implementation includes its own setup guide:
+
+- [How to set up the JIVAS version](./jivas/how_to_setup_jivas.md)  
+- [How to set up the byLLM version](./byllm/how_to_setup.md)

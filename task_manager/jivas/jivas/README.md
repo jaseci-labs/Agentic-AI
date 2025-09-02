@@ -1,4 +1,4 @@
-## Task Manager – JIVAS Project
+## Task Manager - JIVAS Project
 
 This is an agentic task manager built on the [JIVAS](https://github.com/TrueSelph/jivas) framework. It detects task-related intents from natural conversation, schedules tasks, and interacts intelligently with users using agentic AI logic.
 
@@ -12,13 +12,13 @@ Follow the steps below to set up and run the Task Manager application.
 
 ```bash
 git clone https://github.com/jaseci-labs/Agentic-AI.git
-cd Agentic-AI/task_manager_jivas
+cd Agentic-AI/task_manager
 ```
 
 #### 2. Navigate to the `jac` Directory
 
 ```bash
-cd jac
+cd jivas
 ```
 
 #### 3. Create a Virtual Environment and Activate It
@@ -120,7 +120,6 @@ POST http://localhost:8000/walker/update_action
 
 ---
 
-
 #### Useful Walkers
 
 Here are some useful endpoints to help manage and debug your setup:
@@ -129,3 +128,6 @@ Here are some useful endpoints to help manage and debug your setup:
 - POST /walker/list_agents – list all agents
 - POST /walker/list_actions – list all actions
 
+---
+
+-> **Visit [here](docs/README.md) to follow the Tutorial to build Task Manager.**
