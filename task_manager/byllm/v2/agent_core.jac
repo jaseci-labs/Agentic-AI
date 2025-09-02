@@ -1,6 +1,6 @@
 import from dotenv { load_dotenv }
 import sys;
-include utils;
+import from utils { get_current_datetime }
 
 node Memory {}
 

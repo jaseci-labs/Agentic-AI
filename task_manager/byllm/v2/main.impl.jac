@@ -9,7 +9,7 @@ impl TaskHandling.check_scheduled_tasks {
     return [self --> (`?Task)];
 }
 
-sem TaskHandling.extract_task_info = "time and date should be extracted in the format of 'YYYY-MM-DD HH:MM:SS'.";
+sem TaskHandling.extract_task_info = "time and date should be extracted in the format of 'YYYY-MM-DD HH:MM:SS'. Response should be like 'Task: <task>, Date: <date>, Time: <time>' is added successfully.";
 sem TaskHandling.route_and_run = "Select and Execute only one tool provided.";
 sem TaskHandling.summarize_tasks = "Summarize the tasks in a concise manner. But all relevant task information should be included.";
 

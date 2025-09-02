@@ -1,10 +1,11 @@
-import from mtllm.llm { Model }
+import from byllm.llm { Model }
 import from email.mime.text { MIMEText }
 import smtplib;
 import os;
 include agent_core;
+import from utils { get_current_datetime }
 
-glob llm = Model(model_name="gpt-4o", verbose=False);
+glob llm = Model(model_name="gpt-4o-mini", verbose=False);
 
 enum RoutingNodes {
     GENERAL_CHAT = "GeneralChat",
@@ -22,7 +23,7 @@ node Task {
 node TaskHandling(Toolbox) {
     def add_task(task: Task) -> str;
     def check_scheduled_tasks -> list[Task];
-    def extract_task_info(utterance: str) -> Task by llm(
+    def extract_task_info(utterance: str) -> str by llm(
         method="ReAct",
         tools=([self.add_task, get_current_datetime])
     );

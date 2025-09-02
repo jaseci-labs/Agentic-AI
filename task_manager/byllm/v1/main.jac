@@ -1,4 +1,4 @@
-import from mtllm.llm { Model }
+import from byllm.llm { Model }
 import from email.mime.text { MIMEText }
 import from dotenv { load_dotenv }
 import smtplib;
@@ -36,7 +36,7 @@ node TaskHandling {
     def check_scheduled_tasks -> list[Task] {
         return [self --> (`?Task)];
     }
-    def extract_task_info(utterance: str) -> Task by llm(
+    def extract_task_info(utterance: str) -> str by llm(
         method="ReAct",
         tools=([self.add_task, get_current_datetime])
     );
@@ -61,7 +61,7 @@ node TaskHandling {
         };
     }
 }
-sem TaskHandling.extract_task_info = "time and date should be extracted in the format of 'YYYY-MM-DD HH:MM:SS'.";
+sem TaskHandling.extract_task_info = "time and date should be extracted in the format of 'YYYY-MM-DD HH:MM:SS'. Response should be like 'Task: <task>, Date: <date>, Time: <time>' is added successfully.";
 sem TaskHandling.route_and_run = "Select and Execute only one tool provided.";
 sem TaskHandling.summarize_tasks = "Summarize the tasks in a concise manner. But all relevant task information should be included.";
 
