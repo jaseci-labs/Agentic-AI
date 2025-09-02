@@ -1,47 +1,53 @@
-# Task Manager using JIVAS
 
-**Task Manager using JIVAS** is a task manager application being developed using the [Jivas](https://github.com/TruSelph/jivas) platform. It allows users to manage tasks through a chat interface. The system identifies when the user is referring to a task, checks existing tasks for scheduling conflicts, and suggests or creates new tasks accordingly.
+# JIVAS Architecture for Task Manager
+
+This section provides an overview of how the Task Manager is structured and operates within the JIVAS platform.
+
+
+
+## System Overview
+
+The Task Manager leverages JIVAS’s agentic architecture to manage tasks through natural language interactions. The agent interprets user input, interacts with custom actions, and updates or queries the task database.
+
+
+
+## Architecture Diagram
+
+<img src="../../assets/task_manager_jivas_architecture.png" alt="Task Manager using JIVAS Architecture" width="500"/>
+
+
+## Key Components
+
+- **Task Manager Agent:** The central entity that coordinates all actions and manages user sessions.
+- **Custom Actions:**
+  - `routing_interact_action`: Manages routing and interaction logic.
+  - `tasks_handling_action`: Handles creating, listing, and managing tasks.
+  - `email_handling_action`: Supports email-related features.
+- **Default JIVAS Actions:** Provide LLM interaction, persona management, and agent utilities.
+
+
+## How It Works
+
+1. **User Interaction:**  
+  Users interact with the agent via chat or API.
+
+2. **Intent Detection:**  
+  The agent uses LLM-powered actions to understand user requests (e.g., add, list, or edit tasks).
+
+3. **Action Execution:**  
+  Relevant custom actions are triggered:
+    - New tasks creation.
+    - Listing tasks summarizes current schedule.
+    - Routing and persona actions enhance conversational flow.
+
+4. **Response:**  
+  The agent responds with task details, suggestions, or confirmations.
+
+
+## Extensibility
+
+The architecture is modular - new actions can be added to extend functionality (e.g., notifications, integrations).
 
 ---
 
-## Overview
-
-Task Manager using JIVAS is designed to simplify task management through natural conversation.
-
-- When a user mentions a task in chat:
-  - The system detects and extracts task details
-  - It checks current tasks to find any scheduling conflicts
-  - It suggests free time slots or directly adds the task
-
-Planned features include:
-- Summarizing scheduled tasks
-- Responding to questions about the current schedule
-- Allowing task edits and deletions via chat
-
----
-
-## Key Features (Planned)
-
-- Chat-based task creation
-- Conflict checking and time slot suggestions
-- Viewing and summarizing tasks
-- Agent-driven task updates and logic
-
----
-
-## Architecture Overview
-
-<img src="assets/task_manager_jivas_architecture.png" alt="Task Manager using JIVAS Architecture" width="500"/>
-
----
-
-## Repositories
-
-- Implementation: [chat-powered-task-agent](jac/README.md)
-- Based on: [Jivas](https://github.com/TrueSelph/jivas.git)
-
----
-
-## Project Status
-
-This repository is for documentation and planning. Development will take place in the implementation repository.
+This overview sets the stage for the next steps, where you’ll learn to implement and customize each part of the Task Manager in JIVAS.
