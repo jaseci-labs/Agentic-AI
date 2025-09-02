@@ -51,3 +51,6 @@ The architecture is modular - new actions can be added to extend functionality (
 ---
 
 This overview sets the stage for the next steps, where you’ll learn to implement and customize each part of the Task Manager in JIVAS.
+
+
+**Next:** Return to the [Main Tutorial Table of Contents](./README.md) to continue create actions.
