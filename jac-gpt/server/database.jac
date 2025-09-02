@@ -182,19 +182,19 @@ obj MongoDB {
     # The built-in /user/register and /user/login endpoints handle user creation and authentication
     # User data is automatically stored in the 'user' collection by JAC Cloud
     
-    def get_all_users(limit: int = 100) -> List[Dict] {
-        try {
-            # Query JAC Cloud's built-in user collection
-            # JAC Cloud users have different structure than custom users
-            users = <>list(
-                self.users.find({}, {"password": 0}).limit(limit)
-            );
-            return users;
-        } except Exception as e {
-            logger.error(f"Error getting all users: { e }");
-            return [];
-        }
-    }
+    # def get_all_users(limit: int = 100) -> List[Dict] {
+    #     try {
+    #         # Query JAC Cloud's built-in user collection
+    #         # JAC Cloud users have different structure than custom users
+    #         users = <>list(
+    #             self.users.find({}, {"password": 0}).limit(limit)
+    #         );
+    #         return users;
+    #     } except Exception as e {
+    #         logger.error(f"Error getting all users: { e }");
+    #         return [];
+    #     }
+    # }
     
     def get_all_sessions_with_user_info(limit: int = 100) -> List[Dict] {
         try {
