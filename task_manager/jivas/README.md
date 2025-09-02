@@ -1,131 +1,47 @@
-## Task Manager – JIVAS Project
+# Task Manager using JIVAS
 
-This is an agentic task manager built on the [JIVAS](https://github.com/TrueSelph/jivas) framework. It detects task-related intents from natural conversation, schedules tasks, and interacts intelligently with users using agentic AI logic.
-
----
-
-### Setup Instructions
-
-Follow the steps below to set up and run the Task Manager application.
-
-#### 1. Clone the Repository
-
-```bash
-git clone https://github.com/jaseci-labs/Agentic-AI.git
-cd Agentic-AI/task_manager_jivas
-```
-
-#### 2. Navigate to the `jac` Directory
-
-```bash
-cd jac
-```
-
-#### 3. Create a Virtual Environment and Activate It
-
-```bash
-python3 -m venv venv
-source venv/bin/activate     # On Windows: venv\Scripts\activate
-```
-
-#### 4. Install Required Packages
-
-you can install all dependencies via the provided requirements.txt
-
-```bash
-pip install -r requirements.txt
-```
+**Task Manager using JIVAS** is a task manager application being developed using the [Jivas](https://github.com/TruSelph/jivas) platform. It allows users to manage tasks through a chat interface. The system identifies when the user is referring to a task, checks existing tasks for scheduling conflicts, and suggests or creates new tasks accordingly.
 
 ---
 
-### Running the Project
+## Overview
 
-#### 5. Launch the Server
+Task Manager using JIVAS is designed to simplify task management through natural conversation.
 
-```bash
-jvcli server launch
-```
+- When a user mentions a task in chat:
+  - The system detects and extracts task details
+  - It checks current tasks to find any scheduling conflicts
+  - It suggests free time slots or directly adds the task
 
-Before launching the server, ensure you have set the required environment variables for authentication. If you encounter an error like:
-
-```bash
-Missing JIVAS_USER or JIVAS_PASSWORD
-```
-
-please run the following commands in your terminal:
-
-```bash
-export JIVAS_USER=admin@jivas.com
-export JIVAS_PASSWORD=password
-```
-
-#### 6. Initialize the Agent
-
-- First-time setup (in a new terminal):
-
-```bash
-jvcli server importagent jaseci/task_manager 0.0.1
-```
-
-- Subsequent runs:
-
-```bash
-jvcli server initagents
-```
+Planned features include:
+- Summarizing scheduled tasks
+- Responding to questions about the current schedule
+- Allowing task edits and deletions via chat
 
 ---
 
-#### Using the Interact Walker
+## Key Features (Planned)
 
-Once the server is running and the agent is initialized, you can interact with it by sending a request to:
-
-```bash
-POST http://localhost:8000/walker/interact/interact
-```
-
-**Sample JSON Payload**
-
-```json
-{
-  "utterance": "{{YOU CAN ASK THE QUESTION HERE}}",
-  "session_id": "{{SESSION_ID}}",
-  "agent_id": "{{AGENT_ID}}",
-  "tts": "false",
-  "data": {},
-  "verbose": "false",
-  "streaming": "false"
-}
-```
-
-**OpenAI API Key Configuration**
-
-To enable LLM-based responses, set your OpenAI API key using the following request:
-
-```bash
-POST http://localhost:8000/walker/update_action
-```
-
-**Sample JSON Payload**
-
-```json
-{
-  "reporting": true,
-  "agent_id": "{{AGENT_ID}}",
-  "action_id": "n:LangChainModelAction:688f65a4f45c35658ca0fb2e",
-  "action_data": {
-    "api_key": "type api key here"
-  }
-}
-```
+- Chat-based task creation
+- Conflict checking and time slot suggestions
+- Viewing and summarizing tasks
+- Agent-driven task updates and logic
 
 ---
 
+## Architecture Overview
 
-#### Useful Walkers
+<img src="assets/task_manager_jivas_architecture.png" alt="Task Manager using JIVAS Architecture" width="500"/>
 
-Here are some useful endpoints to help manage and debug your setup:
+---
 
-- POST /user/login – login user
-- POST /walker/list_agents – list all agents
-- POST /walker/list_actions – list all actions
+## Repositories
 
+- Implementation: [chat-powered-task-agent](jac/README.md)
+- Based on: [Jivas](https://github.com/TrueSelph/jivas.git)
+
+---
+
+## Project Status
+
+This repository is for documentation and planning. Development will take place in the implementation repository.

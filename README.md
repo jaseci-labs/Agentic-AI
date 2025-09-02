@@ -13,9 +13,14 @@ See the [Aider-Genius README](./Aider-Genius/README.md) for detailed information
 
 ### Task Manager using JIVAS
 
-An agentic task manager application powered by the [JIVAS](https://github.com/TrueSelph/jivas.git) platform. It identifies tasks from natural conversation, handles scheduling, and provides task summaries.
+The **Task Manager** is a simple Single-Agentic Application built to demonstrate how agent-based systems can be created in the **Jaseci ecosystem**.
 
-See the [Task Manager using JIVAS README](./task_manager_jivas/README.md) for more information.
+This example project is implemented in **two different ways**, using the two available frameworks/tools in Jaseci:
+
+- **[JIVAS](https://github.com/TrueSelph/jivas)** – Jaseci’s agent framework  
+- **[byLLM (Meaning-Typed Programming)](https://www.jac-lang.org/learn/jac-byllm/with_llm)** – a tool-centric agentic framework  
+
+For more context, see the [overview README](./task_manager/README.md).
 
 ---
 
