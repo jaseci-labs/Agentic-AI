@@ -107,7 +107,7 @@ if 'token' not in st.session_state:
 if 'session_id' not in st.session_state:
     st.session_state.session_id = ""
 if 'agent_id' not in st.session_state:
-    st.session_state.agent_id = "n:Agent:68addbb5148f9ebad6bc30ed"
+    st.session_state.agent_id = "n:Agent:68b6f57fcd57945930c1e87a"
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
