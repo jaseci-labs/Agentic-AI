@@ -1,0 +1,32 @@
+version: '3.8'
+
+# Production deployment simulation override
+# Use this with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  # JAC Server with production-like settings
+  jac-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_HOST=mongodb+srv://v30793620:qFT9ofgVU2GPN5oA@cluster0.ry1lymm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - DATABASE_NAME=jac_gpt
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - JAC_ENV=production
+    volumes: []  # Remove volume mounts for production
+    restart: always
+
+  # React Frontend with production build
+  jac-webapp:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://jac-server:8080  # Use service name for internal communication
+    environment:
+      - VITE_API_URL=http://localhost:8080  # External access still via localhost
+    volumes: []  # Remove volume mounts for production
+    restart: always
