@@ -21,3 +21,11 @@ walker update_profile(visit_profile) {
     
     can update_profile with profile entry;
 }
+
+walker get_profile(visit_profile) {
+    class __specs__ {
+        has tags: list = ["profile"];
+    }
+
+    can get_profile with profile entry;
+}

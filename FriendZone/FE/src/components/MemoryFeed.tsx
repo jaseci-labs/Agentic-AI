@@ -128,7 +128,8 @@ const MemoryCard = ({ memory }: { memory: Memory }) => {
   );
 };
 
-const MemoryFeed = () => {
+const MemoryFeed = ({ token, user }: { token: string; user: any }) => {
+  console.log("MemoryFeed: rendering with token:", token, "and user:", user);
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
