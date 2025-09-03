@@ -5,7 +5,7 @@ FriendZone is an AI-powered memory sharing platform that allows users to capture
 ## 🎥 Demo
 
 <video width="100%" controls>
-  <source src="./assert/demo.mov" type="video/mp4">
+  <source src="./assert/demo.mov" type="video/quicktime">
   Your browser does not support the video tag.
 </video>
 
