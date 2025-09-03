@@ -319,6 +319,7 @@ node PlanningNode {
             
             if plan_objects {
                 tasks = [];
+                
                 for plan in plan_objects {
                     task_dict = {
                         'name': plan.name,
