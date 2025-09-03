@@ -1,7 +1,7 @@
 import sys;
 import os;
 import requests;
-import from mtllm.llm {Model}
+import from byllm.llm {Model}
 import from dotenv {load_dotenv}
 import from database {get_database}
 import from rag_engine {RagEngine}
