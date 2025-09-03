@@ -2,6 +2,13 @@
 
 FriendZone is an AI-powered memory sharing platform that allows users to capture, organize, and share their precious memories through an intelligent conversational interface. The application combines image analysis, natural language processing, and location services to create rich, contextual memories that can be shared with friends and family.
 
+## 🎥 Demo
+
+<video width="100%" controls>
+  <source src="./assert/demo.mov" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ## 🌟 Features
 
 - **Intelligent Memory Creation**: Upload photos with location and date information to create rich, contextual memories
