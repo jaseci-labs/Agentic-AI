@@ -2,6 +2,7 @@ import streamlit as st;
 import json;
 import os;
 import subprocess;
+import from tone_samples { TONE_SAMPLES }
 
 def content_creator() {
 
@@ -11,6 +12,8 @@ def content_creator() {
     st.caption("Generate AI-powered content with Jac workflows");
 
     st.header("Input Details");
+
+    uploaded_files = st.file_uploader("Upload Draft Documents (Optional, PDF)", <>type = "pdf", accept_multiple_files=True);
 
     field = st.text_input("Field", "Artificial Intelligence");
     topic = st.text_input("Topic", "Agentic AI");
@@ -31,9 +34,15 @@ def content_creator() {
     col1 = columns[0];
     col2 = columns[1];
     with col1{
+        # tone = st.selectbox(
+        #     "Tone",
+        #     ["Professional", "Casual", "First-person experience", "Educational", "Storytelling"]
+        # );
+        available_tones = list(TONE_SAMPLES.keys());
+        
         tone = st.selectbox(
             "Tone",
-            ["Professional", "Casual", "First-person experience", "Educational", "Storytelling"]
+            available_tones
         );
     }
 
@@ -54,12 +63,34 @@ def content_creator() {
     if st.button("Generate Content"){
         st.info("⏳ Running Jac workflow...");
 
+        pdf_paths = [];
+        documents_folder = "documents";
+
+        if uploaded_files{
+            os.makedirs(documents_folder, exist_ok=True);
+
+            for uploaded_file in uploaded_files{
+                save_path = os.path.join(documents_folder, uploaded_file.name);
+                
+                with open(save_path, "wb") as f{
+                    f.write(uploaded_file.getvalue());
+                };
+                
+                pdf_paths.append(save_path);
+            }
+        }
+
+        tone_sample_text = TONE_SAMPLES[tone]['sample'];
+
         # sample
         user_input = {
+            "documents_folder": documents_folder,
+            "pdf_paths": pdf_paths, 
             "field": field,
             "topic": topic,
             "expected_output": expected_output,
             "tone": tone,
+            "tone_sample": tone_sample_text,
             "audience": audience,
             "write_as": write_as,
         };
@@ -90,11 +121,6 @@ def content_creator() {
                 st.markdown(open("generated_article_final.md").read());
             }
 
-
-            if os.path.exists("trending_topics.md"){
-                st.subheader("Trending Topics");
-                st.text(open("trending_topics.md").read());
-            }
         }
 
         except subprocess.CalledProcessError as e {
