@@ -1,73 +1,104 @@
-# Welcome to your Lovable project
+# FriendZone Frontend
 
-## Project info
+This is the frontend application for FriendZone built with React, TypeScript, and Vite.
 
-**URL**: https://lovable.dev/projects/3c3f3829-d487-435e-84b2-21e98c3e9b0f
+## Prerequisites
 
-## How can I edit this code?
+- Node.js (v16 or higher)
+- npm or yarn package manager
 
-There are several ways of editing your application.
+## Setup Instructions
 
-**Use Lovable**
+1. **Clone the repository**
+   ```sh
+   git clone <repository-url>
+   cd FriendZone/FE
+   ```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3c3f3829-d487-435e-84b2-21e98c3e9b0f) and start prompting.
+2. **Install dependencies**
+   ```sh
+   npm install
+   ```
 
-Changes made via Lovable will be committed automatically to this repo.
+3. **Environment Setup**
+   Create a `.env` file in the root directory if needed and add any required environment variables.
 
-**Use your preferred IDE**
+## Available Scripts
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Development server**
+  ```sh
+  npm run dev
+  ```
+  Starts the development server with hot-reload at `http://localhost:5173`
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Build for production**
+  ```sh
+  npm run build
+  ```
 
-Follow these steps:
+- **Build for development**
+  ```sh
+  npm run build:dev
+  ```
+
+- **Lint code**
+  ```sh
+  npm run lint
+  ```
+
+- **Preview production build**
+  ```sh
+  npm run preview
+  ```
+
+## Running the Server
+
+To start the development server:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Development Workflow
 
-**Use GitHub Codespaces**
+1. Make sure all dependencies are installed
+2. Start the development server using `npm run dev`
+3. Make your changes - the server will automatically reload
+4. Run linting with `npm run lint` before committing
+5. Build the project with `npm run build` to check for any build errors
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
+## Technologies Used
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Vite** - Fast build tool and development server
+- **React** - Frontend library
+- **TypeScript** - Type-safe JavaScript
+- **shadcn/ui** - UI component library
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Router** - Client-side routing
+- **React Query** - Data fetching and state management
+- **React Hook Form** - Form handling
+- **Zod** - Schema validation
 
-## How can I deploy this project?
+## Project Structure
 
-Simply open [Lovable](https://lovable.dev/projects/3c3f3829-d487-435e-84b2-21e98c3e9b0f) and click on Share -> Publish.
+```
+FE/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/         # Page components
+│   ├── hooks/         # Custom React hooks
+│   ├── lib/           # Utility functions
+│   └── types/         # TypeScript type definitions
+├── public/            # Static assets
+└── package.json       # Dependencies and scripts
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Troubleshooting
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Port already in use**: If port 5173 is busy, Vite will automatically use the next available port
+- **Build errors**: Run `npm run lint` to check for code issues
+- **Module not found**: Make sure all dependencies are installed with `npm install`
