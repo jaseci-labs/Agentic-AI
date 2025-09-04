@@ -41,22 +41,18 @@ obj WriterAgent {
     #     self.revision_chain = ((revision_prompt | self.llm) | StrOutputParser());
     # }
 
-    has prompt: any;
-    has chain: any;
-    has revision_prompt: any;
-    has revision_chain: any;
 
-    
-    self.prompt =
-        ChatPromptTemplate.from_template(
-            "You are an expert content writer, specializing in creating engaging {output_format} articles."
-            "Your task is to write a comprehensive article on the topic: {topic}\n"
-            "You must strictly follow the provided content plan {plan}, including all sections, topics, and code snippets as instructed."
-            "You must adopt the following tone and style. TONE EXAMPLE {tone_sample}"
-            "The article should be well-structured, clear, and align with the user's original request for a {output_format}.\n"
-        );
-    self.chain = ((self.prompt | self.llm) | StrOutputParser());
-    self.revision_prompt =
+
+    has prompt =
+            ChatPromptTemplate.from_template(
+                "You are an expert content writer, specializing in creating engaging {output_format} articles."
+                "Your task is to write a comprehensive article on the topic: {topic}\n"
+                "You must strictly follow the provided content plan {plan}, including all sections, topics, and code snippets as instructed."
+                "You must adopt the following tone and style. TONE EXAMPLE {tone_sample}"
+                "The article should be well-structured, clear, and align with the user's original request for a {output_format}.\n"
+            );
+    has chain = ((prompt | llm) | StrOutputParser());
+    has revision_prompt =
         ChatPromptTemplate.from_template(
             "You are an expert content writer. Your previous draft was reviewed and needs improvement. Your task is to revise the article based on the editor's feedback."
             "TOPIC: {topic}\n"
@@ -64,7 +60,34 @@ obj WriterAgent {
             "ORIGINAL PLAN: {plan}\n"
             "Please rewrite the article, incorporating all the feedback to create a high-quality final version."
         );
-    self.revision_chain = ((self.revision_prompt | self.llm) | StrOutputParser());
+    has revision_chain = ((revision_prompt | llm) | StrOutputParser());
+
+
+
+    # has prompt: any;
+    # has chain: any;
+    # has revision_prompt: any;
+    # has revision_chain: any;
+
+    
+    # self.prompt =
+    #     ChatPromptTemplate.from_template(
+    #         "You are an expert content writer, specializing in creating engaging {output_format} articles."
+    #         "Your task is to write a comprehensive article on the topic: {topic}\n"
+    #         "You must strictly follow the provided content plan {plan}, including all sections, topics, and code snippets as instructed."
+    #         "You must adopt the following tone and style. TONE EXAMPLE {tone_sample}"
+    #         "The article should be well-structured, clear, and align with the user's original request for a {output_format}.\n"
+    #     );
+    # self.chain = ((self.prompt | self.llm) | StrOutputParser());
+    # self.revision_prompt =
+    #     ChatPromptTemplate.from_template(
+    #         "You are an expert content writer. Your previous draft was reviewed and needs improvement. Your task is to revise the article based on the editor's feedback."
+    #         "TOPIC: {topic}\n"
+    #         "EDITOR'S FEEDBACK: {review_notes}\n"
+    #         "ORIGINAL PLAN: {plan}\n"
+    #         "Please rewrite the article, incorporating all the feedback to create a high-quality final version."
+    #     );
+    # self.revision_chain = ((self.revision_prompt | self.llm) | StrOutputParser());
     
 
     def run(state: AgentState) {
