@@ -29,10 +29,10 @@ The Task Manager leverages JIVAS’s agentic architecture to manage tasks throug
 ## How It Works
 
 1. **User Interaction:**  
-  Users interact with the agent via chat or API.
+  Users interact with the agent via chat.
 
 2. **Intent Detection:**  
-  The agent uses LLM-powered actions to understand user requests (e.g., add, list, or edit tasks).
+  The agent uses LLM-powered actions to understand user requests (e.g., add, list tasks).
 
 3. **Action Execution:**  
   Relevant custom actions are triggered:
