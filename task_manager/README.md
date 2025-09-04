@@ -44,5 +44,5 @@ Both versions provide the same functionality, but follow different architectural
 
 Each implementation includes its own setup guide:
 
-- [How to set up the JIVAS version](./jivas/how_to_setup_jivas.md)  
-- [How to set up the byLLM version](./byllm/how_to_setup.md)
+- [Visit JIVAS version](./jivas/README.md)  
+- [Visit byLLM version](./byllm/README.md)
