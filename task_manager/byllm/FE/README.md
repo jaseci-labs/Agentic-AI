@@ -1,4 +1,4 @@
-# byllm Frontend (FE)
+# byllm Frontend
 
 This is the Streamlit-based frontend for the byllm task manager and chat assistant.
 
