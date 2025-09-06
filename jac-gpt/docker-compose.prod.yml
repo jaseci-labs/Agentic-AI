@@ -12,7 +12,7 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - DATABASE_HOST=mongodb+srv://v30793620:qFT9ofgVU2GPN5oA@cluster0.ry1lymm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-      - DATABASE_NAME=jac_gpt
+      - DATABASE_NAME=jac_gpt_2
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
       - JAC_ENV=production
