@@ -34,7 +34,7 @@ GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 ## API Documentation
 
-Replace `{{HOST}}` with your server's host URL (e.g., `http://localhost:8000`)
+Replace `{{HOST}}` with your server's host URL (e.g., `http://localhost:8080`)
 
 ### 1. Authentication
 

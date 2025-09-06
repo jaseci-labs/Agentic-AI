@@ -86,7 +86,7 @@ jac-gpt/
    jac serve server.jac
    ```
 
-   The server will start on `http://localhost:8000` by default.
+   The server will start on `http://localhost:8080` by default.
 
 ### 2. React Client Setup
 
@@ -112,7 +112,7 @@ jac-gpt/
    Edit `.env` and update the configuration:
    ```env
    # JAC Server Configuration
-   VITE_API_URL=http://localhost:8000
+   VITE_API_URL=http://localhost:8080
    
    # Authentication (uses defaults if not provided)
    VITE_JAC_USER_EMAIL=test@mail.com

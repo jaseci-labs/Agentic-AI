@@ -62,7 +62,7 @@ Added Dockerfile and docker-compose.yml to the chat.
 ```
 + USER appuser
 + HEALTHCHECK --interval=30s --timeout=3s \
-+   CMD curl -f http://localhost:8000/health || exit 1
++   CMD curl -f http://localhost:8080/health || exit 1
 ```
 
 #### Expose port 5432 and add volume for postgres data

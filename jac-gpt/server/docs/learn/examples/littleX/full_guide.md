@@ -894,7 +894,7 @@ Using tools like Swagger or Postman, you can test these APIs to confirm their fu
 `jac serve filename.jac` run using command line.
 
 2. Access Swagger Docs
-Open your browser and navigate to http://localhost:8000/docs
+Open your browser and navigate to http://localhost:8080/docs
 
 3. Test an API Endpoint
       - Click on an endpoint

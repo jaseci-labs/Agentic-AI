@@ -8,10 +8,9 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    env_file:
+      - ./server/.env
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_api_key_here}
-      - DATABASE_HOST=mongodb+srv://v30793620:qFT9ofgVU2GPN5oA@cluster0.ry1lymm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-      - DATABASE_NAME=jac_gpt
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
@@ -20,6 +19,12 @@ services:
       - jac_server_logs:/app/logs
     networks:
       - jac-gpt-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # React Frontend (Webapp)
   jac-webapp:
@@ -27,19 +32,22 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:8080
+        - VITE_API_URL=/api
+        - VITE_JAC_USER_EMAIL=test@mail.com
+        - VITE_JAC_USER_PASSWORD=password
     container_name: jac-gpt-webapp
     restart: unless-stopped
     ports:
       - "3000:80"  # Use port 3000 to avoid conflict with system nginx
-    environment:
-      - VITE_API_URL=http://localhost:8080
-      - VITE_JAC_USER_EMAIL=${VITE_JAC_USER_EMAIL:-test@mail.com}
-      - VITE_JAC_USER_PASSWORD=${VITE_JAC_USER_PASSWORD:-password}
     depends_on:
       - jac-server
     networks:
       - jac-gpt-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   jac_server_data:

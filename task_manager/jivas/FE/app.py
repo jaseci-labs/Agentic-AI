@@ -96,7 +96,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- CONSTANTS ---
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8080"
 LOGIN_ENDPOINT = f"{BASE_URL}/user/login"
 CHAT_ENDPOINT = f"{BASE_URL}/interact"
 TASKS_ENDPOINT = f"{BASE_URL}/action/walker/tasks_handling_action/list_tasks"

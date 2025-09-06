@@ -159,7 +159,7 @@ export LOGGER_USE_UTC="true"                      # Use UTC timestamps
 | `RESTRICT_UNVERIFIED_USER` | Require email verification | `false` | `true` |
 | `VERIFICATION_CODE_TIMEOUT` | Verification code expiration (hours) | `24` | `48` |
 | `RESET_CODE_TIMEOUT` | Password reset code expiration (hours) | `24` | `1` |
-| `SENDGRID_HOST` | Host for verification links | `http://localhost:8000` | `https://api.example.com` |
+| `SENDGRID_HOST` | Host for verification links | `http://localhost:8080` | `https://api.example.com` |
 | `SENDGRID_API_KEY` | SendGrid API key | `null` | `SG.your-api-key` |
 
 ### Logging Configuration

@@ -14,7 +14,15 @@ RUN bun install
 COPY . .
 
 # Accept build arguments
-ARG VITE_API_URL=http://localhost:8000
+# Accept build arguments
+ARG VITE_API_URL=http://localhost:8080
+ARG VITE_JAC_USER_EMAIL=test@mail.com
+ARG VITE_JAC_USER_PASSWORD=password
+
+# Set environment variables for the build
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_JAC_USER_EMAIL=$VITE_JAC_USER_EMAIL
+ENV VITE_JAC_USER_PASSWORD=$VITE_JAC_USER_PASSWORD
 
 # Build the application
 RUN bun run build

@@ -265,33 +265,33 @@ pip install -r requirements.txt
 # Start the service with database persistence
 jac serve main.jac
 
-# Service starts on http://localhost:8000
-# API documentation available at http://localhost:8000/docs
+# Service starts on http://localhost:8080
+# API documentation available at http://localhost:8080/docs
 ```
 
 ### Testing Persistence
 
 ```bash
 # First request - Create counter
-curl -X POST http://localhost:8000/walker/get_counter \
+curl -X POST http://localhost:8080/walker/get_counter \
   -H "Content-Type: application/json" \
   -d '{}'
 # Response: {"returns": [{"value": 0, "status": "created"}]}
 
 # Increment the counter
-curl -X POST http://localhost:8000/walker/increment_counter \
+curl -X POST http://localhost:8080/walker/increment_counter \
   -H "Content-Type: application/json" \
   -d '{}'
 # Response: {"returns": [{"value": 1, "previous": 0}]}
 
 # Increment again
-curl -X POST http://localhost:8000/walker/increment_counter \
+curl -X POST http://localhost:8080/walker/increment_counter \
   -H "Content-Type: application/json" \
   -d '{}'
 # Response: {"returns": [{"value": 2, "previous": 1}]}
 
 # Check counter value
-curl -X POST http://localhost:8000/walker/get_counter \
+curl -X POST http://localhost:8080/walker/get_counter \
   -H "Content-Type: application/json" \
   -d '{}'
 # Response: {"returns": [{"value": 2, "status": "existing"}]}
@@ -299,7 +299,7 @@ curl -X POST http://localhost:8000/walker/get_counter \
 # Restart the service (Ctrl+C, then jac serve main.jac again)
 
 # Counter value persists after restart
-curl -X POST http://localhost:8000/walker/get_counter \
+curl -X POST http://localhost:8080/walker/get_counter \
   -H "Content-Type: application/json" \
   -d '{}'
 # Response: {"returns": [{"value": 2, "status": "existing"}]}
@@ -416,27 +416,27 @@ Let's enhance our counter to track increment history:
 jac serve main.jac
 
 # Multiple increments to build history
-curl -X POST http://localhost:8000/walker/increment_with_history \
+curl -X POST http://localhost:8080/walker/increment_with_history \
   -H "Content-Type: application/json" \
   -d '{}'
 
-curl -X POST http://localhost:8000/walker/increment_with_history \
+curl -X POST http://localhost:8080/walker/increment_with_history \
   -H "Content-Type: application/json" \
   -d '{}'
 
-curl -X POST http://localhost:8000/walker/increment_with_history \
+curl -X POST http://localhost:8080/walker/increment_with_history \
   -H "Content-Type: application/json" \
   -d '{}'
 
 # Check counter with complete history
-curl -X POST http://localhost:8000/walker/get_counter_with_history \
+curl -X POST http://localhost:8080/walker/get_counter_with_history \
   -H "Content-Type: application/json" \
   -d '{}'
 # Response includes value and complete history array
 
 # Restart service - history persists
 # jac serve main.jac (after restart)
-curl -X POST http://localhost:8000/walker/get_counter_with_history \
+curl -X POST http://localhost:8080/walker/get_counter_with_history \
   -H "Content-Type: application/json" \
   -d '{}'
 # All history entries remain intact
@@ -567,25 +567,25 @@ The automatic persistence enables building sophisticated stateful applications. 
 
 ```bash
 # Create multiple counters
-curl -X POST "http://localhost:8000/walker/create_counter" \
+curl -X POST "http://localhost:8080/walker/create_counter" \
      -H "Content-Type: application/json" \
      -d '{"name": "page_views"}'
 
-curl -X POST "http://localhost:8000/walker/create_counter" \
+curl -X POST "http://localhost:8080/walker/create_counter" \
      -H "Content-Type: application/json" \
      -d '{"name": "user_signups"}'
 
 # Increment specific counters
-curl -X POST "http://localhost:8000/walker/increment_named_counter" \
+curl -X POST "http://localhost:8080/walker/increment_named_counter" \
      -H "Content-Type: application/json" \
      -d '{"name": "page_views", "amount": 5}'
 
-curl -X POST "http://localhost:8000/walker/increment_named_counter" \
+curl -X POST "http://localhost:8080/walker/increment_named_counter" \
      -H "Content-Type: application/json" \
      -d '{"name": "user_signups", "amount": 2}'
 
 # View all counters
-curl -X POST http://localhost:8000/walker/get_all_counters \
+curl -X POST http://localhost:8080/walker/get_all_counters \
   -H "Content-Type: application/json" \
   -d '{}'
 # Response: {"returns": [{"counters": [{"name": "page_views", "value": 5}, {"name": "user_signups", "value": 2}], "total": 7}]}

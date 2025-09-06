@@ -96,7 +96,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- CONSTANTS ---
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8080"
 TASK_MANAGER_ENDPOINT = f"{BASE_URL}/walker/task_manager"
 GET_ALL_TASKS_ENDPOINT = f"{BASE_URL}/walker/get_all_tasks"
 

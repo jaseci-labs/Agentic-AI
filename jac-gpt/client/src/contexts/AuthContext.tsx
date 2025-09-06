@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           // Always fetch the latest user profile to ensure correct role
           try {
-            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/walker/get_user_profile`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // First, try the built-in JAC Cloud login endpoint
       try {
-        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/login`, {
+        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/user/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (token) {
             // Fetch the complete user profile from our custom endpoint to get correct role
             try {
-              const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_user_profile`, {
+              const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/walker/get_user_profile`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
 
       // Use JAC Cloud's built-in register endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/register`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/user/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -254,7 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Save location data if available
         if (location) {
           try {
-            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/save_user_location`, {
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/walker/save_user_location`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

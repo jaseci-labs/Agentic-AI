@@ -31,7 +31,7 @@ def bootstrap_frontend(token: str) {
             "session_id": st.session_state.session_id
         };
         response = requests.post(
-            "http://localhost:8000/walker/upload_file",
+            "http://localhost:8080/walker/upload_file",
             json=payload,
             headers={"Authorization": f"Bearer {token}"}
         );
@@ -72,7 +72,7 @@ def bootstrap_frontend(token: str) {
                     payload["file_path"] = st.session_state.last_uploaded_file_path;
                 }
                 response = requests.post(
-                    "http://localhost:8000/walker/interact",
+                    "http://localhost:8080/walker/interact",
                     json=payload,
                     headers={"Authorization": f"Bearer {token}"}
                 );
@@ -92,7 +92,7 @@ def bootstrap_frontend(token: str) {
 
 with entry {
 
-    INSTANCE_URL = "http://localhost:8000";
+    INSTANCE_URL = "http://localhost:8080";
     TEST_USER_EMAIL = "test@mail.com";
     TEST_USER_PASSWORD = "password";
 

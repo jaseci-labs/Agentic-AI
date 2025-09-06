@@ -31,5 +31,9 @@ RUN mkdir -p /app/data /app/logs
 # Expose port 8000 (default for jac serve)
 EXPOSE 8080
 
+# Set environment variables for CORS
+ENV CORS_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
+ENV CORS_ALLOW_CREDENTIALS="true"
+
 # Set the default command to serve the jac application
 CMD ["jac", "serve", "server.jac", "--host", "0.0.0.0", "--port", "8080"]

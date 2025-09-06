@@ -93,7 +93,7 @@ Your walker is now automatically available as a REST API endpoint!
 To test the API, you can use `curl` or any HTTP client:
 
 ```bash
-curl -X POST http://localhost:8000/walker/get_weather \
+curl -X POST http://localhost:8080/walker/get_weather \
   -H "Content-Type: application/json" \
   -d '{"city": "New York"}'
 ```
@@ -233,7 +233,7 @@ jac serve simple_notebook.jac
 We can now test the API using `curl` or any HTTP client via the POST method. The `create_note` walker will accept a JSON request body with `title`, `content`, and `author` fields, and return a response indicating the note was created.
 
 ```bash
-curl -X POST http://localhost:8000/walker/create_note \
+curl -X POST http://localhost:8080/walker/create_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "My First Note",
@@ -260,7 +260,7 @@ curl -X POST http://localhost:8000/walker/create_note \
 To retrieve all notes, we can use the `get_notes` walker:
 
 ```bash
-curl -X POST http://localhost:8000/walker/get_notes \
+curl -X POST http://localhost:8080/walker/get_notes \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -289,7 +289,7 @@ walker get_notes {
 The `get_notes` walker can now be accessed via a GET request at the endpoint `/walker/get_notes`.
 
 ```bash
-curl -X GET http://localhost:8000/walker/get_notes \
+curl -X GET http://localhost:8080/walker/get_notes \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -362,7 +362,7 @@ Jac automatically validates request parameters based on walker attribute types. 
 
 ```bash
 # Valid request
-curl -X POST http://localhost:8000/walker/create_note \
+curl -X POST http://localhost:8080/walker/create_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Important Meeting",
@@ -373,7 +373,7 @@ curl -X POST http://localhost:8000/walker/create_note \
   }'
 
 # Invalid request - priority out of range
-curl -X POST http://localhost:8000/walker/create_note \
+curl -X POST http://localhost:8080/walker/create_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Test",
@@ -524,27 +524,27 @@ Walkers naturally map to REST operations, creating intuitive API patterns for co
 
 ```bash
 # Create a note
-curl -X POST http://localhost:8000/walker/create_note \
+curl -X POST http://localhost:8080/walker/create_note \
   -H "Content-Type: application/json" \
   -d '{"title": "Shopping List", "content": "Milk, Bread, Eggs", "author": "Alice"}'
 
 # List all notes
-curl -X POST http://localhost:8000/walker/list_notes \
+curl -X POST http://localhost:8080/walker/list_notes \
   -H "Content-Type: application/json" \
   -d '{}'
 
 # Get specific note (replace with actual ID)
-curl -X POST http://localhost:8000/walker/get_note \
+curl -X POST http://localhost:8080/walker/get_note \
   -H "Content-Type: application/json" \
   -d '{"note_id": "note_123"}'
 
 # Update a note
-curl -X POST http://localhost:8000/walker/update_note \
+curl -X POST http://localhost:8080/walker/update_note \
   -H "Content-Type: application/json" \
   -d '{"note_id": "note_123", "priority": 5}'
 
 # Delete a note
-curl -X POST http://localhost:8000/walker/delete_note \
+curl -X POST http://localhost:8080/walker/delete_note \
   -H "Content-Type: application/json" \
   -d '{"note_id": "note_123"}'
 ```
@@ -661,7 +661,7 @@ Let's add basic permission checking to demonstrate multi-user patterns:
 
 ```bash
 # Create a shared note
-curl -X POST http://localhost:8000/walker/create_shared_note \
+curl -X POST http://localhost:8080/walker/create_shared_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Team Meeting Notes",
@@ -672,12 +672,12 @@ curl -X POST http://localhost:8000/walker/create_shared_note \
   }'
 
 # Get notes for a user
-curl -X POST http://localhost:8000/walker/get_user_notes \
+curl -X POST http://localhost:8080/walker/get_user_notes \
   -H "Content-Type: application/json" \
   -d '{"user": "Bob"}'
 
 # Share note with another user
-curl -X POST http://localhost:8000/walker/share_note \
+curl -X POST http://localhost:8080/walker/share_note \
   -H "Content-Type: application/json" \
   -d '{
     "note_id": "note_123",

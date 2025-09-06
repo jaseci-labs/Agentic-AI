@@ -416,17 +416,17 @@ Test with curl (all walker endpoints are POST):
 
 ```bash
 # Join a room first
-curl -X POST http://localhost:8000/walker/join_room \
+curl -X POST http://localhost:8080/walker/join_room \
   -H "Content-Type: application/json" \
   -d '{"room_name": "general", "username": "alice"}'
 
 # Send a message
-curl -X POST http://localhost:8000/walker/send_message \
+curl -X POST http://localhost:8080/walker/send_message \
   -H "Content-Type: application/json" \
   -d '{"room_name": "general", "username": "alice", "message": "Hello everyone!"}'
 
 # Get chat history
-curl -X POST http://localhost:8000/walker/get_chat_history \
+curl -X POST http://localhost:8080/walker/get_chat_history \
   -H "Content-Type: application/json" \
   -d '{"room_name": "general", "limit": 10}'
 ```
@@ -553,7 +553,7 @@ Webhooks enable your Jac applications to receive real-time notifications from ex
 Test webhook locally:
 
 ```bash
-curl -X POST http://localhost:8000/walker/receive_webhook \
+curl -X POST http://localhost:8080/walker/receive_webhook \
   -H "Content-Type: application/json" \
   -d '{
     "source": "github",
@@ -827,12 +827,12 @@ Automated tasks are essential for maintenance, cleanup, and periodic operations.
 
 ```bash
 # Run cleanup manually
-curl -X POST http://localhost:8000/walker/cleanup_inactive_rooms \
+curl -X POST http://localhost:8080/walker/cleanup_inactive_rooms \
   -H "Content-Type: application/json" \
   -d '{"max_age_hours": 48}'
 
 # Generate daily stats
-curl -X POST http://localhost:8000/walker/generate_daily_stats \
+curl -X POST http://localhost:8080/walker/generate_daily_stats \
   -H "Content-Type: application/json" \
   -d '{}'
 ```

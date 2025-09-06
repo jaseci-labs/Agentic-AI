@@ -59,7 +59,7 @@ jac run main.jac
 jac serve main.jac
 ```
 
-Your application will be available at `http://localhost:8000` with automatic API documentation at `http://localhost:8000/docs`.
+Your application will be available at `http://localhost:8080` with automatic API documentation at `http://localhost:8080/docs`.
 
 ## How Jac Cloud Works
 

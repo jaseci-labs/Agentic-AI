@@ -20,7 +20,7 @@ This is the Streamlit-based frontend for the Jivas task manager and chat assista
 	```
 
 3. **Make sure the backend is running**
-	- The frontend expects the backend to be available at `http://localhost:8000`
+	- The frontend expects the backend to be available at `http://localhost:8080`
 
 ## Screenshots
 

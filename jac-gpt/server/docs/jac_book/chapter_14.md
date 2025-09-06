@@ -278,7 +278,7 @@ jac serve user_notebook.jac
 
 ```bash
 # Create a note for Alice
-curl -X POST http://localhost:8000/walker/create_note \
+curl -X POST http://localhost:8080/walker/create_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Alice Private Note",
@@ -287,7 +287,7 @@ curl -X POST http://localhost:8000/walker/create_note \
   }'
 
 # Create a note for Bob
-curl -X POST http://localhost:8000/walker/create_note \
+curl -X POST http://localhost:8080/walker/create_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Bob Note",
@@ -296,7 +296,7 @@ curl -X POST http://localhost:8000/walker/create_note \
   }'
 
 # Get Alice's notes only
-curl -X POST http://localhost:8000/walker/list_my_notes \
+curl -X POST http://localhost:8080/walker/list_my_notes \
   -H "Content-Type: application/json" \
   -d '{"user_id": "alice@example.com"}'
 ```
@@ -435,7 +435,7 @@ Multi-user applications often need controlled sharing of data between users. Let
 
 ```bash
 # Alice creates a note
-curl -X POST http://localhost:8000/walker/create_note \
+curl -X POST http://localhost:8080/walker/create_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Team Project",
@@ -444,7 +444,7 @@ curl -X POST http://localhost:8000/walker/create_note \
   }'
 
 # Alice shares note with Bob
-curl -X POST http://localhost:8000/walker/share_note \
+curl -X POST http://localhost:8080/walker/share_note \
   -H "Content-Type: application/json" \
   -d '{
     "note_id": "note_123",
@@ -453,7 +453,7 @@ curl -X POST http://localhost:8000/walker/share_note \
   }'
 
 # Bob views accessible notes
-curl -X POST http://localhost:8000/walker/get_accessible_notes \
+curl -X POST http://localhost:8080/walker/get_accessible_notes \
   -H "Content-Type: application/json" \
   -d '{"user_id": "bob@example.com"}'
 ```
@@ -753,12 +753,12 @@ Different applications require different access control models. Let's implement 
 
 ```bash
 # Check user role
-curl -X POST http://localhost:8000/walker/check_user_role \
+curl -X POST http://localhost:8080/walker/check_user_role \
   -H "Content-Type: application/json" \
   -d '{"user_id": "alice@example.com"}'
 
 # Create a note requiring editor role
-curl -X POST http://localhost:8000/walker/create_role_based_note \
+curl -X POST http://localhost:8080/walker/create_role_based_note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Editor Note",
@@ -769,7 +769,7 @@ curl -X POST http://localhost:8000/walker/create_role_based_note \
   }'
 
 # Get notes filtered by role
-curl -X POST http://localhost:8000/walker/get_role_filtered_notes \
+curl -X POST http://localhost:8080/walker/get_role_filtered_notes \
   -H "Content-Type: application/json" \
   -d '{"user_id": "alice@example.com"}'
 ```

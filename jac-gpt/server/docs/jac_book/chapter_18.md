@@ -105,7 +105,7 @@ Let's start with our weather API and show how it progresses from development to 
         jac serve weather_api.jac --port 8000
 
         # Test the endpoints
-        curl -X POST http://localhost:8000/walker/get_weather \
+        curl -X POST http://localhost:8080/walker/get_weather \
           -H "Content-Type: application/json" \
           -d '{"city": "New York"}'
         ```
@@ -184,7 +184,7 @@ Docker packaging makes your Jac applications portable and consistent across envi
               - weather_data:/app/data
             restart: unless-stopped
             healthcheck:
-              test: ["CMD", "curl", "-f", "http://localhost:8000/walker/health_check", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{}"]
+              test: ["CMD", "curl", "-f", "http://localhost:8080/walker/health_check", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{}"]
               interval: 30s
               timeout: 10s
               retries: 3
@@ -213,12 +213,12 @@ docker-compose up -d
 docker-compose logs -f weather-api
 
 # Test the containerized API
-curl -X POST http://localhost:8000/walker/get_weather \
+curl -X POST http://localhost:8080/walker/get_weather \
   -H "Content-Type: application/json" \
   -d '{"city": "London"}'
 
 # Check health
-curl -X POST http://localhost:8000/walker/health_check \
+curl -X POST http://localhost:8080/walker/health_check \
   -H "Content-Type: application/json" \
   -d '{}'
 ```

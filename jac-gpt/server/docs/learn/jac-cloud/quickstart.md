@@ -24,8 +24,8 @@ jac serve main.jac --host 0.0.0.0 --port 8080 --reload
 
 Once started, your API will be available at:
 
-- **API Endpoint**: `http://localhost:8000`
-- **Interactive Documentation**: `http://localhost:8000/docs`
+- **API Endpoint**: `http://localhost:8080`
+- **Interactive Documentation**: `http://localhost:8080/docs`
 
 ## Understanding Walker Endpoints
 
@@ -105,7 +105,7 @@ walker my_walker {
 ## Examples for Beginners
 
 ### Basic Endpoint Example - Time Service
-Let's create a simple endpoint that returns the current time. For this example, we create a walker named `public_info` which provides one rest method `get` at the url `http://localhost:8000/walker/public_info`. The ability `get_current_time` will return the current timestamp in ISO format via the use of the `report` statement.
+Let's create a simple endpoint that returns the current time. For this example, we create a walker named `public_info` which provides one rest method `get` at the url `http://localhost:8080/walker/public_info`. The ability `get_current_time` will return the current timestamp in ISO format via the use of the `report` statement.
 
 ```jac
 import from datetime {datetime}

@@ -80,7 +80,7 @@ jvcli server initagents
 Once the server is running and the agent is initialized, you can interact with it by sending a request to:
 
 ```bash
-POST http://localhost:8000/walker/interact/interact
+POST http://localhost:8080/walker/interact/interact
 ```
 
 **Sample JSON Payload**
@@ -102,7 +102,7 @@ POST http://localhost:8000/walker/interact/interact
 To enable LLM-based responses, set your OpenAI API key using the following request:
 
 ```bash
-POST http://localhost:8000/walker/update_action
+POST http://localhost:8080/walker/update_action
 ```
 
 **Sample JSON Payload**

@@ -16,7 +16,7 @@ from mtllm import Model
 llm = Model(
     model_name="gpt-4o",                # The model name to be used
     api_key="your_litellm_api_key",     # LiteLLM proxy server key
-    proxy_url="http://localhost:8000",  # URL of the LiteLLM proxy server
+    proxy_url="http://localhost:8080",  # URL of the LiteLLM proxy server
 )
 ```
 

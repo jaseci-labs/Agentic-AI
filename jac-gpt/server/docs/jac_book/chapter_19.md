@@ -715,17 +715,17 @@ When deploying to Jac Cloud, consider performance implications of distributed ex
 jac serve distributed_friends.jac
 
 # Generate test data
-curl -X POST http://localhost:8000/walker/generate_test_network \
+curl -X POST http://localhost:8080/walker/generate_test_network \
   -H "Content-Type: application/json" \
   -d '{"person_count": 1000, "avg_friends": 10}'
 
 # Run performance benchmarks
-curl -X POST http://localhost:8000/walker/run_performance_suite \
+curl -X POST http://localhost:8080/walker/run_performance_suite \
   -H "Content-Type: application/json" \
   -d '{"test_count": 5, "test_persons": ["Person1", "Person50", "Person100"]}'
 
 # Check system health
-curl -X POST http://localhost:8000/walker/performance_health_check \
+curl -X POST http://localhost:8080/walker/performance_health_check \
   -H "Content-Type: application/json" \
   -d '{}'
 ```

@@ -145,7 +145,7 @@ The backend demonstrates Object Spatial Programming with nodes and walkers. It u
 - `POST /walker/upload_file` — Upload any supported file type (requires Bearer token)
 - `POST /walker/interact` — Chat endpoint with multimodal support (requires Bearer token)
 
-See `http://localhost:8000/docs` for full Swagger API documentation.
+See `http://localhost:8080/docs` for full Swagger API documentation.
 
 ## 12. Advanced Features
 - **Multimodal Capabilities**: Chat with images and videos using GPT-4o-mini's vision capabilities

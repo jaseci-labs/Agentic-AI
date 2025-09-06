@@ -16,7 +16,7 @@ class DocumentationService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = 'http://localhost:8000';
+    this.baseUrl = 'http://localhost:8080';
   }
 
   /**

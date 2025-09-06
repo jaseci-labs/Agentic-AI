@@ -19,7 +19,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/user/forgot_password`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/user/forgot_password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
