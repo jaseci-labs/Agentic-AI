@@ -22,8 +22,8 @@ An agentic, modular content creation pipeline built with Jac and Python. This pr
 | `app.jac`                | Application logic and workflow orchestration     |
 | `graph.jac`              | Defines the workflow graph and agent connections |
 | `state.jac`              | State management for the workflow                |
-| `trend_agent.jac`        | Agent for detecting trending topics              |
-| `writer_agent.jac`       | Agent for generating article content             |
+| `planner_agent.jac`      | Agent for creating the plan                      |
+| `blog_writer_agent.jac`  | Agent for generating article content             |
 | `editor_agent.jac`       | Agent for editing and refining articles          |
 | `media_agent.jac`        | Agent for generating images/media                |
 | `input.json`             | Example input for workflow                       |
@@ -39,7 +39,7 @@ An agentic, modular content creation pipeline built with Jac and Python. This pr
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - [Jac language](https://www.jac-lang.org/) (install via `pip install jac[all]`)
 - Required API keys (set in `.env` if using LLMs or image generation)
 
@@ -61,3 +61,10 @@ jac streamlit app.jac
 - generated_article_final.md — The final generated article.
 - generated_article_image.png — Associated image for the article.
 - trending_topics.md — List of trending topics detected.
+
+### Frontend
+<img width="919" height="862" alt="image" src="https://github.com/user-attachments/assets/941d8528-81a6-4432-93f1-238e0a8044e2" />
+<img width="964" height="396" alt="image" src="https://github.com/user-attachments/assets/119e0378-eb8f-46e1-97b7-37b59e4014a9" />
+<img width="655" height="672" alt="image" src="https://github.com/user-attachments/assets/10f1a91c-cce1-4c72-b5e7-21f630bf5561" />
+
+

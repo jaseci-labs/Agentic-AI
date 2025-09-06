@@ -117,7 +117,7 @@ class DocumentationService {
     const mtllmScore = getKeywordScore(messageLower, mtllmWords);
     if (mtllmScore > 0) {
       suggestions.push({
-        url: "https://www.jac-lang.org/learn/jac-mtllm/with_llm/",
+        url: "https://www.jac-lang.org/learn/jac-byllm/with_llm/",
         title: "Working with LLMs - MTLLM",
         reason: "Complete guide to Multi-Turn LLM integration and context management",
         score: mtllmScore + 10
@@ -135,7 +135,7 @@ class DocumentationService {
     const aiScore = getKeywordScore(messageLower, aiWords);
     if (aiScore > 0) {
       suggestions.push({
-        url: "https://www.jac-lang.org/learn/jac-mtllm/with_llm/",
+        url: "https://www.jac-lang.org/learn/jac-byllm/with_llm/",
         title: "Working with LLMs",
         reason: "Deep dive into using Large Language Models in Jac applications",
         score: aiScore + 9
