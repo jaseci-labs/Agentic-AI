@@ -33,8 +33,9 @@ obj MongoDB {
             }
             db_name = os.getenv("DATABASE_NAME", "jac_gpt_2");
             
-            print(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
-            print(f"Database name: {db_name}");
+            print(f"🔍 [DEBUG] Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
+            print(f"🔍 [DEBUG] Database name: {db_name}");
+            print(f"🔍 [DEBUG] Full DATABASE_HOST environment variable: {mongo_uri}");
             
             self.client = MongoClient(mongo_uri);
             self.db = self.client[db_name];
@@ -43,9 +44,14 @@ obj MongoDB {
             self.users = self.db.user;  # Use JAC Cloud's built-in 'user' collection
             self.user_locations = self.db.user_locations;  # Separate collection for location data
             self.client.admin.command("ping");
-            print(f"Connected to MongoDB: { db_name }");
+            print(f"🔍 [DEBUG] Connected to MongoDB: {db_name}");
+            print(f"🔍 [DEBUG] User collection name: 'user'");
+            print(f"🔍 [DEBUG] Collections available: {self.db.list_collection_names()}");
+            
+            # Call debug info on connection
+            self.debug_database_info();
         } except Exception as e {
-            print(f"Failed to connect to MongoDB: { e }");
+            print(f"❌ [DEBUG] Failed to connect to MongoDB: {e}");
             raise ;
         }
     }
@@ -279,49 +285,163 @@ obj MongoDB {
         }
     }
     
+    def debug_database_info() {
+        try {
+            print(f"🔍 [DEBUG] === DATABASE DEBUG INFO ===");
+            print(f"🔍 [DEBUG] Client: {self.client}");
+            print(f"🔍 [DEBUG] Database Name: {self.db.name}");
+            print(f"🔍 [DEBUG] Users Collection Full Name: {self.users.full_name}");
+            print(f"🔍 [DEBUG] Available Collections: {self.db.list_collection_names()}");
+            
+            # Check user count in each potential user collection
+            for collection_name in self.db.list_collection_names() {
+                if "user" in collection_name.lower() {
+                    count = self.db[collection_name].count_documents({});
+                    print(f"🔍 [DEBUG] Collection '{collection_name}' has {count} documents");
+                    
+                    # Sample some documents
+                    if count > 0 {
+                        sample_docs = list(self.db[collection_name].find({}).limit(3));
+                        for i, doc in enumerate(sample_docs) {
+                            print(f"🔍 [DEBUG] Sample doc {i+1} in '{collection_name}': {doc}");
+                        }
+                    }
+                }
+            }
+            print(f"🔍 [DEBUG] === END DATABASE DEBUG INFO ===");
+        } except Exception as e {
+            print(f"❌ [DEBUG] Error getting database info: {e}");
+        }
+    }
+    
+    def check_user_in_all_collections(email: str) {
+        """Check if user exists in any collection that might contain users"""
+        try {
+            print(f"🔍 [DEBUG] === CHECKING USER IN ALL COLLECTIONS ===");
+            print(f"🔍 [DEBUG] Looking for email: {email}");
+            
+            all_collections = self.db.list_collection_names();
+            found_in_collections = [];
+            
+            for collection_name in all_collections {
+                try {
+                    collection = self.db[collection_name];
+                    
+                    # Try different email field variations
+                    email_variations = [
+                        {"email": email},
+                        {"Email": email},
+                        {"user_email": email},
+                        {"userEmail": email}
+                    ];
+                    
+                    for query in email_variations {
+                        count = collection.count_documents(query);
+                        if count > 0 {
+                            found_in_collections.append({
+                                "collection": collection_name,
+                                "query": query,
+                                "count": count
+                            });
+                            print(f"🔍 [DEBUG] Found {count} matches in collection '{collection_name}' with query {query}");
+                            
+                            # Show sample documents
+                            sample_docs = list(collection.find(query).limit(2));
+                            for i, doc in enumerate(sample_docs) {
+                                print(f"🔍 [DEBUG] Sample doc {i+1}: {doc}");
+                            }
+                        }
+                    }
+                } except Exception as col_error {
+                    # Skip collections we can't query
+                    continue;
+                }
+            }
+            
+            if not found_in_collections {
+                print(f"🔍 [DEBUG] User {email} not found in any collection");
+            } else {
+                print(f"🔍 [DEBUG] User {email} found in {len(found_in_collections)} collection(s)");
+                for result in found_in_collections {
+                    print(f"🔍 [DEBUG] - {result}");
+                }
+                    
+            print(f"🔍 [DEBUG] === END USER COLLECTION CHECK ===");
+            return found_in_collections;
+        } except Exception as e {
+            print(f"❌ [DEBUG] Error checking user in collections: {e}");
+            return [];
+        }
+    }
+    
     def create_user_profile(email: str, name: str = "", role: str = "user") -> bool {
         try {
+            print(f"🔍 [DEBUG] create_user_profile called for email: {email}");
+            print(f"🔍 [DEBUG] Database name: {self.db.name}");
+            print(f"🔍 [DEBUG] User collection: {self.users.full_name}");
+            print(f"🔍 [DEBUG] Connection details: {self.client.address}");
+            
             # JAC Cloud automatically creates users in the 'user' collection
             # We should avoid modifying the user collection directly to prevent schema conflicts
             # JAC Cloud handles user creation and management automatically
             
             # Check if user exists in JAC Cloud's user collection
+            print(f"🔍 [DEBUG] Searching for existing user in collection: {self.users.full_name}");
             existing_user = self.users.find_one({"email": email});
             if existing_user {
-                print(f"User profile found for: {email} (admin status managed by JAC Cloud)");
+                print(f"🔍 [DEBUG] User profile found for: {email} (admin status managed by JAC Cloud)");
+                print(f"🔍 [DEBUG] Existing user data: {existing_user}");
                 
                 # We can only update very specific fields that JAC Cloud allows
                 # Avoid adding any custom fields like updated_at, role, etc.
                 # Only update is_admin if it's the admin email and not already set
                 if email == "admin.jacgpt@jaseci.org" and not existing_user.get("is_admin", False) {
                     try {
+                        print(f"🔍 [DEBUG] Setting admin privileges for: {email}");
                         self.users.update_one(
                             {"email": email},
                             {"$set": {"is_admin": True}}
                         );
-                        print(f"Set admin privileges for: {email}");
+                        print(f"🔍 [DEBUG] Successfully set admin privileges for: {email}");
                     } except Exception as update_e {
-                        print(f"Could not update admin status for {email}: {update_e}");
+                        print(f"❌ [DEBUG] Could not update admin status for {email}: {update_e}");
                     }
                 }
             } else {
-                print(f"User {email} not found in JAC Cloud user collection");
+                print(f"❌ [DEBUG] User {email} not found in JAC Cloud user collection");
+                print(f"🔍 [DEBUG] Total users in collection: {self.users.count_documents({})}");
+                print(f"🔍 [DEBUG] Sample users in collection:");
+                
+                # Show sample users for debugging
+                sample_users = list(self.users.find({}).limit(5));
+                for i, user in enumerate(sample_users) {
+                    print(f"🔍 [DEBUG] Sample user {i+1}: {user}");
+                }
+                
                 return False;
             }
             
             return True;
         } except Exception as e {
-            print(f"Error accessing user profile for {email}: {e}");
+            print(f"❌ [DEBUG] Error accessing user profile for {email}: {e}");
+            print(f"❌ [DEBUG] Exception type: {type(e)}");
             return False;
         }
     }
     
     def get_user_profile(email: str) -> <>dict {
         try {
+            print(f"🔍 [DEBUG] get_user_profile called for email: {email}");
+            print(f"🔍 [DEBUG] Querying collection: {self.users.full_name}");
+            
+            # First, check if user exists in any collection
+            self.check_user_in_all_collections(email);
+            
             # Query JAC Cloud's user collection
             profile = self.users.find_one({"email": email});
             if profile {
-                print(f"Found user profile: {email}");
+                print(f"🔍 [DEBUG] Found user profile: {email}");
+                print(f"🔍 [DEBUG] Profile data: {profile}");
                 
                 is_admin = profile.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
                 # Determine role based on is_admin flag instead of role field
@@ -330,19 +450,20 @@ obj MongoDB {
                 # Ensure database is updated with correct admin status if needed
                 if email == "admin.jacgpt@jaseci.org" and not profile.get("is_admin", False) {
                     try {
+                        print(f"🔍 [DEBUG] Updating admin privileges for {email}");
                         self.users.update_one(
                             {"email": email},
                             {"$set": {"is_admin": True}}
                         );
-                        print(f"Updated admin privileges for {email}");
+                        print(f"🔍 [DEBUG] Updated admin privileges for {email}");
                         is_admin = True;
                         role = "admin";
                     } except Exception as update_e {
-                        print(f"Could not update admin status for {email}: {update_e}");
+                        print(f"❌ [DEBUG] Could not update admin status for {email}: {update_e}");
                     }
                 }
                 
-                return {
+                result = {
                     "email": profile["email"],
                     "name": profile.get("name", ""),  # May not exist for older users
                     "role": role,  # Computed from is_admin, not stored directly
@@ -351,12 +472,21 @@ obj MongoDB {
                     "created_at": profile.get("created_at"),
                     "updated_at": profile.get("updated_at")
                 };
+                print(f"🔍 [DEBUG] Returning user profile: {result}");
+                return result;
             } else {
-                print(f"User profile not found: {email}");
+                print(f"❌ [DEBUG] User profile not found: {email}");
+                print(f"🔍 [DEBUG] Total users in collection: {self.users.count_documents({})}");
+                
+                # Show all users for debugging
+                all_users = list(self.users.find({}, {"email": 1, "_id": 1}));
+                print(f"🔍 [DEBUG] All user emails in collection: {[u.get('email', 'NO_EMAIL') for u in all_users]}");
+                
                 return None;
             }
         } except Exception as e {
-            print(f"Error getting user profile {email}: {e}");
+            print(f"❌ [DEBUG] Error getting user profile {email}: {e}");
+            print(f"❌ [DEBUG] Exception type: {type(e)}");
             return None;
         }
     }

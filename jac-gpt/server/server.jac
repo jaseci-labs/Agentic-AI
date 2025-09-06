@@ -527,19 +527,29 @@ walker get_user_profile {
     }
 
     can fetch_profile with `root entry {
+        print(f"🔍 [DEBUG] get_user_profile walker called for email: {self.email}");
+        
         db = get_database();
         
         # Get or create user profile
+        print(f"🔍 [DEBUG] Attempting to get user profile from database");
         profile = db.get_user_profile(self.email);
         if not profile {
+            print(f"🔍 [DEBUG] User profile not found, creating new profile");
             role = "admin" if self.email == "admin.jacgpt@jaseci.org" else "user";
             name = "Admin User" if role == "admin" else "User";
-            db.create_user_profile(self.email, name, role);
+            
+            print(f"🔍 [DEBUG] Creating user profile with role: {role}, name: {name}");
+            success = db.create_user_profile(self.email, name, role);
+            print(f"🔍 [DEBUG] User profile creation result: {success}");
+            
             profile = {
                 "email": self.email,
                 "name": name,
                 "role": role
             };
+        } else {
+            print(f"🔍 [DEBUG] User profile retrieved: {profile}");
         }
         
         report {
@@ -559,14 +569,21 @@ walker create_user_profile {
     }
 
     can setup_profile with `root entry {
+        print(f"🔍 [DEBUG] create_user_profile walker called for email: {self.email}");
+        print(f"🔍 [DEBUG] Name parameter: {self.name}");
+        
         db = get_database();
         
         # Determine role based on email
         role = "admin" if self.email == "admin.jacgpt@jaseci.org" else "user";
         display_name = self.name if self.name else ("Admin User" if role == "admin" else "User");
         
+        print(f"🔍 [DEBUG] Determined role: {role}, display_name: {display_name}");
+        
         # Create or update user profile
-        db.create_user_profile(self.email, display_name, role);
+        print(f"🔍 [DEBUG] Calling create_user_profile on database");
+        success = db.create_user_profile(self.email, display_name, role);
+        print(f"🔍 [DEBUG] create_user_profile result: {success}");
         
         report {
             "success": True,
@@ -1017,4 +1034,29 @@ walker suggest_documentation {
     );
 }
 
+# Debug walker to check database state
+walker debug_database {
+    obj __specs__ {
+        static has methods: list = ["post", "get"];
+        static has auth: bool = False;
+    }
 
+    can check_db_state with `root entry {
+        print(f"🔍 [DEBUG] Debug database walker called");
+        
+        db = get_database();
+        db.debug_database_info();
+        
+        # Also check environment variables
+        print(f"🔍 [DEBUG] Environment Variables:");
+        print(f"🔍 [DEBUG] DATABASE_HOST: {os.getenv('DATABASE_HOST')}");
+        print(f"🔍 [DEBUG] DATABASE_NAME: {os.getenv('DATABASE_NAME')}");
+        
+        report {
+            "success": True,
+            "message": "Database debug info printed to server logs",
+            "database_host": os.getenv("DATABASE_HOST"),
+            "database_name": os.getenv("DATABASE_NAME")
+        };
+    }
+}
