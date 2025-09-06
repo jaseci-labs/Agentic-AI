@@ -302,7 +302,8 @@ obj MongoDB {
                     # Sample some documents
                     if count > 0 {
                         sample_docs = list(self.db[collection_name].find({}).limit(3));
-                        for i, doc in enumerate(sample_docs) {
+                        for i in range(len(sample_docs)) {
+                            doc = sample_docs[i];
                             print(f"🔍 [DEBUG] Sample doc {i+1} in '{collection_name}': {doc}");
                         }
                     }
@@ -314,8 +315,8 @@ obj MongoDB {
         }
     }
     
+    """Check if user exists in any collection that might contain users"""
     def check_user_in_all_collections(email: str) {
-        """Check if user exists in any collection that might contain users"""
         try {
             print(f"🔍 [DEBUG] === CHECKING USER IN ALL COLLECTIONS ===");
             print(f"🔍 [DEBUG] Looking for email: {email}");
@@ -347,7 +348,8 @@ obj MongoDB {
                             
                             # Show sample documents
                             sample_docs = list(collection.find(query).limit(2));
-                            for i, doc in enumerate(sample_docs) {
+                            for i in range(len(sample_docs)) {
+                                doc = sample_docs[i];
                                 print(f"🔍 [DEBUG] Sample doc {i+1}: {doc}");
                             }
                         }
@@ -365,6 +367,7 @@ obj MongoDB {
                 for result in found_in_collections {
                     print(f"🔍 [DEBUG] - {result}");
                 }
+            }
                     
             print(f"🔍 [DEBUG] === END USER COLLECTION CHECK ===");
             return found_in_collections;
@@ -414,7 +417,8 @@ obj MongoDB {
                 
                 # Show sample users for debugging
                 sample_users = list(self.users.find({}).limit(5));
-                for i, user in enumerate(sample_users) {
+                for i in range(len(sample_users)) {
+                    user = sample_users[i];
                     print(f"🔍 [DEBUG] Sample user {i+1}: {user}");
                 }
                 
