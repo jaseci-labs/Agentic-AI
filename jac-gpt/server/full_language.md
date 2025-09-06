@@ -4793,8 +4793,7 @@ with entry {
 import from byllm { Model }
 
 glob llm = Model(
-    model_name="mockllm",
-    outputs=["R8@jL3pQ"],
+    model_name="gpt-4o",
 );
 
 

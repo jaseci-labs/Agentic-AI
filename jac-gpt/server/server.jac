@@ -11,7 +11,7 @@ with entry {
     load_dotenv(override=True);
 }
 
-glob llm = Model(model_name='gpt-4o-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
+glob llm = Model(model_name='gpt-4.1-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
 glob rag_engine: RagEngine = RagEngine();
 
 
