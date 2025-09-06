@@ -94,9 +94,7 @@ obj MongoDB {
     }
     def save_message(session_id: str, role: str, content: str) -> bool {
         try {
-            message_data =
-
-                {"session_id" : session_id , "role" : role , "content" : content , "timestamp" : datetime.utcnow() };
+            message_data = {"session_id" : session_id , "role" : role , "content" : content , "timestamp" : datetime.utcnow() };
             result = self.messages.insert_one(message_data);
             update_result =
                 self.sessions.update_one(
