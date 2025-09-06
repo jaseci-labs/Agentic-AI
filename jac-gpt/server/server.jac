@@ -6,9 +6,35 @@ import from dotenv {load_dotenv}
 import from database {get_database}
 import from rag_engine {RagEngine}
 import from simple_docs {get_sitemap, get_doc_content, suggest_docs}
+import from full_language {full_language}
 
 with entry {
     load_dotenv(override=True);
+    
+    # Check full_language.md file accessibility during server launch
+    print("=== Server Launch: Checking full_language.md accessibility ===");
+    base_path = os.path.dirname(__file__);
+    file_path = os.path.join(base_path, "full_language.md");
+    
+    if os.path.exists(file_path) {
+        try {
+            with open(file_path, "r", encoding="utf-8") as file {
+                content = file.read();
+            }
+            if content.strip() {
+                print(f"✅ SUCCESS: full_language.md is accessible ({len(content)} characters)");
+                print(f"   File path: {file_path}");
+            } else {
+                print("⚠️  WARNING: full_language.md exists but is empty");
+            }
+        } except Exception as e {
+            print(f"❌ ERROR: full_language.md exists but cannot be read - {str(e)}");
+        }
+    } else {
+        print(f"❌ FILE NOT FOUND: full_language.md at {file_path}");
+        print("   Will fallback to embedded string content");
+    }
+    print("=== End accessibility check ===");
 }
 
 glob llm = Model(model_name='gpt-4.1-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
@@ -104,12 +130,48 @@ def search_docs(query: str, chunck_nos: int = 5) -> str {
 
 """Refer `full_language.md` for complete Jac language examples to understand jac syntaxes."""
 def refer_full_language_examples() -> str {
-    base_path = os.path.dirname(__file__);
-    file_path = os.path.join(base_path, "full_language.md");
-    with open(file_path, "r") as file {
-        content = file.read();
+    # First try to read from full_language.md file
+    try {
+        base_path = os.path.dirname(__file__);
+        file_path = os.path.join(base_path, "full_language.md");
+        
+        if os.path.exists(file_path) {
+            with open(file_path, "r", encoding="utf-8") as file {
+                content = file.read();
+            }
+            
+            if content.strip() {
+                print("📁 Using full_language.md file content");
+                return content;
+            } else {
+                print("⚠️  full_language.md file is empty, falling back to embedded string");
+            }
+        } else {
+            print("📄 full_language.md not found, using embedded string content");
+        }
+        
+    } except FileNotFoundError {
+        print("📄 full_language.md file not found, using embedded string content");
+    } except PermissionError as e {
+        print(f"🔒 Permission denied reading full_language.md, using embedded string content: {str(e)}");
+    } except Exception as e {
+        print(f"❌ Error reading full_language.md, using embedded string content: {str(e)}");
     }
-    return content;
+    
+    # Fallback to imported full_language string content
+    try {
+        content = full_language;
+        
+        if not content.strip() {
+            return "ERROR: Both file and embedded full_language content are empty";
+        }
+        
+        print("💾 Using embedded string content");
+        return content;
+        
+    } except Exception as e {
+        return f"ERROR: Failed to access both file and embedded content. Error: {str(e)}";
+    }
 }
 
 node RagChat(Chat) {
@@ -150,16 +212,10 @@ node RagChat(Chat) {
 
     YOUR RESPONSE APPROACH:
     1. **For Code Requests**: ONLY return actual code examples from the full language documentation using `refer_full_language_examples` tool
-    2. **For Concept Questions & Explanations**: ALWAYS follow this two-step process:
-       - **Step 1**: Use `search_docs` tool FIRST to get accurate information and provide a clear conceptual explanation
-       - **Step 2**: Then use `refer_full_language_examples` to show relevant official code examples that demonstrate the concept
-    3. **For Mixed Requests**: Always explain the concept first with `search_docs`, then show examples with `refer_full_language_examples`
+    2. **For Concept Questions & Explanations**: ALWAYS use `search_docs` tool first to get accurate information about JAC language concepts, syntax, features, or terminology before providing explanations
+    3. **Combine Information**: After using `search_docs` to understand concepts, provide relevant official examples using `refer_full_language_examples` if available
     4. **DO NOT GENERATE**: Never create, modify, or invent new JAC code beyond what exists in official examples
     5. **NO EXAMPLE FOUND**: If no relevant example exists, clearly state this and suggest reviewing the documentation
-
-    MANDATORY RESPONSE STRUCTURE FOR CONCEPT QUESTIONS:
-    1. **Conceptual Explanation**: Use `search_docs` to provide a clear, comprehensive explanation of what the concept is, how it works, and why it's useful
-    2. **Code Examples**: Use `refer_full_language_examples` to show official examples that illustrate the concept
 
     TOOL USAGE PRIORITY:
     - **First**: Use `search_docs` to gather accurate information about JAC concepts, syntax, or features when explanation is needed
@@ -167,16 +223,11 @@ node RagChat(Chat) {
     - **Never**: Generate new code or modify existing examples
 
     RESPONSE FORMAT:
-    - **For concept questions**: 
-      1. Start with a comprehensive explanation using information from `search_docs`
-      2. Then provide relevant official code examples from `refer_full_language_examples`
-      3. Ensure both explanation and examples are included in every concept response
-    - **For pure code requests**: Return the exact official example.
-    - **For mixed requests**: Always explain first using `search_docs`, then show official examples using `refer_full_language_examples`
-    - Always cite the source section/title professionally (e.g., "From JAC Language Documentation - Section X.Y" or "From JAC Syntax Guide - Object-Spatial Programming")
+    - For code requests: Return the exact official example with source section reference
+    - For concept questions: First explain using `search_docs` information, then provide relevant official examples from `refer_full_language_examples`
+    - For mixed requests: Use `search_docs` for explanation, then show official examples
+    - Always cite the source section/title when possible
     - Be clear when no official example exists for a specific request
-
-    NEVER provide code examples without explanation when a concept is being asked about.
 
     REMEMBER: You are NOT a code generator. You are a curator of official JAC examples. Only provide actual, existing code examples from the documentation using the `refer_full_language_examples` tool."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
