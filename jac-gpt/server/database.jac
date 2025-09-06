@@ -28,13 +28,13 @@ obj MongoDB {
         try {
             mongo_uri = os.getenv("DATABASE_HOST");
             if not mongo_uri {
-                logger.warning("DATABASE_HOST not found! Falling back to localhost...");
+                print("DATABASE_HOST not found! Falling back to localhost...");
                 mongo_uri = "mongodb://localhost:27017/";
             }
-            db_name = os.getenv("DATABASE_NAME", "jac_gpt_prod4");
+            db_name = os.getenv("DATABASE_NAME", "jac_gpt_2");
             
-            logger.info(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
-            logger.info(f"Database name: {db_name}");
+            print(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
+            print(f"Database name: {db_name}");
             
             self.client = MongoClient(mongo_uri);
             self.db = self.client[db_name];
@@ -43,9 +43,9 @@ obj MongoDB {
             self.users = self.db.user;  # Use JAC Cloud's built-in 'user' collection
             self.user_locations = self.db.user_locations;  # Separate collection for location data
             self.client.admin.command("ping");
-            logger.info(f"Connected to MongoDB: { db_name }");
+            print(f"Connected to MongoDB: { db_name }");
         } except Exception as e {
-            logger.error(f"Failed to connect to MongoDB: { e }");
+            print(f"Failed to connect to MongoDB: { e }");
             raise ;
         }
     }
@@ -60,7 +60,7 @@ obj MongoDB {
             };
             existing = self.sessions.find_one({"_id": session_id});
             if existing {
-                logger.info(f"Session {session_id} already exists");
+                print(f"Session {session_id} already exists");
                 # Update user_email if provided and not already set
                 if user_email and not existing.get("user_email") {
                     self.sessions.update_one(
@@ -71,10 +71,10 @@ obj MongoDB {
                 return existing;
             }
             result = self.sessions.insert_one(session_data);
-            logger.info(f"Created new session: {session_id} for user: {user_email}");
+            print(f"Created new session: {session_id} for user: {user_email}");
             return session_data;
         } except Exception as e {
-            logger.error(f"Error creating session {session_id}: {e}");
+            print(f"Error creating session {session_id}: {e}");
             return None;
         }
     }
@@ -82,13 +82,13 @@ obj MongoDB {
         try {
             session = self.sessions.find_one({"_id" : session_id });
             if session {
-                logger.info(f"Found session: { session_id }");
+                print(f"Found session: { session_id }");
             } else {
-                logger.warning(f"Session not found: { session_id }");
+                print(f"Session not found: { session_id }");
             }
             return session;
         } except Exception as e {
-            logger.error(f"Error getting session { session_id }: { e }");
+            print(f"Error getting session { session_id }: { e }");
             return None;
         }
     }
@@ -103,12 +103,12 @@ obj MongoDB {
                     {"_id" : session_id },
                     {"$set" : {"updated_at" : datetime.utcnow() } }
                 );
-            logger.info(
+            print(
                 f"Saved { role } message for session { session_id }"
             );
             return True;
         } except Exception as e {
-            logger.error(
+            print(
                 f"Error saving message for session { session_id }: { e }"
             );
             return False;
@@ -133,7 +133,7 @@ obj MongoDB {
             }
             return chat_history;
         } except Exception as e {
-            logger.error(
+            print(
                 f"Error retrieving chat history for session { session_id }: { e }"
             );
             return [];
@@ -158,7 +158,7 @@ obj MongoDB {
             return
             {"session_id" : session_id , "total_messages" : message_count , "user_messages" : user_messages , "assistant_messages" : assistant_messages , "created_at" : session["created_at"] , "updated_at" : session["updated_at"] };
         } except Exception as e {
-            logger.error(
+            print(
                 f"Error getting session stats for { session_id }: { e }"
             );
             return {};
@@ -172,9 +172,9 @@ obj MongoDB {
                 {"$set" :
                 {"status" : "closed" , "updated_at" : datetime.utcnow() } }
             );
-            logger.info(f"Closed session: { session_id }");
+            print(f"Closed session: { session_id }");
         } except Exception as e {
-            logger.error(f"Error closing session { session_id }: { e }");
+            print(f"Error closing session { session_id }: { e }");
         }
     }
     
@@ -232,7 +232,7 @@ obj MongoDB {
             
             return enriched_sessions;
         } except Exception as e {
-            logger.error(f"Error getting all sessions: { e }");
+            print(f"Error getting all sessions: { e }");
             return [];
         }
     }
@@ -244,7 +244,7 @@ obj MongoDB {
             );
             return messages;
         } except Exception as e {
-            logger.error(f"Error getting messages for session { session_id }: { e }");
+            print(f"Error getting messages for session { session_id }: { e }");
             return [];
         }
     }
@@ -276,7 +276,7 @@ obj MongoDB {
             
             return user_sessions;
         } except Exception as e {
-            logger.error(f"Error getting sessions for user { email }: { e }");
+            print(f"Error getting sessions for user { email }: { e }");
             return [];
         }
     }
@@ -284,43 +284,36 @@ obj MongoDB {
     def create_user_profile(email: str, name: str = "", role: str = "user") -> bool {
         try {
             # JAC Cloud automatically creates users in the 'user' collection
-            # We can add additional profile information by updating the existing user record
-            # Or create a separate profile collection if needed
+            # We should avoid modifying the user collection directly to prevent schema conflicts
+            # JAC Cloud handles user creation and management automatically
             
             # Check if user exists in JAC Cloud's user collection
             existing_user = self.users.find_one({"email": email});
             if existing_user {
-                # Update the existing user with additional profile info
-                update_data = {
-                    "updated_at": datetime.utcnow()
-                };
+                print(f"User profile found for: {email} (admin status managed by JAC Cloud)");
                 
-                # Add name if provided and not already exists
-                if name and not existing_user.get("name"){
-                    update_data["name"] = name;
+                # We can only update very specific fields that JAC Cloud allows
+                # Avoid adding any custom fields like updated_at, role, etc.
+                # Only update is_admin if it's the admin email and not already set
+                if email == "admin.jacgpt@jaseci.org" and not existing_user.get("is_admin", False) {
+                    try {
+                        self.users.update_one(
+                            {"email": email},
+                            {"$set": {"is_admin": True}}
+                        );
+                        print(f"Set admin privileges for: {email}");
+                    } except Exception as update_e {
+                        print(f"Could not update admin status for {email}: {update_e}");
+                    }
                 }
-                if email == "admin.jacgpt@jaseci.org" or role == "admin"{
-                    update_data["is_admin"] = True;
-                    update_data["role"] = "admin";
-                }
-                else{
-                    update_data["is_admin"] = False;
-                    update_data["role"] = role;
-                }
-                
-                self.users.update_one(
-                    {"email": email},
-                    {"$set": update_data}
-                );
-                logger.info(f"Updated user profile for: {email} with role: {role}");
             } else {
-                logger.warning(f"User {email} not found in JAC Cloud user collection");
+                print(f"User {email} not found in JAC Cloud user collection");
                 return False;
             }
             
             return True;
         } except Exception as e {
-            logger.error(f"Error creating user profile for {email}: {e}");
+            print(f"Error accessing user profile for {email}: {e}");
             return False;
         }
     }
@@ -330,37 +323,42 @@ obj MongoDB {
             # Query JAC Cloud's user collection
             profile = self.users.find_one({"email": email});
             if profile {
-                logger.info(f"Found user profile: {email}");
+                print(f"Found user profile: {email}");
                 
                 is_admin = profile.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
-                role = profile.get("role", "admin" if is_admin else "user");
+                # Determine role based on is_admin flag instead of role field
+                role = "admin" if is_admin else "user";
                 
                 # Ensure database is updated with correct admin status if needed
                 if email == "admin.jacgpt@jaseci.org" and not profile.get("is_admin", False) {
-                    self.users.update_one(
-                        {"email": email},
-                        {"$set": {"is_admin": True, "role": "admin", "updated_at": datetime.utcnow()}}
-                    );
-                    logger.info(f"Updated admin privileges for {email}");
-                    is_admin = True;
-                    role = "admin";
+                    try {
+                        self.users.update_one(
+                            {"email": email},
+                            {"$set": {"is_admin": True}}
+                        );
+                        print(f"Updated admin privileges for {email}");
+                        is_admin = True;
+                        role = "admin";
+                    } except Exception as update_e {
+                        print(f"Could not update admin status for {email}: {update_e}");
+                    }
                 }
                 
                 return {
                     "email": profile["email"],
                     "name": profile.get("name", ""),  # May not exist for older users
-                    "role": role,
+                    "role": role,  # Computed from is_admin, not stored directly
                     "is_admin": is_admin,
                     "is_activated": profile.get("is_activated", True),
                     "created_at": profile.get("created_at"),
                     "updated_at": profile.get("updated_at")
                 };
             } else {
-                logger.warning(f"User profile not found: {email}");
+                print(f"User profile not found: {email}");
                 return None;
             }
         } except Exception as e {
-            logger.error(f"Error getting user profile {email}: {e}");
+            print(f"Error getting user profile {email}: {e}");
             return None;
         }
     }
@@ -373,7 +371,7 @@ obj MongoDB {
             for user in users {
                 email = user["email"];
                 is_admin = user.get("is_admin", False) or email == "admin.jacgpt@jaseci.org";
-                role = user.get("role", "admin" if is_admin else "user");
+                role = "admin" if is_admin else "user";
                 
                 # Get location data from separate user_locations collection
                 location_info = self.get_user_location_full(email);
@@ -383,7 +381,7 @@ obj MongoDB {
                 user_list.append({
                     "email": email,
                     "name": user.get("name", ""),  # May not exist for all users
-                    "role": role,
+                    "role": role,  # Computed from is_admin, not stored directly
                     "is_admin": is_admin,
                     "is_activated": user.get("is_activated", True),
                     "location": location,  # Location data from user_locations collection
@@ -392,10 +390,10 @@ obj MongoDB {
                     "location_updated_at": location_updated_at
                 });
             }
-            logger.info(f"Retrieved {len(user_list)} users from JAC Cloud user collection");
+            print(f"Retrieved {len(user_list)} users from JAC Cloud user collection");
             return user_list;
         } except Exception as e {
-            logger.error(f"Error getting all users: {e}");
+            print(f"Error getting all users: {e}");
             return [];
         }
     }
@@ -423,14 +421,14 @@ obj MongoDB {
             );
             
             if result.upserted_id or result.modified_count > 0 {
-                logger.info(f"Location saved for user: {email}");
+                print(f"Location saved for user: {email}");
                 return True;
             } else {
-                logger.warning(f"Failed to save location for user: {email}");
+                print(f"Failed to save location for user: {email}");
                 return False;
             }
         } except Exception as e {
-            logger.error(f"Error saving location for {email}: {e}");
+            print(f"Error saving location for {email}: {e}");
             return False;
         }
     }
@@ -443,28 +441,28 @@ obj MongoDB {
             }
             return None;
         } except Exception as e {
-            logger.error(f"Error getting location for {email}: {e}");
+            print(f"Error getting location for {email}: {e}");
             return None;
         }
     }
     
     def get_user_location_full(email: str) -> Optional[dict] {
         try {
-            logger.info(f"Looking for location data for email: {email}");
+            print(f"Looking for location data for email: {email}");
             location_doc = self.user_locations.find_one({"email": email});
-            logger.info(f"Found location document: {location_doc}");
+            print(f"Found location document: {location_doc}");
             if location_doc {
                 result = {
                     "location": location_doc.get("location", {}),
                     "location_updated_at": location_doc.get("location_updated_at")
                 };
-                logger.info(f"Returning location data: {result}");
+                print(f"Returning location data: {result}");
                 return result;
             }
-            logger.warning(f"No location document found for email: {email}");
+            print(f"No location document found for email: {email}");
             return None;
         } except Exception as e {
-            logger.error(f"Error getting full location data for {email}: {e}");
+            print(f"Error getting full location data for {email}: {e}");
             return None;
         }
     }
@@ -484,10 +482,10 @@ obj MongoDB {
                 };
                 session_list.append(session_info);
             }
-            logger.info(f"Retrieved {len(session_list)} sessions");
+            print(f"Retrieved {len(session_list)} sessions");
             return session_list;
         } except Exception as e {
-            logger.error(f"Error getting all sessions: {e}");
+            print(f"Error getting all sessions: {e}");
             return [];
         }
     }
@@ -495,7 +493,7 @@ obj MongoDB {
     def close_connection {
         if self.client {
             self.client.close();
-            logger.info("MongoDB connection closed");
+            print("MongoDB connection closed");
         }
     }
 }
@@ -505,7 +503,7 @@ def get_database() -> MongoDB {
     if (_database_instance is None) {
         _database_instance = MongoDB();
     } else {
-        logger.info("Using existing database instance");
+        print("Using existing database instance");
     }
     return _database_instance;
 }
