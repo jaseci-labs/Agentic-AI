@@ -189,7 +189,7 @@ walker suggest_docs {
         mtllm_score = has_keywords_with_score(message_lower, mtllm_words);
         if mtllm_score > 0 {
             suggestions.append({
-                "url": "https://www.jac-lang.org/learn/jac-mtllm/with_llm/",
+                "url": "https://www.jac-lang.org/learn/jac-byllm/with_llm/",
                 "title": "Working with LLMs - MTLLM",
                 "reason": "Complete guide to Multi-Turn LLM integration and context management",
                 "score": mtllm_score + 10  # High priority
@@ -207,7 +207,7 @@ walker suggest_docs {
         ai_score = has_keywords_with_score(message_lower, ai_words);
         if ai_score > 0 {
             suggestions.append({
-                "url": "https://www.jac-lang.org/learn/jac-mtllm/with_llm/",
+                "url": "https://www.jac-lang.org/learn/jac-byllm/with_llm/",
                 "title": "Working with LLMs",
                 "reason": "Deep dive into using Large Language Models in Jac applications",
                 "score": ai_score + 9
