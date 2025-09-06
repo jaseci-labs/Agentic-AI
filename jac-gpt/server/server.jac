@@ -104,7 +104,9 @@ def search_docs(query: str, chunck_nos: int = 5) -> str {
 
 """Refer `full_language.md` for complete Jac language examples to understand jac syntaxes."""
 def refer_full_language_examples() -> str {
-    with open("full_language.md", "r") as file {
+    base_path = os.path.dirname(__file__);
+    file_path = os.path.join(base_path, "full_language.md");
+    with open(file_path, "r") as file {
         content = file.read();
     }
     return content;
