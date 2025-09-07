@@ -63,7 +63,7 @@ jac-gpt/
    
    # MongoDB Configuration
    MONGODB_URI=mongodb://localhost:27017/
-   MONGODB_DATABASE=jac_gpt
+   MONGODB_DATABASE=jaseci
    
    # Optional: Serper API for web search
    SERPER_API_KEY=your-serper-api-key-here

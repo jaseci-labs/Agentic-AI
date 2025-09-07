@@ -31,7 +31,7 @@ obj MongoDB {
                 print("DATABASE_HOST not found! Falling back to localhost...");
                 mongo_uri = "mongodb://localhost:27017/";
             }
-            db_name = os.getenv("DATABASE_NAME", "jac_gpt_2");
+            db_name = os.getenv("DATABASE_NAME", "jaseci");
             
             print(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
             print(f"Database name: {db_name}");
@@ -94,9 +94,7 @@ obj MongoDB {
     }
     def save_message(session_id: str, role: str, content: str) -> bool {
         try {
-            message_data =
-
-                {"session_id" : session_id , "role" : role , "content" : content , "timestamp" : datetime.utcnow() };
+            message_data = {"session_id" : session_id , "role" : role , "content" : content , "timestamp" : datetime.utcnow() };
             result = self.messages.insert_one(message_data);
             update_result =
                 self.sessions.update_one(

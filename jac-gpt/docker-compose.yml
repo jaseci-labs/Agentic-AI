@@ -11,6 +11,9 @@ services:
     env_file:
       - ./server/.env
     environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_api_key_here}
+      - DATABASE_HOST=mongodb+srv://v30793620:qFT9ofgVU2GPN5oA@cluster0.ry1lymm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - DATABASE_NAME=jaseci
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
