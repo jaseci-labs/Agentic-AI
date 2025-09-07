@@ -31,7 +31,7 @@ obj MongoDB {
                 print("DATABASE_HOST not found! Falling back to localhost...");
                 mongo_uri = "mongodb://localhost:27017/";
             }
-            db_name = os.getenv("DATABASE_NAME", "jac_gpt_2");
+            db_name = os.getenv("DATABASE_NAME", "jaseci");
             
             print(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
             print(f"Database name: {db_name}");
