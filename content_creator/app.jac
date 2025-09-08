@@ -34,10 +34,6 @@ def content_creator() {
     col1 = columns[0];
     col2 = columns[1];
     with col1{
-        # tone = st.selectbox(
-        #     "Tone",
-        #     ["Professional", "Casual", "First-person experience", "Educational", "Storytelling"]
-        # );
         available_tones = list(TONE_SAMPLES.keys());
         
         tone = st.selectbox(
@@ -101,21 +97,34 @@ def content_creator() {
         }
 
         try {
-            result = subprocess.run(
-                ["jac", "run", "main.jac"],
-                capture_output=True,
-                text=True,
-                check=True,
-            );
-            st.success("Workflow completed!");
 
-            with st.expander("Execution Logs"){
-                st.text(result.stdout);
+            process = subprocess.Popen(
+                ["jac", "run", "main.jac"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            );
+
+            logs = "";
+            with st.expander("Execution Logs") {
+                log_placeholder = st.empty(); 
+                for line in process.stdout {
+                    logs += line;
+                    log_placeholder.text(logs);
+                }
             }
 
-            if os.path.exists("generated_article_final.md"){
+            process.wait();
+            if process.returncode == 0 {
+                st.success("Workflow completed!");
+            } else {
+                st.error("Error running Jac workflow");
+            }
+
+            if os.path.exists("generated_article_final.md") {
                 st.subheader("Generated Article");
-                if os.path.exists("generated_article_image.png"){
+                if os.path.exists("generated_article_image.png") {
                     st.image("generated_article_image.png", use_container_width =True);
                 }
                 st.markdown(open("generated_article_final.md").read());
@@ -123,9 +132,9 @@ def content_creator() {
 
         }
 
-        except subprocess.CalledProcessError as e {
+        except Exception as e {
             st.error("Error running Jac workflow");
-            st.text(e.stderr);
+            st.text(str(e));
         }
     }
 }

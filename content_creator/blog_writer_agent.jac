@@ -13,6 +13,8 @@ with entry {
     tavily_client = TavilyClient(api_key=os.getenv('TAVILY_API_KEY'));
 }
 
+glob llm = ChatOpenAI(model='gpt-4o', temperature=0);
+glob search_tool = tavily_client;
 
 obj WriterAgent {
     def init {
@@ -25,6 +27,8 @@ obj WriterAgent {
                 "Your task is to write a comprehensive article on the topic: {topic}\n"
                 "You must strictly follow the provided content plan {plan}, including all sections, topics, and code snippets as instructed."
                 "You must adopt the following tone and style. TONE EXAMPLE {tone_sample}"
+                "The target audience for this article is: {audience}\n"
+                "The article should be written from the perspective of: {write_as}\n"
                 "The article should be well-structured, clear, and align with the user's original request for a {output_format}.\n"
             );
         self.chain = ((prompt | self.llm) | StrOutputParser());
@@ -34,6 +38,8 @@ obj WriterAgent {
                 "TOPIC: {topic}\n"
                 "EDITOR'S FEEDBACK: {review_notes}\n"
                 "ORIGINAL PLAN: {plan}\n"
+                "The target audience for this article is: {audience}\n"
+                "The article should be written from the perspective of: {write_as}\n"
                 "Please rewrite the article, incorporating all the feedback to create a high-quality final version."
             );
         self.revision_chain = ((revision_prompt | self.llm) | StrOutputParser());
@@ -47,14 +53,14 @@ obj WriterAgent {
             article =
                 self.revision_chain.invoke(
 
-                    {'topic' : user_input[ 'topic'], 'review_notes' : state[ 'review_notes' ] , 'tone_sample' : user_input[ 'tone_sample' ], 'plan' : state[ 'plan' ] }
+                    {'topic' : user_input[ 'topic'], 'review_notes' : state[ 'review_notes' ] , 'tone_sample' : user_input[ 'tone_sample' ], 'audience' : user_input[ 'audience' ], 'write_as' : user_input[ 'write_as' ], 'plan' : state[ 'plan' ] }
                 );
             return {'article' : article , 'review_notes' : None };
         }
         article =
             self.chain.invoke(
 
-                {'topic' : user_input[ 'topic'] , 'plan' : state[ 'plan' ], 'tone_sample' : user_input[ 'tone_sample' ], 'output_format' : user_input[ 'expected_output' ] }
+                {'topic' : user_input[ 'topic'] , 'plan' : state[ 'plan' ], 'tone_sample' : user_input[ 'tone_sample' ], 'audience' : user_input[ 'audience' ], 'write_as' : user_input[ 'write_as' ], 'output_format' : user_input[ 'expected_output' ] }
             );
         print('Article generation complete.');
         return
