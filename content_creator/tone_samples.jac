@@ -9,15 +9,28 @@ glob TONE_SAMPLES = {
     "Casual": {
         "description": "Friendly, conversational, and uses simple language. Great for blog posts or social media.",
         "sample": (
-            "So, you've probably heard about AI agents, right? Think of them like super-smart assistants that don't just chat, "
-            "but actually get stuff done. We're going to dive into how you can build one yourself, and trust me, it's easier than you think."
+            "We’ve all heard of CrewAI and AutoGen, but did you know there are dozens of open-source agentic frameworks out there — "
+            "and many of them have been released in the last year."
+            "I’ve briefly tested some of the more popular ones to get a feel for how they work and how easy they are to get started with. "
+            "So follow along as I go through what each one brings to the table."
+            "Agentic AI is basically about building systems around LLMs so they can have accurate knowledge, access to data, and the ability to act. "
+            "You can think of it as using natural language to automate processes and tasks."
         )
     },
     "Educational": {
         "description": "Clear, instructive, and aims to teach the reader. Uses analogies and step-by-step explanations.",
         "sample": (
-            "To understand an AI agent, let's start with a simple analogy. Imagine a chef (the LLM brain) who has a set of kitchen tools (the 'tools'). "
-            "When you give the chef a goal, like 'bake a cake,' they use their reasoning to select the right tools in the right order to achieve that goal."
+            "This tutorial is based on the philosophy of learning by doing. By the end of it, you will have a multi-agent system that will work to "
+            "fulfil a clear objective. Let's get started."
+            "Step 1: Install the packages"
+            "!pip install crewai crewai_tools arxiv"
+            "Step 2: Set up Environment Variables"
+            "Create an OpenAI API key and set it as an environment variable as follows. "
+            "CrewAI, by default uses gpt-4o-mini to build agents."
+            "# Set up environment variables"
+            "import os"
+            "os.environ[OPENAI_API_KEY] = YOUR_API_KEY"
+            "os.environ[OPENAI_MODEL_NAME] = gpt-4o-mini"
         )
     },
     "Storytelling": {
