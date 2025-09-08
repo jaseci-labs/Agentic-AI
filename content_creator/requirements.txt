@@ -7,3 +7,4 @@ langchain_openai
 langchain
 langchain_community
 pymupdf
+faiss-gpu
