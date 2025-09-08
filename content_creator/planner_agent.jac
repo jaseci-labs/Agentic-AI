@@ -24,7 +24,12 @@ obj ContentPlannerAgent {
         print('---EXECUTING CONTENT PLANNER AGENT---');
         retriever = state[ 'retriever' ];
         topic = state[ 'user_input' ][ 'topic' ];
-        all_docs = retriever.invoke(topic);
+        if retriever is not None {
+            all_docs = retriever.invoke(topic);
+        } else {
+            all_docs = [];
+        }
+        
         plan = self.chain.invoke({'topic' : topic , 'context' : all_docs });
         print('---CONTENT PLAN GENERATED---');
         return {'plan' : plan };
