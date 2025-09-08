@@ -1,0 +1,30 @@
+# Environment variables
+.env
+*.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Project-specific
+question_generator1.jac
+streamlit1.py
+question_generator2.jac
+streamlit2.py
+question_generator3.jac
+streamlit3.py
+
+
+#test
+just.jac
+mainnot.jac
+test.docx
+test.pdf
+
+
+# folders
+/documents
+
+
+
