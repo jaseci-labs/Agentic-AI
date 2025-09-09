@@ -1,5 +1,5 @@
 import from states { AppState }
-import from utils { get_history, normalize_from_fields }
+import from utils { normalize_from_fields }
 import from prompts { TASK_EXTRACT_PROMPT, TASK_DECIDER_PROMPT, llm }
 import from datetime { datetime }
 import json;
@@ -7,15 +7,26 @@ import json;
 glob TASKS: List[Dict[str, Any]] = [];
 glob TASK_COUNTER = 0;
 
-def _next_task_id() -> int{
-    global TASK_COUNTER;
-    TASK_COUNTER += 1;
-    return TASK_COUNTER;
+node Task {
+    has task:str = "";
+    has date:str = "";
+    has time:str = "";
+    has created_at: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S");
+}
+
+node TaskHandling {
+    def add_task(task: Task) -> str {
+        self ++> task;
+        return "Task added successfully";
+    }
+    def check_scheduled_tasks -> list[Task] {
+        return [self --> (`?Task)];
+    }
 }
 
 def task_decider_node(state: AppState) -> AppState {
     history = state.get("history", [])[-10:];
-    hist_txt = get_history(history);
+    hist_txt = "\n".join(history);
 
     raw = (TASK_DECIDER_PROMPT | llm).invoke({
         "history": hist_txt,
@@ -25,7 +36,6 @@ def task_decider_node(state: AppState) -> AppState {
     try {
         data = json.loads(raw);
         action = data.get("task_action", "EXTRACT_AND_ADD");
-        print("****TASK DECIDER RAW:", action, "****");
         if action not in {"EXTRACT_AND_ADD", "SUMMARIZE"} {
             action = "EXTRACT_AND_ADD";
         }
@@ -38,7 +48,7 @@ def task_decider_node(state: AppState) -> AppState {
 
 def task_add_node(state: AppState) -> AppState {
     history = state.get("history", [])[-10:];
-    hist_txt = get_history(history);
+    hist_txt = "\n".join(history);
 
     utter = state.get("utterance", "").strip();
     raw = (TASK_EXTRACT_PROMPT | llm).invoke({
@@ -59,19 +69,18 @@ def task_add_node(state: AppState) -> AppState {
         (date_full, time_only) = normalize_from_fields(date_s, time_s);
 
         # 4) Save task
-        tid = _next_task_id();
-        TASKS.append({
-            "id": tid,
-            "task": task_text,
-            "date": date_full,
-            "time": time_only,
-            "status": "pending",
-            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        });
+        if not [root-->(`?TaskHandling)] {
+            task_handle = root ++> TaskHandling();
+        }
+        print("****Task Handle:", task_handle);
+        task_handle[0].add_task(Task(
+            task=task_text,
+            date=date_full,
+            time=time_only
+        ));
 
         state["response"] = (
-            f"Task: {task_text}, Date: {date_full}, Time: {time_only} "
-            f"is added successfully (id={tid})."
+            f"Task: {task_text}, Date: {date_full}, Time: {time_only} is added successfully."
         );
     } except Exception as e {
         state["response"] = f"Couldn't add the task. ({e})";
@@ -80,10 +89,20 @@ def task_add_node(state: AppState) -> AppState {
 }
 
 def task_summarize_node(state: AppState) -> AppState {
-    if not TASKS {
+    task_handle = [root --> (`?TaskHandling)];
+    if not [root-->(`?TaskHandling)] {
         state["response"] = "No tasks found.";
         return state;
     }
+    TASKS = [
+        {
+            "task": t.task,
+            "date": t.date,
+            "time": t.time,
+            "status": "pending"
+        }
+        for t in task_handle[0].check_scheduled_tasks()
+    ];
     lines = [
         f"- [{t['status']}] (#{t['id']}) {t['task']} — {t['date']} / {t['time']}"
         for t in sorted(TASKS, key=lambda x: int: x["id"], reverse=True)

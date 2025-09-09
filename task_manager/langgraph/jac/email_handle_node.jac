@@ -1,5 +1,4 @@
 import from states { AppState }
-import from utils { get_history }
 import from prompts { EMAIL_DECIDER_PROMPT, EMAIL_DRAFT_PROMPT, llm }
 import from email.mime.text { MIMEText }
 import smtplib;
@@ -8,7 +7,7 @@ import os;
 
 def email_decider_node(state: AppState) -> AppState {
     history = state.get("history", [])[-10:];
-    hist_txt = get_history(history);
+    hist_txt = "\n".join(history);
     
     raw = (EMAIL_DECIDER_PROMPT | llm).invoke({
         "history": hist_txt,
@@ -17,7 +16,6 @@ def email_decider_node(state: AppState) -> AppState {
     try {
         data = json.loads(raw);
         action = data.get("action", "DRAFT");
-        print("****EMAIL DECIDER RAW:", action, "****");
         if action not in {"DRAFT", "SEND"} {
             action = "DRAFT";
         }
@@ -30,7 +28,7 @@ def email_decider_node(state: AppState) -> AppState {
 
 def email_draft_node(state: AppState) -> AppState {
     history = state.get("history", [])[-10:];
-    hist_txt = get_history(history);
+    hist_txt = "\n".join(history);
 
     raw = (EMAIL_DRAFT_PROMPT | llm).invoke({"history": hist_txt, "utterance": state.get("utterance","")}).content;
     try {

@@ -1,13 +1,4 @@
 import from datetime { datetime }
-def get_history(history_list: list) {
-    hist_lines: list = [];
-    for m in history_list {
-        cls_name = type(m).__name__;
-        line = f"{cls_name}: {getattr(m, 'content', '')}";
-        hist_lines.append(line);
-    }
-    return "\n".join(hist_lines);
-}
 
 def normalize_from_fields(date_s: str, time_s: str) -> tuple[str, str] {
 
