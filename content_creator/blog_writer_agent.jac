@@ -13,9 +13,6 @@ with entry {
     tavily_client = TavilyClient(api_key=os.getenv('TAVILY_API_KEY'));
 }
 
-glob llm = ChatOpenAI(model='gpt-4o', temperature=0);
-glob search_tool = tavily_client;
-
 obj WriterAgent {
     has llm : ChatOpenAI = ChatOpenAI(model='gpt-4o', temperature=0);
     has prompt : ChatPromptTemplate = ChatPromptTemplate.from_template(
