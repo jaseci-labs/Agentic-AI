@@ -45,7 +45,7 @@ To run the project, use three terminals.
 3. **Terminal 3:**  
    Run the Jac backend:
    ```
-   jac run interview_backend.jac
+   jac serve interview_backend.jac
    ```
 
 Make sure you have all dependencies installed before running these.
