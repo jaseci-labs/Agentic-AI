@@ -5,21 +5,19 @@ import from state { AgentState }
 
 
 obj EditorAgent {
-    def init {
-        self.llm = ChatOpenAI(model='gpt-4o', temperature=0);
-        prompt =
-            ChatPromptTemplate.from_template(
-                "You are an expert editor. Your job is to review a draft article and decide if it's ready for publication."
-                "Check only the content, the visual aids check is not neededIf the article is high-quality, well-structured, and engaging, with a tone of a 3rd party person, respond with 'OK'."
-                "If it needs improvement, provide a concise list of 2-3 bullet points with specific, actionable feedback. Do not approve a mediocre article."
-                "ARTICLE DRAFT:{article}\n"
-                "Make sure it align with the tone user requested, the sample of the tones: {tone_sample}"
-            );
-        self.chain = ((prompt | self.llm) | StrOutputParser());
-    }
+    has llm : ChatOpenAI = ChatOpenAI(model='gpt-4o');
+    has prompt : ChatPromptTemplate = ChatPromptTemplate.from_template(
+        "You are an expert editor. Your job is to review a draft article and decide if it's ready for publication."
+        "Check only the content, the visual aids check is not neededIf the article is high-quality, well-structured, and engaging, with a tone of a 3rd party person, respond with 'OK'."
+        "If it needs improvement, provide a concise list of 2-3 bullet points with specific, actionable feedback. Do not approve a mediocre article."
+        "ARTICLE DRAFT:{article}\n"
+        "Make sure it align with the tone user requested, the sample of the tones: {tone_sample}"
+    );
+
 
     def run(state: AgentState) {
         print('---EXECUTING EDITOR AGENT---');
+        self.chain = ((self.prompt | self.llm) | StrOutputParser());
         review_count = (state.get('review_count', 0) + 1);
         print(f"'---EDITOR REVIEW COUNT: '{review_count}'---'");
         article = state[ 'article' ];
