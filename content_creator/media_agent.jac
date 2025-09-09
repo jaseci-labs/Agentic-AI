@@ -18,11 +18,9 @@ with entry {
 
 
 obj MediaAgent {
-    def init {
-        self.prompt_llm = ChatOpenAI(model='gpt-4o', temperature=0);
-        self.image_client = OpenAI();
-        prompt =
-            ChatPromptTemplate.from_template(
+    has llm : ChatOpenAI = ChatOpenAI(model='gpt-4o');
+    has image_client : OpenAI = OpenAI();
+    has prompt : ChatPromptTemplate = ChatPromptTemplate.from_template(
                 "You are an expert at creating relevant image prompts for a DALL-E model."
                 "Based on the following article, create a single, concise prompt that visually represents the core message."
                 "The prompt should describe the main theme or idea of the article"
@@ -31,12 +29,11 @@ obj MediaAgent {
                 "Create a graphic representation of the article's content, include the title as a text."
                 "ARTICLE: {article}\n"
             );
-        self.prompt_chain = ((prompt | self.prompt_llm) | StrOutputParser());
-    }
 
     # Generates an image for the article and saves it using base64 data.
     def run(state: AgentState) {
         print('---EXECUTING MEDIA AGENT---');
+        self.prompt_chain = ((self.prompt | self.llm) | StrOutputParser());
         article = state[ 'article' ];
         print('Generating image prompt...');
         image_prompt = self.prompt_chain.invoke({'article' : article });
