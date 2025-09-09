@@ -8,7 +8,7 @@ import from pathlib { Path }
 import from typing { Any, Dict, List, Optional, Tuple }
 import from aider.web_search { web_search, create_web_searcher }
 import from mcp_client { list_mcp_tools, call_mcp_tool }
-import from mtllm {Model}
+import from byllm {Model}
 
 glob llm = Model(model_name="gpt-4o-mini");
 

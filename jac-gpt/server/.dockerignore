@@ -93,10 +93,7 @@ Thumbs.db
 Dockerfile*
 docker-compose*.yml
 
-# Documentation (can be excluded for production)
-docs/
 README.md
-*.md
 
 # Logs
 logs/
