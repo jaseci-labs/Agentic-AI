@@ -2,3 +2,9 @@ python-dotenv
 openai
 jac-streamlit
 tavily-python
+langgraph
+langchain_openai
+langchain
+langchain_community
+pymupdf
+faiss-gpu
