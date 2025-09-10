@@ -87,19 +87,26 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
     }
     
     try {
+      // Ensure URL uses HTTPS to avoid mixed content issues
+      let httpsUrl = url;
+      if (url.startsWith('http://')) {
+        httpsUrl = url.replace('http://', 'https://');
+        console.log('Upgraded HTTP to HTTPS:', url, '->', httpsUrl);
+      }
+      
       // Parse URL to handle fragments properly
-      const urlObj = new URL(url);
+      const urlObj = new URL(httpsUrl);
       const baseUrl = urlObj.origin + urlObj.pathname + urlObj.search;
       const fragment = urlObj.hash;
       
-      console.log('Loading documentation:', { url, baseUrl, fragment });
+      console.log('Loading documentation:', { url: httpsUrl, baseUrl, fragment });
       
-      // Set initial state with the full URL (including fragment)
+      // Set initial state with the full HTTPS URL (including fragment)
       setSelectedDoc({
         content: "",
         title: "Loading Documentation...",
-        url: url, // Use full URL with fragment
-        originalUrl: url,
+        url: httpsUrl, // Use HTTPS URL with fragment
+        originalUrl: httpsUrl,
         fragment: fragment
       });
       
@@ -116,22 +123,23 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
       setTimeout(() => {
         setSelectedDoc({
           content: "",
-          title: url.includes('/introduction/') ? 'Introduction to Jac' : 
-                 url.includes('/nodes_and_edges/') ? 'Nodes and Edges' :
-                 url.includes('/quickstart/') ? 'AI Integration Quickstart' :
-                 url.includes('/with_llm/') ? 'Working with LLMs - MTLLM' :
-                 url.includes('/jac-cloud/') ? 'Jac Cloud Introduction' :
-                 url.includes('/walkers/') ? 'Walkers Guide' :
-                 url.includes('/rag_chatbot/') ? 'RAG Chatbot Example' :
-                 url.includes('/deployment/') ? 'Deployment Guide' :
-                 url.includes('/keywords/') ? 'Jac Keywords Reference' :
-                 url.includes('/jac_ref/') ? 'Language Reference' :
-                 url.includes('/getting_started/') ? 'Getting Started Guide' :
-                 url.includes('/playground/') ? 'Jac Playground' :
-                 url.includes('/cli/') ? 'CLI Tools' :
+          title: httpsUrl.includes('/introduction/') ? 'Introduction to Jac' : 
+                 httpsUrl.includes('/nodes_and_edges/') ? 'Nodes and Edges' :
+                 httpsUrl.includes('/quickstart/') ? 'AI Integration Quickstart' :
+                 httpsUrl.includes('/with_llm/') ? 'Working with LLMs - MTLLM' :
+                 httpsUrl.includes('/jac-cloud/') ? 'Jac Cloud Introduction' :
+                 httpsUrl.includes('/walkers/') ? 'Walkers Guide' :
+                 httpsUrl.includes('/rag_chatbot/') ? 'RAG Chatbot Example' :
+                 httpsUrl.includes('/deployment/') ? 'Deployment Guide' :
+                 httpsUrl.includes('/keywords/') ? 'Jac Keywords Reference' :
+                 httpsUrl.includes('/jac_ref/') ? 'Language Reference' :
+                 httpsUrl.includes('/getting_started/') ? 'Getting Started Guide' :
+                 httpsUrl.includes('/playground/') ? 'Jac Playground' :
+                 httpsUrl.includes('/cli/') ? 'CLI Tools' :
+                 httpsUrl.includes('/jac_book/') ? 'Jac Book' :
                  'Jac Documentation',
-          url: url,
-          originalUrl: url,
+          url: httpsUrl,
+          originalUrl: httpsUrl,
           fragment: fragment
         });
         setLoading(false);
@@ -146,7 +154,12 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
   };
 
   const handleSuggestionClick = (suggestion: DocumentationSuggestion) => {
-    fetchDocumentation(suggestion.url);
+    // Ensure the URL uses HTTPS before passing to fetchDocumentation
+    let httpsUrl = suggestion.url;
+    if (suggestion.url.startsWith('http://')) {
+      httpsUrl = suggestion.url.replace('http://', 'https://');
+    }
+    fetchDocumentation(httpsUrl);
   };
 
   const handleBackToSuggestions = () => {
