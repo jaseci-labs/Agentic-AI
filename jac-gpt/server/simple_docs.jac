@@ -245,18 +245,58 @@ walker suggest_docs {
             });
         }
         
-        # Node/Edge/Graph concepts
-        spatial_keywords = ["node", "edge", "graph", "spatial", "object"];
+        # Node/Edge/Graph concepts and OSP (Object-Spatial Programming)
+        spatial_keywords = ["node", "edge", "graph", "spatial", "object", "osp", "object spatial", "object-spatial"];
         spatial_found = False;
+        osp_specific = False;
+        
         for keyword in spatial_keywords {
             if keyword in message_lower {
                 spatial_found = True;
+                if keyword == "osp" or "object spatial" in message_lower or "object-spatial" in message_lower {
+                    osp_specific = True;
+                }
                 print(f"Found spatial keyword: {keyword}");
                 break;
             }
         }
         
-        if spatial_found {
+        if osp_specific {
+            # OSP-specific comprehensive suggestions
+            suggestions.extend([
+                {
+                    "url": "https://www.jac-lang.org/learn/dspfoundation/",
+                    "title": "Object Spatial Programming Specification",
+                    "reason": "Complete specification and foundation of Object-Spatial Programming",
+                    "score": 22
+                },
+                {
+                    "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
+                    "title": "Nodes and Edges",
+                    "reason": "Core concepts of nodes and edges in Object-Spatial Programming",
+                    "score": 21
+                },
+                {
+                    "url": "https://www.jac-lang.org/learn/data_spatial/walkers/",
+                    "title": "Walkers",
+                    "reason": "Learn about walkers for traversing spatial data structures",
+                    "score": 20
+                },
+                {
+                    "url": "https://www.jac-lang.org/learn/data_spatial/filtering/",
+                    "title": "Node and Edges Filtering",
+                    "reason": "Advanced filtering techniques for nodes and edges",
+                    "score": 19
+                },
+                {
+                    "url": "https://www.jac-lang.org/learn/data_spatial/sequence/",
+                    "title": "Walker and Node ability trigger sequence",
+                    "reason": "Understanding execution sequences in Object-Spatial Programming",
+                    "score": 18
+                }
+            ]);
+        } elif spatial_found {
+            # General spatial programming suggestions
             suggestions.append({
                 "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
                 "title": "Nodes and Edges",
