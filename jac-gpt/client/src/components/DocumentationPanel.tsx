@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ExternalLink, Book, ChevronRight, Loader2 } from 'lucide-react';
+import { ExternalLink, Book, ChevronRight, Loader2, ArrowLeft } from 'lucide-react';
 import { documentationService } from '@/services/documentation';
 
 interface DocumentationSuggestion {
@@ -25,10 +25,11 @@ interface DocumentationPanelProps {
 }
 
 const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: DocumentationPanelProps) => {
+  const [currentSuggestions, setCurrentSuggestions] = useState<DocumentationSuggestion[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<DocumentationContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentSuggestions, setCurrentSuggestions] = useState<DocumentationSuggestion[]>([]);
+  const [iframeKey, setIframeKey] = useState(0); // Force iframe reload
 
   // Default documentation suggestions
   const defaultSuggestions: DocumentationSuggestion[] = [
@@ -55,60 +56,12 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
     const newSuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
     console.log('Setting current suggestions:', newSuggestions);
     setCurrentSuggestions(newSuggestions);
-    
-    // Reset selected doc when new suggestions come in to show the list first
-    if (suggestions.length > 0 && isVisible) {
-      setSelectedDoc(null);
-    }
   }, [suggestions, isVisible]);
 
-  const fetchDocumentation = async (url: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Instead of fetching content, directly load the webpage in iframe
-      setSelectedDoc({
-        content: "", // We'll use iframe instead of content
-        title: "Loading Documentation...",
-        url: url
-      });
-      
-      // Simulate loading time for better UX
-      setTimeout(() => {
-        setSelectedDoc({
-          content: "", // Content will be loaded via iframe
-          title: url.includes('/introduction/') ? 'Introduction to Jac' : 
-                 url.includes('/nodes_and_edges/') ? 'Nodes and Edges' :
-                 url.includes('/quickstart/') ? 'AI Integration Quickstart' :
-                 url.includes('/with_llm/') ? 'Working with LLMs - MTLLM' :
-                 url.includes('/jac-cloud/') ? 'Jac Cloud Introduction' :
-                 url.includes('/walkers/') ? 'Walkers Guide' :
-                 url.includes('/rag_chatbot/') ? 'RAG Chatbot Example' :
-                 url.includes('/deployment/') ? 'Deployment Guide' :
-                 url.includes('/keywords/') ? 'Jac Keywords Reference' :
-                 url.includes('/jac_ref/') ? 'Language Reference' :
-                 url.includes('/getting_started/') ? 'Getting Started Guide' :
-                 url.includes('/playground/') ? 'Jac Playground' :
-                 url.includes('/cli/') ? 'CLI Tools' :
-                 'Jac Documentation',
-          url: url
-        });
-        setLoading(false);
-      }, 500);
-      
-    } catch (err) {
-      console.error('Error loading documentation:', err);
-      setError('Failed to load documentation');
-      setLoading(false);
-    }
-  };
-
   const handleSuggestionClick = (suggestion: DocumentationSuggestion) => {
-    fetchDocumentation(suggestion.url);
-  };
-
-  const handleBackToSuggestions = () => {
+    // Open all documentation links in a new tab
+    window.open(suggestion.url, '_blank', 'noopener,noreferrer');
+  };  const handleBackToSuggestions = () => {
     setSelectedDoc(null);
     setError(null);
   };
@@ -129,7 +82,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
               onClick={handleBackToSuggestions}
               className="text-gray-400 hover:text-white mr-2"
             >
-              ← Back
+              <ArrowLeft className="w-4 h-4" />
             </Button>
           )}
           <Book className="w-5 h-5 text-orange-500" />
@@ -193,10 +146,19 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
               
               <div className="flex-1 relative">
                 <iframe
+                  key={iframeKey}
                   src={selectedDoc.url}
                   className="w-full h-full border-0"
                   title={selectedDoc.title}
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
+                  onLoad={() => {
+                    setLoading(false);
+                    console.log('Iframe loaded:', selectedDoc.url);
+                  }}
+                  onError={() => {
+                    setError('Failed to load documentation page');
+                    setLoading(false);
+                  }}
                   style={{
                     background: 'white',
                     minHeight: '100%'
@@ -222,28 +184,33 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
               
               <ScrollArea className="flex-1">
                 <div className="space-y-3">
-                  {currentSuggestions.map((suggestion, index) => (
-                    <Card 
-                      key={index} 
-                      className="p-4 bg-gray-800 border-gray-700 cursor-pointer hover:bg-gray-750 transition-colors"
-                      onClick={() => handleSuggestionClick(suggestion)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-white mb-2 flex items-center gap-2">
-                            {suggestion.title}
-                            <ChevronRight className="w-4 h-4 text-gray-400" />
-                          </h4>
-                          <p className="text-sm text-gray-400 mb-2">
-                            {suggestion.reason}
-                          </p>
-                          <p className="text-xs text-blue-400 hover:text-blue-300">
-                            {suggestion.url}
-                          </p>
+                  {currentSuggestions.map((suggestion, index) => {
+                    return (
+                      <Card 
+                        key={index} 
+                        className="p-4 bg-gray-800 border-gray-700 cursor-pointer hover:bg-gray-750 transition-colors"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        title={`Click to open ${suggestion.title} in a new tab`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-white mb-2 flex items-center gap-2">
+                              {suggestion.title}
+                              <ExternalLink className="w-4 h-4 text-gray-400" />
+                            </h4>
+                            <p className="text-sm text-gray-400 mb-2">
+                              {suggestion.reason}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-blue-400 hover:text-blue-300">
+                                {suggestion.url}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </div>
