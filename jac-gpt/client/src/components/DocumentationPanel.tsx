@@ -51,7 +51,9 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
 
   // Update current suggestions when props change
   useEffect(() => {
+    console.log('DocumentationPanel received suggestions:', suggestions);
     const newSuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
+    console.log('Setting current suggestions:', newSuggestions);
     setCurrentSuggestions(newSuggestions);
     
     // Reset selected doc when new suggestions come in to show the list first

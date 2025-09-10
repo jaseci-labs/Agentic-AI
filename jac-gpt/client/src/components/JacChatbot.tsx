@@ -97,10 +97,12 @@ const JacChatbot = () => {
 
     // Get documentation suggestions based on the message
     try {
+      console.log('Fetching suggestions for message:', message);
       const suggestions = await documentationService.getSuggestions(message, messages.map(m => ({
         role: m.isUser ? 'user' : 'assistant',
         content: m.content
       })));
+      console.log('Received suggestions:', suggestions);
       setDocSuggestions(suggestions);
       
       // Auto-open documentation panel when user sends a message

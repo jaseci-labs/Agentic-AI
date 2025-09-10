@@ -46,7 +46,7 @@ class DocumentationService {
         return report.suggestions.map((suggestion: any) => ({
           title: suggestion.title,
           url: suggestion.url,
-          description: suggestion.reason
+          reason: suggestion.reason
         }));
       } else {
         throw new Error('Failed to get suggestions from API');
