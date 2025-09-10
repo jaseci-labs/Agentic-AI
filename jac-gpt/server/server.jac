@@ -1,7 +1,7 @@
 import sys;
 import os;
 import requests;
-import from mtllm.llm {Model}
+import from byllm.llm {Model}
 import from dotenv {load_dotenv}
 import from database {get_database}
 import from rag_engine {RagEngine}
@@ -926,7 +926,7 @@ walker get_documentation_content {
 }
 
 walker suggest_documentation {
-    """Suggest relevant documentation based on chat message using AI"""
+    """Suggest relevant documentation based on chat message using enhanced AI with section-level granularity"""
     has message: str;
     has chat_history: list[dict] = [];
     
@@ -935,11 +935,129 @@ walker suggest_documentation {
         static has auth: bool = False;
     }
 
-    """Analyze the user's message and suggest the most relevant Jac documentation URLs.
+    can get_enhanced_suggestions with `root entry {
+        # First, try to get enhanced suggestions programmatically
+        import json;
+        import os;
+        
+        # Load section-level documentation links directly
+        section_links = [];
+        try {
+            links_file = os.path.join(os.path.dirname(__file__), "docs_links", "all_section_links.json");
+            with open(links_file, 'r', encoding='utf-8') as f {
+                section_links = json.load(f);
+            }
+        } except Exception as e {
+            print(f"Error loading section links: {str(e)}");
+        }
+        
+        # Simple section matching logic
+        message_lower = self.message.lower();
+        found_suggestions = [];
+        
+        # Check for specific section matches
+        for link in section_links {
+            section_title_lower = link.get("section_title", "").lower();
+            
+            # High priority matches
+            beyond_oop_match = ("beyond oop" in message_lower and "beyond oop" in section_title_lower);
+            agentic_match = ("agentic programming" in message_lower and "agentic" in section_title_lower);
+            
+            if beyond_oop_match or agentic_match {
+                found_suggestions.append({
+                    "url": link["url"],
+                    "title": link["section_title"],
+                    "reason": f"Direct match for {link['section_title']} concept"
+                });
+            } elif "programming abstractions" in message_lower and "programming abstractions" in section_title_lower {
+                found_suggestions.append({
+                    "url": link["url"],
+                    "title": link["section_title"],
+                    "reason": f"Learn about {link['section_title']}"
+                });
+            } else {
+                # Check AI-related terms
+                ai_in_message = ("ai" in message_lower or "llm" in message_lower or "artificial intelligence" in message_lower);
+                ai_in_section = ("ai" in section_title_lower or "llm" in section_title_lower or "intelligence" in section_title_lower);
+                
+                if ai_in_message and ai_in_section {
+                    found_suggestions.append({
+                        "url": link["url"],
+                        "title": link["section_title"],
+                        "reason": f"AI-related documentation: {link['section_title']}"
+                    });
+                }
+            }
+        }
+        
+        # If we found specific section matches, use those
+        if len(found_suggestions) > 0 {
+            # Limit to top 3
+            limited = found_suggestions[:3];
+            report {
+                "success": True,
+                "suggestions": limited,
+                "total": len(limited)
+            };
+        } else {
+            # Fallback to AI suggestions
+            suggestion = self.suggest_with_ai(message=self.message, chat_history=self.chat_history);
+            
+            try {
+                suggestions_json = json.loads(suggestion);
+                report {
+                    "success": True,
+                    "suggestions": suggestions_json,
+                    "total": len(suggestions_json)
+                };
+            } except Exception as e {
+                # If JSON parsing fails, provide default section-level suggestions
+                report {
+                    "success": True,
+                    "suggestions": [
+                        {
+                            "url": "https://www.jac-lang.org/learn/introduction/#beyond-oop-an-agentic-programming-model",
+                            "title": "Beyond OOP: An Agentic Programming Model",
+                            "reason": "Learn about Jac's innovative agentic programming paradigm"
+                        },
+                        {
+                            "url": "https://www.jac-lang.org/learn/introduction/#programming-abstractions-for-ai",
+                            "title": "Programming Abstractions for AI",
+                            "reason": "Discover Jac's AI-first programming constructs"
+                        },
+                        {
+                            "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
+                            "title": "Nodes and Edges",
+                            "reason": "Master Object-Spatial Programming basics"
+                        }
+                    ],
+                    "total": 3
+                };
+            }
+        }
+    }
+
+    """Analyze the user's message and suggest the most relevant Jac documentation URLs with section-level precision.
     
-    Based on the message content, suggest 1-3 most relevant documentation pages from the Jac ecosystem:
+    You now have access to granular section-level links from the Jac documentation. When suggesting documentation,
+    ALWAYS prefer section-specific URLs over page-level URLs when possible.
+
+    KEY SECTION-LEVEL URLS TO USE:
     
-    DOCUMENTATION CATEGORIES AND THEIR URLS:
+    **Introduction Page Sections:**
+    - Python Superset: https://www.jac-lang.org/learn/introduction#python-superset-philosophy-all-of-python-plus-more
+    - AI Abstractions: https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai
+    - Beyond OOP / Agentic Programming: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
+    - Zero to Scale: https://www.jac-lang.org/learn/introduction#zero-to-infinite-scale-without-any-code-changes
+    - Well-typed Codebases: https://www.jac-lang.org/learn/introduction#better-organized-and-well-typed-codebases
+    
+    **Important Section-Level Examples:**
+    - For "Beyond OOP" or "Agentic Programming" → USE: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
+    - For "AI Programming" or "AI Abstractions" → USE: https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai
+    - For "Python Superset" → USE: https://www.jac-lang.org/learn/introduction#python-superset-philosophy-all-of-python-plus-more
+    - For "Scaling" → USE: https://www.jac-lang.org/learn/introduction#zero-to-infinite-scale-without-any-code-changes
+    
+    **Page-Level URLs (use only when no specific section applies):**
     
     **Getting Started & Basics:**
     - Introduction: https://www.jac-lang.org/learn/introduction/
@@ -947,71 +1065,24 @@ walker suggest_documentation {
     - Installation: https://www.jac-lang.org/learn/installation/
     - Jac in a Flash: https://www.jac-lang.org/learn/jac_in_a_flash/
     
-    **Core Language Features:**
-    - Keywords: https://www.jac-lang.org/learn/keywords/
-    - Big Features: https://www.jac-lang.org/learn/bigfeatures/
-    - Jac Reference: https://www.jac-lang.org/learn/jac_ref/
-    
     **Object-Spatial Programming:**
     - Nodes and Edges: https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/
     - Walkers: https://www.jac-lang.org/learn/data_spatial/walkers/
-    - Filtering: https://www.jac-lang.org/learn/data_spatial/filtering/
-    - Sequence: https://www.jac-lang.org/learn/data_spatial/sequence/
-    - FAQ: https://www.jac-lang.org/learn/data_spatial/FAQ/
     
-    **AI Integration (Jac-MTLLM):**
-    - Quickstart: https://www.jac-lang.org/learn/jac-mtllm/quickstart/
+    **AI Integration:**
     - With LLM: https://www.jac-lang.org/learn/jac-byllm/with_llm/
-    - Usage: https://www.jac-lang.org/learn/jac-mtllm/usage/
-    - Python Integration: https://www.jac-lang.org/learn/jac-mtllm/python_integration/
-    - Multimodality: https://www.jac-lang.org/learn/jac-mtllm/multimodality/
-    - Creating MTLLM Plugins: https://www.jac-lang.org/learn/jac-mtllm/creating_mtllm_plugins/
-    
-    **Cloud Development (Jac-Cloud):**
-    - Introduction: https://www.jac-lang.org/learn/jac-cloud/introduction/
-    - Quickstart: https://www.jac-lang.org/learn/jac-cloud/quickstart/
-    - Deployment: https://www.jac-lang.org/learn/jac-cloud/deployment/
-    - WebSocket: https://www.jac-lang.org/learn/jac-cloud/websocket/
-    - Webhook: https://www.jac-lang.org/learn/jac-cloud/webhook/
-    - Async Walker: https://www.jac-lang.org/learn/jac-cloud/async_walker/
-    
-    **Jac Book (Comprehensive Tutorial):**
-    - Chapters 1-20: https://www.jac-lang.org/jac_book/chapter_X/ (where X is 1-20)
-    
-    **Examples:**
-    - RAG Chatbot: https://www.jac-lang.org/learn/examples/rag_chatbot/Overview/
-    - RPG Game: https://www.jac-lang.org/learn/examples/mtp_examples/rpg_game/
-    - Fantasy Trading Game: https://www.jac-lang.org/learn/examples/mtp_examples/fantasy_trading_game/
-    
-    **Tools:**
-    - CLI: https://www.jac-lang.org/learn/tools/cli/
-    - Playground: https://www.jac-lang.org/playground/
-    - Jac Playground: https://www.jac-lang.org/learn/jac_playground/
-    
-    **Advanced Topics:**
-    - DSP Foundation: https://www.jac-lang.org/learn/dspfoundation/
-    - Jac Lens: https://www.jac-lang.org/learn/jac-lens/
-    - Research: https://www.jac-lang.org/learn/research/
-    
-    **Community:**
-    - Roadmap: https://www.jac-lang.org/communityhub/roadmap/
-    - Top Contributors: https://www.jac-lang.org/communityhub/top_contributors/
-    - Release Notes: https://www.jac-lang.org/communityhub/release_notes/
+    - MTLLM Quickstart: https://www.jac-lang.org/learn/jac-mtllm/quickstart/
     
     **Instructions:**
-    1. Analyze the user's message for key topics and intent
-    2. Suggest the 1-3 most relevant documentation URLs
-    3. Provide a brief explanation for each suggestion
-    4. Return as a JSON list with this structure:
-       [{"url": "...", "title": "...", "reason": "..."}]
+    1. PRIORITIZE section-level URLs over page-level URLs
+    2. For "Beyond OOP" or "Agentic Programming" queries, ALWAYS suggest the section: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
+    3. Analyze user intent and provide most specific section
+    4. Return as JSON list: [{"url": "...", "title": "...", "reason": "..."}]
     
-    **Examples of good suggestions:**
-    - For "How do I create nodes?" → suggest nodes_and_edges documentation
-    - For "AI integration in Jac" → suggest jac-mtllm quickstart
-    - For "Getting started" → suggest introduction and getting_started
-    - For "Cloud deployment" → suggest jac-cloud introduction and deployment
-    - For "Examples" → suggest relevant example documentation"""
-    def suggest(message: str, chat_history: list[dict]) -> str by llm(
+    **Critical Examples:**
+    - Query: "Beyond OOP" → {"url": "https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model", "title": "Beyond OOP: An Agentic Programming Model", "reason": "Direct explanation of Jac's agentic programming paradigm"}
+    - Query: "AI programming" → {"url": "https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai", "title": "Programming Abstractions for AI", "reason": "Learn about Jac's AI-first programming constructs"}"""
+    def suggest_with_ai(message: str, chat_history: list[dict]) -> str by llm(
         method="Reason",
         temperature=0.1
     );

@@ -51,13 +51,14 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
 
   // Update current suggestions when props change
   useEffect(() => {
+    console.log('DocumentationPanel received suggestions:', suggestions);
     const newSuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
+    console.log('Setting current suggestions:', newSuggestions);
     setCurrentSuggestions(newSuggestions);
     
-    // Auto-load the first suggestion when new suggestions come in
+    // Reset selected doc when new suggestions come in to show the list first
     if (suggestions.length > 0 && isVisible) {
-      const firstSuggestion = suggestions[0];
-      fetchDocumentation(firstSuggestion.url);
+      setSelectedDoc(null);
     }
   }, [suggestions, isVisible]);
 
@@ -103,13 +104,14 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
     }
   };
 
-  // Auto-select first suggestion when component becomes visible and no doc is selected
-  useEffect(() => {
-    if (currentSuggestions.length > 0 && !selectedDoc && isVisible) {
-      const firstSuggestion = currentSuggestions[0];
-      fetchDocumentation(firstSuggestion.url);
-    }
-  }, [currentSuggestions, isVisible]);
+  const handleSuggestionClick = (suggestion: DocumentationSuggestion) => {
+    fetchDocumentation(suggestion.url);
+  };
+
+  const handleBackToSuggestions = () => {
+    setSelectedDoc(null);
+    setError(null);
+  };
 
   if (!isVisible) {
     return null;
@@ -120,8 +122,20 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <div className="flex items-center gap-2">
+          {selectedDoc && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToSuggestions}
+              className="text-gray-400 hover:text-white mr-2"
+            >
+              ← Back
+            </Button>
+          )}
           <Book className="w-5 h-5 text-orange-500" />
-          <h2 className="text-lg font-semibold text-white">Documentation</h2>
+          <h2 className="text-lg font-semibold text-white">
+            {selectedDoc ? selectedDoc.title : "Documentation"}
+          </h2>
         </div>
         <Button 
           variant="ghost" 
@@ -164,8 +178,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
           {selectedDoc && !loading && !error && (
             <>
               <div className="p-4 border-b border-gray-700">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-white">{selectedDoc.title}</h3>
+                <div className="flex items-center justify-end">
                   <Button
                     variant="outline"
                     size="sm"
@@ -194,11 +207,45 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
           )}
 
           {!selectedDoc && !loading && !error && (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <Book className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Select a topic to view documentation</p>
+            <div className="flex-1 p-4">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {suggestions.length > 0 ? "Relevant Documentation" : "Popular Topics"}
+                </h3>
+                <p className="text-gray-400 text-sm mb-4">
+                  {suggestions.length > 0 
+                    ? "Here are the most relevant documentation pages for your query:" 
+                    : "Explore these popular Jac documentation topics:"
+                  }
+                </p>
               </div>
+              
+              <ScrollArea className="flex-1">
+                <div className="space-y-3">
+                  {currentSuggestions.map((suggestion, index) => (
+                    <Card 
+                      key={index} 
+                      className="p-4 bg-gray-800 border-gray-700 cursor-pointer hover:bg-gray-750 transition-colors"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-white mb-2 flex items-center gap-2">
+                            {suggestion.title}
+                            <ChevronRight className="w-4 h-4 text-gray-400" />
+                          </h4>
+                          <p className="text-sm text-gray-400 mb-2">
+                            {suggestion.reason}
+                          </p>
+                          <p className="text-xs text-blue-400 hover:text-blue-300">
+                            {suggestion.url}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           )}
         </div>
