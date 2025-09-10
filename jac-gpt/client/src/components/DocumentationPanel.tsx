@@ -15,6 +15,8 @@ interface DocumentationContent {
   content: string;
   title: string;
   url: string;
+  originalUrl?: string;
+  fragment?: string;
 }
 
 interface DocumentationPanelProps {
@@ -29,6 +31,9 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSuggestions, setCurrentSuggestions] = useState<DocumentationSuggestion[]>([]);
+  const [iframeKey, setIframeKey] = useState(0); // Force iframe re-render
+  const [iframeLoading, setIframeLoading] = useState(false); // Track iframe loading state
+  const [loadTimeout, setLoadTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Default documentation suggestions
   const defaultSuggestions: DocumentationSuggestion[] = [
@@ -62,22 +67,55 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
     }
   }, [suggestions, isVisible]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadTimeout) {
+        clearTimeout(loadTimeout);
+      }
+    };
+  }, [loadTimeout]);
+
   const fetchDocumentation = async (url: string) => {
     setLoading(true);
+    setIframeLoading(true);
     setError(null);
     
+    // Clear any existing timeout
+    if (loadTimeout) {
+      clearTimeout(loadTimeout);
+    }
+    
     try {
-      // Instead of fetching content, directly load the webpage in iframe
+      // Parse URL to handle fragments properly
+      const urlObj = new URL(url);
+      const baseUrl = urlObj.origin + urlObj.pathname + urlObj.search;
+      const fragment = urlObj.hash;
+      
+      console.log('Loading documentation:', { url, baseUrl, fragment });
+      
+      // Set initial state with the full URL (including fragment)
       setSelectedDoc({
-        content: "", // We'll use iframe instead of content
+        content: "",
         title: "Loading Documentation...",
-        url: url
+        url: url, // Use full URL with fragment
+        originalUrl: url,
+        fragment: fragment
       });
       
-      // Simulate loading time for better UX
+      // Set a timeout to catch cases where iframe never loads
+      const timeout = setTimeout(() => {
+        console.warn('Iframe loading timeout, offering fallback options');
+        setIframeLoading(false);
+        setError('The documentation is taking longer than expected to load. This might be due to network issues or security restrictions.');
+      }, 15000); // 15 second timeout
+      
+      setLoadTimeout(timeout);
+      
+      // Simulate loading time for better UX and allow iframe to load
       setTimeout(() => {
         setSelectedDoc({
-          content: "", // Content will be loaded via iframe
+          content: "",
           title: url.includes('/introduction/') ? 'Introduction to Jac' : 
                  url.includes('/nodes_and_edges/') ? 'Nodes and Edges' :
                  url.includes('/quickstart/') ? 'AI Integration Quickstart' :
@@ -92,7 +130,9 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
                  url.includes('/playground/') ? 'Jac Playground' :
                  url.includes('/cli/') ? 'CLI Tools' :
                  'Jac Documentation',
-          url: url
+          url: url,
+          originalUrl: url,
+          fragment: fragment
         });
         setLoading(false);
       }, 500);
@@ -101,6 +141,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
       console.error('Error loading documentation:', err);
       setError('Failed to load documentation');
       setLoading(false);
+      setIframeLoading(false);
     }
   };
 
@@ -161,16 +202,32 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
 
           {error && (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-red-400 text-center">
-                <p>{error}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-2"
-                  onClick={() => setError(null)}
-                >
-                  Try Again
-                </Button>
+              <div className="text-red-400 text-center max-w-md p-4">
+                <p className="mb-4">{error}</p>
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setError(null);
+                      setIframeKey(prev => prev + 1);
+                      setIframeLoading(true);
+                    }}
+                  >
+                    Retry Loading
+                  </Button>
+                  {selectedDoc && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => window.open(selectedDoc.originalUrl || selectedDoc.url, '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Open in New Tab
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -182,7 +239,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(selectedDoc.url, '_blank')}
+                    onClick={() => window.open(selectedDoc.originalUrl || selectedDoc.url, '_blank')}
                     className="flex items-center gap-2"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -192,11 +249,61 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
               </div>
               
               <div className="flex-1 relative">
+                {/* Loading overlay for iframe */}
+                {(loading || iframeLoading) && (
+                  <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-10">
+                    <div className="flex items-center gap-2 text-white">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Loading documentation...
+                    </div>
+                  </div>
+                )}
+                
                 <iframe
+                  key={`${selectedDoc.url}-${iframeKey}`} // Force re-render when URL changes
                   src={selectedDoc.url}
                   className="w-full h-full border-0"
                   title={selectedDoc.title}
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
+                  onLoad={(e) => {
+                    console.log('Iframe loaded successfully:', selectedDoc.url);
+                    
+                    // Clear timeout since iframe loaded successfully
+                    if (loadTimeout) {
+                      clearTimeout(loadTimeout);
+                      setLoadTimeout(null);
+                    }
+                    
+                    setIframeLoading(false);
+                    setError(null);
+                    
+                    // Additional check to see if iframe content is actually visible
+                    setTimeout(() => {
+                      const iframe = e.target as HTMLIFrameElement;
+                      try {
+                        // Try to check if iframe has any content
+                        const iframeDoc = iframe.contentDocument;
+                        if (iframeDoc && iframeDoc.body && iframeDoc.body.innerHTML.trim() === '') {
+                          console.warn('Iframe appears to be empty, this might be a loading issue');
+                        }
+                      } catch (corsError) {
+                        // Expected if there are CORS restrictions
+                        console.log('Cannot access iframe content due to CORS (this is normal)');
+                      }
+                    }, 2000);
+                  }}
+                  onError={(e) => {
+                    console.error('Iframe loading error:', e);
+                    
+                    // Clear timeout
+                    if (loadTimeout) {
+                      clearTimeout(loadTimeout);
+                      setLoadTimeout(null);
+                    }
+                    
+                    setIframeLoading(false);
+                    setError('Failed to load documentation page. This may be due to network issues or the page being temporarily unavailable.');
+                  }}
                   style={{
                     background: 'white',
                     minHeight: '100%'
