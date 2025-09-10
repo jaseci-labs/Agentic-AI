@@ -59,9 +59,23 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
   }, [suggestions, isVisible]);
 
   const handleSuggestionClick = (suggestion: DocumentationSuggestion) => {
-    // Open all documentation links in a new tab
-    window.open(suggestion.url, '_blank', 'noopener,noreferrer');
-  };  const handleBackToSuggestions = () => {
+    setLoading(true);
+    setError(null);
+    
+    // Set the selected doc to load in iframe
+    setSelectedDoc({
+      content: "", // We'll use iframe instead of content
+      title: suggestion.title,
+      url: suggestion.url
+    });
+    
+    // Set loading to false after a short delay to show the iframe
+    setTimeout(() => {
+      setLoading(false);
+    }, 500);
+  };
+
+  const handleBackToSuggestions = () => {
     setSelectedDoc(null);
     setError(null);
   };
@@ -146,19 +160,10 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
               
               <div className="flex-1 relative">
                 <iframe
-                  key={iframeKey}
                   src={selectedDoc.url}
                   className="w-full h-full border-0"
                   title={selectedDoc.title}
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
-                  onLoad={() => {
-                    setLoading(false);
-                    console.log('Iframe loaded:', selectedDoc.url);
-                  }}
-                  onError={() => {
-                    setError('Failed to load documentation page');
-                    setLoading(false);
-                  }}
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                   style={{
                     background: 'white',
                     minHeight: '100%'
@@ -190,13 +195,13 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
                         key={index} 
                         className="p-4 bg-gray-800 border-gray-700 cursor-pointer hover:bg-gray-750 transition-colors"
                         onClick={() => handleSuggestionClick(suggestion)}
-                        title={`Click to open ${suggestion.title} in a new tab`}
+                        title={`Click to view ${suggestion.title}`}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h4 className="font-medium text-white mb-2 flex items-center gap-2">
                               {suggestion.title}
-                              <ExternalLink className="w-4 h-4 text-gray-400" />
+                              <ChevronRight className="w-4 h-4 text-gray-400" />
                             </h4>
                             <p className="text-sm text-gray-400 mb-2">
                               {suggestion.reason}
