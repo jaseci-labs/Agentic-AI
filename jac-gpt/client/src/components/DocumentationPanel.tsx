@@ -31,6 +31,14 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
   const [error, setError] = useState<string | null>(null);
   const [iframeKey, setIframeKey] = useState(0); // Force iframe reload
 
+  // Function to ensure HTTPS protocol for jac-lang.org URLs
+  const ensureHttpsUrl = (url: string): string => {
+    if (url.includes('jac-lang.org') && url.startsWith('http://')) {
+      return url.replace('http://', 'https://');
+    }
+    return url;
+  };
+
   // Default documentation suggestions
   const defaultSuggestions: DocumentationSuggestion[] = [
     {
@@ -62,11 +70,14 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
     setLoading(true);
     setError(null);
     
+    // Ensure HTTPS URL for jac-lang.org domains
+    const secureUrl = ensureHttpsUrl(suggestion.url);
+    
     // Set the selected doc to load in iframe
     setSelectedDoc({
       content: "", // We'll use iframe instead of content
       title: suggestion.title,
-      url: suggestion.url
+      url: secureUrl
     });
     
     // Set loading to false after a short delay to show the iframe
@@ -149,7 +160,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(selectedDoc.url, '_blank')}
+                    onClick={() => window.open(ensureHttpsUrl(selectedDoc.url), '_blank')}
                     className="flex items-center gap-2"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -160,7 +171,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
               
               <div className="flex-1 relative">
                 <iframe
-                  src={selectedDoc.url}
+                  src={ensureHttpsUrl(selectedDoc.url)}
                   className="w-full h-full border-0"
                   title={selectedDoc.title}
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -208,7 +219,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
                             </p>
                             <div className="flex items-center gap-2">
                               <p className="text-xs text-blue-400 hover:text-blue-300">
-                                {suggestion.url}
+                                {ensureHttpsUrl(suggestion.url)}
                               </p>
                             </div>
                           </div>

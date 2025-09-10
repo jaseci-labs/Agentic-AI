@@ -20,6 +20,16 @@ class DocumentationService {
   }
 
   /**
+   * Ensure HTTPS protocol for jac-lang.org URLs
+   */
+  private ensureHttpsUrl(url: string): string {
+    if (url.includes('jac-lang.org') && url.startsWith('http://')) {
+      return url.replace('http://', 'https://');
+    }
+    return url;
+  }
+
+  /**
    * Get documentation suggestions based on a message
    */
   async getSuggestions(message: string, chatHistory: Array<any> = []): Promise<DocumentationSuggestion[]> {
@@ -45,7 +55,7 @@ class DocumentationService {
         const report = data.reports[0];
         return report.suggestions.map((suggestion: any) => ({
           title: suggestion.title,
-          url: suggestion.url,
+          url: this.ensureHttpsUrl(suggestion.url),
           reason: suggestion.reason
         }));
       } else {
@@ -295,8 +305,11 @@ class DocumentationService {
       );
     }
 
-    // Return top 3 suggestions without score
-    return suggestions.slice(0, 3).map(({ score, ...suggestion }) => suggestion);
+    // Return top 3 suggestions without score, ensuring HTTPS URLs
+    return suggestions.slice(0, 3).map(({ score, ...suggestion }) => ({
+      ...suggestion,
+      url: this.ensureHttpsUrl(suggestion.url)
+    }));
   }
 
   /**
