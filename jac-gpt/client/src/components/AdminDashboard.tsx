@@ -73,7 +73,7 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       console.log('🔍 Fetching users with requester_email:', user?.email);
-      console.log('🔍 API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
+      console.log('🔍 API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8080');
       
       // Get auth token for headers
       const token = localStorage.getItem('auth_token');
@@ -88,7 +88,7 @@ const AdminDashboard = () => {
         console.log('🔍 Added Authorization header');
       }
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_users`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/walker/get_all_users`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ requester_email: user?.email }),
@@ -138,7 +138,7 @@ const AdminDashboard = () => {
         console.log('🔍 Added Authorization header');
       }
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_all_sessions_admin`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/walker/get_all_sessions_admin`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ requester_email: user?.email }),
@@ -186,7 +186,7 @@ const AdminDashboard = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/walker/get_session_messages_admin`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ 
@@ -230,7 +230,7 @@ const AdminDashboard = () => {
       // First get all sessions with their messages
       for (const session of sessions) {
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/get_session_messages_admin`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/walker/get_session_messages_admin`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ 
