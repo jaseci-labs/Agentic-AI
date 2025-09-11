@@ -1,151 +1,170 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Share2, Clock, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { MessageCircle, Share2, Clock, UserPlus, X, Calendar, MapPin, Users, ImageIcon, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AuthApi, SavedMemory } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
-interface SharedMemory {
-  id: string;
-  user: {
-    name: string;
-    avatar: string;
-    username: string;
+
+const SharedMemoryCard = ({ memory, token, user, onReject }: { 
+  memory: SavedMemory; 
+  token: string; 
+  user: any;
+  onReject: (memoryId: string) => void;
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const handleReject = async () => {
+    setIsRejecting(true);
+    try {
+      await AuthApi.rejectMemory(token, { memory_ids: [memory.memory_id] });
+      toast({
+        title: "Memory rejected",
+        description: "The shared memory has been removed from your feed.",
+      });
+      onReject(memory.memory_id);
+    } catch (error) {
+      console.error('Failed to reject memory:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reject memory. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRejecting(false);
+    }
   };
-  sharedBy: {
-    name: string;
-    avatar: string;
-    username: string;
+
+  const getDisplayName = (ownerEmail?: string) => {
+    if (!ownerEmail) return "Unknown User";
+    return ownerEmail.split('@')[0];
   };
-  image: string;
-  caption: string;
-  timestamp: string;
-  comments: number;
-}
 
-const mockSharedMemories: SharedMemory[] = [
-  {
-    id: "1",
-    user: {
-      name: "Maya Rodriguez",
-      avatar: "/placeholder-avatar.jpg",
-      username: "mayar"
-    },
-    sharedBy: {
-      name: "Alex Johnson",
-      avatar: "/placeholder-avatar.jpg",
-      username: "alexj"
-    },
-    image: "/placeholder-memory.jpg",
-    caption: "That amazing trip to the mountains last summer! 🏔️",
-    timestamp: "1 hour ago",
-    comments: 15
-  },
-  {
-    id: "2",
-    user: {
-      name: "David Kim", 
-      avatar: "/placeholder-avatar.jpg",
-      username: "davidk"
-    },
-    sharedBy: {
-      name: "Sarah Chen",
-      avatar: "/placeholder-avatar.jpg",
-      username: "sarahc"
-    },
-    image: "/placeholder-memory.jpg",
-    caption: "Graduation day memories with the squad 🎓",
-    timestamp: "3 hours ago",
-    comments: 22
-  }
-];
-
-const SharedMemoryCard = ({ memory }: { memory: SharedMemory }) => {
-  const [showComments, setShowComments] = useState(false);
+  const getInitials = (ownerEmail?: string) => {
+    if (!ownerEmail) return "U";
+    return ownerEmail.charAt(0).toUpperCase();
+  };
 
   return (
     <Card className="mb-6 shadow-soft hover:shadow-medium transition-all">
       {/* Shared Memory Header */}
       <div className="p-4">
         {/* Shared by indicator */}
-        <div className="flex items-center space-x-2 mb-3 p-2 bg-accent/50 rounded-lg">
-          <Share2 className="w-4 h-4 text-primary" />
-          <span className="text-sm text-muted-foreground">
-            Shared by <span className="font-medium text-foreground">{memory.sharedBy.name}</span>
-          </span>
+        <div className="flex items-center justify-between mb-3 p-2 bg-accent/50 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <Share2 className="w-4 h-4 text-primary" />
+            <span className="text-sm text-muted-foreground">
+              Shared memory from <span className="font-medium text-foreground">{getDisplayName(memory.owner_email)}</span>
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleReject}
+            disabled={isRejecting}
+            className="text-muted-foreground hover:text-destructive w-6 h-6 p-0"
+          >
+            {isRejecting ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <X className="w-3 h-3" />
+            )}
+          </Button>
         </div>
         
         {/* Original poster */}
         <div className="flex items-center space-x-3">
           <Avatar className="w-10 h-10">
-            <AvatarImage src={memory.user.avatar} />
             <AvatarFallback className="bg-primary-soft text-primary">
-              {memory.user.name.charAt(0)}
+              {getInitials(memory.owner_email)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h3 className="font-semibold text-sm">{memory.user.name}</h3>
+            <h3 className="font-semibold text-sm">{getDisplayName(memory.owner_email)}</h3>
             <div className="flex items-center text-xs text-muted-foreground">
               <Clock className="w-3 h-3 mr-1" />
-              {memory.timestamp}
+              {memory.created_at ? new Date(memory.created_at).toLocaleDateString() : memory.when}
             </div>
           </div>
         </div>
       </div>
 
       {/* Memory Image */}
-      <div className="relative aspect-square bg-muted rounded-lg mx-4">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <div className="w-16 h-16 bg-gradient-soft rounded-full flex items-center justify-center mb-2 mx-auto">
-              📷
+      <div className="relative aspect-square bg-muted rounded-lg mx-4 overflow-hidden">
+        {memory.image_url ? (
+          <img 
+            src={memory.image_url} 
+            alt={memory.summary || "Shared Memory"} 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <div className="w-16 h-16 bg-gradient-soft rounded-full flex items-center justify-center mb-2 mx-auto">
+                <ImageIcon className="w-8 h-8" />
+              </div>
+              <p className="text-sm">Shared Memory</p>
             </div>
-            <p className="text-sm">Shared Memory</p>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Memory Content */}
       <CardContent className="p-4">
-        <p className="text-sm mb-4">{memory.caption}</p>
+        {memory.summary && <p className="text-sm mb-4">{memory.summary}</p>}
+        
+        {/* Memory Details */}
+        {memory.when && (
+          <div className="flex items-center text-xs text-muted-foreground mb-2">
+            <Calendar className="w-3 h-3 mr-2" />
+            {memory.when}
+          </div>
+        )}
+        {memory.where && memory.where.length > 0 && (
+          <div className="flex items-center text-xs text-muted-foreground mb-2">
+            <MapPin className="w-3 h-3 mr-2" />
+            {memory.where.join(', ')}
+          </div>
+        )}
+        {memory.who && memory.who.length > 0 && (
+          <div className="flex items-center text-xs text-muted-foreground mb-4">
+            <Users className="w-3 h-3 mr-2" />
+            {memory.who.join(', ')}
+          </div>
+        )}
         
         {/* Action Buttons */}
         <div className="flex items-center space-x-4">
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => setShowComments(!showComments)}
+            onClick={() => setShowDetails(!showDetails)}
             className="text-muted-foreground hover:text-primary"
           >
             <MessageCircle className="w-4 h-4 mr-2" />
-            {memory.comments} comments
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-muted-foreground hover:text-primary"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share
+            {showDetails ? 'Hide' : 'Show'} conversation
           </Button>
         </div>
 
-        {/* Comments Section */}
-        {showComments && (
+        {/* Conversation Details */}
+        {showDetails && memory.conversation && memory.conversation.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-2">Recent comments</p>
+            <p className="text-xs text-muted-foreground mb-2">Conversation</p>
             <div className="space-y-2">
-              <div className="flex items-start space-x-2">
-                <Avatar className="w-6 h-6">
-                  <AvatarFallback className="bg-secondary-soft text-secondary text-xs">
-                    {memory.sharedBy.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-xs">
-                    <span className="font-medium">{memory.sharedBy.name}</span> Love this memory! 💕
-                  </p>
+              {memory.conversation.map((msg, index) => (
+                <div key={index} className="text-xs">
+                  {msg.user && (
+                    <div className="mb-1">
+                      <span className="font-medium text-primary">{getDisplayName(memory.owner_email)}:</span> {msg.user}
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium text-accent-foreground">Assistant:</span> {msg.assistant}
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         )}
@@ -155,7 +174,34 @@ const SharedMemoryCard = ({ memory }: { memory: SharedMemory }) => {
 };
 
 const SharedMemoriesFeed = ({ token, user }: { token: string; user: any }) => {
+  const [sharedMemories, setSharedMemories] = useState<SavedMemory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   console.log("SharedMemoriesFeed: rendering with token:", token, "and user:", user);
+
+  const fetchSharedMemories = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedMemories = await AuthApi.getSharedMemories(token);
+      setSharedMemories(fetchedMemories);
+    } catch (error) {
+      console.error('Failed to fetch shared memories:', error);
+      setSharedMemories([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRejectMemory = (memoryId: string) => {
+    setSharedMemories(prev => prev.filter(memory => memory.memory_id !== memoryId));
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchSharedMemories();
+    }
+  }, [token]);
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
@@ -163,13 +209,26 @@ const SharedMemoriesFeed = ({ token, user }: { token: string; user: any }) => {
         <p className="text-muted-foreground">Memories your friends have shared with you</p>
       </div>
       
-      {mockSharedMemories.length > 0 ? (
-        mockSharedMemories.map((memory) => (
-          <SharedMemoryCard key={memory.id} memory={memory} />
+      {isLoading ? (
+        <Card className="p-8 text-center">
+          <div className="text-muted-foreground">
+            <div className="w-6 h-6 mx-auto mb-4 animate-spin">⚪</div>
+            <p className="text-sm">Loading shared memories...</p>
+          </div>
+        </Card>
+      ) : sharedMemories.length > 0 ? (
+        sharedMemories.map((memory) => (
+          <SharedMemoryCard 
+            key={memory.memory_id} 
+            memory={memory} 
+            token={token}
+            user={user}
+            onReject={handleRejectMemory}
+          />
         ))
       ) : (
         <Card className="text-center p-8 shadow-soft">
-          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4">
             <Share2 className="w-8 h-8 text-white" />
           </div>
           <h3 className="font-semibold mb-2">No shared memories yet</h3>

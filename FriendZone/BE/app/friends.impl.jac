@@ -39,9 +39,8 @@ impl send_friend_request.send_friend_request with profile entry {
             logger.debug(f"friends | send_friend_request | Friend request sent successfully to {reciver['email']}");
             grant_permission(node=received_request_edge, permission_level="WRITE", root_id=reciver["root_id"]);
             report {
-                "status": "success",
-                "message": f"Friend request sent to {reciver['email']}",
                 "status": FriendRequestStatus.PENDING.value,
+                "message": f"Friend request sent to {reciver['email']}",
                 "user_email": reciver["email"]
             };
         }
@@ -228,4 +227,38 @@ impl get_friends.get_friends with profile entry {
             }
         }
     }
+}
+
+impl list_users.get_all_users with `root entry {
+    current_user = _.get_context().connection._user;
+    nodes = get_nodes(node_type_str="profile");
+    users = [];
+    for profile in nodes {
+        if not profile.email {
+            continue;
+        }
+        users.append(
+            {
+                "email" : profile.email , 
+                "firstName" : profile.first_name , 
+                "lastName" : profile.last_name , 
+                "profile_picture_url" : profile.profile_picture_url 
+            }
+        );
+    }
+    ::py::
+    sorted_users = sorted(users, key=lambda x: x["email"], reverse=False)
+    ::py::
+    start_index = (self.page - 1) * self.page_size;
+    end_index = start_index + self.page_size;
+    paginated_users = sorted_users[start_index:end_index];
+    total_pages = (len(sorted_users) + self.page_size - 1) // self.page_size;
+    payload = {
+        "users": paginated_users,
+        "total_users": len(sorted_users),
+        "total_pages": total_pages,
+        "current_page": self.page,
+        "page_size": self.page_size,
+    };
+    report payload;
 }

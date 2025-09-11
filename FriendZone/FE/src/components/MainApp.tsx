@@ -2,12 +2,14 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
-import MemoryFeed from "@/components/MemoryFeed";
+import MemoryFeed, { Memory } from "@/components/MemoryFeed";
 import SharedMemoriesFeed from "@/components/SharedMemoriesFeed";
 import FriendsSection from "@/components/FriendsSection";
 import ProfileSection from "@/components/ProfileSection";
+import ImageUpload from "@/components/ImageUpload";
 import { Heart, Users, Share2, User } from "lucide-react";
 import { User as UserType } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 interface MainAppProps {
   user: UserType;
@@ -16,6 +18,15 @@ interface MainAppProps {
 
 export const MainApp = ({ user, onLogout }: MainAppProps) => {
   const [activeTab, setActiveTab] = React.useState("memories");
+  const [memoriesUpdateTrigger, setMemoriesUpdateTrigger] = React.useState(0);
+
+  const handleImageUploaded = (publicUrl: string) => {
+    console.log("Image uploaded:", publicUrl);
+  };
+
+  const handleMemoryCreated = () => {
+    setMemoriesUpdateTrigger(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-soft">
@@ -64,7 +75,18 @@ export const MainApp = ({ user, onLogout }: MainAppProps) => {
             </TabsList>
 
             <TabsContent value="memories" className="mt-6">
-              <MemoryFeed token={localStorage.getItem("token") || ""} user={user} />
+              <div className="max-w-2xl mx-auto">
+                <ImageUpload 
+                  token={localStorage.getItem("token") || ""} 
+                  onImageUploaded={handleImageUploaded}
+                  onMemoryCreated={handleMemoryCreated}
+                />
+                <MemoryFeed 
+                  token={localStorage.getItem("token") || ""} 
+                  user={user} 
+                  memoriesUpdateTrigger={memoriesUpdateTrigger}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="shared" className="mt-6">

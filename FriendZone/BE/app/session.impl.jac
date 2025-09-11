@@ -15,6 +15,7 @@ impl init_session.initialize_session with sessions entry {
 
 impl init_session.update_session with session entry {
     logger.debug("session | init_session | updating session");
+    city = None;
     if self.location.latitude and self.location.longitude {
         logger.debug("session | init_session | fetching city for provided coordinates");
         city = google_location_service.get_city(
