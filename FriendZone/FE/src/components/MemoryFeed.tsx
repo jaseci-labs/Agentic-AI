@@ -240,7 +240,7 @@ const MemoryCard = ({ memory, user, token, friends, onUpdate }: {
                       <div>
                         <p className="text-sm font-medium">
                           {friend.first_name || friend.last_name 
-                            ? `${friend.first_name} ${friend.last_name}`.trim()
+                            ? `${friend.first_name || ''} ${friend.last_name || ''}`.trim()
                             : friend.email.split('@')[0]
                           }
                         </p>

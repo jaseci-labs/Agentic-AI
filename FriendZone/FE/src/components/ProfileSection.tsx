@@ -164,7 +164,7 @@ const ProfileSection = ({ token }: { token: string; user: any }) => {
   const getDisplayName = () => {
     if (!profileData) return "Loading...";
     if (profileData.first_name || profileData.last_name) {
-      return `${profileData.first_name} ${profileData.last_name}`.trim();
+      return `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
     }
     return profileData.email.split('@')[0];
   };

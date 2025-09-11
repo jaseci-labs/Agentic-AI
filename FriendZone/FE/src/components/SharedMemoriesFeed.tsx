@@ -3,16 +3,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Share2, Clock, UserPlus, X, Calendar, MapPin, Users, ImageIcon, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { AuthApi, SavedMemory } from "@/lib/api";
+import { AuthApi, SharedMemoryItem } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 
-const SharedMemoryCard = ({ memory, token, user, onReject }: { 
-  memory: SavedMemory; 
+const SharedMemoryCard = ({ sharedMemoryItem, token, user, onReject }: { 
+  sharedMemoryItem: SharedMemoryItem; 
   token: string; 
   user: any;
   onReject: (memoryId: string) => void;
 }) => {
+  const { memory, shared_by } = sharedMemoryItem;
   const [showDetails, setShowDetails] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
@@ -37,14 +38,27 @@ const SharedMemoryCard = ({ memory, token, user, onReject }: {
     }
   };
 
-  const getDisplayName = (ownerEmail?: string) => {
-    if (!ownerEmail) return "Unknown User";
-    return ownerEmail.split('@')[0];
+  const getDisplayName = () => {
+    if (shared_by.first_name || shared_by.last_name) {
+      return `${shared_by.first_name} ${shared_by.last_name}`.trim();
+    }
+    if (shared_by.email) {
+      return shared_by.email.split('@')[0];
+    }
+    return "Unknown User";
   };
 
-  const getInitials = (ownerEmail?: string) => {
-    if (!ownerEmail) return "U";
-    return ownerEmail.charAt(0).toUpperCase();
+  const getInitials = () => {
+    if (shared_by.first_name && shared_by.last_name) {
+      return `${shared_by.first_name.charAt(0)}${shared_by.last_name.charAt(0)}`.toUpperCase();
+    }
+    if (shared_by.first_name) {
+      return shared_by.first_name.charAt(0).toUpperCase();
+    }
+    if (shared_by.email) {
+      return shared_by.email.charAt(0).toUpperCase();
+    }
+    return "U";
   };
 
   return (
@@ -56,7 +70,7 @@ const SharedMemoryCard = ({ memory, token, user, onReject }: {
           <div className="flex items-center space-x-2">
             <Share2 className="w-4 h-4 text-primary" />
             <span className="text-sm text-muted-foreground">
-              Shared memory from <span className="font-medium text-foreground">{getDisplayName(memory.owner_email)}</span>
+              Shared memory from <span className="font-medium text-foreground">{getDisplayName()}</span>
             </span>
           </div>
           <Button
@@ -77,12 +91,15 @@ const SharedMemoryCard = ({ memory, token, user, onReject }: {
         {/* Original poster */}
         <div className="flex items-center space-x-3">
           <Avatar className="w-10 h-10">
+            {shared_by.profile_picture_url ? (
+              <AvatarImage src={shared_by.profile_picture_url} alt={getDisplayName()} />
+            ) : null}
             <AvatarFallback className="bg-primary-soft text-primary">
-              {getInitials(memory.owner_email)}
+              {getInitials()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h3 className="font-semibold text-sm">{getDisplayName(memory.owner_email)}</h3>
+            <h3 className="font-semibold text-sm">{getDisplayName()}</h3>
             <div className="flex items-center text-xs text-muted-foreground">
               <Clock className="w-3 h-3 mr-1" />
               {memory.created_at ? new Date(memory.created_at).toLocaleDateString() : memory.when}
@@ -157,7 +174,7 @@ const SharedMemoryCard = ({ memory, token, user, onReject }: {
                 <div key={index} className="text-xs">
                   {msg.user && (
                     <div className="mb-1">
-                      <span className="font-medium text-primary">{getDisplayName(memory.owner_email)}:</span> {msg.user}
+                      <span className="font-medium text-primary">{getDisplayName()}:</span> {msg.user}
                     </div>
                   )}
                   <div>
@@ -174,7 +191,7 @@ const SharedMemoryCard = ({ memory, token, user, onReject }: {
 };
 
 const SharedMemoriesFeed = ({ token, user }: { token: string; user: any }) => {
-  const [sharedMemories, setSharedMemories] = useState<SavedMemory[]>([]);
+  const [sharedMemories, setSharedMemories] = useState<SharedMemoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   console.log("SharedMemoriesFeed: rendering with token:", token, "and user:", user);
@@ -193,7 +210,7 @@ const SharedMemoriesFeed = ({ token, user }: { token: string; user: any }) => {
   };
 
   const handleRejectMemory = (memoryId: string) => {
-    setSharedMemories(prev => prev.filter(memory => memory.memory_id !== memoryId));
+    setSharedMemories(prev => prev.filter(item => item.memory.memory_id !== memoryId));
   };
 
   useEffect(() => {
@@ -217,10 +234,10 @@ const SharedMemoriesFeed = ({ token, user }: { token: string; user: any }) => {
           </div>
         </Card>
       ) : sharedMemories.length > 0 ? (
-        sharedMemories.map((memory) => (
+        sharedMemories.map((sharedMemoryItem) => (
           <SharedMemoryCard 
-            key={memory.memory_id} 
-            memory={memory} 
+            key={sharedMemoryItem.memory.memory_id} 
+            sharedMemoryItem={sharedMemoryItem} 
             token={token}
             user={user}
             onReject={handleRejectMemory}

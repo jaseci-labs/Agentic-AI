@@ -2,7 +2,7 @@ import from memory { visit_memory }
 import from pydantic { EmailStr }
 import from jac_cloud.jaseci.utils.logger { logger }
 import from friends { get_friends }
-import from jaseci_sdk { get_user_by_email, get_node_by_root_id, grant_permission, revoke_permission }
+import from jaseci_sdk { get_user_by_email, get_node_by_root_id, grant_permission, revoke_permission, get_node_owner }
 import from profile { visit_profile }
 import from datetime { datetime }
 import from nodes_and_edges { profile, memory, shared_memory }

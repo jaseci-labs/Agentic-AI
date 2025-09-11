@@ -230,19 +230,35 @@ impl get_friends.get_friends with profile entry {
 }
 
 impl list_users.get_all_users with `root entry {
-    current_user = _.get_context().connection._user;
+    current_user = get_current_user();
+    walker_obj = root spawn get_friends(if_report=False);
+    current_user_friends = walker_obj.friends;
     nodes = get_nodes(node_type_str="profile");
     users = [];
     for profile in nodes {
         if not profile.email {
             continue;
         }
+
+        if profile.email == current_user["email"] {
+            continue;
+        }
+
+        is_friend = False;
+        for friend in current_user_friends {
+            if friend["email"] == profile.email {
+                is_friend = True;
+                break;
+            }
+        }
+
         users.append(
             {
                 "email" : profile.email , 
                 "firstName" : profile.first_name , 
                 "lastName" : profile.last_name , 
-                "profile_picture_url" : profile.profile_picture_url 
+                "profile_picture_url" : profile.profile_picture_url,
+                "is_friend": is_friend
             }
         );
     }

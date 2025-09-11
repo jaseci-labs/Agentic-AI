@@ -191,7 +191,7 @@ const FriendsSection = ({ token }: { token: string; user: any }) => {
 
   const getDisplayName = (person: Friend | FriendRequest) => {
     if (person.first_name || person.last_name) {
-      return `${person.first_name} ${person.last_name}`.trim();
+      return `${person.first_name || ''} ${person.last_name || ''}`.trim();
     }
     return person.email.split('@')[0];
   };
@@ -478,29 +478,72 @@ const FriendsSection = ({ token }: { token: string; user: any }) => {
                         <div className="flex-1">
                           <h3 className="font-semibold">
                             {user.first_name || user.last_name 
-                              ? `${user.first_name} ${user.last_name}`.trim()
+                              ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
                               : user.email.split('@')[0]
                             }
                           </h3>
                           <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                         <div className="flex space-x-2">
-                          <Button 
-                            variant="default"
-                            size="sm"
-                            onClick={() => handleSendFriendRequestToUser(user.email)}
-                            disabled={actionLoading === user.email}
-                            className="bg-gradient-hero hover:opacity-90"
-                          >
-                            {actionLoading === user.email ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <>
-                                <UserPlus className="w-3 h-3 mr-1" />
-                                Add
-                              </>
-                            )}
-                          </Button>
+                          {user.is_friend ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium">
+                                ✓ Friends
+                              </span>
+                              <Button variant="ghost" size="sm">
+                                <MessageCircle className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : sentRequests.some(req => req.email === user.email) ? (
+                            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium">
+                              Request Sent
+                            </span>
+                          ) : receivedRequests.some(req => req.email === user.email) ? (
+                            <div className="flex items-center space-x-1">
+                              <Button 
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleAcceptRequest(user.email)}
+                                disabled={actionLoading === user.email}
+                                className="bg-gradient-hero hover:opacity-90 text-xs px-2"
+                              >
+                                {actionLoading === user.email ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Check className="w-3 h-3 mr-1" />
+                                    Accept
+                                  </>
+                                )}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleRejectRequest(user.email)}
+                                disabled={actionLoading === user.email}
+                                className="text-xs px-2"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button 
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleSendFriendRequestToUser(user.email)}
+                              disabled={actionLoading === user.email}
+                              className="bg-gradient-hero hover:opacity-90"
+                            >
+                              {actionLoading === user.email ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <UserPlus className="w-3 h-3 mr-1" />
+                                  Add
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>

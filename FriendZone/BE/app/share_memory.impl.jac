@@ -107,19 +107,41 @@ impl get_shared_memories.get_shared_memories with profile entry {
     logger.debug(f"friends | get_shared_memories | Retrieved {len(self.shared_memories)} shared memories");
     response = [];
     for memory in self.shared_memories {
-        response.append({
-            "memory_id": memory.memory_id,
-            "session_id": memory.session_id,
-            "summary": memory.summary,
-            "when": memory.when,
-            "who": memory.who,
-            "where": memory.where,
-            "what": memory.what,
-            "created_at": memory.created_at,
-            "updated_at": memory.updated_at,
-            "image_url": memory.image_url,
-            "conversation": memory.conversation
-        });
+        memory_owner = get_node_owner(memory);
+        if not memory_owner {
+            logger.error(f"friends | get_shared_memories | Memory owner not found for {memory.memory_id}");
+            continue;
+        }
+
+        memory_owner_profile = get_node_by_root_id(root_id=memory_owner["root_id"], node_type="profile");
+        if not memory_owner_profile {
+            logger.error(f"friends | get_shared_memories | Memory owner profile not found for {memory_owner.email}");
+            continue;
+        }
+
+        response_item = {
+            "memory" : {
+                "memory_id": memory.memory_id,
+                "session_id": memory.session_id,
+                "summary": memory.summary,
+                "when": memory.when,
+                "who": memory.who,
+                "where": memory.where,
+                "what": memory.what,
+                "created_at": memory.created_at,
+                "updated_at": memory.updated_at,
+                "image_url": memory.image_url,
+                "conversation": memory.conversation
+            },
+            "shared_by": {
+                "email": memory_owner["email"],
+                "root_id": memory_owner["root_id"],
+                "first_name": memory_owner_profile.first_name,
+                "last_name": memory_owner_profile.last_name,
+                "profile_picture_url": memory_owner_profile.profile_picture_url
+            }
+        };
+        response.append(response_item);
     }
     if self.if_report {
         report response;

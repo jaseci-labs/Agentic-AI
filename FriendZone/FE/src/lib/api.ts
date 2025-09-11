@@ -55,6 +55,7 @@ export interface UserProfile {
   first_name: string;
   last_name: string;
   profile_picture_url: string;
+  is_friend: boolean;
 }
 
 export interface ListUsersRequest {
@@ -176,6 +177,19 @@ export interface SavedMemory {
   show_summary?: boolean;
   shared_with?: string[];
   owner_email?: string;
+}
+
+export interface SharedBy {
+  email: string;
+  root_id: string;
+  first_name: string;
+  last_name: string;
+  profile_picture_url: string;
+}
+
+export interface SharedMemoryItem {
+  memory: SavedMemory;
+  shared_by: SharedBy;
 }
 
 export interface ShareMemoryRequest {
@@ -567,7 +581,7 @@ export class AuthApi {
     return data.reports[0];
   }
 
-  static async getSharedMemories(token: string): Promise<SavedMemory[]> {
+  static async getSharedMemories(token: string): Promise<SharedMemoryItem[]> {
     const response = await fetch(`${HOST}/walker/get_shared_memories`, {
       method: 'POST',
       headers: this.getAuthHeaders(token),
@@ -582,7 +596,7 @@ export class AuthApi {
     
     // Handle the nested array structure in the response
     if (data.reports && data.reports.length > 0 && Array.isArray(data.reports[0])) {
-      return data.reports[0]; // Return the first array which contains the memories
+      return data.reports[0]; // Return the first array which contains the shared memory items
     }
     
     return [];
