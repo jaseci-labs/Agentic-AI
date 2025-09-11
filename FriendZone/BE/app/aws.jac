@@ -24,6 +24,7 @@ obj AWSConnector {
         content_type: str = "image/png",
     ) -> Optional[Dict[str, str]] {
         try {
+            logger.debug("aws | generate_upload_links | Generating presigned URL");
             # Pre-signed upload URL
             upload_url = self.s3_client.generate_presigned_url(
                 "put_object",
@@ -36,7 +37,7 @@ obj AWSConnector {
             );
 
             # Public URL
-            public_url = f"https://{bucket_name}.s3.{self.region}.amazonaws.com/{object_name}";
+            public_url = f"https://{bucket_name}.s3.amazonaws.com/{object_name}";
 
             return {"upload_url": upload_url, "public_url": public_url};
 

@@ -2,6 +2,7 @@ import from aws { aws_client }
 import from jac_cloud.jaseci.utils.logger { logger }
 import from utils { get_env_variable }
 import from uuid { uuid4 }
+import from fastapi { HTTPException, status }
 
 
 walker generate_presigned_url {
@@ -19,11 +20,15 @@ walker generate_presigned_url {
             expiration=3600,
             content_type="image/png"
         );
+
         if response {
-            return response;
+            report response;
         } else {
             logger.error("storage | generate_presigned_url | Failed to generate presigned URL");
-            return None;    
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate presigned URL"
+            );
         }
     }
 }
