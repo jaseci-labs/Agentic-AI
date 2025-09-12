@@ -96,3 +96,19 @@ def get_node_by_root_id(root_id: str, node_type: str) {
         return None;
     }
 }
+
+def get_nodes(node_type_str: str, root_id: str = "") -> list {
+    logger.debug(f"jaseci_sdk | get_nodes | node_type: {node_type_str}");
+    filter = {"name": node_type_str};
+    if root_id {
+        logger.debug(f"jaseci_sdk | get_nodes | root_id: {root_id}");
+        filter.update({"root": ObjectId(root_id)});
+    }
+    try {
+        nodes = list(NodeAnchor.Collection.find(filter=filter));
+        return [n.archetype for n in nodes] if nodes else [];
+    } except Exception as e {
+        logger.error(f"jaseci_sdk | get_nodes | error: {e}");
+        return [];
+    }
+}
