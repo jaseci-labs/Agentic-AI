@@ -6,35 +6,9 @@ import from dotenv {load_dotenv}
 import from database {get_database}
 import from rag_engine {RagEngine}
 import from simple_docs {get_sitemap, get_doc_content, suggest_docs}
-import from full_language {full_language}
 
 with entry {
     load_dotenv(override=True);
-    
-    # Check full_language.md file accessibility during server launch
-    print("=== Server Launch: Checking full_language.md accessibility ===");
-    base_path = os.path.dirname(__file__);
-    file_path = os.path.join(base_path, "full_language.md");
-    
-    if os.path.exists(file_path) {
-        try {
-            with open(file_path, "r", encoding="utf-8") as file {
-                content = file.read();
-            }
-            if content.strip() {
-                print(f"✅ SUCCESS: full_language.md is accessible ({len(content)} characters)");
-                print(f"   File path: {file_path}");
-            } else {
-                print("⚠️  WARNING: full_language.md exists but is empty");
-            }
-        } except Exception as e {
-            print(f"❌ ERROR: full_language.md exists but cannot be read - {str(e)}");
-        }
-    } else {
-        print(f"❌ FILE NOT FOUND: full_language.md at {file_path}");
-        print("   Will fallback to embedded string content");
-    }
-    print("=== End accessibility check ===");
 }
 
 glob llm = Model(model_name='gpt-4.1-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
@@ -130,47 +104,22 @@ def search_docs(query: str, chunck_nos: int = 5) -> str {
 
 """Refer `full_language.md` for complete Jac language examples to understand jac syntaxes."""
 def refer_full_language_examples() -> str {
-    # First try to read from full_language.md file
     try {
         base_path = os.path.dirname(__file__);
         file_path = os.path.join(base_path, "full_language.md");
         
-        if os.path.exists(file_path) {
-            with open(file_path, "r", encoding="utf-8") as file {
-                content = file.read();
-            }
-            
-            if content.strip() {
-                print("📁 Using full_language.md file content");
-                return content;
-            } else {
-                print("⚠️  full_language.md file is empty, falling back to embedded string");
-            }
+        with open(file_path, "r", encoding="utf-8") as file {
+            content = file.read();
+        }
+        
+        if content.strip() {
+            return content;
         } else {
-            print("📄 full_language.md not found, using embedded string content");
+            return "Language documentation is empty";
         }
         
-    } except FileNotFoundError {
-        print("📄 full_language.md file not found, using embedded string content");
-    } except PermissionError as e {
-        print(f"🔒 Permission denied reading full_language.md, using embedded string content: {str(e)}");
-    } except Exception as e {
-        print(f"❌ Error reading full_language.md, using embedded string content: {str(e)}");
-    }
-    
-    # Fallback to imported full_language string content
-    try {
-        content = full_language;
-        
-        if not content.strip() {
-            return "ERROR: Both file and embedded full_language content are empty";
-        }
-        
-        print("💾 Using embedded string content");
-        return content;
-        
-    } except Exception as e {
-        return f"ERROR: Failed to access both file and embedded content. Error: {str(e)}";
+    } except Exception {
+        return "Language documentation not available";
     }
 }
 
