@@ -1,0 +1,146 @@
+/* Jac language syntax highlighting styles */
+.jac-code {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.jac-keyword {
+  color: #569cd6;
+  font-weight: 500;
+}
+
+.jac-control-flow {
+  color: #c678dd;
+  font-weight: 500;
+}
+
+.jac-string {
+  color: #ce9178;
+}
+
+.jac-comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.jac-number {
+  color: #b5cea8;
+}
+
+.jac-type {
+  color: #3ac9b0;
+}
+
+.jac-class-name {
+  color: #4ec9b0;
+}
+
+.jac-operator {
+  color: #d4d4d4;
+}
+
+.jac-arrow {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.jac-function {
+  color: #dcdcaa;
+}
+
+.jac-variable {
+  color: #9cdcfe;
+}
+
+.jac-special-keyword {
+  color: #c678dd;
+}
+
+.jac-module {
+  color: #4ec9b0;
+}
+
+.jac-punctuation {
+  color: #d4d4d4;
+}
+
+/* Bracket nesting colors */
+.jac-bracket-level-0 {
+  color: #ffd700; /* Yellow for outermost brackets */
+  font-weight: bold;
+}
+
+.jac-bracket-level-1 {
+  color: #c678dd; /* Purple for second level */
+  font-weight: bold;
+}
+
+.jac-bracket-level-2 {
+  color: #61afef; /* Blue for third level */
+  font-weight: bold;
+}
+
+.jac-bracket-level-3 {
+  color: #98c379; /* Green for fourth level (fallback) */
+  font-weight: bold;
+}
+
+/* Dark theme adjustments */
+.dark .jac-code {
+  background: #0d1117;
+  border: 1px solid #30363d;
+}
+
+/* Light theme adjustments */
+.light .jac-code {
+  background: #f6f8fa;
+  color: #24292f;
+  border: 1px solid #d1d9e0;
+}
+
+.light .jac-keyword {
+  color: #0550ae;
+}
+
+.light .jac-control-flow {
+  color: #8250df;
+}
+
+.light .jac-string {
+  color: #0a3069;
+}
+
+.light .jac-comment {
+  color: #6e7781;
+}
+
+.light .jac-number {
+  color: #0550ae;
+}
+
+.light .jac-type {
+  color: #953800;
+}
+
+.light .jac-operator {
+  color: #24292f;
+}
+
+.light .jac-arrow {
+  color: #d73a49;
+  font-weight: bold;
+}
+
+.light .jac-special-keyword {
+  color: #8250df;
+}
+
+.light .jac-variable {
+  color: #24292f;
+}

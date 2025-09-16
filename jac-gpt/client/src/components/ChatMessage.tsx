@@ -3,9 +3,32 @@ import { Avatar } from "@/components/ui/avatar";
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
+import { highlightJacCode } from '@/lib/syntaxHighlighting';
+import '@/styles/jacSyntax.css';
 
 // Logo path updated to use public folder
 const jacLogo = "/logo.png";
+
+interface JacCodeBlockProps {
+  code: string;
+}
+
+const JacCodeBlock = ({ code }: JacCodeBlockProps) => {
+  const [highlightedCode, setHighlightedCode] = React.useState(code);
+
+  React.useEffect(() => {
+    highlightJacCode(code).then(setHighlightedCode);
+  }, [code]);
+
+  return (
+    <div className="jac-code">
+      <pre 
+        className="text-sm font-mono overflow-x-auto leading-relaxed m-0"
+        dangerouslySetInnerHTML={{ __html: highlightedCode }}
+      />
+    </div>
+  );
+};
 
 interface ChatMessageProps {
   message: string;
@@ -50,17 +73,23 @@ const ChatMessage = ({ message, isUser, timestamp }: ChatMessageProps) => {
                   code({ node, className, children, ...props }: any) {
                     const inline = !className?.includes('language-');
                     const match = /language-(\w+)/.exec(className || '');
+                    const language = match ? match[1] : '';
+                    
                     return !inline && match ? (
                       <div className="bg-chat-code rounded-xl p-3 border border-border/30 hover:border-primary/20 transition-colors my-3">
                         <div className="text-sm text-primary font-mono mb-2 flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-primary/20"></div>
-                          {match[1] || 'code'}
+                          {language}
                         </div>
-                        <pre className="text-sm font-mono overflow-x-auto leading-relaxed m-0">
-                          <code className={`${className} text-primary-glow`} {...props}>
-                            {children}
-                          </code>
-                        </pre>
+                        {language === 'jac' ? (
+                          <JacCodeBlock code={String(children).replace(/\n$/, '')} />
+                        ) : (
+                          <pre className="text-sm font-mono overflow-x-auto leading-relaxed m-0">
+                            <code className={`${className} text-primary-glow`} {...props}>
+                              {children}
+                            </code>
+                          </pre>
+                        )}
                       </div>
                     ) : (
                       <code className={`${className} bg-muted/50 text-primary px-1 py-0.5 rounded text-sm font-mono`} {...props}>
@@ -111,9 +140,7 @@ const ChatMessage = ({ message, isUser, timestamp }: ChatMessageProps) => {
                             <div className="w-2 h-2 rounded-full bg-primary/20"></div>
                             jac
                           </div>
-                          <pre className="text-xs font-mono overflow-x-auto leading-relaxed m-0">
-                            <code className="text-primary-glow">{textContent}</code>
-                          </pre>
+                          <JacCodeBlock code={textContent} />
                         </div>
                       );
                     }
