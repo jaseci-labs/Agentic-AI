@@ -32,6 +32,10 @@
   color: #3ac9b0;
 }
 
+.jac-class-name {
+  color: #4ec9b0;
+}
+
 .jac-operator {
   color: #d4d4d4;
 }
@@ -46,6 +50,27 @@
 
 .jac-punctuation {
   color: #d4d4d4;
+}
+
+/* Bracket nesting colors */
+.jac-bracket-level-0 {
+  color: #ffd700; /* Yellow for outermost brackets */
+  font-weight: bold;
+}
+
+.jac-bracket-level-1 {
+  color: #c678dd; /* Purple for second level */
+  font-weight: bold;
+}
+
+.jac-bracket-level-2 {
+  color: #61afef; /* Blue for third level */
+  font-weight: bold;
+}
+
+.jac-bracket-level-3 {
+  color: #98c379; /* Green for fourth level (fallback) */
+  font-weight: bold;
 }
 
 /* Dark theme adjustments */

@@ -61,58 +61,224 @@ export async function loadJacLanguage(monaco: any) {
 }
 
 export async function highlightJacCode(code: string): Promise<string> {
-  // Simple and safe syntax highlighting for Jac language
-  let highlightedCode = code;
-
-  // Escape HTML first
-  highlightedCode = highlightedCode
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-
-  // Define patterns in order of priority (most specific first)
-  const patterns = [
-    // Comments (highest priority)
-    { regex: /(#.*$)/gm, replacement: '<span class="jac-comment">$1</span>' },
-    { regex: /(#\*[\s\S]*?\*#)/g, replacement: '<span class="jac-comment">$1</span>' },
-    
-    // Strings
-    { regex: /("(?:[^"\\]|\\.)*")/g, replacement: '<span class="jac-string">$1</span>' },
-    { regex: /('(?:[^'\\]|\\.)*')/g, replacement: '<span class="jac-string">$1</span>' },
-    
-    // Numbers
-    { regex: /\b(\d+\.?\d*)\b/g, replacement: '<span class="jac-number">$1</span>' },
-    
-    // Archetype definitions
-    { regex: /\b(node|edge|walker|obj|class|enum)(\s+)([a-zA-Z_]\w*)/g, 
-      replacement: '<span class="jac-keyword">$1</span>$2<span class="jac-type">$3</span>' },
-    
-    // Function/ability definitions
-    { regex: /\b(def|can|ability)(\s+)([a-zA-Z_]\w*)/g, 
-      replacement: '<span class="jac-keyword">$1</span>$2<span class="jac-function">$3</span>' },
-    
-    // Keywords
-    { regex: /\b(node|edge|walker|can|with|entry|exit|def|class|obj|enum|has|ability|if|else|elif|for|while|return|spawn|visit|disengage|yield|try|except|finally|assert|import|include|from|as|global|async|await|lambda|here|self|root|super|init|postinit|visitor|impl|and|or|not|in|is|True|False|None|break|continue|pass|del|raise|test|check)\b/g, 
-      replacement: '<span class="jac-keyword">$1</span>' },
-    
-    // Built-in types
-    { regex: /\b(str|int|float|bool|list|dict|tuple|set|any|type)\b/g, 
-      replacement: '<span class="jac-type">$1</span>' },
+  const keywords = [
+    'node', 'edge', 'walker', 'can', 'with', 'entry', 'exit', 'def', 'class', 'obj',
+    'enum', 'has', 'ability', 'if', 'else', 'elif', 'for', 'while', 'return',
+    'spawn', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
+    'import', 'include', 'from', 'as', 'global', 'async', 'await', 'lambda',
+    'here', 'self', 'root', 'super', 'init', 'postinit', 'visitor', 'impl',
+    'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None', 'break', 'continue',
+    'pass', 'del', 'raise', 'test', 'check'
   ];
 
-  // Apply patterns sequentially, being careful not to modify already highlighted content
-  patterns.forEach(pattern => {
-    // Split by existing spans to avoid modifying highlighted content
-    const parts = highlightedCode.split(/(<span[^>]*>.*?<\/span>)/);
-    
-    for (let i = 0; i < parts.length; i += 2) { // Only process non-span parts
-      if (parts[i]) {
-        parts[i] = parts[i].replace(pattern.regex, pattern.replacement);
+  const types = ['str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'any', 'type'];
+
+  // Tokenize the code to handle proper highlighting without overlaps
+  const tokens = tokenizeJacCode(code);
+  
+  return tokens.map(token => {
+    switch (token.type) {
+      case 'comment':
+        return `<span class="jac-comment">${escapeHtml(token.value)}</span>`;
+      case 'string':
+        return `<span class="jac-string">${escapeHtml(token.value)}</span>`;
+      case 'number':
+        return `<span class="jac-number">${escapeHtml(token.value)}</span>`;
+      case 'keyword':
+        return `<span class="jac-keyword">${escapeHtml(token.value)}</span>`;
+      case 'type':
+        return `<span class="jac-type">${escapeHtml(token.value)}</span>`;
+      case 'class-name':
+        return `<span class="jac-class-name">${escapeHtml(token.value)}</span>`;
+      case 'function':
+        return `<span class="jac-function">${escapeHtml(token.value)}</span>`;
+      case 'variable':
+        return `<span class="jac-variable">${escapeHtml(token.value)}</span>`;
+      case 'operator':
+        return `<span class="jac-operator">${escapeHtml(token.value)}</span>`;
+      case 'bracket':
+        return `<span class="jac-bracket-level-${token.level % 4}">${escapeHtml(token.value)}</span>`;
+      default:
+        return escapeHtml(token.value);
+    }
+  }).join('');
+}
+
+function tokenizeJacCode(code: string): Array<{type: string, value: string, level?: number}> {
+  const tokens: Array<{type: string, value: string, level?: number}> = [];
+  const keywords = new Set([
+    'node', 'edge', 'walker', 'can', 'with', 'entry', 'exit', 'def', 'class', 'obj',
+    'enum', 'has', 'ability', 'if', 'else', 'elif', 'for', 'while', 'return',
+    'spawn', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
+    'import', 'include', 'from', 'as', 'global', 'async', 'await', 'lambda',
+    'here', 'self', 'root', 'super', 'init', 'postinit', 'visitor', 'impl',
+    'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None', 'break', 'continue',
+    'pass', 'del', 'raise', 'test', 'check'
+  ]);
+  
+  const types = new Set(['str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'any', 'type']);
+  const operators = new Set(['=', '+', '-', '*', '/', '%', '==', '!=', '<', '>', '<=', '>=', '+=', '-=', '*=', '/=', '|', '&', '^', '~', '<<', '>>', '**']);
+
+  let i = 0;
+  let bracketStack: string[] = [];
+
+  while (i < code.length) {
+    // Skip whitespace
+    if (/\s/.test(code[i])) {
+      let whitespace = '';
+      while (i < code.length && /\s/.test(code[i])) {
+        whitespace += code[i];
+        i++;
       }
+      tokens.push({ type: 'whitespace', value: whitespace });
+      continue;
+    }
+
+    // Handle comments
+    if (code[i] === '#') {
+      if (code[i + 1] === '*') {
+        // Block comment
+        let comment = '';
+        while (i < code.length && !(code[i] === '*' && code[i + 1] === '#')) {
+          comment += code[i];
+          i++;
+        }
+        if (i < code.length) {
+          comment += code[i] + code[i + 1]; // Add closing */
+          i += 2;
+        }
+        tokens.push({ type: 'comment', value: comment });
+      } else {
+        // Line comment
+        let comment = '';
+        while (i < code.length && code[i] !== '\n') {
+          comment += code[i];
+          i++;
+        }
+        tokens.push({ type: 'comment', value: comment });
+      }
+      continue;
+    }
+
+    // Handle strings
+    if (code[i] === '"' || code[i] === "'") {
+      const quote = code[i];
+      let string = quote;
+      i++;
+      while (i < code.length && code[i] !== quote) {
+        if (code[i] === '\\' && i + 1 < code.length) {
+          string += code[i] + code[i + 1];
+          i += 2;
+        } else {
+          string += code[i];
+          i++;
+        }
+      }
+      if (i < code.length) {
+        string += code[i]; // Add closing quote
+        i++;
+      }
+      tokens.push({ type: 'string', value: string });
+      continue;
+    }
+
+    // Handle numbers
+    if (/\d/.test(code[i])) {
+      let number = '';
+      while (i < code.length && /[\d.]/.test(code[i])) {
+        number += code[i];
+        i++;
+      }
+      tokens.push({ type: 'number', value: number });
+      continue;
+    }
+
+    // Handle brackets with nesting
+    if (code[i] === '{') {
+      bracketStack.push('{');
+      tokens.push({ type: 'bracket', value: code[i], level: bracketStack.length - 1 });
+      i++;
+      continue;
     }
     
-    highlightedCode = parts.join('');
-  });
+    if (code[i] === '}') {
+      if (bracketStack.length > 0 && bracketStack[bracketStack.length - 1] === '{') {
+        bracketStack.pop();
+      }
+      tokens.push({ type: 'bracket', value: code[i], level: bracketStack.length });
+      i++;
+      continue;
+    }
 
-  return highlightedCode;
+    // Handle other brackets (parentheses and square brackets)
+    if (code[i] === '(' || code[i] === '[') {
+      bracketStack.push(code[i]);
+      tokens.push({ type: 'bracket', value: code[i], level: bracketStack.length - 1 });
+      i++;
+      continue;
+    }
+    
+    if (code[i] === ')' || code[i] === ']') {
+      const expectedOpen = code[i] === ')' ? '(' : '[';
+      if (bracketStack.length > 0 && bracketStack[bracketStack.length - 1] === expectedOpen) {
+        bracketStack.pop();
+      }
+      tokens.push({ type: 'bracket', value: code[i], level: bracketStack.length });
+      i++;
+      continue;
+    }
+
+    // Handle operators
+    let operator = '';
+    let j = i;
+    while (j < code.length && /[=+\-*/%<>!&|^~]/.test(code[j])) {
+      operator += code[j];
+      j++;
+    }
+    if (operator && operators.has(operator)) {
+      tokens.push({ type: 'operator', value: operator });
+      i = j;
+      continue;
+    }
+
+    // Handle identifiers (keywords, types, functions, variables)
+    if (/[a-zA-Z_]/.test(code[i])) {
+      let identifier = '';
+      while (i < code.length && /[a-zA-Z0-9_]/.test(code[i])) {
+        identifier += code[i];
+        i++;
+      }
+      
+      if (keywords.has(identifier)) {
+        tokens.push({ type: 'keyword', value: identifier });
+      } else if (types.has(identifier)) {
+        tokens.push({ type: 'type', value: identifier });
+      } else if (/^[A-Z]/.test(identifier)) {
+        // Capitalized identifiers are class names
+        tokens.push({ type: 'class-name', value: identifier });
+      } else {
+        // Check if it's followed by '(' to determine if it's a function
+        let k = i;
+        while (k < code.length && /\s/.test(code[k])) k++;
+        if (k < code.length && code[k] === '(') {
+          tokens.push({ type: 'function', value: identifier });
+        } else {
+          tokens.push({ type: 'variable', value: identifier });
+        }
+      }
+      continue;
+    }
+
+    // Handle single characters (punctuation, etc.)
+    tokens.push({ type: 'punctuation', value: code[i] });
+    i++;
+  }
+
+  return tokens;
+}
+
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
