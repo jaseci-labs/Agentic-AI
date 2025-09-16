@@ -15,6 +15,11 @@
   font-weight: 500;
 }
 
+.jac-control-flow {
+  color: #c678dd;
+  font-weight: 500;
+}
+
 .jac-string {
   color: #ce9178;
 }
@@ -38,6 +43,11 @@
 
 .jac-operator {
   color: #d4d4d4;
+}
+
+.jac-arrow {
+  color: #ff6b6b;
+  font-weight: bold;
 }
 
 .jac-function {
@@ -98,6 +108,10 @@
   color: #0550ae;
 }
 
+.light .jac-control-flow {
+  color: #8250df;
+}
+
 .light .jac-string {
   color: #0a3069;
 }
@@ -118,6 +132,15 @@
   color: #24292f;
 }
 
+.light .jac-arrow {
+  color: #d73a49;
+  font-weight: bold;
+}
+
 .light .jac-special-keyword {
   color: #8250df;
+}
+
+.light .jac-variable {
+  color: #24292f;
 }

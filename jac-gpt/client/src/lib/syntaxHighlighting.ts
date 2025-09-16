@@ -63,12 +63,15 @@ export async function loadJacLanguage(monaco: any) {
 export async function highlightJacCode(code: string): Promise<string> {
   const keywords = [
     'node', 'edge', 'walker', 'can', 'with', 'entry', 'exit', 'def', 'class', 'obj',
-    'enum', 'has', 'ability', 'if', 'else', 'elif', 'for', 'while', 'return',
-    'spawn', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
+    'enum', 'has', 'ability', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
     'import', 'include', 'from', 'as', 'global', 'async', 'await', 'lambda',
     'here', 'self', 'root', 'super', 'init', 'postinit', 'visitor', 'impl',
-    'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None', 'break', 'continue',
+    'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None',
     'pass', 'del', 'raise', 'test', 'check'
+  ];
+
+  const controlFlowKeywords = [
+    'if', 'else', 'elif', 'for', 'while', 'return', 'break', 'continue', 'spawn'
   ];
 
   const types = ['str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'any', 'type'];
@@ -86,6 +89,8 @@ export async function highlightJacCode(code: string): Promise<string> {
         return `<span class="jac-number">${escapeHtml(token.value)}</span>`;
       case 'keyword':
         return `<span class="jac-keyword">${escapeHtml(token.value)}</span>`;
+      case 'control-flow':
+        return `<span class="jac-control-flow">${escapeHtml(token.value)}</span>`;
       case 'special-keyword':
         return `<span class="jac-special-keyword">${escapeHtml(token.value)}</span>`;
       case 'type':
@@ -100,6 +105,8 @@ export async function highlightJacCode(code: string): Promise<string> {
         return `<span class="jac-variable">${escapeHtml(token.value)}</span>`;
       case 'operator':
         return `<span class="jac-operator">${escapeHtml(token.value)}</span>`;
+      case 'arrow':
+        return `<span class="jac-arrow">${escapeHtml(token.value)}</span>`;
       case 'bracket':
         return `<span class="jac-bracket-level-${token.level % 4}">${escapeHtml(token.value)}</span>`;
       default:
@@ -112,16 +119,20 @@ function tokenizeJacCode(code: string): Array<{type: string, value: string, leve
   const tokens: Array<{type: string, value: string, level?: number}> = [];
   const keywords = new Set([
     'node', 'edge', 'walker', 'can', 'with', 'entry', 'exit', 'def', 'class', 'obj',
-    'enum', 'has', 'ability', 'if', 'else', 'elif', 'for', 'while', 'return',
-    'spawn', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
+    'enum', 'has', 'ability', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
     'import', 'include', 'from', 'as', 'global', 'async', 'await', 'lambda',
     'here', 'self', 'root', 'super', 'init', 'postinit', 'visitor', 'impl',
-    'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None', 'break', 'continue',
+    'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None',
     'pass', 'del', 'raise', 'test', 'check'
+  ]);
+  
+  const controlFlowKeywords = new Set([
+    'if', 'else', 'elif', 'for', 'while', 'return', 'break', 'continue', 'spawn'
   ]);
   
   const types = new Set(['str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'any', 'type']);
   const operators = new Set(['=', '+', '-', '*', '/', '%', '==', '!=', '<', '>', '<=', '>=', '+=', '-=', '*=', '/=', '|', '&', '^', '~', '<<', '>>', '**']);
+  const arrowOperators = new Set(['-->', '++>', '<--', '<++', '->', '<-']);
 
   let i = 0;
   let bracketStack: string[] = [];
@@ -232,9 +243,49 @@ function tokenizeJacCode(code: string): Array<{type: string, value: string, leve
       continue;
     }
 
-    // Handle operators
+    // Handle operators (check for arrows first, then regular operators)
     let operator = '';
     let j = i;
+    
+    // Check for arrow operators first (check 3-char, then 2-char patterns)
+    if (i + 2 < code.length) {
+      const threeChar = code.slice(i, i + 3);
+      if (threeChar === '-->' || threeChar === '<--') {
+        // Split into -- (red) and > (white) or < (white) and -- (red)
+        if (threeChar === '-->') {
+          tokens.push({ type: 'arrow', value: '--' });
+          tokens.push({ type: 'punctuation', value: '>' });
+        } else if (threeChar === '<--') {
+          tokens.push({ type: 'punctuation', value: '<' });
+          tokens.push({ type: 'arrow', value: '--' });
+        }
+        i += 3;
+        continue;
+      } else if (threeChar === '++>' || threeChar === '<++') {
+        // Split into ++ (white) and > (white) or < (white) and ++ (white)
+        if (threeChar === '++>') {
+          tokens.push({ type: 'punctuation', value: '++' });
+          tokens.push({ type: 'punctuation', value: '>' });
+        } else if (threeChar === '<++') {
+          tokens.push({ type: 'punctuation', value: '<' });
+          tokens.push({ type: 'punctuation', value: '++' });
+        }
+        i += 3;
+        continue;
+      }
+    }
+    
+    // Check for 2-character single arrows (entire thing red)
+    if (i + 1 < code.length) {
+      const twoChar = code.slice(i, i + 2);
+      if (twoChar === '->' || twoChar === '<-') {
+        tokens.push({ type: 'arrow', value: twoChar });
+        i += 2;
+        continue;
+      }
+    }
+    
+    // Check for regular operators
     while (j < code.length && /[=+\-*/%<>!&|^~]/.test(code[j])) {
       operator += code[j];
       j++;
@@ -277,10 +328,13 @@ function tokenizeJacCode(code: string): Array<{type: string, value: string, leve
         ['walker', 'node', 'edge', 'obj', 'class', 'enum'].includes(prevNonWhitespaceToken.value);
       const isAfterCan = prevNonWhitespaceToken && prevNonWhitespaceToken.value === 'can';
       const isAfterWith = prevNonWhitespaceToken && prevNonWhitespaceToken.value === 'with';
+      const isAfterRoot = prevNonWhitespaceToken && prevNonWhitespaceToken.value === 'root';
       
       // Special keywords like 'entry', 'exit' in certain contexts (check BEFORE general keywords)
-      if (['entry', 'exit'].includes(identifier) && (isAfterWith || isAfterCan)) {
+      if (['entry', 'exit'].includes(identifier) && (isAfterWith || isAfterCan || isAfterRoot)) {
         tokens.push({ type: 'special-keyword', value: identifier });
+      } else if (controlFlowKeywords.has(identifier)) {
+        tokens.push({ type: 'control-flow', value: identifier });
       } else if (keywords.has(identifier)) {
         tokens.push({ type: 'keyword', value: identifier });
       } else if (types.has(identifier)) {
