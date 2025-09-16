@@ -86,12 +86,14 @@ export async function highlightJacCode(code: string): Promise<string> {
         return `<span class="jac-number">${escapeHtml(token.value)}</span>`;
       case 'keyword':
         return `<span class="jac-keyword">${escapeHtml(token.value)}</span>`;
+      case 'special-keyword':
+        return `<span class="jac-special-keyword">${escapeHtml(token.value)}</span>`;
       case 'type':
         return `<span class="jac-type">${escapeHtml(token.value)}</span>`;
       case 'class-name':
         return `<span class="jac-class-name">${escapeHtml(token.value)}</span>`;
       case 'module':
-        return escapeHtml(token.value); // Default color for module names
+        return `<span class="jac-module">${escapeHtml(token.value)}</span>`;
       case 'function':
         return `<span class="jac-function">${escapeHtml(token.value)}</span>`;
       case 'variable':
@@ -251,33 +253,52 @@ function tokenizeJacCode(code: string): Array<{type: string, value: string, leve
         i++;
       }
       
-      if (keywords.has(identifier)) {
+      // Handle dotted module names (like settings.config)
+      const prevNonWhitespaceToken = tokens.slice().reverse().find(t => t.type !== 'whitespace');
+      const isAfterImport = prevNonWhitespaceToken && 
+        ['import', 'include', 'from'].includes(prevNonWhitespaceToken.value);
+      
+      if (isAfterImport) {
+        // For imports, handle the full dotted path
+        while (i < code.length && code[i] === '.') {
+          identifier += code[i];
+          i++;
+          while (i < code.length && /[a-zA-Z0-9_]/.test(code[i])) {
+            identifier += code[i];
+            i++;
+          }
+        }
+        tokens.push({ type: 'module', value: identifier });
+        continue;
+      }
+      
+      // Check context for class names and functions
+      const isAfterArchetypeKeyword = prevNonWhitespaceToken && 
+        ['walker', 'node', 'edge', 'obj', 'class', 'enum'].includes(prevNonWhitespaceToken.value);
+      const isAfterCan = prevNonWhitespaceToken && prevNonWhitespaceToken.value === 'can';
+      const isAfterWith = prevNonWhitespaceToken && prevNonWhitespaceToken.value === 'with';
+      
+      // Special keywords like 'entry', 'exit' in certain contexts (check BEFORE general keywords)
+      if (['entry', 'exit'].includes(identifier) && (isAfterWith || isAfterCan)) {
+        tokens.push({ type: 'special-keyword', value: identifier });
+      } else if (keywords.has(identifier)) {
         tokens.push({ type: 'keyword', value: identifier });
       } else if (types.has(identifier)) {
         tokens.push({ type: 'type', value: identifier });
+      } else if (isAfterArchetypeKeyword || /^[A-Z]/.test(identifier)) {
+        // Capitalized identifiers or identifiers after archetype keywords are class names
+        tokens.push({ type: 'class-name', value: identifier });
+      } else if (isAfterCan) {
+        // Function names after 'can' keyword
+        tokens.push({ type: 'function', value: identifier });
       } else {
-        // Check context for class names
-        const prevNonWhitespaceToken = tokens.slice().reverse().find(t => t.type !== 'whitespace');
-        const isAfterArchetypeKeyword = prevNonWhitespaceToken && 
-          ['walker', 'node', 'edge', 'obj', 'class', 'enum'].includes(prevNonWhitespaceToken.value);
-        const isAfterImport = prevNonWhitespaceToken && 
-          ['import', 'include', 'from'].includes(prevNonWhitespaceToken.value);
-        
-        if (isAfterImport) {
-          // Module names after import should be default color
-          tokens.push({ type: 'module', value: identifier });
-        } else if (isAfterArchetypeKeyword || /^[A-Z]/.test(identifier)) {
-          // Capitalized identifiers or identifiers after archetype keywords are class names
-          tokens.push({ type: 'class-name', value: identifier });
+        // Check if it's followed by '(' to determine if it's a function
+        let k = i;
+        while (k < code.length && /\s/.test(code[k])) k++;
+        if (k < code.length && code[k] === '(') {
+          tokens.push({ type: 'function', value: identifier });
         } else {
-          // Check if it's followed by '(' to determine if it's a function
-          let k = i;
-          while (k < code.length && /\s/.test(code[k])) k++;
-          if (k < code.length && code[k] === '(') {
-            tokens.push({ type: 'function', value: identifier });
-          } else {
-            tokens.push({ type: 'variable', value: identifier });
-          }
+          tokens.push({ type: 'variable', value: identifier });
         }
       }
       continue;

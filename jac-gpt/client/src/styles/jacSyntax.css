@@ -48,6 +48,14 @@
   color: #9cdcfe;
 }
 
+.jac-special-keyword {
+  color: #c678dd;
+}
+
+.jac-module {
+  color: #4ec9b0;
+}
+
 .jac-punctuation {
   color: #d4d4d4;
 }
@@ -108,4 +116,8 @@
 
 .light .jac-operator {
   color: #24292f;
+}
+
+.light .jac-special-keyword {
+  color: #8250df;
 }
