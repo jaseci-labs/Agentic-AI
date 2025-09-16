@@ -64,14 +64,14 @@ export async function highlightJacCode(code: string): Promise<string> {
   const keywords = [
     'node', 'edge', 'walker', 'can', 'with', 'entry', 'exit', 'def', 'class', 'obj',
     'enum', 'has', 'ability', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
-    'import', 'include', 'from', 'as', 'global', 'async', 'await', 'lambda',
+    'include', 'as', 'global', 'async', 'await', 'lambda',
     'here', 'self', 'root', 'super', 'init', 'postinit', 'visitor', 'impl',
     'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None',
-    'pass', 'del', 'raise', 'test', 'check'
+    'pass', 'del', 'raise', 'test', 'check', 'glob'
   ];
 
   const controlFlowKeywords = [
-    'if', 'else', 'elif', 'for', 'while', 'return', 'break', 'continue', 'spawn'
+    'if', 'else', 'elif', 'for', 'while', 'return', 'break', 'continue', 'spawn', 'from', 'import'
   ];
 
   const types = ['str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'any', 'type'];
@@ -120,14 +120,14 @@ function tokenizeJacCode(code: string): Array<{type: string, value: string, leve
   const keywords = new Set([
     'node', 'edge', 'walker', 'can', 'with', 'entry', 'exit', 'def', 'class', 'obj',
     'enum', 'has', 'ability', 'visit', 'disengage', 'yield', 'try', 'except', 'finally', 'assert',
-    'import', 'include', 'from', 'as', 'global', 'async', 'await', 'lambda',
+    'include', 'as', 'global', 'async', 'await', 'lambda',
     'here', 'self', 'root', 'super', 'init', 'postinit', 'visitor', 'impl',
     'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None',
-    'pass', 'del', 'raise', 'test', 'check'
+    'pass', 'del', 'raise', 'test', 'check', 'glob'
   ]);
   
   const controlFlowKeywords = new Set([
-    'if', 'else', 'elif', 'for', 'while', 'return', 'break', 'continue', 'spawn'
+    'if', 'else', 'elif', 'for', 'while', 'return', 'break', 'continue', 'spawn', 'from', 'import'
   ]);
   
   const types = new Set(['str', 'int', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'any', 'type']);
@@ -275,11 +275,24 @@ function tokenizeJacCode(code: string): Array<{type: string, value: string, leve
       }
     }
     
-    // Check for 2-character single arrows (entire thing red)
+    // Check for 2-character single arrows (entire thing red, except in function type annotations)
     if (i + 1 < code.length) {
       const twoChar = code.slice(i, i + 2);
       if (twoChar === '->' || twoChar === '<-') {
-        tokens.push({ type: 'arrow', value: twoChar });
+        // Check if this is a function type annotation (preceded by ')' or a type)
+        const prevNonWhitespaceToken = tokens.slice().reverse().find(t => t.type !== 'whitespace');
+        const isInFunctionSignature = prevNonWhitespaceToken && 
+          (prevNonWhitespaceToken.value === ')' || 
+           prevNonWhitespaceToken.type === 'type' ||
+           prevNonWhitespaceToken.value === ':');
+        
+        if (twoChar === '->' && isInFunctionSignature) {
+          // Treat as regular operator in function signatures
+          tokens.push({ type: 'operator', value: twoChar });
+        } else {
+          // Treat as arrow (red)
+          tokens.push({ type: 'arrow', value: twoChar });
+        }
         i += 2;
         continue;
       }
@@ -310,6 +323,12 @@ function tokenizeJacCode(code: string): Array<{type: string, value: string, leve
         ['import', 'include', 'from'].includes(prevNonWhitespaceToken.value);
       
       if (isAfterImport) {
+        // Special case: "from" should be treated as a control-flow keyword, not a module
+        if (identifier === 'from') {
+          tokens.push({ type: 'control-flow', value: identifier });
+          continue;
+        }
+        
         // For imports, handle the full dotted path
         while (i < code.length && code[i] === '.') {
           identifier += code[i];
