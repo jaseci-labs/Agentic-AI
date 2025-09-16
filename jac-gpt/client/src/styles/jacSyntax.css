@@ -1,0 +1,86 @@
+/* Jac language syntax highlighting styles */
+.jac-code {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.jac-keyword {
+  color: #569cd6;
+  font-weight: 500;
+}
+
+.jac-string {
+  color: #ce9178;
+}
+
+.jac-comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.jac-number {
+  color: #b5cea8;
+}
+
+.jac-type {
+  color: #3ac9b0;
+}
+
+.jac-operator {
+  color: #d4d4d4;
+}
+
+.jac-function {
+  color: #dcdcaa;
+}
+
+.jac-variable {
+  color: #9cdcfe;
+}
+
+.jac-punctuation {
+  color: #d4d4d4;
+}
+
+/* Dark theme adjustments */
+.dark .jac-code {
+  background: #0d1117;
+  border: 1px solid #30363d;
+}
+
+/* Light theme adjustments */
+.light .jac-code {
+  background: #f6f8fa;
+  color: #24292f;
+  border: 1px solid #d1d9e0;
+}
+
+.light .jac-keyword {
+  color: #0550ae;
+}
+
+.light .jac-string {
+  color: #0a3069;
+}
+
+.light .jac-comment {
+  color: #6e7781;
+}
+
+.light .jac-number {
+  color: #0550ae;
+}
+
+.light .jac-type {
+  color: #953800;
+}
+
+.light .jac-operator {
+  color: #24292f;
+}
