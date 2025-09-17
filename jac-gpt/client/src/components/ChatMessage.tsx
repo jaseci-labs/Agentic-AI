@@ -21,12 +21,10 @@ const JacCodeBlock = ({ code }: JacCodeBlockProps) => {
   }, [code]);
 
   return (
-    <div className="jac-code">
-      <pre 
-        className="text-sm font-mono overflow-x-auto leading-relaxed m-0"
-        dangerouslySetInnerHTML={{ __html: highlightedCode }}
-      />
-    </div>
+    <pre 
+      className="text-sm font-mono overflow-x-auto leading-relaxed m-0"
+      dangerouslySetInnerHTML={{ __html: highlightedCode }}
+    />
   );
 };
 

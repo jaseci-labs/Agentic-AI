@@ -41,15 +41,11 @@ impl OffTopicChat.chat {
 
 
 impl Session.chat {
-   # Store user email from visitor if provided
    if visitor.user_email and not self.user_email {
       self.user_email = visitor.user_email;
    }
    
-   # Initialize database connection
    db = get_database();
-   
-   # Try to load existing session from database
    existing_session = db.get_session(self.id);
    
    if existing_session and not self.chat_history {
