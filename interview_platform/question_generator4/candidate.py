@@ -43,8 +43,9 @@ if not st.session_state.candidate_id:
                     user_id = data["user"]["id"]
                     token = data["token"]
                     # Start interview
+                    headers = {"Authorization": f"Bearer {token}"}
                     start_payload = {"candidate_id": user_id}
-                    start_response = requests.post(API_START_INTERVIEW, json=start_payload)
+                    start_response = requests.post(API_START_INTERVIEW, json=start_payload, headers=headers)
                     start_response.raise_for_status()
                     start_data = start_response.json()
                     if start_data.get("reports") and len(start_data["reports"]) > 0:
@@ -86,8 +87,9 @@ elif st.session_state.candidate_id and st.session_state.interview_active:
                 with st.spinner("AI is analyzing your answer..."):
                     st.session_state.qa_transcript.append({"question": st.session_state.current_question, "answer": answer})
                     try:
+                        headers = {"Authorization": f"Bearer {st.session_state.token}"}
                         payload = {"candidate_id": st.session_state.candidate_id, "answer": answer}
-                        response = requests.post(API_SUBMIT_ANSWER, json=payload)
+                        response = requests.post(API_SUBMIT_ANSWER, json=payload, headers=headers)
                         response.raise_for_status()
                         data = response.json()
 
