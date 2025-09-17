@@ -274,12 +274,12 @@ walker get_session_messages_admin {
     can get_session_chat with `root entry;
 }
 
-walker get_user_info {
-    has email: str;
-    has requester_email: str = "";
+# walker get_user_info {
+#     has email: str;
+#     has requester_email: str = "";
 
-    can get_user_details with `root entry;
-}
+#     can get_user_details with `root entry;
+# }
 
 # Documentation-related walkers
 walker get_documentation_urls {
@@ -341,34 +341,29 @@ walker get_documentation_urls {
     }
 }
 
-walker get_documentation_content {
-    """Fetch documentation content from a given URL"""
-    has url: str;
+# walker get_documentation_content {
+#     """Fetch documentation content from a given URL"""
+#     has url: str;
     
-    obj __specs__ {
-        static has methods: list = ["post"];
-        static has auth: bool = False;
-    }
+#     obj __specs__ {
+#         static has methods: list = ["post"];
+#         static has auth: bool = False;
+#     }
 
-    can fetch_content with `root entry;
-}
+#     can fetch_content with `root entry;
+# }
 
-walker suggest_documentation {
-    """Suggest relevant documentation based on chat message using enhanced AI with section-level granularity"""
-    has message: str;
-    has chat_history: list[dict] = [];
+# walker suggest_documentation {
+#     """Suggest relevant documentation based on chat message using enhanced AI with section-level granularity"""
+#     has message: str;
+#     has chat_history: list[dict] = [];
     
-    obj __specs__ {
-        static has methods: list = ["post"];
-        static has auth: bool = False;
-    }
+#     obj __specs__ {
+#         static has methods: list = ["post"];
+#         static has auth: bool = False;
+#     }
 
-    can get_enhanced_suggestions with `root entry;
-
-    def suggest_with_ai(message: str, chat_history: list[dict]) -> str by llm(
-        method="Reason",
-        temperature=0.1
-    );
-}
+#     can get_enhanced_suggestions with `root entry;
+# }
 
 

@@ -158,8 +158,8 @@ const JacChatbot = () => {
       />
       
       {/* Chat Interface */}
-      <div className={`flex ${docPanelOpen ? 'w-1/2' : 'flex-1'}`}>
-        <div className="flex-1 flex flex-col">
+      <div className={`flex ${docPanelOpen ? 'w-1/2' : 'flex-1'} min-w-0`}>
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Mobile Menu Button */}
           <MobileMenuButton onClick={() => setSidebarOpen(true)} />
 
@@ -191,7 +191,7 @@ const JacChatbot = () => {
           
           {/* Chat Messages */}
           <ScrollArea className="flex-1 p-4 lg:p-6">
-            <div className="max-w-4xl mx-auto space-y-1 lg:pt-0 pt-16">
+            <div className="max-w-4xl mx-auto space-y-1 lg:pt-0 pt-16 min-w-0 overflow-hidden">
               {messages.length === 0 && !isLoading && (
                 <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                   <div className="text-center">

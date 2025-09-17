@@ -263,25 +263,25 @@ impl get_session_messages_admin.get_session_chat {
    };
 }
 
-impl get_user_info.get_user_details {
-   db = get_database();
+# impl get_user_info.get_user_details {
+#    db = get_database();
         
-   user = db.get_user_profile(self.email);
-   if not user {
-      report {
-            "error": "User not found"
-      };
-      return;
-   }
+#    user = db.get_user_profile(self.email);
+#    if not user {
+#       report {
+#             "error": "User not found"
+#       };
+#       return;
+#    }
    
-   user_sessions = db.get_user_sessions(self.email);
+#    user_sessions = db.get_user_sessions(self.email);
    
-   report {
-      "user": user,
-      "sessions": user_sessions,
-      "total_sessions": len(user_sessions)
-   };
-}
+#    report {
+#       "user": user,
+#       "sessions": user_sessions,
+#       "total_sessions": len(user_sessions)
+#    };
+# }
 
 
 impl get_documentation_content.fetch_content {
@@ -360,104 +360,92 @@ impl get_documentation_content.fetch_content {
 }
 
 
-impl suggest_documentation.get_enhanced_suggestions {
-   # Load section-level documentation links directly
-   section_links = [];
-   try {
-      links_file = os.path.join(os.path.dirname(__file__), "docs_links", "all_section_links.json");
-      with open(links_file, 'r', encoding='utf-8') as f {
-            section_links = json.load(f);
-      }
-   } except Exception as e {
-      print(f"Error loading section links: {str(e)}");
-   }
+# impl suggest_documentation.get_enhanced_suggestions {
+#    # Load section-level documentation links directly
+#    section_links = [];
+#    try {
+#       links_file = os.path.join(os.path.dirname(__file__), "docs_links", "all_section_links.json");
+#       with open(links_file, 'r', encoding='utf-8') as f {
+#             section_links = json.load(f);
+#       }
+#    } except Exception as e {
+#       print(f"Error loading section links: {str(e)}");
+#    }
    
-   # Simple section matching logic
-   message_lower = self.message.lower();
-   found_suggestions = [];
+#    # Simple section matching logic
+#    message_lower = self.message.lower();
+#    found_suggestions = [];
    
-   # Check for specific section matches
-   for link in section_links {
-      section_title_lower = link.get("section_title", "").lower();
+#    # Check for specific section matches
+#    for link in section_links {
+#       section_title_lower = link.get("section_title", "").lower();
       
-      # High priority matches
-      beyond_oop_match = ("beyond oop" in message_lower and "beyond oop" in section_title_lower);
-      agentic_match = ("agentic programming" in message_lower and "agentic" in section_title_lower);
+#       # High priority matches
+#       beyond_oop_match = ("beyond oop" in message_lower and "beyond oop" in section_title_lower);
+#       agentic_match = ("agentic programming" in message_lower and "agentic" in section_title_lower);
       
-      if beyond_oop_match or agentic_match {
-            found_suggestions.append({
-               "url": link["url"],
-               "title": link["section_title"],
-               "reason": f"Direct match for {link['section_title']} concept"
-            });
-      } elif "programming abstractions" in message_lower and "programming abstractions" in section_title_lower {
-            found_suggestions.append({
-               "url": link["url"],
-               "title": link["section_title"],
-               "reason": f"Learn about {link['section_title']}"
-            });
-      } else {
-            # Check AI-related terms
-            ai_in_message = ("ai" in message_lower or "llm" in message_lower or "artificial intelligence" in message_lower);
-            ai_in_section = ("ai" in section_title_lower or "llm" in section_title_lower or "intelligence" in section_title_lower);
+#       if beyond_oop_match or agentic_match {
+#             found_suggestions.append({
+#                "url": link["url"],
+#                "title": link["section_title"],
+#                "reason": f"Direct match for {link['section_title']} concept"
+#             });
+#       } elif "programming abstractions" in message_lower and "programming abstractions" in section_title_lower {
+#             found_suggestions.append({
+#                "url": link["url"],
+#                "title": link["section_title"],
+#                "reason": f"Learn about {link['section_title']}"
+#             });
+#       } else {
+#             # Check AI-related terms
+#             ai_in_message = ("ai" in message_lower or "llm" in message_lower or "artificial intelligence" in message_lower);
+#             ai_in_section = ("ai" in section_title_lower or "llm" in section_title_lower or "intelligence" in section_title_lower);
             
-            if ai_in_message and ai_in_section {
-               found_suggestions.append({
-                  "url": link["url"],
-                  "title": link["section_title"],
-                  "reason": f"AI-related documentation: {link['section_title']}"
-               });
-            }
-      }
-   }
+#             if ai_in_message and ai_in_section {
+#                found_suggestions.append({
+#                   "url": link["url"],
+#                   "title": link["section_title"],
+#                   "reason": f"AI-related documentation: {link['section_title']}"
+#                });
+#             }
+#       }
+#    }
    
-   # If we found specific section matches, use those
-   if len(found_suggestions) > 0 {
-      # Limit to top 3
-      limited = found_suggestions[:3];
-      report {
-            "success": True,
-            "suggestions": limited,
-            "total": len(limited)
-      };
-   } else {
-      # Fallback to AI suggestions
-      suggestion = self.suggest_with_ai(message=self.message, chat_history=self.chat_history);
-      
-      try {
-            suggestions_json = json.loads(suggestion);
-            report {
-               "success": True,
-               "suggestions": suggestions_json,
-               "total": len(suggestions_json)
-            };
-      } except Exception as e {
-            # If JSON parsing fails, provide default section-level suggestions
-            report {
-               "success": True,
-               "suggestions": [
-                  {
-                        "url": "https://www.jac-lang.org/learn/introduction/#beyond-oop-an-agentic-programming-model",
-                        "title": "Beyond OOP: An Agentic Programming Model",
-                        "reason": "Learn about Jac's innovative agentic programming paradigm"
-                  },
-                  {
-                        "url": "https://www.jac-lang.org/learn/introduction/#programming-abstractions-for-ai",
-                        "title": "Programming Abstractions for AI",
-                        "reason": "Discover Jac's AI-first programming constructs"
-                  },
-                  {
-                        "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
-                        "title": "Nodes and Edges",
-                        "reason": "Master Object-Spatial Programming basics"
-                  }
-               ],
-               "total": 3
-            };
-      }
-   }
+#    # If we found specific section matches, use those
+#    if len(found_suggestions) > 0 {
+#       # Limit to top 3
+#       limited = found_suggestions[:3];
+#       report {
+#             "success": True,
+#             "suggestions": limited,
+#             "total": len(limited)
+#       };
+#    } else {
+#       # Provide default section-level suggestions
+#       report {
+#          "success": True,
+#          "suggestions": [
+#             {
+#                   "url": "https://www.jac-lang.org/learn/introduction/#beyond-oop-an-agentic-programming-model",
+#                   "title": "Beyond OOP: An Agentic Programming Model",
+#                   "reason": "Learn about Jac's innovative agentic programming paradigm"
+#             },
+#             {
+#                   "url": "https://www.jac-lang.org/learn/introduction/#programming-abstractions-for-ai",
+#                   "title": "Programming Abstractions for AI",
+#                   "reason": "Discover Jac's AI-first programming constructs"
+#             },
+#             {
+#                   "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
+#                   "title": "Nodes and Edges",
+#                   "reason": "Master Object-Spatial Programming basics"
+#             }
+#          ],
+#          "total": 3
+#       };
+#    }
 
-}
+# }
 
 sem Router.classify = """Classify messages for optimal routing:
 
@@ -491,53 +479,6 @@ sem OffTopicChat.respond = """Handle off-topic messages unrelated to programming
 For non-technical topics: politely redirect to programming questions
 Brand protection: respond positively if negative sentiment about Jac/Jaseci detected
 Goal: guide users back to Jac programming assistance""";
-
-
-sem suggest_documentation.suggest_with_ai = """Analyze the user's message and suggest the most relevant Jac documentation URLs with section-level precision.
-    
-You now have access to granular section-level links from the Jac documentation. When suggesting documentation,
-ALWAYS prefer section-specific URLs over page-level URLs when possible.
-
-KEY SECTION-LEVEL URLS TO USE:
-
-**Introduction Page Sections:**
-- Python Superset: https://www.jac-lang.org/learn/introduction#python-superset-philosophy-all-of-python-plus-more
-- AI Abstractions: https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai
-- Beyond OOP / Agentic Programming: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
-- Zero to Scale: https://www.jac-lang.org/learn/introduction#zero-to-infinite-scale-without-any-code-changes
-- Well-typed Codebases: https://www.jac-lang.org/learn/introduction#better-organized-and-well-typed-codebases
-
-**Important Section-Level Examples:**
-- For "Beyond OOP" or "Agentic Programming" → USE: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
-- For "AI Programming" or "AI Abstractions" → USE: https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai
-- For "Python Superset" → USE: https://www.jac-lang.org/learn/introduction#python-superset-philosophy-all-of-python-plus-more
-- For "Scaling" → USE: https://www.jac-lang.org/learn/introduction#zero-to-infinite-scale-without-any-code-changes
-
-**Page-Level URLs (use only when no specific section applies):**
-
-**Getting Started & Basics:**
-- Introduction: https://www.jac-lang.org/learn/introduction/
-- Getting Started: https://www.jac-lang.org/learn/getting_started/
-- Installation: https://www.jac-lang.org/learn/installation/
-- Jac in a Flash: https://www.jac-lang.org/learn/jac_in_a_flash/
-
-**Object-Spatial Programming:**
-- Nodes and Edges: https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/
-- Walkers: https://www.jac-lang.org/learn/data_spatial/walkers/
-
-**AI Integration:**
-- With LLM: https://www.jac-lang.org/learn/jac-byllm/with_llm/
-- MTLLM Quickstart: https://www.jac-lang.org/learn/jac-mtllm/quickstart/
-
-**Instructions:**
-1. PRIORITIZE section-level URLs over page-level URLs
-2. For "Beyond OOP" or "Agentic Programming" queries, ALWAYS suggest the section: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
-3. Analyze user intent and provide most specific section
-4. Return as JSON list: [{"url": "...", "title": "...", "reason": "..."}]
-
-**Critical Examples:**
-- Query: "Beyond OOP" → {"url": "https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model", "title": "Beyond OOP: An Agentic Programming Model", "reason": "Direct explanation of Jac's agentic programming paradigm"}
-- Query: "AI programming" → {"url": "https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai", "title": "Programming Abstractions for AI", "reason": "Learn about Jac's AI-first programming constructs"}""";
 
 
 
