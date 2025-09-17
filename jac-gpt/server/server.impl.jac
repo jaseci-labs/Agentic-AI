@@ -1,3 +1,6 @@
+import json;
+import os;
+
 impl RagChat.chat {
     response = self.respond(
         message=visitor.message,
@@ -358,10 +361,6 @@ impl get_documentation_content.fetch_content {
 
 
 impl suggest_documentation.get_enhanced_suggestions {
-   # First, try to get enhanced suggestions programmatically
-   import json;
-   import os;
-   
    # Load section-level documentation links directly
    section_links = [];
    try {
