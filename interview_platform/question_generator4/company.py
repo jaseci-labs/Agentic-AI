@@ -48,13 +48,22 @@ with col2:
     else:
         st.write(f"Registering candidates for: *{st.session_state.job_context['job_role']}*")
         
+        # Number of candidates input
+        num_candidates = st.number_input(
+            "Number of Candidates", 
+            min_value=1, 
+            max_value=10, 
+            value=1,
+            help="Specify how many candidates you want to register"
+        )
+        
         with st.form("candidates_form"):
             candidates_data = []
-            for i in range(5): # Allow up to 5 candidates
-                st.markdown(f"*Candidate {i+1}*")
+            for i in range(num_candidates):
+                st.markdown(f"**Candidate {i+1}**")
                 name = st.text_input(f"Name", key=f"name_{i}")
                 email = st.text_input(f"Email", key=f"email_{i}")
-                password = st.text_input(f"Password", key=f"password_{i}", type="password") # Add password field
+                password = st.text_input(f"Password", key=f"password_{i}", type="password")
                 if name and email and password:
                     candidates_data.append({"name": name, "email": email, "password": password})
             
