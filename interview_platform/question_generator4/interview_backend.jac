@@ -1,6 +1,6 @@
 import from dotenv { load_dotenv }
 import os;
-import uuid;
+import requests;
 import from mtllm.llm { Model }
 
 
@@ -18,6 +18,7 @@ node JobContext {
 obj Candidate {
     has name: str;
     has email: str;
+    has password: str;
 }
 
 obj Chat { has role: str; has content: str; }
@@ -38,8 +39,8 @@ glob interview_sessions: dict[str, InterviewSession] = {};
 You are an expert AI hiring manager conducting a live, conversational interview.
 Your goal is to have a natural, insightful conversation to assess a candidate for the role defined".
 
-**YOUR TASK:**
-Based on the entire conversation history, with special emphasis on the **candidate's most recent answer**, generate the single best question to ask next.
+*YOUR TASK:*
+Based on the entire conversation history, with special emphasis on the *candidate's most recent answer*, generate the single best question to ask next.
 
 Your strategy should include both:
 1.  Ask Follow-Up Questions where it's relevant: If the candidate's last answer introduced a new project, a key skill, or was vague, your top priority is to ask a probing follow-up question. This makes the conversation feel interactive and intelligent. (e.g., "You mentioned you improved performance by 30%. Could you walk me through the specific steps you took to achieve that?")
@@ -70,7 +71,7 @@ walker RegisterCandidatesWalker {
     has job_context: JobContext;
     has candidates: list[Candidate];
 
-    obj __specs__ {
+    obj _specs_ {
         static has auth: bool = False;
     }
 
@@ -78,13 +79,23 @@ walker RegisterCandidatesWalker {
         load_dotenv();
         created_sessions = [];
         for cand in self.candidates {
-            candidate_id = str(uuid.uuid4());
+            # Register user via API
+            user_response = requests.post(
+                "http://127.0.0.1:8000/user/register",
+                json={"email": cand.email, "password": cand.password}
+            );
+            login_response = requests.post(
+                "http://127.0.0.1:8000/user/login",
+                json={"email": cand.email, "password": cand.password}
+            );
+            login_data = login_response.json();
+            candidate_id = login_data["user"]["id"];
 
             # Create the session node 
             session_node = (root ++> InterviewSession(
                 job_context=self.job_context,
                 candidate=cand,
-                is_active=False, # Will be activated by the candidate
+                is_active=False,
                 interview_started=False
             ))[0];
 
@@ -103,7 +114,7 @@ walker RegisterCandidatesWalker {
 walker StartInterviewWalker {
     has candidate_id: str;
 
-    obj __specs__ {
+    obj _specs_ {
         static has auth: bool = False;
     }
 
@@ -148,7 +159,7 @@ walker SubmitAnswerWalker {
     has candidate_id: str;
     has answer: str;
 
-    obj __specs__ {
+    obj _specs_ {
         static has auth: bool = False;
     }
 

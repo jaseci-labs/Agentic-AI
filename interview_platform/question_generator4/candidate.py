@@ -21,27 +21,37 @@ if 'error_message' not in st.session_state:
 st.set_page_config(layout="centered", page_title="AI Interview")
 st.title("🤖 Welcome to Your AI-Powered Interview")
 
-# Session ID Entry
+
+if 'token' not in st.session_state:
+    st.session_state.token = None
+
+# Login Form
 if not st.session_state.candidate_id:
-    st.header("Please Enter Your Interview Session ID")
-    candidate_id_input = st.text_input("Session ID", placeholder="Enter the ID provided by the company")
-    
-    if st.button("Begin Interview", type="primary"):
-        if not candidate_id_input.strip():
-            st.warning("Please enter a valid Session ID.")
+    st.header("Login to Your Interview")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    if st.button("Login and Begin Interview", type="primary"):
+        if not email.strip() or not password.strip():
+            st.warning("Please enter both email and password.")
         else:
-            with st.spinner("Verifying your session and preparing the first question..."):
+            with st.spinner("Logging in and preparing your interview..."):
                 try:
-                    payload = {"candidate_id": candidate_id_input.strip()}
-                    response = requests.post(API_START_INTERVIEW, json=payload)
+                    payload = {"email": email.strip(), "password": password.strip()}
+                    response = requests.post("http://127.0.0.1:8000/user/login", json=payload)
                     response.raise_for_status()
                     data = response.json()
-
-                    # Extract from reports array
-                    if data.get("reports") and len(data["reports"]) > 0:
-                        report_data = data["reports"][0]
+                    user_id = data["user"]["id"]
+                    token = data["token"]
+                    # Start interview
+                    start_payload = {"candidate_id": user_id}
+                    start_response = requests.post(API_START_INTERVIEW, json=start_payload)
+                    start_response.raise_for_status()
+                    start_data = start_response.json()
+                    if start_data.get("reports") and len(start_data["reports"]) > 0:
+                        report_data = start_data["reports"][0]
                         if report_data.get("status") == "started":
-                            st.session_state.candidate_id = candidate_id_input.strip()
+                            st.session_state.candidate_id = user_id
+                            st.session_state.token = token
                             st.session_state.current_question = report_data["question"]
                             st.session_state.interview_active = True
                             st.session_state.qa_transcript = []
@@ -51,9 +61,8 @@ if not st.session_state.candidate_id:
                             st.error(report_data.get("message", "An unknown error occurred."))
                     else:
                         st.error("Invalid response format from server")
-
                 except Exception as e:
-                    st.error(f"Could not start interview. Error: {e}")
+                    st.error(f"Could not start interview, check your email and password: {e}")
 
 
 # Interview Interface

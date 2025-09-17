@@ -41,15 +41,17 @@ with col2:
     if 'job_context' not in st.session_state:
         st.warning("Please define and lock the job details on the left first.")
     else:
-        st.write(f"Registering candidates for: **{st.session_state.job_context['job_role']}**")
+        st.write(f"Registering candidates for: *{st.session_state.job_context['job_role']}*")
+        
         with st.form("candidates_form"):
             candidates_data = []
             for i in range(5): # Allow up to 5 candidates
-                st.markdown(f"**Candidate {i+1}**")
+                st.markdown(f"*Candidate {i+1}*")
                 name = st.text_input(f"Name", key=f"name_{i}")
                 email = st.text_input(f"Email", key=f"email_{i}")
-                if name and email:
-                    candidates_data.append({"name": name, "email": email})
+                password = st.text_input(f"Password", key=f"password_{i}", type="password") # Add password field
+                if name and email and password:
+                    candidates_data.append({"name": name, "email": email, "password": password})
             
             candidates_form_submitted = st.form_submit_button("Register Candidates and Generate IDs", type="primary")
 
