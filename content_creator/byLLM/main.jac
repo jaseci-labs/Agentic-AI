@@ -1,6 +1,7 @@
 # import from agent_core { supervisor, agent, Toolbox}
 import from agent_core { Memory, Session }
 import from byllm.llm { Model }
+import sys;
 
 glob llm = Model(model_name="gpt-4o");
 
@@ -49,9 +50,9 @@ walker SupervisorAgent {
         }
         return None;
     }
-    def spawning_agent_at_root(agent_type: str) -> None {
-        print("Spawning agent at root:", agent_type.value);
-        agent_cls = self.get_agent_class(agent_type.value);
+    def spawning_selected_agent_at_root(agent_type: str) -> None {
+        print("Spawning agent at root:", agent_type, type(agent_type));
+        agent_cls = self.get_agent_class(agent_type);
         if not agent_cls {
             print("Agent class not found");
             report {
@@ -61,15 +62,17 @@ walker SupervisorAgent {
             disengage;
         }
         agent_inst = agent_cls();
-        agent_inst(
-            utterance = self.utterance,
-            session_id = jid(self.session)
-        ) spawn root;
+        print("Agent instance created:", agent_inst);
+        agent_inst spawn root;
     }
     def find_agent(utterance: str, history: str) -> AgentTypes by llm();
+    def decide_agent(utterance: str, history: str) -> str {
+        agent_type = self.find_agent(utterance, history);
+        return agent_type.value;
+    }
     def communicate_agents(utterance: str, history: str) -> str by llm(
         method="ReAct",
-        tools=[self.find_agent, self.spawning_agent_at_root]
+        tools=[self.decide_agent, self.spawning_selected_agent_at_root]
     );
     can supervise with `root entry {
         memory_list = [root --> (`?Memory)];
@@ -87,7 +90,6 @@ walker SupervisorAgent {
     }
 }
 
-sem SupervisorAgent.find_agent = "You are an AI assistant that helps route user requests to the appropriate specialized agent based on the user's utterance and conversation history. return the relevant value in the enum";
 
 walker planner_agent {
     can execute with `root entry {
