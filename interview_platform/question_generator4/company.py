@@ -1,6 +1,11 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 JAC_SERVER_URL = "http://localhost:8000"
 API_REGISTER_CANDIDATES = f"{JAC_SERVER_URL}/walker/RegisterCandidatesWalker"
@@ -41,15 +46,26 @@ with col2:
     if 'job_context' not in st.session_state:
         st.warning("Please define and lock the job details on the left first.")
     else:
-        st.write(f"Registering candidates for: **{st.session_state.job_context['job_role']}**")
+        st.write(f"Registering candidates for: *{st.session_state.job_context['job_role']}*")
+        
+        # Number of candidates input
+        num_candidates = st.number_input(
+            "Number of Candidates", 
+            min_value=1, 
+            max_value=10, 
+            value=1,
+            help="Specify how many candidates you want to register"
+        )
+        
         with st.form("candidates_form"):
             candidates_data = []
-            for i in range(5): # Allow up to 5 candidates
+            for i in range(num_candidates):
                 st.markdown(f"**Candidate {i+1}**")
                 name = st.text_input(f"Name", key=f"name_{i}")
                 email = st.text_input(f"Email", key=f"email_{i}")
-                if name and email:
-                    candidates_data.append({"name": name, "email": email})
+                password = st.text_input(f"Password", key=f"password_{i}", type="password")
+                if name and email and password:
+                    candidates_data.append({"name": name, "email": email, "password": password})
             
             candidates_form_submitted = st.form_submit_button("Register Candidates and Generate IDs", type="primary")
 
@@ -59,11 +75,22 @@ with col2:
                 else:
                     with st.spinner("Registering candidates and creating secure sessions..."):
                         try:
+                            # First, authenticate to get a token
+                            auth_response = requests.post(
+                                f"{JAC_SERVER_URL}/user/login",
+                                json={"email": "admin@test.com", "password": "admin123"}
+                            )
+                            auth_response.raise_for_status()
+                            auth_data = auth_response.json()
+                            token = auth_data["token"]
+                            
+                            # Now make the authenticated API call
+                            headers = {"Authorization": f"Bearer {token}"}
                             payload = {
                                 "job_context": st.session_state.job_context,
                                 "candidates": candidates_data
                             }
-                            response = requests.post(API_REGISTER_CANDIDATES, json=payload)
+                            response = requests.post(API_REGISTER_CANDIDATES, json=payload, headers=headers)
                             response.raise_for_status()
                             data = response.json()
                             
