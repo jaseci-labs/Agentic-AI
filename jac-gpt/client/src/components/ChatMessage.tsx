@@ -21,12 +21,10 @@ const JacCodeBlock = ({ code }: JacCodeBlockProps) => {
   }, [code]);
 
   return (
-    <div className="jac-code">
-      <pre 
-        className="text-sm font-mono overflow-x-auto leading-relaxed m-0"
-        dangerouslySetInnerHTML={{ __html: highlightedCode }}
-      />
-    </div>
+    <pre 
+      className="text-sm font-mono overflow-x-auto leading-relaxed m-0 whitespace-pre-wrap break-words"
+      dangerouslySetInnerHTML={{ __html: highlightedCode }}
+    />
   );
 };
 
@@ -55,9 +53,9 @@ const ChatMessage = ({ message, isUser, timestamp }: ChatMessageProps) => {
         )}
       </Avatar>
       
-      <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col gap-2 flex-1 min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
         <div 
-          className={`rounded-2xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 text-sm ${
+          className={`rounded-2xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 text-sm max-w-full min-w-0 break-words ${
             isUser 
               ? 'bg-gradient-primary text-white shadow-glow/50' 
               : 'bg-card/80 border border-border/50 text-foreground hover:border-border'
@@ -66,7 +64,7 @@ const ChatMessage = ({ message, isUser, timestamp }: ChatMessageProps) => {
           {isUser ? (
             <div className="whitespace-pre-wrap leading-relaxed text-sm">{message}</div>
           ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground prose-code:text-primary prose-pre:bg-chat-code prose-pre:border prose-pre:border-border/30 prose-a:text-primary hover:prose-a:text-primary/80 prose-li:text-foreground">
+            <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground prose-code:text-primary prose-pre:bg-chat-code prose-pre:border prose-pre:border-border/30 prose-a:text-primary hover:prose-a:text-primary/80 prose-li:text-foreground break-words overflow-wrap-anywhere">
               <ReactMarkdown
                 rehypePlugins={[rehypeHighlight]}
                 components={{

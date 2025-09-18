@@ -1,34 +1,34 @@
 # Documentation API for serving Jac documentation content
 
-walker get_sitemap {
-    """Get sitemap URLs for documentation"""
+# walker get_sitemap {
+#     """Get sitemap URLs for documentation"""
     
-    obj __specs__ {
-        static has methods: list = ["get"];
-        static has auth: bool = False;
-    }
+#     obj __specs__ {
+#         static has methods: list = ["get"];
+#         static has auth: bool = False;
+#     }
 
-    can serve_sitemap with `root entry {
-        import os;
+#     can serve_sitemap with `root entry {
+#         import os;
         
-        try {
-            sitemap_path = os.path.join(os.path.dirname(__file__), "sitemap.xml");
-            with open(sitemap_path, 'r', encoding='utf-8') as f {
-                content = f.read();
-            }
+#         try {
+#             sitemap_path = os.path.join(os.path.dirname(__file__), "sitemap.xml");
+#             with open(sitemap_path, 'r', encoding='utf-8') as f {
+#                 content = f.read();
+#             }
             
-            report {
-                "success": True,
-                "content": content
-            };
-        } except Exception as e {
-            report {
-                "success": False,
-                "error": str(e)
-            };
-        }
-    }
-}
+#             report {
+#                 "success": True,
+#                 "content": content
+#             };
+#         } except Exception as e {
+#             report {
+#                 "success": False,
+#                 "error": str(e)
+#             };
+#         }
+#     }
+# }
 
 walker get_doc_content {
     """Fetch documentation content from URL or local files"""

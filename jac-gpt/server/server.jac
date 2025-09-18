@@ -1,40 +1,14 @@
 import sys;
 import os;
 import requests;
-import from mtllm.llm {Model}
+import from byllm.llm {Model}
 import from dotenv {load_dotenv}
 import from database {get_database}
 import from rag_engine {RagEngine}
-import from simple_docs {get_sitemap, get_doc_content, suggest_docs}
-import from full_language {full_language}
+import from simple_docs {get_doc_content, suggest_docs}
 
 with entry {
     load_dotenv(override=True);
-    
-    # Check full_language.md file accessibility during server launch
-    print("=== Server Launch: Checking full_language.md accessibility ===");
-    base_path = os.path.dirname(__file__);
-    file_path = os.path.join(base_path, "full_language.md");
-    
-    if os.path.exists(file_path) {
-        try {
-            with open(file_path, "r", encoding="utf-8") as file {
-                content = file.read();
-            }
-            if content.strip() {
-                print(f"✅ SUCCESS: full_language.md is accessible ({len(content)} characters)");
-                print(f"   File path: {file_path}");
-            } else {
-                print("⚠️  WARNING: full_language.md exists but is empty");
-            }
-        } except Exception as e {
-            print(f"❌ ERROR: full_language.md exists but cannot be read - {str(e)}");
-        }
-    } else {
-        print(f"❌ FILE NOT FOUND: full_language.md at {file_path}");
-        print("   Will fallback to embedded string content");
-    }
-    print("=== End accessibility check ===");
 }
 
 glob llm = Model(model_name='gpt-4.1-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
@@ -53,38 +27,6 @@ enum ChatType {
 }
 
 node Router {
-    """Classify the message based on its content and intent for optimal Jac language assistance:
-    
-    **Classification Rules:**
-    
-    1. **QA Only For**:
-       - Basic greetings and casual conversation ('hi', 'hello', 'how are you', 'thanks', 'goodbye')
-       - Simple acknowledgments and social pleasantries
-    
-    2. **RAG For All Technical and Explaintion Content**:
-       - ANY Jac programming language questions (syntax, features, concepts, examples)
-       - Code documentation and example requests (reference existing Jac examples from docs)
-       - Object-Spatial Programming (OSP) questions and examples
-       - AI-first constructs and LLM integration in Jac
-       - Jaseci platform, tools, ecosystem questions
-       - Cloud-native development with Jac
-       - Programming questions that could benefit from Jac solutions
-       - Algorithm and data structure questions
-       - Software development concepts and patterns
-       - AI/ML programming questions
-       - Graph programming and data modeling
-       - Debugging, best practices, or technical help
-       - Documentation requests about Jac/Jaseci
-       - Code review and optimization questions
-       - Comparison with other programming languages
-       - Technical problem-solving questions
-    
-    3. **OFF_TOPIC Only For**:
-       - Completely non-technical topics (cooking, sports, entertainment, politics, etc.)
-       - Personal advice unrelated to programming
-       - Topics that cannot reasonably connect to programming or technology
-       
-    **Default**: When in doubt between QA and RAG for technical content, choose RAG to leverage comprehensive documentation."""
     def classify(message: str) -> ChatType by llm(method="Reason", temperature=0.2);
 }
 
@@ -130,106 +72,28 @@ def search_docs(query: str, chunck_nos: int = 5) -> str {
 
 """Refer `full_language.md` for complete Jac language examples to understand jac syntaxes."""
 def refer_full_language_examples() -> str {
-    # First try to read from full_language.md file
     try {
         base_path = os.path.dirname(__file__);
         file_path = os.path.join(base_path, "full_language.md");
         
-        if os.path.exists(file_path) {
-            with open(file_path, "r", encoding="utf-8") as file {
-                content = file.read();
-            }
-            
-            if content.strip() {
-                print("📁 Using full_language.md file content");
-                return content;
-            } else {
-                print("⚠️  full_language.md file is empty, falling back to embedded string");
-            }
+        with open(file_path, "r", encoding="utf-8") as file {
+            content = file.read();
+        }
+        
+        if content.strip() {
+            return content;
         } else {
-            print("📄 full_language.md not found, using embedded string content");
+            return "Language documentation is empty";
         }
         
-    } except FileNotFoundError {
-        print("📄 full_language.md file not found, using embedded string content");
-    } except PermissionError as e {
-        print(f"🔒 Permission denied reading full_language.md, using embedded string content: {str(e)}");
-    } except Exception as e {
-        print(f"❌ Error reading full_language.md, using embedded string content: {str(e)}");
-    }
-    
-    # Fallback to imported full_language string content
-    try {
-        content = full_language;
-        
-        if not content.strip() {
-            return "ERROR: Both file and embedded full_language content are empty";
-        }
-        
-        print("💾 Using embedded string content");
-        return content;
-        
-    } except Exception as e {
-        return f"ERROR: Failed to access both file and embedded content. Error: {str(e)}";
+    } except Exception {
+        return "Language documentation not available";
     }
 }
 
 node RagChat(Chat) {
     has chat_type: ChatType = ChatType.RAG;
 
-    """You are a JAC Code Example and Jac concept Explanation Expert. Your PRIMARY OBJECTIVE is to respond ONLY with actual code examples from the official Jac language documentation and concept explanations, not to generate new code.
-
-    JAC TERMINOLOGY:
-    - MTP = Meaning Typed Programming: JAC's paradigm that combines type safety with semantic meaning
-    - MTLLM = Meaning-typed LLM: JAC's AI-first approach where LLMs understand both syntax and semantic meaning
-    - OSP = Object-Spatial Programming: JAC's spatial relationship programming model
-
-    CORE JAC LANGUAGE FEATURES:
-    - `node` for data entities with spatial relationships and complex state
-    - `walker` for algorithms, data processing, and traversal logic
-    - `obj` for traditional object-oriented patterns and utilities
-    - `edge` for defining relationships and connections between nodes
-    - `enum` for type-safe constants and state definitions
-
-    ADVANCED JAC FEATURES:
-    - `by llm()` functions for AI-powered logic and decision making
-    - `++>` operator for spatial node creation and graph building
-    - `spawn` for walker invocation and data flow
-    - `glob` variables with `:g:` access for shared state
-    - JAC's built-in async capabilities for concurrent operations
-
-    AI-FIRST PROGRAMMING (MTLLM):
-    - LLM-powered functions using `by llm()` with proper prompting
-    - Semantic routing and intelligent decision making
-    - AI for data processing, classification, and generation tasks
-    - Meaning-typed programming for better AI integration
-
-    GRAPH AND SPATIAL PROGRAMMING (OSP):
-    - Node hierarchies that represent real-world relationships
-    - Walker algorithms that traverse and manipulate graph structures
-    - Edges to model complex data relationships and workflows
-    - Spatial queries and graph-based operations
-
-    YOUR RESPONSE APPROACH:
-    1. **For Code Requests**: ONLY return actual code examples from the full language documentation using `refer_full_language_examples` tool
-    2. **For Concept Questions & Explanations**: ALWAYS use `search_docs` tool first to get accurate information about JAC language concepts, syntax, features, or terminology before providing explanations
-    3. **Combine Information**: After using `search_docs` to understand concepts, provide relevant official examples using `refer_full_language_examples` if available
-    4. **DO NOT GENERATE**: Never create, modify, or invent new JAC code beyond what exists in official examples
-    5. **NO EXAMPLE FOUND**: If no relevant example exists, clearly state this and suggest reviewing the documentation
-
-    TOOL USAGE PRIORITY:
-    - **First**: Use `search_docs` to gather accurate information about JAC concepts, syntax, or features when explanation is needed
-    - **Second**: Use `refer_full_language_examples` to provide official code examples that demonstrate the concepts
-    - **Never**: Generate new code or modify existing examples
-
-    RESPONSE FORMAT:
-    - For code requests: Return the exact official example with source section reference
-    - For concept questions: First explain using `search_docs` information, then provide relevant official examples from `refer_full_language_examples`
-    - For mixed requests: Use `search_docs` for explanation, then show official examples
-    - Always cite the source section/title when possible
-    - Be clear when no official example exists for a specific request
-
-    REMEMBER: You are NOT a code generator. You are a curator of official JAC examples. Only provide actual, existing code examples from the documentation using the `refer_full_language_examples` tool."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
@@ -237,107 +101,31 @@ node RagChat(Chat) {
         tools = [refer_full_language_examples, search_docs]
     );
 
-    can chat with infer entry {
-        response = self.respond(
-            message=visitor.message,
-            chat_history=visitor.chat_history
-        );
-        visitor.chat_history.append({"role": "assistant", "content": response});
-        self.chat_history = visitor.chat_history;
-        visitor.response = response;
-        report {"response": response, "chat_history": visitor.chat_history};
-    }
+    can chat with infer entry;
 }
 
 node QAChat(Chat) {
     has chat_type: ChatType = ChatType.QA;
 
-    """Generate a friendly response to basic greetings and casual conversation. You are Jaseci Assistant, a welcoming AI assistant for the Jac programming community.
-
-    YOUR ROLE IN QA MODE:
-    You handle basic social interactions and greetings with warmth while representing the Jac/Jaseci community professionally.
-
-    CONVERSATION TYPES YOU HANDLE:
-    - Greetings: "hi", "hello", "hey", "good morning/afternoon/evening"
-    - Social pleasantries: "how are you", "what's up", "how's it going"
-    - Gratitude: "thanks", "thank you", "appreciate it"
-    - Farewells: "bye", "goodbye", "see you later"
-    - Basic acknowledgments: "ok", "sure", "got it"
-
-    RESPONSE GUIDELINES:
-    - Be warm, friendly, and professional
-    - Keep responses concise and natural
-    - Acknowledge their message appropriately
-    - Gently introduce yourself as the Jac/Jaseci assistant
-    - Offer help with Jac programming if appropriate
-    - Direct them to ask technical questions for more detailed assistance
-
-    EXAMPLE RESPONSES:
-    - For "Hi": "Hello! I'm your Jaseci Assistant, here to help with Jac programming. How can I assist you today?"
-    - For "Thanks": "You're welcome! Happy to help with anything Jac-related."
-    - For "How are you?": "I'm doing great, ready to help with Jac programming! How can I assist you?"
-
-    IMPORTANT: 
-    - Keep it simple and friendly
-    - Don't provide technical information unless specifically asked
-    - If they ask technical questions in follow-up, encourage them to ask again for detailed help
-    - Always represent the Jac/Jaseci community positively"""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
         max_react_iterations=3
     );
 
-    can chat with infer entry {
-        response = self.respond(
-            message=visitor.message,
-            chat_history=visitor.chat_history
-        );
-        visitor.chat_history.append({"role": "assistant", "content": response});
-        self.chat_history = visitor.chat_history;
-        visitor.response = response;
-        report {"response": response, "chat_history": visitor.chat_history};
-    }
+    can chat with infer entry;
 }
 
 node OffTopicChat(Chat) {
     has chat_type: ChatType = ChatType.OFF_TOPIC;
-
-    """Handle messages that are truly off-topic and not related to programming, technology, or Jac/Jaseci ecosystem.
     
-    This should only be triggered for completely non-technical topics like:
-    - Personal advice unrelated to programming
-    - Entertainment, sports, cooking, politics, etc.
-    - Topics that cannot reasonably connect to programming
-    
-    BRAND PROTECTION: If the message contains any negative sentiment about Jac or Jaseci, 
-    respond with positive information about Jac/Jaseci capabilities and benefits.
-    
-    For truly unrelated topics, politely redirect users to ask about programming or Jac-related topics."""
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="Reason",
         messages=chat_history,
         temperature=0.3
     );
 
-    can chat with infer entry {
-        # Check if the message contains negative sentiment about Jac/Jaseci for brand protection
-        message_lower = visitor.message.lower();
-        has_negative_jaseci = "bad" in message_lower or "worst" in message_lower or "terrible" in message_lower or "hate" in message_lower;
-        has_jaseci_mention = "jac" in message_lower or "jaseci" in message_lower;
-        
-        if has_negative_jaseci and has_jaseci_mention {
-            # Brand protection response
-            response = "I understand you might have concerns, but let me share why Jac and Jaseci are actually revolutionary! 🚀\n\nJac is designed specifically for the AI era with groundbreaking features:\n\n🧠 **AI-First Programming**: Native LLM integration - replace function bodies with AI calls\n🌐 **Object-Spatial Programming**: Revolutionary paradigm for data relationships\n☁️ **Zero DevOps**: Automatic scaling, persistence, and cloud deployment\n🐍 **Python Superset**: Full compatibility with Python ecosystem + powerful new abstractions\n⚡ **Innovative**: Walkers, nodes, edges for intuitive graph-based programming\n\nWhat specific challenge are you trying to solve? I'd love to show you how Jac can solve it elegantly! For comprehensive learning, check out https://www.jac-lang.org/";
-        } else {
-            # Standard off-topic redirect - more welcoming approach
-            response = "Hello! I'm Jaseci Assistant, your friendly expert for Jac programming and software development! 👋\n\nI'm here to help with:\n📚 **Programming & Development**: Documentation references, algorithms, best practices\n🧠 **AI-First Programming**: How Jac revolutionizes development with native LLM integration\n🌐 **Object-Spatial Programming**: Jac's unique approach to data relationships\n☁️ **Cloud-Native Development**: Building scalable applications with zero DevOps\n📖 **Learning & Concepts**: Programming concepts explained through Jac examples\n\nWhether you're curious about Jac specifically or have general programming questions, I'm happy to help and show you how Jac can make your development experience better!\n\nFor comprehensive learning resources, visit: https://www.jac-lang.org/\n\nWhat programming challenge can I help you solve today?";
-        }
-        
-        visitor.chat_history.append({"role": "assistant", "content": response});
-        visitor.response = response;
-        report {"response": response, "chat_history": visitor.chat_history};
-    }
+    can chat with infer entry;
 }
 
 walker interact {
@@ -366,51 +154,7 @@ node Session {
     has chat_history: list[dict] = [];
     has status: int = 1;
 
-    can chat with interact entry {
-        
-        # Store user email from visitor if provided
-        if visitor.user_email and not self.user_email {
-            self.user_email = visitor.user_email;
-        }
-        
-        # Initialize database connection
-        db = get_database();
-        
-        # Try to load existing session from database
-        existing_session = db.get_session(self.id);
-        
-        if existing_session and not self.chat_history {
-            self.chat_history = db.get_chat_history(self.id);
-        } elif not existing_session {
-            # Create session with user email if available
-            db_result = db.create_session(self.id, self.user_email);
-            if not self.chat_history {
-                self.chat_history = [];
-            }
-        }
-        
-        visitor.chat_history = self.chat_history;
-        
-        # Save user message to database
-        db.save_message(self.id, "user", visitor.message);
-        visitor.chat_history.append({"role": "user", "content": visitor.message});
-        
-        response_walker = infer(
-            message=visitor.message, 
-            chat_history=self.chat_history
-        ) spawn root;
-        
-        # Save assistant response to database
-        db.save_message(self.id, "assistant", response_walker.response);
-        visitor.chat_history.append({"role": "assistant", "content": response_walker.response});
-        self.chat_history = visitor.chat_history;
-        
-        report {
-            "response": response_walker.response,
-            "chat_history": self.chat_history,
-            "session_id": self.id
-        };
-    }
+    can chat with interact entry ;
 }
 
 walker get_session {
@@ -421,39 +165,9 @@ walker get_session {
         static has auth: bool = False;
     }
 
-    can get_chat_history with `root entry {
-        # Try to get session from database first
-        db = get_database();
-        existing_session = db.get_session(self.session_id);
-        
-        if existing_session {
-            chat_history = db.get_chat_history(self.session_id);
-            report {
-                "chat_history": chat_history, 
-                "session_id": self.session_id, 
-                "found": true,
-                "stats": db.get_session_stats(self.session_id)
-            };
-        } else {
-            # Check if session exists in memory
-            visit [-->](`?Session)(?id == self.session_id) else {
-                report {"chat_history": [], "session_id": self.session_id, "found": false};
-            }
-        }
-    }
+    can get_chat_history with `root entry;
 
-    can return_history with Session entry {
-        # Also get database stats for the session
-        db = get_database();
-        stats = db.get_session_stats(self.session_id);
-        
-        report {
-            "chat_history": here.chat_history,
-            "session_id": here.id,
-            "found": true,
-            "stats": stats
-        };
-    }
+    can return_history with Session entry;
 }
 
 walker new_session {
@@ -464,29 +178,7 @@ walker new_session {
         static has auth: bool = False;
     }
 
-    can create_session with `root entry {
-        if not self.session_id {
-            # Generate a simple session ID based on timestamp
-            import time;
-            self.session_id = f"session_{int(time.time())}";
-        }
-        
-        # Create session in database
-        db = get_database();
-        db_session = db.create_session(self.session_id);
-        
-        session_node = here ++> Session(
-            id=self.session_id, 
-            chat_history=[]
-        );
-        
-        report {
-            "session_id": self.session_id,
-            "status": "created",
-            "chat_history": [],
-            "database_created": bool(db_session)
-        };
-    }
+    can create_session with `root entry;
 }
 
 walker get_session_stats {
@@ -512,11 +204,6 @@ walker close_session {
     }
 }
 
-# User management walkers - Using JAC Cloud built-in authentication
-# The register_user walker is removed as we now use JAC Cloud's built-in /user/register endpoint
-
-
-
 # Admin walkers
 walker get_user_profile {
     has email: str;
@@ -526,27 +213,7 @@ walker get_user_profile {
         static has auth: bool = False;
     }
 
-    can fetch_profile with `root entry {
-        db = get_database();
-        
-        # Get or create user profile
-        profile = db.get_user_profile(self.email);
-        if not profile {
-            role = "admin" if self.email == "admin.jacgpt@jaseci.org" else "user";
-            name = "Admin User" if role == "admin" else "User";
-            db.create_user_profile(self.email, name, role);
-            profile = {
-                "email": self.email,
-                "name": name,
-                "role": role
-            };
-        }
-        
-        report {
-            "user": profile,
-            "isAdmin": profile.get("role") == "admin"
-        };
-    }
+    can fetch_profile with `root entry;
 }
 
 walker create_user_profile {
@@ -558,26 +225,7 @@ walker create_user_profile {
         static has auth: bool = False;
     }
 
-    can setup_profile with `root entry {
-        db = get_database();
-        
-        # Determine role based on email
-        role = "admin" if self.email == "admin.jacgpt@jaseci.org" else "user";
-        display_name = self.name if self.name else ("Admin User" if role == "admin" else "User");
-        
-        # Create or update user profile
-        db.create_user_profile(self.email, display_name, role);
-        
-        report {
-            "success": True,
-            "message": "Profile created successfully",
-            "user": {
-                "email": self.email,
-                "name": display_name,
-                "role": role
-            }
-        };
-    }
+    can setup_profile with `root entry;
 }
 
 walker save_user_location {
@@ -589,26 +237,7 @@ walker save_user_location {
         static has auth: bool = False;
     }
 
-    can save_location with `root entry {
-        db = get_database();
-        
-        # Save location data to user profile
-        success = db.save_user_location(self.email, self.location);
-        
-        if success {
-            report {
-                "success": True,
-                "message": "Location saved successfully",
-                "email": self.email,
-                "location": self.location
-            };
-        } else {
-            report {
-                "success": False,
-                "error": "Failed to save location"
-            };
-        }
-    }
+    can save_location with `root entry;
 }
 
 walker get_all_users {
@@ -619,49 +248,7 @@ walker get_all_users {
         static has auth: bool = False;
     }
 
-    can list_users with `root entry {
-        db = get_database();
-        
-        # Get the authenticated user from JAC Cloud context
-        # If no requester_email provided, try to get it from auth context
-        auth_email = self.requester_email;
-        if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
-            auth_email = here.info["auth_user"]["email"];
-        }
-        
-        # print(f"🔍 [DEBUG] Server: get_all_users called with auth_email: {auth_email}");
-        # print(f"🔍 [DEBUG] Server: self.requester_email: {self.requester_email}");
-        
-        # Check if requester is admin
-        # requester = db.get_user_profile(auth_email);
-        
-        # Debug information
-        # if not requester {
-        #     report {
-        #         "error": "Unauthorized: User profile not found",
-        #         "requester_email": auth_email,
-        #         "provided_email": self.requester_email
-        #     };
-        #     return;
-        # }
-        
-        # if requester.get("role") != "admin" {
-        #     report {
-        #         "error": "Unauthorized: Admin access required",
-        #         "requester_email": self.requester_email,
-        #         "user_role": requester.get("role"),
-        #         "is_admin": requester.get("is_admin")
-        #     };
-        #     return;
-        # }
-        
-        users = db.get_all_users();
-        
-        report {
-            "users": users,
-            "total": len(users)
-        };
-    }
+    can list_users with `root entry;
 }
 
 walker get_all_sessions_admin {
@@ -672,33 +259,7 @@ walker get_all_sessions_admin {
         static has auth: bool = False;
     }
 
-    can list_all_sessions with `root entry {
-        db = get_database();
-        
-        # Get the authenticated user from JAC Cloud context
-        auth_email = self.requester_email;
-        if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
-            auth_email = here.info["auth_user"]["email"];
-        }
-        
-        print(f"🔍 [DEBUG] Server: get_all_sessions_admin called with auth_email: {auth_email}");
-        
-        # Check if requester is admin
-        # requester = db.get_user_profile(auth_email);
-        # if not requester or requester.get("role") != "admin" {
-        #     report {
-        #         "error": "Unauthorized: Admin access required"
-        #     };
-        #     return;
-        # }
-        
-        sessions = db.get_all_sessions_with_users();
-        
-        report {
-            "sessions": sessions,
-            "total": len(sessions)
-        };
-    }
+    can list_all_sessions with `root entry;
 }
 
 walker get_session_messages_admin {
@@ -710,76 +271,15 @@ walker get_session_messages_admin {
         static has auth: bool = False;
     }
 
-    can get_session_chat with `root entry {
-        db = get_database();
-        
-        # Get the authenticated user from JAC Cloud context
-        auth_email = self.requester_email;
-        if not auth_email and hasattr(here, "info") and here.info.get("auth_user") {
-            auth_email = here.info["auth_user"]["email"];
-        }
-        
-        # # Check if requester is admin
-        # requester = db.get_user_profile(auth_email);
-        # if not requester or requester.get("role") != "admin" {
-        #     report {
-        #         "error": "Unauthorized: Admin access required"
-        #     };
-        #     return;
-        # }
-        
-        messages = db.get_all_messages_by_session(self.session_id);
-        session_stats = db.get_session_stats(self.session_id);
-        
-        report {
-            "session_id": self.session_id,
-            "messages": [
-                {
-                    "role": msg["role"],
-                    "content": msg["content"],
-                    "timestamp": msg["timestamp"]
-                }
-                for msg in messages
-            ],
-            "stats": session_stats,
-            "total_messages": len(messages)
-        };
-    }
+    can get_session_chat with `root entry;
 }
 
-walker get_user_info {
-    has email: str;
-    has requester_email: str = "";
+# walker get_user_info {
+#     has email: str;
+#     has requester_email: str = "";
 
-    can get_user_details with `root entry {
-        db = get_database();
-        
-        # Check if requester is admin or requesting their own info
-        # requester = db.get_user_profile(self.requester_email);
-        # if not requester or (requester.get("role") != "admin" and self.requester_email != self.email) {
-        #     report {
-        #         "error": "Unauthorized"
-        #     };
-        #     return;
-        # }
-        
-        user = db.get_user_profile(self.email);
-        if not user {
-            report {
-                "error": "User not found"
-            };
-            return;
-        }
-        
-        user_sessions = db.get_user_sessions(self.email);
-        
-        report {
-            "user": user,
-            "sessions": user_sessions,
-            "total_sessions": len(user_sessions)
-        };
-    }
-}
+#     can get_user_details with `root entry;
+# }
 
 # Documentation-related walkers
 walker get_documentation_urls {
@@ -841,251 +341,29 @@ walker get_documentation_urls {
     }
 }
 
-walker get_documentation_content {
-    """Fetch documentation content from a given URL"""
-    has url: str;
+# walker get_documentation_content {
+#     """Fetch documentation content from a given URL"""
+#     has url: str;
     
-    obj __specs__ {
-        static has methods: list = ["post"];
-        static has auth: bool = False;
-    }
+#     obj __specs__ {
+#         static has methods: list = ["post"];
+#         static has auth: bool = False;
+#     }
 
-    can fetch_content with `root entry {
-        import requests;
-        import os;
-        import urllib.parse;
-        
-        try {
-            # Check if it's a jac-lang.org URL
-            parsed_url = urllib.parse.urlparse(self.url);
-            if "jac-lang.org" not in parsed_url.netloc {
-                report {
-                    "success": False,
-                    "error": "Only jac-lang.org URLs are supported",
-                    "content": "",
-                    "title": ""
-                };
-                return;
-            }
-            
-            # Try to serve from local docs first
-            url_path = parsed_url.path.strip('/');
-            local_doc_path = os.path.join(os.path.dirname(__file__), "docs", url_path);
-            
-            # Check for index.html in the directory
-            if os.path.isdir(local_doc_path) {
-                index_path = os.path.join(local_doc_path, "index.html");
-                if os.path.exists(index_path) {
-                    local_doc_path = index_path;
-                }
-            }
-            
-            # Check for .html extension
-            if not local_doc_path.endswith('.html') and os.path.exists(local_doc_path + '.html') {
-                local_doc_path += '.html';
-            }
-            
-            content = "";
-            title = "";
-            
-            if os.path.exists(local_doc_path) {
-                # Read local file
-                with open(local_doc_path, 'r', encoding='utf-8') as f {
-                    content = f.read();
-                }
-                title = self._extract_title_from_html(content);
-            } else {
-                # Fallback to fetching from remote URL
-                response = requests.get(self.url, timeout=10);
-                response.raise_for_status();
-                content = response.text;
-                title = self._extract_title_from_html(content);
-            }
-            
-            # Clean up the content for better display
-            cleaned_content = self._clean_html_content(content);
-            
-            report {
-                "success": True,
-                "content": cleaned_content,
-                "title": title,
-                "url": self.url,
-                "source": "local" if os.path.exists(local_doc_path) else "remote"
-            };
-            
-        } except Exception as e {
-            report {
-                "success": False,
-                "error": str(e),
-                "content": "",
-                "title": "",
-                "url": self.url
-            };
-        }
-    }
-}
+#     can fetch_content with `root entry;
+# }
 
-walker suggest_documentation {
-    """Suggest relevant documentation based on chat message using enhanced AI with section-level granularity"""
-    has message: str;
-    has chat_history: list[dict] = [];
+# walker suggest_documentation {
+#     """Suggest relevant documentation based on chat message using enhanced AI with section-level granularity"""
+#     has message: str;
+#     has chat_history: list[dict] = [];
     
-    obj __specs__ {
-        static has methods: list = ["post"];
-        static has auth: bool = False;
-    }
+#     obj __specs__ {
+#         static has methods: list = ["post"];
+#         static has auth: bool = False;
+#     }
 
-    can get_enhanced_suggestions with `root entry {
-        # First, try to get enhanced suggestions programmatically
-        import json;
-        import os;
-        
-        # Load section-level documentation links directly
-        section_links = [];
-        try {
-            links_file = os.path.join(os.path.dirname(__file__), "docs_links", "all_section_links.json");
-            with open(links_file, 'r', encoding='utf-8') as f {
-                section_links = json.load(f);
-            }
-        } except Exception as e {
-            print(f"Error loading section links: {str(e)}");
-        }
-        
-        # Simple section matching logic
-        message_lower = self.message.lower();
-        found_suggestions = [];
-        
-        # Check for specific section matches
-        for link in section_links {
-            section_title_lower = link.get("section_title", "").lower();
-            
-            # High priority matches
-            beyond_oop_match = ("beyond oop" in message_lower and "beyond oop" in section_title_lower);
-            agentic_match = ("agentic programming" in message_lower and "agentic" in section_title_lower);
-            
-            if beyond_oop_match or agentic_match {
-                found_suggestions.append({
-                    "url": link["url"],
-                    "title": link["section_title"],
-                    "reason": f"Direct match for {link['section_title']} concept"
-                });
-            } elif "programming abstractions" in message_lower and "programming abstractions" in section_title_lower {
-                found_suggestions.append({
-                    "url": link["url"],
-                    "title": link["section_title"],
-                    "reason": f"Learn about {link['section_title']}"
-                });
-            } else {
-                # Check AI-related terms
-                ai_in_message = ("ai" in message_lower or "llm" in message_lower or "artificial intelligence" in message_lower);
-                ai_in_section = ("ai" in section_title_lower or "llm" in section_title_lower or "intelligence" in section_title_lower);
-                
-                if ai_in_message and ai_in_section {
-                    found_suggestions.append({
-                        "url": link["url"],
-                        "title": link["section_title"],
-                        "reason": f"AI-related documentation: {link['section_title']}"
-                    });
-                }
-            }
-        }
-        
-        # If we found specific section matches, use those
-        if len(found_suggestions) > 0 {
-            # Limit to top 3
-            limited = found_suggestions[:3];
-            report {
-                "success": True,
-                "suggestions": limited,
-                "total": len(limited)
-            };
-        } else {
-            # Fallback to AI suggestions
-            suggestion = self.suggest_with_ai(message=self.message, chat_history=self.chat_history);
-            
-            try {
-                suggestions_json = json.loads(suggestion);
-                report {
-                    "success": True,
-                    "suggestions": suggestions_json,
-                    "total": len(suggestions_json)
-                };
-            } except Exception as e {
-                # If JSON parsing fails, provide default section-level suggestions
-                report {
-                    "success": True,
-                    "suggestions": [
-                        {
-                            "url": "https://www.jac-lang.org/learn/introduction/#beyond-oop-an-agentic-programming-model",
-                            "title": "Beyond OOP: An Agentic Programming Model",
-                            "reason": "Learn about Jac's innovative agentic programming paradigm"
-                        },
-                        {
-                            "url": "https://www.jac-lang.org/learn/introduction/#programming-abstractions-for-ai",
-                            "title": "Programming Abstractions for AI",
-                            "reason": "Discover Jac's AI-first programming constructs"
-                        },
-                        {
-                            "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
-                            "title": "Nodes and Edges",
-                            "reason": "Master Object-Spatial Programming basics"
-                        }
-                    ],
-                    "total": 3
-                };
-            }
-        }
-    }
-
-    """Analyze the user's message and suggest the most relevant Jac documentation URLs with section-level precision.
-    
-    You now have access to granular section-level links from the Jac documentation. When suggesting documentation,
-    ALWAYS prefer section-specific URLs over page-level URLs when possible.
-
-    KEY SECTION-LEVEL URLS TO USE:
-    
-    **Introduction Page Sections:**
-    - Python Superset: https://www.jac-lang.org/learn/introduction#python-superset-philosophy-all-of-python-plus-more
-    - AI Abstractions: https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai
-    - Beyond OOP / Agentic Programming: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
-    - Zero to Scale: https://www.jac-lang.org/learn/introduction#zero-to-infinite-scale-without-any-code-changes
-    - Well-typed Codebases: https://www.jac-lang.org/learn/introduction#better-organized-and-well-typed-codebases
-    
-    **Important Section-Level Examples:**
-    - For "Beyond OOP" or "Agentic Programming" → USE: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
-    - For "AI Programming" or "AI Abstractions" → USE: https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai
-    - For "Python Superset" → USE: https://www.jac-lang.org/learn/introduction#python-superset-philosophy-all-of-python-plus-more
-    - For "Scaling" → USE: https://www.jac-lang.org/learn/introduction#zero-to-infinite-scale-without-any-code-changes
-    
-    **Page-Level URLs (use only when no specific section applies):**
-    
-    **Getting Started & Basics:**
-    - Introduction: https://www.jac-lang.org/learn/introduction/
-    - Getting Started: https://www.jac-lang.org/learn/getting_started/
-    - Installation: https://www.jac-lang.org/learn/installation/
-    - Jac in a Flash: https://www.jac-lang.org/learn/jac_in_a_flash/
-    
-    **Object-Spatial Programming:**
-    - Nodes and Edges: https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/
-    - Walkers: https://www.jac-lang.org/learn/data_spatial/walkers/
-    
-    **AI Integration:**
-    - With LLM: https://www.jac-lang.org/learn/jac-byllm/with_llm/
-    - MTLLM Quickstart: https://www.jac-lang.org/learn/jac-mtllm/quickstart/
-    
-    **Instructions:**
-    1. PRIORITIZE section-level URLs over page-level URLs
-    2. For "Beyond OOP" or "Agentic Programming" queries, ALWAYS suggest the section: https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model
-    3. Analyze user intent and provide most specific section
-    4. Return as JSON list: [{"url": "...", "title": "...", "reason": "..."}]
-    
-    **Critical Examples:**
-    - Query: "Beyond OOP" → {"url": "https://www.jac-lang.org/learn/introduction#beyond-oop-an-agentic-programming-model", "title": "Beyond OOP: An Agentic Programming Model", "reason": "Direct explanation of Jac's agentic programming paradigm"}
-    - Query: "AI programming" → {"url": "https://www.jac-lang.org/learn/introduction#programming-abstractions-for-ai", "title": "Programming Abstractions for AI", "reason": "Learn about Jac's AI-first programming constructs"}"""
-    def suggest_with_ai(message: str, chat_history: list[dict]) -> str by llm(
-        method="Reason",
-        temperature=0.1
-    );
-}
+#     can get_enhanced_suggestions with `root entry;
+# }
 
 

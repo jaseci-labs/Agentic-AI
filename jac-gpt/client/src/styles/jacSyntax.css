@@ -1,13 +1,10 @@
 /* Jac language syntax highlighting styles */
-.jac-code {
-  background: #1e1e1e;
+.jac-code,
+pre[class*="jac"] {
   color: #d4d4d4;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
 }
 
 .jac-keyword {
