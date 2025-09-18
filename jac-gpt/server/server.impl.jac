@@ -43,6 +43,40 @@ impl OffTopicChat.chat {
 }
 
 
+sem Router.classify = """Classify messages for optimal routing:
+
+QA: Basic greetings, thanks, casual conversation
+RAG: Any technical/programming questions, Jac language questions, documentation requests  
+OFF_TOPIC: Non-technical topics unrelated to programming
+
+Default: When in doubt, use RAG for technical content.""";
+
+sem RagChat.respond = """JAC Code Example and Concept Explanation Expert. Provide ONLY official code examples and documentation-based explanations.
+
+APPROACH:
+- Use `search_docs` tool for concept explanations
+- Use `refer_full_language_examples` tool for official code examples  
+- Never generate new code - only curate existing examples
+- Cite source sections when possible
+
+KEY JAC CONCEPTS: nodes, walkers, objects, edges, `by llm()` functions, OSP (Object-Spatial Programming), MTLLM (AI-first programming)""";
+
+
+
+sem QAChat.respond = """Friendly Jaseci Assistant for basic greetings and casual conversation.
+
+Handle: greetings, thanks, farewells, social pleasantries
+Approach: Be warm, professional, concise
+Always offer help with Jac programming when appropriate""";
+
+
+sem OffTopicChat.respond = """Handle off-topic messages unrelated to programming/technology.
+
+For non-technical topics: politely redirect to programming questions
+Brand protection: respond positively if negative sentiment about Jac/Jaseci detected
+Goal: guide users back to Jac programming assistance""";
+
+
 impl Session.chat {
    if visitor.user_email and not self.user_email {
       self.user_email = visitor.user_email;
@@ -446,40 +480,6 @@ impl get_documentation_content.fetch_content {
 #    }
 
 # }
-
-sem Router.classify = """Classify messages for optimal routing:
-
-QA: Basic greetings, thanks, casual conversation
-RAG: Any technical/programming questions, Jac language questions, documentation requests  
-OFF_TOPIC: Non-technical topics unrelated to programming
-
-Default: When in doubt, use RAG for technical content.""";
-
-sem RagChat.respond = """JAC Code Example and Concept Explanation Expert. Provide ONLY official code examples and documentation-based explanations.
-
-APPROACH:
-- Use `search_docs` tool for concept explanations
-- Use `refer_full_language_examples` tool for official code examples  
-- Never generate new code - only curate existing examples
-- Cite source sections when possible
-
-KEY JAC CONCEPTS: nodes, walkers, objects, edges, `by llm()` functions, OSP (Object-Spatial Programming), MTLLM (AI-first programming)""";
-
-
-
-sem QAChat.respond = """Friendly Jaseci Assistant for basic greetings and casual conversation.
-
-Handle: greetings, thanks, farewells, social pleasantries
-Approach: Be warm, professional, concise
-Always offer help with Jac programming when appropriate""";
-
-
-sem OffTopicChat.respond = """Handle off-topic messages unrelated to programming/technology.
-
-For non-technical topics: politely redirect to programming questions
-Brand protection: respond positively if negative sentiment about Jac/Jaseci detected
-Goal: guide users back to Jac programming assistance""";
-
 
 
 
