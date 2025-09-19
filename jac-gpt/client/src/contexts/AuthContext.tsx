@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [messageCount, setMessageCount] = useState(0);
-  const maxFreeMessages = 10;
+  const maxFreeMessages = 30;
 
   // For development/testing purposes - expose reset function globally
   useEffect(() => {
