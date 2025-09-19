@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AI Interview Platform Design System - Premium, Modern, Trustworthy */
+
+@layer base {
+  :root {
+    /* Base Colors */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
+    
+    /* Card & Surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+    
+    /* Primary Action/Accent - Vibrant Orange */
+    --primary: 9 82% 67%;        /* #ee6c4d */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 9 82% 60%;
+    --primary-active: 9 82% 55%;
+    
+    /* Primary Neutral/Info - Deep Blue */
+    --secondary: 210 36% 37%;     /* #3d5a80 */
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 210 36% 32%;
+    --secondary-active: 210 36% 27%;
+    
+    /* Secondary Accent - Teal */
+    --accent: 190 63% 33%;        /* #1f7a8c */
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 190 63% 28%;
+    
+    /* Neutral Colors */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: 9 82% 67%;
+    
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 7%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Semantic Design Tokens */
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --radius-lg: 1rem;
+  }
+
+  .dark {
+    /* Dark Theme - Dark Navy Background */
+    --background: 210 21% 20%;    /* #293241 */
+    --foreground: 0 0% 95%;
+    
+    --card: 210 21% 22%;
+    --card-foreground: 0 0% 95%;
+    --popover: 210 21% 22%;
+    --popover-foreground: 0 0% 95%;
+    
+    /* Primary colors remain vibrant in dark mode */
+    --primary: 9 82% 67%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 9 82% 72%;
+    --primary-active: 9 82% 62%;
+    
+    --secondary: 210 36% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 210 36% 50%;
+    --secondary-active: 210 36% 40%;
+    
+    --accent: 190 63% 40%;
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 190 63% 45%;
+    
+    --muted: 210 21% 16%;
+    --muted-foreground: 0 0% 65%;
+    --border: 210 21% 30%;
+    --input: 210 21% 16%;
+    --ring: 9 82% 67%;
+    
+    --success: 142 76% 45%;
+    --warning: 38 92% 60%;
+    --destructive: 0 84% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom Component Styles */
+@layer components {
+  .card-shadow {
+    box-shadow: 0 4px 6px -1px hsl(var(--foreground) / 0.1), 
+                0 2px 4px -1px hsl(var(--foreground) / 0.06);
+  }
+  
+  .card-shadow-lg {
+    box-shadow: 0 10px 15px -3px hsl(var(--foreground) / 0.1), 
+                0 4px 6px -2px hsl(var(--foreground) / 0.05);
+  }
+  
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .transition-base {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent;
+  }
+}

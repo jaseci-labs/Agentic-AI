@@ -28,24 +28,29 @@ This module is part of the Interview Platform and provides functionality for gen
 
 ## Running the Project
 
-To run the project, use three terminals.
+To run the project, use two terminals.
 
 1. **Terminal 1:**  
-   Run the first Streamlit app (Python):
+   Run the backend
+
    ```
-   streamlit run candidate.py
+   cd BE
+   jac serve interview_backend.jac
    ```
 
 2. **Terminal 2:**  
-   Run the second Streamlit app (Python):
+
+   To install the dependencies
    ```
-   streamlit run company.py
+   cd FE
+   npm i
+   ```
+   
+   Run the frontend:
+   ```
+   cd FE
+   npm run dev
    ```
 
-3. **Terminal 3:**  
-   Run the Jac backend:
-   ```
-   jac serve interview_backend.jac
-   ```
 
 Make sure you have all dependencies installed before running these.

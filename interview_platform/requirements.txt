@@ -1,3 +1,7 @@
+jaclang
+jac-cloud
 python-dotenv
 openai
-streamlit
+fastapi
+uvicorn
+pydantic
