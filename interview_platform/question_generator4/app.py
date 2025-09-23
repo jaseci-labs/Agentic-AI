@@ -1,3 +1,275 @@
+# import streamlit as st
+# import requests
+# import pandas as pd
+# import os
+# from dotenv import load_dotenv
+
+# # Load environment variables
+# load_dotenv()
+
+# JAC_SERVER_URL = "http://localhost:8000"
+# API_REGISTER_CANDIDATES = f"{JAC_SERVER_URL}/walker/RegisterCandidatesWalker"
+# API_START_INTERVIEW = f"{JAC_SERVER_URL}/walker/StartInterviewWalker"
+# API_SUBMIT_ANSWER = f"{JAC_SERVER_URL}/walker/SubmitAnswerWalker"
+
+# st.set_page_config(layout="wide", page_title="AI Interview Platform")
+
+# # Initialize session state
+# def init_session_state():
+#     # Admin state
+#     if 'created_sessions' not in st.session_state:
+#         st.session_state.created_sessions = []
+    
+#     # Candidate state
+#     if 'candidate_id' not in st.session_state:
+#         st.session_state.candidate_id = None
+#     if 'interview_active' not in st.session_state:
+#         st.session_state.interview_active = False
+#     if 'current_question' not in st.session_state:
+#         st.session_state.current_question = ""
+#     if 'qa_transcript' not in st.session_state:
+#         st.session_state.qa_transcript = []
+#     if 'error_message' not in st.session_state:
+#         st.session_state.error_message = ""
+    
+#     if 'selected_role' not in st.session_state:
+#         st.session_state.selected_role = None
+
+# init_session_state()
+
+# # Role Selection
+# def render_role_selection():
+#     st.title("🤖 AI Interview Platform")
+#     st.write("Welcome to the AI-powered interview platform. Please select your role to continue.")
+    
+#     col1, col2 = st.columns(2)
+    
+#     with col1:
+#         if st.button("🏢 Admin Portal", type="primary", use_container_width=True):
+#             st.session_state.selected_role = "admin"
+#             st.rerun()
+#         st.write("Create job postings and manage candidate interviews")
+    
+#     with col2:
+#         if st.button("👤 Candidate Portal", type="primary", use_container_width=True):
+#             st.session_state.selected_role = "candidate"
+#             st.rerun()
+#         st.write("Take your AI-powered interview")
+
+# # Admin Portal Functions
+# def render_admin_portal():
+#     st.title("🏢 Admin Portal: Create Interview Sessions")
+#     st.write("Use this portal to define a job role and register candidates. Each registered candidate will receive a unique Session ID to take their interview.")
+    
+#     # Back button
+#     if st.button("← Back to Role Selection"):
+#         st.session_state.selected_role = None
+#         st.rerun()
+    
+#     col1, col2 = st.columns(2)
+    
+#     with col1:
+#         st.header("1. Define the Job")
+#         with st.form("job_details_form"):
+#             company_name = st.text_input("Company Name", "QuantumLeap AI")
+#             company_info = st.text_area("Company Info", "We build foundational AI models.", height=100)
+#             job_role = st.text_input("Job Role", "Research Scientist")
+#             job_description = st.text_area("Job Description", "Seeking a PhD-level Research Scientist...", height=150)
+#             number_of_questions = st.number_input("Number of Questions", min_value=3, max_value=10, value=5)
+#             job_form_submitted = st.form_submit_button("Lock Job Details")
+            
+#             if job_form_submitted:
+#                 # Store job details in session state to use with candidate form
+#                 st.session_state.job_context = {
+#                     "company_name": company_name,
+#                     "company_info": company_info,
+#                     "job_role": job_role,
+#                     "job_description": job_description,
+#                     "number_of_questions": number_of_questions
+#                 }
+#                 st.success("Job details locked in. Now register candidates.")
+
+#     with col2:
+#         st.header("2. Register Candidates")
+#         if 'job_context' not in st.session_state:
+#             st.warning("Please define and lock the job details on the left first.")
+#         else:
+#             st.write(f"Registering candidates for: *{st.session_state.job_context['job_role']}*")
+            
+#             # Number of candidates input
+#             num_candidates = st.number_input(
+#                 "Number of Candidates", 
+#                 min_value=1, 
+#                 max_value=10, 
+#                 value=1,
+#                 help="Specify how many candidates you want to register"
+#             )
+            
+#             with st.form("candidates_form"):
+#                 candidates_data = []
+#                 for i in range(num_candidates):
+#                     st.markdown(f"**Candidate {i+1}**")
+#                     name = st.text_input(f"Name", key=f"name_{i}")
+#                     email = st.text_input(f"Email", key=f"email_{i}")
+#                     password = st.text_input(f"Password", key=f"password_{i}", type="password")
+#                     if name and email and password:
+#                         candidates_data.append({"name": name, "email": email, "password": password})
+                
+#                 candidates_form_submitted = st.form_submit_button("Register Candidates and Generate IDs", type="primary")
+
+#                 if candidates_form_submitted:
+#                     if not candidates_data:
+#                         st.error("Please enter details for at least one candidate.")
+#                     else:
+#                         with st.spinner("Registering candidates and creating secure sessions..."):
+#                             try:
+#                                 # Make the API call (no authentication required for RegisterCandidatesWalker)
+#                                 payload = {
+#                                     "job_context": st.session_state.job_context,
+#                                     "candidates": candidates_data
+#                                 }
+#                                 response = requests.post(API_REGISTER_CANDIDATES, json=payload)
+#                                 response.raise_for_status()
+#                                 data = response.json()
+                                
+#                                 # Extract from reports array
+#                                 if data.get("reports") and len(data["reports"]) > 0:
+#                                     report_data = data["reports"][0]
+#                                     if report_data.get("status") == "success":
+#                                         st.session_state.created_sessions = report_data.get("created_sessions", [])
+#                                     else:
+#                                         st.error(report_data.get("message", "Registration failed"))
+#                                 else:
+#                                     st.error("Invalid response format from server")
+
+#                             except Exception as e:
+#                                 st.error(f"Failed to register candidates. Error: {e}")
+
+#     # Results
+#     if st.session_state.created_sessions:
+#         st.header("3. Generated Interview Sessions")
+#         st.success("The following interview sessions have been created. Please share the unique Session ID with each candidate.")
+        
+#         df = pd.DataFrame(st.session_state.created_sessions)
+#         st.dataframe(df, use_container_width=True)
+
+# # Candidate Portal Functions
+# def render_candidate_portal():
+#     st.title("🤖 Welcome to Your AI-Powered Interview")
+    
+#     # Back button
+#     if st.button("← Back to Role Selection"):
+#         st.session_state.selected_role = None
+#         # Reset candidate state
+#         st.session_state.candidate_id = None
+#         st.session_state.interview_active = False
+#         st.session_state.current_question = ""
+#         st.session_state.qa_transcript = []
+#         st.session_state.error_message = ""
+#         st.rerun()
+    
+#     # Login Form
+#     if not st.session_state.candidate_id:
+#         st.header("Login to Your Interview")
+#         email = st.text_input("Email")
+#         password = st.text_input("Password", type="password")
+#         if st.button("Login and Begin Interview", type="primary"):
+#             if not email.strip() or not password.strip():
+#                 st.warning("Please enter both email and password.")
+#             else:
+#                 with st.spinner("Logging in and preparing your interview..."):
+#                     try:
+#                         payload = {"email": email.strip(), "password": password.strip()}
+#                         response = requests.post("http://127.0.0.1:8000/user/login", json=payload)
+#                         response.raise_for_status()
+#                         data = response.json()
+#                         user_id = data["user"]["id"]
+#                         # Start interview (no authentication required for StartInterviewWalker)
+#                         start_payload = {"candidate_id": user_id}
+#                         start_response = requests.post(API_START_INTERVIEW, json=start_payload)
+#                         start_response.raise_for_status()
+#                         start_data = start_response.json()
+#                         if start_data.get("reports") and len(start_data["reports"]) > 0:
+#                             report_data = start_data["reports"][0]
+#                             if report_data.get("status") == "started":
+#                                 st.session_state.candidate_id = user_id
+#                                 st.session_state.current_question = report_data["question"]
+#                                 st.session_state.interview_active = True
+#                                 st.session_state.qa_transcript = []
+#                                 st.session_state.error_message = ""
+#                                 st.rerun()
+#                             else:
+#                                 st.error(report_data.get("message", "An unknown error occurred."))
+#                         else:
+#                             st.error("Invalid response format from server")
+#                     except Exception as e:
+#                         st.error(f"Could not start interview, check your email and password: {e}")
+
+#     # Interview Interface
+#     elif st.session_state.candidate_id and st.session_state.interview_active:
+#         st.success("Your session is active. Please answer the questions below.")
+#         # Display chat history
+#         for item in st.session_state.qa_transcript:
+#             st.chat_message("ai", avatar="🤖").write(item["question"])
+#             st.chat_message("human", avatar="👤").write(item["answer"])
+
+#         # Display current question and answer form
+#         st.chat_message("ai", avatar="🤖").write(st.session_state.current_question)
+#         with st.form("answer_form", clear_on_submit=True):
+#             answer = st.text_area("Your Answer:", height=150, key="answer_input")
+#             submit_answer = st.form_submit_button("Submit Answer")
+
+#             if submit_answer:
+#                 if not answer.strip():
+#                     st.warning("Please provide an answer.")
+#                 else:
+#                     with st.spinner("AI is analyzing your answer..."):
+#                         st.session_state.qa_transcript.append({"question": st.session_state.current_question, "answer": answer})
+#                         try:
+#                             # No authentication required for SubmitAnswerWalker
+#                             payload = {"candidate_id": st.session_state.candidate_id, "answer": answer}
+#                             response = requests.post(API_SUBMIT_ANSWER, json=payload)
+#                             response.raise_for_status()
+#                             data = response.json()
+
+#                             # Extract from reports array
+#                             if data.get("reports") and len(data["reports"]) > 0:
+#                                 report_data = data["reports"][0]
+#                                 if report_data["status"] == "ongoing":
+#                                     st.session_state.current_question = report_data["question"]
+#                                 elif report_data["status"] == "completed":
+#                                     st.session_state.interview_active = False
+#                                     st.session_state.qa_transcript = report_data.get("final_transcript", [])
+#                                 st.rerun()
+#                             else:
+#                                 st.error("Invalid response format from server")
+
+#                         except Exception as e:
+#                             st.error(f"Error submitting answer: {e}")
+#                             st.session_state.qa_transcript.pop()
+
+#     # End Screen
+#     elif st.session_state.candidate_id and not st.session_state.interview_active:
+#         st.success("Thank you! Your interview is now complete.")
+#         st.header("Final Interview Transcript")
+#         st.json(st.session_state.qa_transcript)
+#         if st.button("End Session"):
+#             st.session_state.candidate_id = None
+#             st.rerun()
+
+# # Main App Logic
+# def main():
+#     if st.session_state.selected_role is None:
+#         render_role_selection()
+#     elif st.session_state.selected_role == "admin":
+#         render_admin_portal()
+#     elif st.session_state.selected_role == "candidate":
+#         render_candidate_portal()
+
+# if __name__ == "__main__":
+#     main()
+
+# app_auth.py
 import streamlit as st
 import requests
 import pandas as pd
@@ -7,16 +279,29 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# --- Configuration ---
+# Your Jac server and the separate User Management API
 JAC_SERVER_URL = "http://localhost:8000"
+USER_API_URL = "http://127.0.0.1:8000" # Assuming they run on the same port for now
+
 API_REGISTER_CANDIDATES = f"{JAC_SERVER_URL}/walker/RegisterCandidatesWalker"
 API_START_INTERVIEW = f"{JAC_SERVER_URL}/walker/StartInterviewWalker"
 API_SUBMIT_ANSWER = f"{JAC_SERVER_URL}/walker/SubmitAnswerWalker"
+API_USER_LOGIN = f"{USER_API_URL}/user/login"
 
 st.set_page_config(layout="wide", page_title="AI Interview Platform")
 
-# Initialize session state
+# --- Session State Initialization ---
 def init_session_state():
+    # Role and generic state
+    if 'selected_role' not in st.session_state:
+        st.session_state.selected_role = None
+    if 'error_message' not in st.session_state:
+        st.session_state.error_message = ""
+
     # Admin state
+    if 'admin_token' not in st.session_state:
+        st.session_state.admin_token = None # Will store the auth token
     if 'created_sessions' not in st.session_state:
         st.session_state.created_sessions = []
     
@@ -29,84 +314,85 @@ def init_session_state():
         st.session_state.current_question = ""
     if 'qa_transcript' not in st.session_state:
         st.session_state.qa_transcript = []
-    if 'error_message' not in st.session_state:
-        st.session_state.error_message = ""
-    if 'token' not in st.session_state:
-        st.session_state.token = None
-    
-    if 'selected_role' not in st.session_state:
-        st.session_state.selected_role = None
 
 init_session_state()
 
-# Role Selection
+# --- Role Selection UI ---
 def render_role_selection():
     st.title("🤖 AI Interview Platform")
-    st.write("Welcome to the AI-powered interview platform. Please select your role to continue.")
-    
+    st.write("Please select your role to continue.")
     col1, col2 = st.columns(2)
-    
     with col1:
         if st.button("🏢 Admin Portal", type="primary", use_container_width=True):
             st.session_state.selected_role = "admin"
             st.rerun()
-        st.write("Create job postings and manage candidate interviews")
-    
     with col2:
         if st.button("👤 Candidate Portal", type="primary", use_container_width=True):
             st.session_state.selected_role = "candidate"
             st.rerun()
-        st.write("Take your AI-powered interview")
 
-# Admin Portal Functions
+# --- Admin Portal UI and Logic ---
 def render_admin_portal():
-    st.title("🏢 Admin Portal: Create Interview Sessions")
-    st.write("Use this portal to define a job role and register candidates. Each registered candidate will receive a unique Session ID to take their interview.")
+    st.title("🏢 Admin Portal")
     
-    # Back button
-    if st.button("← Back to Role Selection"):
-        st.session_state.selected_role = None
-        st.rerun()
+    # --- AUTHENTICATION GATE ---
+    # If admin is not logged in, show the login form.
+    if not st.session_state.admin_token:
+        st.header("Admin Login")
+        st.info("You must log in to an admin account to create and manage interviews.")
+        # NOTE: This assumes you have pre-registered an admin user in your user management system.
+        admin_email = st.text_input("Admin Email", "admin@example.com")
+        admin_password = st.text_input("Admin Password", type="password")
+
+        if st.button("Login as Admin", type="primary"):
+            with st.spinner("Authenticating..."):
+                try:
+                    login_payload = {"email": admin_email, "password": admin_password}
+                    response = requests.post(API_USER_LOGIN, json=login_payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    # Store the token upon successful login
+                    st.session_state.admin_token = data.get("token")
+                    st.success("Login successful!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Admin login failed. Please check credentials. Error: {e}")
+        
+        # Back button for login screen
+        if st.button("← Back to Role Selection"):
+            st.session_state.selected_role = None
+            st.rerun()
+        return # Stop rendering the rest of the admin page
+
+    # --- MAIN ADMIN INTERFACE (only shown after successful login) ---
+    st.success("You are logged in as an administrator.")
+    st.header("Create Interview Sessions")
     
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.header("1. Define the Job")
+        st.subheader("1. Define the Job")
         with st.form("job_details_form"):
+            # (Job details form is the same as before)
             company_name = st.text_input("Company Name", "QuantumLeap AI")
             company_info = st.text_area("Company Info", "We build foundational AI models.", height=100)
             job_role = st.text_input("Job Role", "Research Scientist")
             job_description = st.text_area("Job Description", "Seeking a PhD-level Research Scientist...", height=150)
-            number_of_questions = st.number_input("Number of Questions", min_value=3, max_value=10, value=5)
+            number_of_questions = st.number_input("Number of Questions", min_value=3, value=5)
             job_form_submitted = st.form_submit_button("Lock Job Details")
-            
             if job_form_submitted:
-                # Store job details in session state to use with candidate form
                 st.session_state.job_context = {
-                    "company_name": company_name,
-                    "company_info": company_info,
-                    "job_role": job_role,
-                    "job_description": job_description,
-                    "number_of_questions": number_of_questions
+                    "company_name": company_name, "company_info": company_info, "job_role": job_role,
+                    "job_description": job_description, "number_of_questions": number_of_questions
                 }
-                st.success("Job details locked in. Now register candidates.")
+                st.success("Job details locked. Now register candidates.")
 
     with col2:
-        st.header("2. Register Candidates")
+        st.subheader("2. Register Candidates")
         if 'job_context' not in st.session_state:
-            st.warning("Please define and lock the job details on the left first.")
+            st.warning("Please define and lock the job details first.")
         else:
-            st.write(f"Registering candidates for: *{st.session_state.job_context['job_role']}*")
-            
-            # Number of candidates input
-            num_candidates = st.number_input(
-                "Number of Candidates", 
-                min_value=1, 
-                max_value=10, 
-                value=1,
-                help="Specify how many candidates you want to register"
-            )
-            
+            # (Candidate registration form is the same as before)
+            num_candidates = st.number_input("Number of Candidates", min_value=1, value=1)
             with st.form("candidates_form"):
                 candidates_data = []
                 for i in range(num_candidates):
@@ -118,33 +404,20 @@ def render_admin_portal():
                         candidates_data.append({"name": name, "email": email, "password": password})
                 
                 candidates_form_submitted = st.form_submit_button("Register Candidates and Generate IDs", type="primary")
-
                 if candidates_form_submitted:
                     if not candidates_data:
                         st.error("Please enter details for at least one candidate.")
                     else:
-                        with st.spinner("Registering candidates and creating secure sessions..."):
+                        with st.spinner("Registering candidates securely..."):
                             try:
-                                # First, authenticate to get a token
-                                auth_response = requests.post(
-                                    f"{JAC_SERVER_URL}/user/login",
-                                    json={"email": "admin@test.com", "password": "admin123"}
-                                )
-                                auth_response.raise_for_status()
-                                auth_data = auth_response.json()
-                                token = auth_data["token"]
+                                # --- THIS IS THE KEY CHANGE: ADD AUTHENTICATION HEADERS ---
+                                headers = { "Authorization": f"Bearer {st.session_state.admin_token}" }
+                                payload = { "job_context": st.session_state.job_context, "candidates": candidates_data }
                                 
-                                # Now make the authenticated API call
-                                headers = {"Authorization": f"Bearer {token}"}
-                                payload = {
-                                    "job_context": st.session_state.job_context,
-                                    "candidates": candidates_data
-                                }
                                 response = requests.post(API_REGISTER_CANDIDATES, json=payload, headers=headers)
                                 response.raise_for_status()
                                 data = response.json()
                                 
-                                # Extract from reports array
                                 if data.get("reports") and len(data["reports"]) > 0:
                                     report_data = data["reports"][0]
                                     if report_data.get("status") == "success":
@@ -152,20 +425,23 @@ def render_admin_portal():
                                     else:
                                         st.error(report_data.get("message", "Registration failed"))
                                 else:
-                                    st.error("Invalid response format from server")
-
+                                    st.error("Invalid response from server")
                             except Exception as e:
-                                st.error(f"Failed to register candidates. Error: {e}")
+                                st.error(f"Failed to register candidates. This may be an authentication issue. Error: {e}")
 
-    # Results
+    # Results display is the same
     if st.session_state.created_sessions:
         st.header("3. Generated Interview Sessions")
-        st.success("The following interview sessions have been created. Please share the unique Session ID with each candidate.")
-        
-        df = pd.DataFrame(st.session_state.created_sessions)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(pd.DataFrame(st.session_state.created_sessions), use_container_width=True)
 
-# Candidate Portal Functions
+    # Logout button
+    if st.sidebar.button("Logout Admin"):
+        st.session_state.admin_token = None
+        st.rerun()
+
+# --- Candidate Portal UI and Logic ---
+# No changes are needed for the candidate portal, as its walkers have `auth: bool = False`.
+# The existing `render_candidate_portal()` function is correct.
 def render_candidate_portal():
     st.title("🤖 Welcome to Your AI-Powered Interview")
     
@@ -178,7 +454,6 @@ def render_candidate_portal():
         st.session_state.current_question = ""
         st.session_state.qa_transcript = []
         st.session_state.error_message = ""
-        st.session_state.token = None
         st.rerun()
     
     # Login Form
@@ -197,18 +472,15 @@ def render_candidate_portal():
                         response.raise_for_status()
                         data = response.json()
                         user_id = data["user"]["id"]
-                        token = data["token"]
                         # Start interview
-                        headers = {"Authorization": f"Bearer {token}"}
                         start_payload = {"candidate_id": user_id}
-                        start_response = requests.post(API_START_INTERVIEW, json=start_payload, headers=headers)
+                        start_response = requests.post(API_START_INTERVIEW, json=start_payload)
                         start_response.raise_for_status()
                         start_data = start_response.json()
                         if start_data.get("reports") and len(start_data["reports"]) > 0:
                             report_data = start_data["reports"][0]
                             if report_data.get("status") == "started":
                                 st.session_state.candidate_id = user_id
-                                st.session_state.token = token
                                 st.session_state.current_question = report_data["question"]
                                 st.session_state.interview_active = True
                                 st.session_state.qa_transcript = []
@@ -242,13 +514,11 @@ def render_candidate_portal():
                     with st.spinner("AI is analyzing your answer..."):
                         st.session_state.qa_transcript.append({"question": st.session_state.current_question, "answer": answer})
                         try:
-                            headers = {"Authorization": f"Bearer {st.session_state.token}"}
                             payload = {"candidate_id": st.session_state.candidate_id, "answer": answer}
-                            response = requests.post(API_SUBMIT_ANSWER, json=payload, headers=headers)
+                            response = requests.post(API_SUBMIT_ANSWER, json=payload)
                             response.raise_for_status()
                             data = response.json()
 
-                            # Extract from reports array
                             if data.get("reports") and len(data["reports"]) > 0:
                                 report_data = data["reports"][0]
                                 if report_data["status"] == "ongoing":
@@ -273,7 +543,7 @@ def render_candidate_portal():
             st.session_state.candidate_id = None
             st.rerun()
 
-# Main App Logic
+# --- Main App Router ---
 def main():
     if st.session_state.selected_role is None:
         render_role_selection()
