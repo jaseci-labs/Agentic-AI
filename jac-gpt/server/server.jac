@@ -270,7 +270,7 @@ walker interact_stream {
                     yield sse_data;
                     
                     import time;
-                    time.sleep(0.05);
+                    time.sleep(0.03);
                 }
                 
                 # Final message

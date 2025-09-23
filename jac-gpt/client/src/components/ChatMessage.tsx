@@ -32,9 +32,10 @@ interface ChatMessageProps {
   message: string;
   isUser: boolean;
   timestamp: Date;
+  isComplete?: boolean;
 }
 
-const ChatMessage = ({ message, isUser, timestamp }: ChatMessageProps) => {
+const ChatMessage = ({ message, isUser, timestamp, isComplete = true }: ChatMessageProps) => {
   return (
     <div className={`flex gap-3 p-3 animate-fade-in ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar className="w-8 h-8 shrink-0 hover:scale-110 transition-transform duration-200">
@@ -173,6 +174,9 @@ const ChatMessage = ({ message, isUser, timestamp }: ChatMessageProps) => {
               >
                 {message}
               </ReactMarkdown>
+              {!isComplete && (
+                <span className="inline-block w-2 h-4 bg-primary/60 ml-1 animate-pulse"></span>
+              )}
             </div>
           )}
         </div>

@@ -19,6 +19,7 @@ interface Message {
   content: string;
   isUser: boolean;
   timestamp: Date;
+  isComplete?: boolean;
 }
 
 const JacChatbot = () => {
@@ -96,6 +97,7 @@ const JacChatbot = () => {
       content: '',
       isUser: false,
       timestamp: new Date(),
+      isComplete: false,
     };
 
     setMessages(prev => [...prev, userMessage, streamingMessage]);
@@ -115,17 +117,15 @@ const JacChatbot = () => {
         
         const chunk = decoder.decode(value);
         
-        // Simple parsing - look for complete SSE events
+        // Better SSE parsing - split by data: and clean up properly
         const lines = chunk.split('\n');
         
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               let jsonStr = line.slice(6).trim();
-              // Remove any literal \n characters that might be in the string
-              jsonStr = jsonStr.replace(/\\n/g, '');
-              // Also remove any actual newline characters
-              jsonStr = jsonStr.replace(/\n/g, '');
+              // Remove any trailing \\n\\n characters that might be breaking JSON
+              jsonStr = jsonStr.replace(/\\n\\n$/, '').replace(/\n\n$/, '');
               
               console.log('Trying to parse JSON:', JSON.stringify(jsonStr));
               
@@ -138,16 +138,18 @@ const JacChatbot = () => {
                   
                   setMessages(prev => prev.map(msg => 
                     msg.id === botMessageId 
-                      ? { ...msg, content: fullResponse }
+                      ? { ...msg, content: fullResponse, isComplete: false }
                       : msg
                   ));
                 }
                 
-                if (data.is_complete && data.full_response) {
-                  fullResponse = data.full_response;
+                if (data.is_complete) {
+                  if (data.full_response) {
+                    fullResponse = data.full_response;
+                  }
                   setMessages(prev => prev.map(msg => 
                     msg.id === botMessageId 
-                      ? { ...msg, content: fullResponse }
+                      ? { ...msg, content: fullResponse, isComplete: true }
                       : msg
                   ));
                   break;
@@ -156,7 +158,6 @@ const JacChatbot = () => {
             } catch (parseError) {
               console.error('JSON parse error:', parseError);
               console.error('Raw line:', JSON.stringify(line));
-              console.error('JSON string after processing:', JSON.stringify(line.slice(6).trim().replace(/\\n/g, '').replace(/\n/g, '')));
             }
           }
         }
@@ -170,7 +171,7 @@ const JacChatbot = () => {
       // Fall back to regular message
       setMessages(prev => prev.map(msg => 
         msg.id === botMessageId 
-          ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
+          ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isComplete: true }
           : msg
       ));
     }
@@ -234,6 +235,7 @@ const JacChatbot = () => {
         content: response.response,
         isUser: false,
         timestamp: new Date(),
+        isComplete: true,
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -249,6 +251,7 @@ const JacChatbot = () => {
         content: 'Sorry, I encountered an error. Please try again.',
         isUser: false,
         timestamp: new Date(),
+        isComplete: true,
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -332,6 +335,7 @@ const JacChatbot = () => {
                   message={message.content}
                   isUser={message.isUser}
                   timestamp={message.timestamp}
+                  isComplete={message.isComplete}
                 />
               ))}
               
