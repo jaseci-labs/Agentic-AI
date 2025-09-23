@@ -1,6 +1,3 @@
-// API Service for Interview Platform
-// Matches the exact functionality from Streamlit app
-
 const JAC_SERVER_URL = "http://localhost:8000";
 const API_REGISTER_CANDIDATES = `${JAC_SERVER_URL}/walker/RegisterCandidatesWalker`;
 const API_START_INTERVIEW = `${JAC_SERVER_URL}/walker/StartInterviewWalker`;
@@ -18,6 +15,7 @@ export interface Candidate {
   name: string;
   email: string;
   password: string;
+  cv_file?: File;
 }
 
 export interface RegisteredCandidate {
@@ -67,10 +65,7 @@ class APIError extends Error {
   }
 }
 
-/**
- * Authenticate admin user and get token
- * Uses the same approach as company.py
- */
+
 export async function authenticateAdmin(): Promise<string> {
   try {
     const response = await fetch(`${JAC_SERVER_URL}/user/login`, {
@@ -96,36 +91,64 @@ export async function authenticateAdmin(): Promise<string> {
   }
 }
 
-/**
- * Login admin with frontend validation only
- */
-export async function loginAdmin(email: string, password: string): Promise<LoginResponse> {
-  // Simple frontend validation
-  if (email.trim() !== "admin@test.com" || password.trim() !== "admin123") {
-    throw new APIError("Invalid admin credentials");
-  }
 
-  // Return mock success response
-  return {
-    user: {
-      id: "admin_user",
-      email: "admin@test.com"
-    },
-    token: "admin_authenticated_token"
-  };
+export async function loginAdmin(email: string, password: string): Promise<LoginResponse> {
+  try {
+    const response = await fetch(`${JAC_SERVER_URL}/user/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    
+    if (!response.ok) {
+      throw new APIError(`Login failed: ${response.statusText}`, response.status);
+    }
+    
+    const data: LoginResponse = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof APIError) throw error;
+    throw new APIError(`Login error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
-/**
- * Register candidates and create interview sessions
- * Matches the exact logic from Streamlit RegisterCandidatesWalker call
- */
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove the data:application/pdf;base64, prefix
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+
 export async function registerCandidates(
   jobContext: JobContext,
   candidates: Candidate[]
 ): Promise<RegisteredCandidate[]> {
   try {
-    // First authenticate to get token (same as Streamlit)
     const token = await authenticateAdmin();
+
+    const candidatesWithCvs = await Promise.all(
+      candidates.map(async (candidate) => {
+        let cvBase64 = '';
+        if (candidate.cv_file) {
+          cvBase64 = await fileToBase64(candidate.cv_file);
+        }
+        
+        return {
+          name: candidate.name,
+          email: candidate.email,
+          password: candidate.password,
+          cv_bytes: cvBase64
+        };
+      })
+    );
 
     // Make the authenticated API call
     const headers = {
@@ -135,7 +158,7 @@ export async function registerCandidates(
 
     const payload = {
       job_context: jobContext,
-      candidates: candidates
+      candidates: candidatesWithCvs
     };
 
     const response = await fetch(API_REGISTER_CANDIDATES, {
@@ -150,7 +173,6 @@ export async function registerCandidates(
 
     const data: APIResponse<any> = await response.json();
 
-    // Extract from reports array (same logic as Streamlit)
     if (data.reports && data.reports.length > 0) {
       const reportData = data.reports[0];
       if (reportData.status === "success") {
@@ -167,10 +189,6 @@ export async function registerCandidates(
   }
 }
 
-/**
- * Login candidate and get user info
- * Matches the exact logic from Streamlit candidate login
- */
 export async function loginCandidate(email: string, password: string): Promise<LoginResponse> {
   try {
     const payload = { 
@@ -198,10 +216,7 @@ export async function loginCandidate(email: string, password: string): Promise<L
   }
 }
 
-/**
- * Start interview for a candidate
- * Matches the exact logic from Streamlit StartInterviewWalker call
- */
+
 export async function startInterview(candidateId: string, token: string): Promise<InterviewStartResponse> {
   try {
     const headers = {
@@ -223,7 +238,6 @@ export async function startInterview(candidateId: string, token: string): Promis
 
     const data: APIResponse<any> = await response.json();
 
-    // Extract from reports array (same logic as Streamlit)
     if (data.reports && data.reports.length > 0) {
       const reportData = data.reports[0];
       if (reportData.status === "started") {
@@ -245,10 +259,7 @@ export async function startInterview(candidateId: string, token: string): Promis
   }
 }
 
-/**
- * Submit answer and get next question or completion status
- * Matches the exact logic from Streamlit SubmitAnswerWalker call
- */
+
 export async function submitAnswer(
   candidateId: string, 
   answer: string, 
@@ -277,7 +288,6 @@ export async function submitAnswer(
 
     const data: APIResponse<any> = await response.json();
 
-    // Extract from reports array (same logic as Streamlit)
     if (data.reports && data.reports.length > 0) {
       const reportData = data.reports[0];
       
