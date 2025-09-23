@@ -100,7 +100,6 @@ const AdminPortal = () => {
     setLoading(true);
     
     try {
-      // Prepare job context exactly like Streamlit
       const jobContext: JobContext = {
         company_name: companyName,
         company_info: companyInfo,
@@ -116,7 +115,6 @@ const AdminPortal = () => {
         password: candidate.password.trim() || generatePassword()
       }));
 
-      // Call the API (matches Streamlit logic exactly)
       const result = await registerCandidates(jobContext, candidatesData);
       
       setRegisteredCandidates(result);
