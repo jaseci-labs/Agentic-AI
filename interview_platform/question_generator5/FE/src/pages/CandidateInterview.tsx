@@ -23,8 +23,7 @@ interface QAPair {
 const CandidateInterview = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Session state (matches Streamlit)
+
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [interviewActive, setInterviewActive] = useState(false);
@@ -95,8 +94,7 @@ const CandidateInterview = () => {
 
     // Add candidate's response to UI
     addCandidateMessage(currentAnswer);
-    
-    // Add to transcript (matches Streamlit logic)
+
     const newQAPair: QAPair = {
       question: currentQuestion,
       answer: currentAnswer
@@ -108,7 +106,6 @@ const CandidateInterview = () => {
     setLoading(true);
 
     try {
-      // Submit answer to API (matches Streamlit logic)
       const response = await submitAnswer(candidateId, answerToSubmit, authToken);
       
       if (response.status === "ongoing") {
@@ -139,7 +136,6 @@ const CandidateInterview = () => {
         description: errorMessage
       });
       
-      // Remove the last QA pair on error (matches Streamlit logic)
       setQaTranscript(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
@@ -147,7 +143,6 @@ const CandidateInterview = () => {
   };
 
   const handleLogout = () => {
-    // Clear session data (matches Streamlit reset logic)
     sessionStorage.removeItem('candidateId');
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('currentQuestion');

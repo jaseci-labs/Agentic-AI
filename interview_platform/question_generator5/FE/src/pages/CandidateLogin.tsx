@@ -31,12 +31,10 @@ const CandidateLogin = () => {
     setLoading(true);
     
     try {
-      // Login candidate (matches Streamlit logic)
       const loginData = await loginCandidate(email, password);
       const userId = loginData.user.id;
       const token = loginData.token;
 
-      // Start interview (matches Streamlit logic)
       const interviewData = await startInterview(userId, token);
       
       if (interviewData.status === "started") {

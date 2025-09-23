@@ -16,14 +16,12 @@ const InterviewComplete = () => {
   const [transcript, setTranscript] = useState<QAPair[]>([]);
 
     useEffect(() => {
-    // Get final transcript from session storage (matches Streamlit logic)
     const storedTranscript = sessionStorage.getItem('finalTranscript');
     if (storedTranscript) {
       try {
         const parsedTranscript = JSON.parse(storedTranscript);
         // Transform the API response format to match component expectations
         if (Array.isArray(parsedTranscript) && parsedTranscript.length > 0) {
-          // Check if it's the API format with nested context
           if (parsedTranscript[0]?.context) {
             const transformedTranscript = parsedTranscript.map(item => ({
               question: item.context.question,
@@ -101,7 +99,6 @@ const InterviewComplete = () => {
   ];
 
   const handleEndSession = () => {
-    // Clear all session data (matches Streamlit reset logic)
     sessionStorage.removeItem('candidateId');
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('currentQuestion');
