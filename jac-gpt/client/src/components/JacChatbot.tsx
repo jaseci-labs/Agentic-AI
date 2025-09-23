@@ -32,7 +32,6 @@ const JacChatbot = () => {
   const [docPanelOpen, setDocPanelOpen] = useState(false);
   const [docSuggestions, setDocSuggestions] = useState<DocumentationSuggestion[]>([]);
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
-  const [isStreamingEnabled, setIsStreamingEnabled] = useState(true);
 
   // Streaming chunk interface
   interface StreamingChunk {
@@ -41,6 +40,7 @@ const JacChatbot = () => {
     is_complete: boolean;
     full_response?: string;
     chat_history?: any[];
+    thinking?: boolean;
   }
 
   // Initialize session on component mount
@@ -91,24 +91,27 @@ const JacChatbot = () => {
       timestamp: new Date(),
     };
 
-    const botMessageId = (Date.now() + 1).toString();
-    const streamingMessage: Message = {
-      id: botMessageId,
-      content: '',
-      isUser: false,
-      timestamp: new Date(),
-      isComplete: false,
-    };
-
-    setMessages(prev => [...prev, userMessage, streamingMessage]);
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true); // Show thinking indicator
 
     try {
       const userEmail = user?.email || '';
       const stream = await jacServerService.sendMessageStream(message, sessionId, userEmail);
       
+      // Create the streaming message after starting the stream
+      const botMessageId = (Date.now() + 1).toString();
+      const streamingMessage: Message = {
+        id: botMessageId,
+        content: '',
+        isUser: false,
+        timestamp: new Date(),
+        isComplete: false,
+      };
+
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let fullResponse = '';
+      let hasAddedMessage = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -133,6 +136,13 @@ const JacChatbot = () => {
                 const data: StreamingChunk = JSON.parse(jsonStr);
                 console.log('Successfully parsed:', data);
                 
+                // Add the streaming message on first content received
+                if (!hasAddedMessage && data.content) {
+                  setIsLoading(false); // Hide thinking indicator
+                  setMessages(prev => [...prev, streamingMessage]);
+                  hasAddedMessage = true;
+                }
+                
                 if (data.content) {
                   fullResponse += data.content;
                   
@@ -152,6 +162,7 @@ const JacChatbot = () => {
                       ? { ...msg, content: fullResponse, isComplete: true }
                       : msg
                   ));
+                  setIsLoading(false); // Ensure loading is false
                   break;
                 }
               }
@@ -168,12 +179,17 @@ const JacChatbot = () => {
       }
     } catch (error) {
       console.error('Streaming error:', error);
+      setIsLoading(false); // Hide thinking indicator on error
       // Fall back to regular message
-      setMessages(prev => prev.map(msg => 
-        msg.id === botMessageId 
-          ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isComplete: true }
-          : msg
-      ));
+      const botMessageId = (Date.now() + 1).toString();
+      const errorMessage: Message = {
+        id: botMessageId,
+        content: 'Sorry, I encountered an error. Please try again.',
+        isUser: false,
+        timestamp: new Date(),
+        isComplete: true,
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
   };
 
@@ -209,54 +225,8 @@ const JacChatbot = () => {
       }
     }
 
-    // Use streaming if enabled
-    if (isStreamingEnabled) {
-      await handleSendMessageStream(message);
-      return;
-    }
-
-    // Original non-streaming logic
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: message,
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-
-    try {
-      const userEmail = user?.email || '';
-      const response = await jacServerService.sendMessage(message, sessionId, userEmail);
-      
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: response.response,
-        isUser: false,
-        timestamp: new Date(),
-        isComplete: true,
-      };
-
-      setMessages(prev => [...prev, botMessage]);
-      
-      // Increment message count for guest users (non-authenticated users)
-      if (!isAuthenticated) {
-        incrementMessageCount();
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, I encountered an error. Please try again.',
-        isUser: false,
-        timestamp: new Date(),
-        isComplete: true,
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    // Always use streaming
+    await handleSendMessageStream(message);
   };
 
   return (
@@ -282,15 +252,6 @@ const JacChatbot = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button
-                variant={isStreamingEnabled ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsStreamingEnabled(!isStreamingEnabled)}
-                className="flex items-center gap-2"
-              >
-                {isStreamingEnabled ? '⚡ Streaming' : '📝 Regular'}
-              </Button>
-              
               <Button
                 variant={docPanelOpen ? "default" : "outline"}
                 size="sm"
@@ -350,7 +311,7 @@ const JacChatbot = () => {
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">Jaseci is thinking...</div>
+                    <div className="text-xs text-gray-400 mt-1">thinking...</div>
                   </div>
                 </div>
               )}

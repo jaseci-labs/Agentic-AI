@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
       <div className={`
         fixed left-0 top-0 h-full bg-gray-900 border-r border-gray-700 z-50 transition-all duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${isExpanded ? 'w-70' : 'w-16'} lg:translate-x-0 lg:static lg:z-auto
+        ${isExpanded ? 'w-56' : 'w-16'} lg:translate-x-0 lg:static lg:z-auto
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}

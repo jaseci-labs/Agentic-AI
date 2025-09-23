@@ -12,7 +12,7 @@ with entry {
     load_dotenv(override=True);
 }
 
-glob llm = Model(model_name='gpt-4.1-mini', verbose=True, api_key=os.getenv("OPENAI_API_KEY"));
+glob llm = Model(model_name='gpt-4.1-mini', verbose=False, api_key=os.getenv("OPENAI_API_KEY"));
 glob rag_engine: RagEngine = RagEngine();
 
 
@@ -250,9 +250,7 @@ walker interact_stream {
             
             # Create generator for streaming using the exact pattern
             def stream_generator() {
-                print(f"Starting stream generation for response: {response[:50]}...");
                 words = response.split(" ");
-                print(f"Split response into {len(words)} words");
                 for i in range(len(words)) {
                     word = words[i];
                     if i < len(words) - 1 {
@@ -266,7 +264,6 @@ walker interact_stream {
                     };
                     
                     sse_data = f"data: {json.dumps(data)}\n\n";
-                    print(f"Yielding SSE data: {sse_data[:100]}...");
                     yield sse_data;
                     
                     import time;
@@ -282,9 +279,7 @@ walker interact_stream {
                     "chat_history": chat_history
                 };
                 final_sse = f"data: {json.dumps(final_data)}\n\n";
-                print(f"Yielding final SSE data: {final_sse[:100]}...");
                 yield final_sse;
-                print("Stream generation completed");
             }
             
             # Use the exact pattern you provided

@@ -33,9 +33,6 @@ obj MongoDB {
             }
             db_name = os.getenv("DATABASE_NAME", "jaseci");
             
-            print(f"Attempting to connect to MongoDB with URI: {mongo_uri[:50]}...");
-            print(f"Database name: {db_name}");
-            
             self.client = MongoClient(mongo_uri);
             self.db = self.client[db_name];
             self.sessions = self.db.sessions;
@@ -60,7 +57,6 @@ obj MongoDB {
             };
             existing = self.sessions.find_one({"_id": session_id});
             if existing {
-                print(f"Session {session_id} already exists");
                 # Update user_email if provided and not already set
                 if user_email and not existing.get("user_email") {
                     self.sessions.update_one(
@@ -71,7 +67,6 @@ obj MongoDB {
                 return existing;
             }
             result = self.sessions.insert_one(session_data);
-            print(f"Created new session: {session_id} for user: {user_email}");
             return session_data;
         } except Exception as e {
             print(f"Error creating session {session_id}: {e}");

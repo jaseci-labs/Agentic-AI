@@ -172,9 +172,9 @@ const ChatMessage = ({ message, isUser, timestamp, isComplete = true }: ChatMess
                   ),
                 }}
               >
-                {message}
+                {message || (!isComplete ? "thinking..." : "")}
               </ReactMarkdown>
-              {!isComplete && (
+              {!isComplete && message && (
                 <span className="inline-block w-2 h-4 bg-primary/60 ml-1 animate-pulse"></span>
               )}
             </div>
