@@ -2,10 +2,35 @@ import json;
 import os;
 
 impl RagChat.chat {
-    response = self.respond(
+    raw_response = self.respond(
         message=visitor.message,
         chat_history=visitor.chat_history
     );
+    
+    # Handle both string and generator responses
+    response = raw_response;
+    if hasattr(response, '__iter__') and not isinstance(response, str) {
+        # If it's a generator, collect all chunks
+        response_text = "";
+        try {
+            for chunk in response {
+                if hasattr(chunk, 'choices') and chunk.choices {
+                    # Handle OpenAI streaming format
+                    delta = chunk.choices[0].delta;
+                    if hasattr(delta, 'content') and delta.content {
+                        response_text += delta.content;
+                    }
+                } elif isinstance(chunk, str) {
+                    response_text += chunk;
+                }
+            }
+            response = response_text;
+        } except Exception as e {
+            print(f"Error processing generator response in RagChat: {e}");
+            response = "Sorry, I encountered an error processing the response.";
+        }
+    }
+    
     visitor.chat_history.append({"role": "assistant", "content": response});
     self.chat_history = visitor.chat_history;
     visitor.response = response;
@@ -13,10 +38,35 @@ impl RagChat.chat {
 }
 
 impl QAChat.chat {
-   response = self.respond(
+   raw_response = self.respond(
       message=visitor.message,
       chat_history=visitor.chat_history
    );
+   
+   # Handle both string and generator responses
+   response = raw_response;
+   if hasattr(response, '__iter__') and not isinstance(response, str) {
+       # If it's a generator, collect all chunks
+       response_text = "";
+       try {
+           for chunk in response {
+               if hasattr(chunk, 'choices') and chunk.choices {
+                   # Handle OpenAI streaming format
+                   delta = chunk.choices[0].delta;
+                   if hasattr(delta, 'content') and delta.content {
+                       response_text += delta.content;
+                   }
+               } elif isinstance(chunk, str) {
+                   response_text += chunk;
+               }
+           }
+           response = response_text;
+       } except Exception as e {
+           print(f"Error processing generator response in QAChat: {e}");
+           response = "Sorry, I encountered an error processing the response.";
+       }
+   }
+   
    visitor.chat_history.append({"role": "assistant", "content": response});
    self.chat_history = visitor.chat_history;
    visitor.response = response;
@@ -106,13 +156,37 @@ impl Session.chat {
       chat_history=self.chat_history
    ) spawn root;
    
+   # Handle both string and generator responses
+   response = response_walker.response;
+   if hasattr(response, '__iter__') and not isinstance(response, str) {
+      # If it's a generator, collect all chunks
+      response_text = "";
+      try {
+         for chunk in response {
+            if hasattr(chunk, 'choices') and chunk.choices {
+               # Handle OpenAI streaming format
+               delta = chunk.choices[0].delta;
+               if hasattr(delta, 'content') and delta.content {
+                  response_text += delta.content;
+               }
+            } elif isinstance(chunk, str) {
+               response_text += chunk;
+            }
+         }
+         response = response_text;
+      } except Exception as e {
+         print(f"Error processing generator response: {e}");
+         response = "Sorry, I encountered an error processing the response.";
+      }
+   }
+   
    # Save assistant response to database
-   db.save_message(self.id, "assistant", response_walker.response);
-   visitor.chat_history.append({"role": "assistant", "content": response_walker.response});
+   db.save_message(self.id, "assistant", response);
+   visitor.chat_history.append({"role": "assistant", "content": response});
    self.chat_history = visitor.chat_history;
    
    report {
-      "response": response_walker.response,
+      "response": response,
       "chat_history": self.chat_history,
       "session_id": self.id
    };

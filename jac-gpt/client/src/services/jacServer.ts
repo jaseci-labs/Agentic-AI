@@ -17,6 +17,15 @@ export interface SessionResponse {
   found?: boolean;
 }
 
+export interface StreamingChunk {
+  content: string;
+  session_id: string;
+  is_complete: boolean;
+  full_response?: string;
+  chat_history?: ChatMessage[];
+  error?: boolean;
+}
+
 class JacServerService {
   private baseUrl: string;
   private defaultEmail: string;
@@ -205,6 +214,59 @@ class JacServerService {
       return data.reports[0];
     } catch (error) {
       console.error('Error sending message:', error);
+      throw error;
+    }
+  }
+
+  // Send a message with streaming response
+  async sendMessageStream(message: string, sessionId: string, userEmail?: string): Promise<ReadableStream<Uint8Array>> {
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add auth header only if user is authenticated
+      if (this.isAuthenticated()) {
+        const token = await this.getAuthToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
+      const requestBody: any = {
+        message,
+        session_id: sessionId,
+      };
+
+      // Include user email if provided
+      if (userEmail) {
+        requestBody.user_email = userEmail;
+      }
+
+      console.log('Sending streaming request to:', `${this.baseUrl}/walker/interact_stream`);
+      console.log('Request body:', requestBody);
+
+      const response = await fetch(`${this.baseUrl}/walker/interact_stream`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('Streaming response status:', response.status);
+      console.log('Streaming response headers:', response.headers);
+
+      if (!response.ok) {
+        throw new Error(`Failed to send streaming message: ${response.statusText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
+      console.log('Successfully got streaming response body');
+      return response.body;
+    } catch (error) {
+      console.error('Error sending streaming message:', error);
       throw error;
     }
   }

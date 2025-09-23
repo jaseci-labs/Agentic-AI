@@ -1,7 +1,8 @@
 import sys;
 import os;
 import requests;
-import from mtllm.llm {Model}
+import json;
+import from byllm.llm {Model}
 import from dotenv {load_dotenv}
 import from database {get_database}
 import from rag_engine {RagEngine}
@@ -110,7 +111,8 @@ node QAChat(Chat) {
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        max_react_iterations=3
+        max_react_iterations=3,
+        stream = True
     );
 
     can chat with infer entry;
@@ -144,6 +146,164 @@ walker interact {
             session_node = here ++> Session(id=self.session_id, user_email=self.user_email, chat_history=[]);
             print("Session Node Created for:", self.session_id, "User:", self.user_email);
             visit session_node;
+        }
+    }
+}
+
+walker stream_response {
+
+    obj __specs__ {
+        static has auth: bool = False;
+        static has methods: list = ["get"];
+        static has entry_type: str = "ROOT";
+    }
+
+    can enter with `root entry {
+        def generator() {
+            for i in range(100) {
+                yield str(i);
+            }
+        }
+        import fastapi.responses;
+        _.report(
+            fastapi.responses.StreamingResponse(
+                generator(),
+                media_type="text/event-stream"
+            ),
+            custom=True
+        );
+    }
+}
+
+walker interact_stream {
+    has message: str;
+    has session_id: str;
+    has user_email: str = "";
+
+    obj __specs__ {
+        static has methods: list = ["post"];
+        static has auth: bool = False;
+    }
+
+    can stream_response with `root entry {
+        # Initialize or find session
+        visit [-->](`?Session)(?id == self.session_id) else {
+            session_node = here ++> Session(id=self.session_id, user_email=self.user_email, chat_history=[]);
+            print("Stream Session Node Created for:", self.session_id, "User:", self.user_email);
+            visit session_node;
+        }
+        
+        session_nodes = [-->](`?Session)(?id == self.session_id);
+        if session_nodes {
+            session = session_nodes[0];  # Get the first (and should be only) match
+            # Prepare chat context  
+            db = get_database();
+            existing_session = db.get_session(self.session_id);
+            
+            chat_history = [];
+            if existing_session {
+                chat_history = db.get_chat_history(self.session_id);
+            }
+            
+            # Save user message
+            db.save_message(self.session_id, "user", self.message);
+            chat_history.append({"role": "user", "content": self.message});
+            
+            # Get the AI response
+            response_walker = infer(
+                message=self.message,
+                chat_history=chat_history
+            ) spawn root;
+            
+            raw_response = response_walker.response;
+            
+            # Handle both string and generator responses
+            response = raw_response;
+            if hasattr(response, '__iter__') and not isinstance(response, str) {
+                # If it's a generator, collect all chunks
+                response_text = "";
+                try {
+                    for chunk in response {
+                        if hasattr(chunk, 'choices') and chunk.choices {
+                            # Handle OpenAI streaming format
+                            delta = chunk.choices[0].delta;
+                            if hasattr(delta, 'content') and delta.content {
+                                response_text += delta.content;
+                            }
+                        } elif isinstance(chunk, str) {
+                            response_text += chunk;
+                        }
+                    }
+                    response = response_text;
+                } except Exception as e {
+                    print(f"Error processing generator response in streaming: {e}");
+                    response = "Sorry, I encountered an error processing the response.";
+                }
+            }
+            
+            # Save assistant response
+            db.save_message(self.session_id, "assistant", response);
+            chat_history.append({"role": "assistant", "content": response});
+            
+            # Update session
+            session.chat_history = chat_history;
+            
+            # Create generator for streaming using the exact pattern
+            def stream_generator() {
+                print(f"Starting stream generation for response: {response[:50]}...");
+                words = response.split(" ");
+                print(f"Split response into {len(words)} words");
+                for i in range(len(words)) {
+                    word = words[i];
+                    if i < len(words) - 1 {
+                        word += " ";
+                    }
+                    
+                    data = {
+                        "content": word,
+                        "session_id": self.session_id,
+                        "is_complete": i == len(words) - 1
+                    };
+                    
+                    sse_data = f"data: {json.dumps(data)}\n\n";
+                    print(f"Yielding SSE data: {sse_data[:100]}...");
+                    yield sse_data;
+                    
+                    import time;
+                    time.sleep(0.05);
+                }
+                
+                # Final message
+                final_data = {
+                    "content": "",
+                    "session_id": self.session_id,
+                    "is_complete": True,
+                    "full_response": response,
+                    "chat_history": chat_history
+                };
+                final_sse = f"data: {json.dumps(final_data)}\n\n";
+                print(f"Yielding final SSE data: {final_sse[:100]}...");
+                yield final_sse;
+                print("Stream generation completed");
+            }
+            
+            # Use the exact pattern you provided
+            import fastapi.responses;
+            _.report(
+                fastapi.responses.StreamingResponse(
+                    stream_generator(),
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Headers": "*"
+                    }
+                ),
+                custom=True
+            );
+        } else {
+            _.report({"error": "Failed to find session"});
         }
     }
 }
@@ -275,7 +435,7 @@ walker get_session_messages_admin {
 }
 
 # walker get_user_info {
-#     has email: str;
+#     has email: str;  
 #     has requester_email: str = "";
 
 #     can get_user_details with `root entry;

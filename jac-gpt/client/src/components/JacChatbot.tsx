@@ -31,6 +31,16 @@ const JacChatbot = () => {
   const [docPanelOpen, setDocPanelOpen] = useState(false);
   const [docSuggestions, setDocSuggestions] = useState<DocumentationSuggestion[]>([]);
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const [isStreamingEnabled, setIsStreamingEnabled] = useState(true);
+
+  // Streaming chunk interface
+  interface StreamingChunk {
+    content: string;
+    session_id: string;
+    is_complete: boolean;
+    full_response?: string;
+    chat_history?: any[];
+  }
 
   // Initialize session on component mount
   useEffect(() => {
@@ -71,6 +81,101 @@ const JacChatbot = () => {
     }
   };
 
+  // Simple streaming handler that properly parses SSE
+  const handleSendMessageStream = async (message: string) => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: message,
+      isUser: true,
+      timestamp: new Date(),
+    };
+
+    const botMessageId = (Date.now() + 1).toString();
+    const streamingMessage: Message = {
+      id: botMessageId,
+      content: '',
+      isUser: false,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage, streamingMessage]);
+
+    try {
+      const userEmail = user?.email || '';
+      const stream = await jacServerService.sendMessageStream(message, sessionId, userEmail);
+      
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        
+        // Simple parsing - look for complete SSE events
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              let jsonStr = line.slice(6).trim();
+              // Remove any literal \n characters that might be in the string
+              jsonStr = jsonStr.replace(/\\n/g, '');
+              // Also remove any actual newline characters
+              jsonStr = jsonStr.replace(/\n/g, '');
+              
+              console.log('Trying to parse JSON:', JSON.stringify(jsonStr));
+              
+              if (jsonStr) {
+                const data: StreamingChunk = JSON.parse(jsonStr);
+                console.log('Successfully parsed:', data);
+                
+                if (data.content) {
+                  fullResponse += data.content;
+                  
+                  setMessages(prev => prev.map(msg => 
+                    msg.id === botMessageId 
+                      ? { ...msg, content: fullResponse }
+                      : msg
+                  ));
+                }
+                
+                if (data.is_complete && data.full_response) {
+                  fullResponse = data.full_response;
+                  setMessages(prev => prev.map(msg => 
+                    msg.id === botMessageId 
+                      ? { ...msg, content: fullResponse }
+                      : msg
+                  ));
+                  break;
+                }
+              }
+            } catch (parseError) {
+              console.error('JSON parse error:', parseError);
+              console.error('Raw line:', JSON.stringify(line));
+              console.error('JSON string after processing:', JSON.stringify(line.slice(6).trim().replace(/\\n/g, '').replace(/\n/g, '')));
+            }
+          }
+        }
+      }
+      
+      if (!isAuthenticated) {
+        incrementMessageCount();
+      }
+    } catch (error) {
+      console.error('Streaming error:', error);
+      // Fall back to regular message
+      setMessages(prev => prev.map(msg => 
+        msg.id === botMessageId 
+          ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
+          : msg
+      ));
+    }
+  };
+
     const handleSendMessage = async (message: string) => {
     if (!canSendMessage) {
       setShowLimitModal(true);
@@ -85,6 +190,31 @@ const JacChatbot = () => {
     // Store the user message for documentation suggestions
     setLastUserMessage(message);
 
+    // Get documentation suggestions
+    try {
+      const suggestions = await documentationService.getSuggestions(message, messages.map(m => ({
+        role: m.isUser ? 'user' : 'assistant',
+        content: m.content
+      })));
+      setDocSuggestions(suggestions);
+      
+      if (!docPanelOpen) {
+        setDocPanelOpen(true);
+      }
+    } catch (error) {
+      console.warn('Failed to get documentation suggestions:', error);
+      if (!docPanelOpen) {
+        setDocPanelOpen(true);
+      }
+    }
+
+    // Use streaming if enabled
+    if (isStreamingEnabled) {
+      await handleSendMessageStream(message);
+      return;
+    }
+
+    // Original non-streaming logic
     const userMessage: Message = {
       id: Date.now().toString(),
       content: message,
@@ -94,28 +224,6 @@ const JacChatbot = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-
-    // Get documentation suggestions based on the message
-    try {
-      console.log('Fetching suggestions for message:', message);
-      const suggestions = await documentationService.getSuggestions(message, messages.map(m => ({
-        role: m.isUser ? 'user' : 'assistant',
-        content: m.content
-      })));
-      console.log('Received suggestions:', suggestions);
-      setDocSuggestions(suggestions);
-      
-      // Auto-open documentation panel when user sends a message
-      if (!docPanelOpen) {
-        setDocPanelOpen(true);
-      }
-    } catch (error) {
-      console.warn('Failed to get documentation suggestions:', error);
-      // Still open the panel even if suggestions fail
-      if (!docPanelOpen) {
-        setDocPanelOpen(true);
-      }
-    }
 
     try {
       const userEmail = user?.email || '';
@@ -170,15 +278,26 @@ const JacChatbot = () => {
               <h1 className="text-xl font-semibold text-white">Jac GPT</h1>
             </div>
             
-            <Button
-              variant={docPanelOpen ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDocPanelOpen(!docPanelOpen)}
-              className="flex items-center gap-2"
-            >
-              {docPanelOpen ? <X className="w-4 h-4" /> : <Book className="w-4 h-4" />}
-              {docPanelOpen ? 'Hide Docs' : 'Show Docs'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={isStreamingEnabled ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsStreamingEnabled(!isStreamingEnabled)}
+                className="flex items-center gap-2"
+              >
+                {isStreamingEnabled ? '⚡ Streaming' : '📝 Regular'}
+              </Button>
+              
+              <Button
+                variant={docPanelOpen ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDocPanelOpen(!docPanelOpen)}
+                className="flex items-center gap-2"
+              >
+                {docPanelOpen ? <X className="w-4 h-4" /> : <Book className="w-4 h-4" />}
+                {docPanelOpen ? 'Hide Docs' : 'Show Docs'}
+              </Button>
+            </div>
           </div>
 
           {/* Limit Reached Modal */}
