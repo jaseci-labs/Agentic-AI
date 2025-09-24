@@ -150,31 +150,6 @@ walker interact {
     }
 }
 
-walker stream_response {
-
-    obj __specs__ {
-        static has auth: bool = False;
-        static has methods: list = ["get"];
-        static has entry_type: str = "ROOT";
-    }
-
-    can enter with `root entry {
-        def generator() {
-            for i in range(100) {
-                yield str(i);
-            }
-        }
-        import fastapi.responses;
-        _.report(
-            fastapi.responses.StreamingResponse(
-                generator(),
-                media_type="text/event-stream"
-            ),
-            custom=True
-        );
-    }
-}
-
 walker interact_stream {
     has message: str;
     has session_id: str;
