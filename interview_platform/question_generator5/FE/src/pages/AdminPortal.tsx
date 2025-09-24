@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, Copy, Plus, Minus } from 'lucide-react';
+import { Check, Copy, Plus, Minus, Upload, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { registerCandidates, JobContext, Candidate as APICandidateType, RegisteredCandidate, APIError } from '@/services/api';
 
@@ -14,13 +14,13 @@ interface Candidate {
   name: string;
   email: string;
   password: string;
+  cv_file?: File;
 }
 
 const AdminPortal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Step 1: Job Details
   const [companyName, setCompanyName] = useState('QuantumLeap AI');
   const [companyInfo, setCompanyInfo] = useState('We build foundational AI models.');
   const [jobRole, setJobRole] = useState('Research Scientist');
@@ -28,10 +28,10 @@ const AdminPortal = () => {
   const [numQuestions, setNumQuestions] = useState('5');
   const [jobDetailsLocked, setJobDetailsLocked] = useState(false);
   
-  // Step 2: Candidates
+  // Candidates
   const [numCandidates, setNumCandidates] = useState(1);
   const [candidates, setCandidates] = useState<Candidate[]>([
-    { name: '', email: '', password: '' }
+    { name: '', email: '', password: '', cv_file: undefined }
   ]);
   const [candidatesRegistered, setCandidatesRegistered] = useState(false);
   const [registeredCandidates, setRegisteredCandidates] = useState<RegisteredCandidate[]>([]);
@@ -65,7 +65,7 @@ const AdminPortal = () => {
     if (num > candidates.length) {
       // Add more candidates
       for (let i = candidates.length; i < num; i++) {
-        newCandidates.push({ name: '', email: '', password: '' });
+        newCandidates.push({ name: '', email: '', password: '', cv_file: undefined });
       }
     } else if (num < candidates.length) {
       // Remove excess candidates
@@ -81,18 +81,21 @@ const AdminPortal = () => {
     setCandidates(newCandidates);
   };
 
-  const generatePassword = () => {
-    return Math.random().toString(36).substring(2, 10);
+  const updateCandidateFile = (index: number, file: File | undefined) => {
+    const newCandidates = [...candidates];
+    newCandidates[index] = { ...newCandidates[index], cv_file: file };
+    setCandidates(newCandidates);
   };
 
+
   const handleRegisterCandidates = async () => {
-    // Validate all candidates have name and email
-    const isValid = candidates.every(c => c.name.trim() && c.email.trim());
+    // Validate all candidates have name, email, and CV
+    const isValid = candidates.every(c => c.name.trim() && c.email.trim() && c.cv_file);
     if (!isValid) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please fill in name and email for all candidates."
+        description: "Please fill in name, email, and upload CV for all candidates."
       });
       return;
     }
@@ -108,11 +111,11 @@ const AdminPortal = () => {
         number_of_questions: parseInt(numQuestions)
       };
 
-      // Prepare candidates with auto-generated passwords if empty
       const candidatesData: APICandidateType[] = candidates.map(candidate => ({
         name: candidate.name.trim(),
         email: candidate.email.trim(),
-        password: candidate.password.trim() || generatePassword()
+        password: candidate.password.trim(),
+        cv_file: candidate.cv_file
       }));
 
       const result = await registerCandidates(jobContext, candidatesData);
@@ -155,7 +158,6 @@ const AdminPortal = () => {
       
       <div className="container mx-auto px-6 py-8">
         <div className="grid gap-8 lg:grid-cols-2">
-          {/* Step 1: Define Job Context */}
           <Card className="card-shadow-lg border-0">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -244,7 +246,7 @@ const AdminPortal = () => {
             </CardContent>
           </Card>
 
-          {/* Step 2: Register Candidates */}
+          {/*Register Candidates */}
           <Card className={`card-shadow-lg border-0 ${!jobDetailsLocked ? 'opacity-50' : ''}`}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -307,7 +309,7 @@ const AdminPortal = () => {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <Label>Password (optional - will generate if empty)</Label>
+                            <Label>Password</Label>
                             <Input
                               type="password"
                               value={candidate.password}
@@ -315,6 +317,34 @@ const AdminPortal = () => {
                               placeholder="Leave empty to auto-generate"
                               disabled={candidatesRegistered}
                             />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>CV/Resume (PDF) *</Label>
+                            <div className="flex items-center space-x-2">
+                              <Input
+                                type="file"
+                                accept=".pdf"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  updateCandidateFile(index, file);
+                                }}
+                                disabled={candidatesRegistered}
+                                className="file:mr-2 file:px-4 file:py-2 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                              />
+                              <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                                {candidate.cv_file ? (
+                                  <>
+                                    <FileText className="h-4 w-4 text-success" />
+                                    <span className="text-success">{candidate.cv_file.name}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="h-4 w-4" />
+                                    <span>No file selected</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -339,7 +369,7 @@ const AdminPortal = () => {
           </Card>
         </div>
 
-        {/* Step 3: Generated Interview Sessions */}
+        {/*Generated Interview Sessions */}
         {candidatesRegistered && (
           <Card className="mt-8 card-shadow-lg border-0">
             <CardHeader>
