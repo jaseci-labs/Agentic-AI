@@ -53,12 +53,12 @@ def generate_next_question(
 ) -> str by llm();
 
 
-sem generate_interview_questions = "Generate a list of interview questions for a candidate which will effectively assess the candidate's skills, experience, and cultural fit based on the provided context, who is applying for a job role, based on the provided company and job context.";
-sem generate_interview_questions.company_name = "The name of the company where the candidate is applying.";
-sem generate_interview_questions.job_role = "The specific job role the candidate is applying for.";
-sem generate_interview_questions.job_description = "The detailed job description outlining responsibilities, required skills, and expectations for the role.";
-sem generate_interview_questions.history_str = "The conversation history so far, formatted as a string with each entry labeled by role (Interviewer or Candidate) and content.";
-sem generate_interview_questions.cv_text = "The full text content of the candidate's CV or resume.";
+sem generate_next_question = "Generate a list of interview questions for a candidate which will effectively assess the candidate's skills, experience, and cultural fit based on the provided context, who is applying for a job role, based on the provided company and job context.";
+sem generate_next_question.company_name = "The name of the company where the candidate is applying.";
+sem generate_next_question.job_role = "The specific job role the candidate is applying for.";
+sem generate_next_question.job_description = "The detailed job description outlining responsibilities, required skills, and expectations for the role.";
+sem generate_next_question.history_str = "The conversation history so far, formatted as a string with each entry labeled by role (Interviewer or Candidate) and content.";
+sem generate_next_question.cv_text = "The full text content of the candidate's CV or resume.";
 
 def extract_text_from_pdf_bytes(pdf_bytes: bytes) -> str {
     try {
