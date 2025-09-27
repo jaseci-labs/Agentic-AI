@@ -11,7 +11,6 @@ node Task {
     has task:str = "";
     has date:str = "";
     has time:str = "";
-    has status: str = "pending";
 }
 
 node Memory {}
@@ -29,8 +28,9 @@ node Session {
 }
 
 node TaskHandling {
-    def add_task(task: Task) -> str {
-        self ++> task;
+    def add_task(task: str, date: str, time: str) -> str {
+        task_node = Task(task=task, date=date, time=time);
+        self ++> task_node;
         return "Task added successfully";
     }
     def check_scheduled_tasks -> list[Task] {

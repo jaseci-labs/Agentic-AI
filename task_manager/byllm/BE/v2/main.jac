@@ -17,11 +17,10 @@ node Task {
     has task:str = "";
     has date:str = "";
     has time:str = "";
-    has status: str = "pending";
 }
 
 node TaskHandling(Toolbox) {
-    def add_task(task: Task) -> str;
+    def add_task(task: str, date: str, time: str) -> str;
     def check_scheduled_tasks -> list[Task];
     def extract_task_info(utterance: str) -> str by llm(
         method="ReAct",
