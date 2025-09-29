@@ -16,21 +16,6 @@ sem RagChat.respond = """Generate a helpful response to the user's message. Use 
 sem QAChat.respond = """Generate a helpful response to the user's message. Use available mcp tool when needed. Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper. """;
 
 
-"""Get available MCP tool names."""
-def list_mcp_tools() -> list[str] {
-    return mcp_client.list_mcp_tools();
-}
-
-"""Use MCP tool to perform actions.
-name must be one of available tools from list_mcp_tools(), do not make up any tool names.
-
-Example input for `use_mcp_tool`:
-{"name": "tool_name", "arguments": {"query": "your query"}}
-"""
-def use_mcp_tool(name: str, arguments: dict[str, str]) -> str {
-    return mcp_client.call_mcp_tool(name=name, arguments=arguments);
-}
-
 impl ImageChat.chat {
     img_path = visitor.file_path;
     response = self.respond_with_image(
@@ -83,27 +68,42 @@ impl QAChat.chat {
 }
 
 impl upload_file.save_doc {
-        upload_dir = os.path.join("uploads", self.session_id);
-        if not os.path.exists(upload_dir) {
-            os.makedirs(upload_dir);
-        }
-
-        file_path = os.path.join(upload_dir, self.file_name);
-        data = base64.b64decode(self.file_data.encode('utf-8'));
-
-        with open(file_path, 'wb') as f {
-            f.write(data);
-        }
-
-        # Only add text-based documents to rag_engine
-        lower_name = self.file_name.lower();
-        if lower_name.endswith(".pdf") or lower_name.endswith(".txt") {
-            rag_engine.add_file(file_path);
-        }
-
-        report {
-            "status": "uploaded",
-            "file_path": file_path,
-            "added_to_rag": lower_name.endswith(".pdf") or lower_name.endswith(".txt")
-        };
+    upload_dir = os.path.join("uploads", self.session_id);
+    if not os.path.exists(upload_dir) {
+        os.makedirs(upload_dir);
     }
+
+    file_path = os.path.join(upload_dir, self.file_name);
+    data = base64.b64decode(self.file_data.encode('utf-8'));
+
+    with open(file_path, 'wb') as f {
+        f.write(data);
+    }
+
+    # Only add text-based documents to rag_engine
+    lower_name = self.file_name.lower();
+    if lower_name.endswith(".pdf") or lower_name.endswith(".txt") {
+        rag_engine.add_file(file_path);
+    }
+
+    report {
+        "status": "uploaded",
+        "file_path": file_path,
+        "added_to_rag": lower_name.endswith(".pdf") or lower_name.endswith(".txt")
+    };
+}
+
+"""Get available MCP tool names."""
+def list_mcp_tools() -> list[str] {
+    return mcp_client.list_mcp_tools();
+}
+
+"""Use MCP tool to perform actions.
+name must be one of available tools from list_mcp_tools(), do not make up any tool names.
+
+Example input for `use_mcp_tool`:
+{"name": "tool_name", "arguments": {"query": "your query"}}
+"""
+def use_mcp_tool(name: str, arguments: dict[str, str]) -> str {
+    return mcp_client.call_mcp_tool(name=name, arguments=arguments);
+}
