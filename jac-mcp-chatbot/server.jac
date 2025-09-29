@@ -83,7 +83,6 @@ node RagChat(Chat) {
 node QAChat(Chat) {
     has chat_type: ChatType = ChatType.QA;
 
-    """Generate a helpful response to the user's message. Use available mcp tool when needed. Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper. """
     def respond(message:str, chat_history:list[dict]) -> str
         by llm(
             method="ReAct",
