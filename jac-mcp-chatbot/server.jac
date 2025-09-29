@@ -11,10 +11,10 @@ glob MCP_SERVER_URL: str = os.getenv('MCP_SERVER_URL', 'http://localhost:8899/mc
 
 
 enum ChatType {
-    RAG = "RAG",
-    QA = "QA",
-    IMAGE = "IMAGE",
-    VIDEO = "VIDEO"
+    RAG,
+    QA,
+    IMAGE,
+    VIDEO
 }
 
 node Router {
