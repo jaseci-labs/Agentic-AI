@@ -2,7 +2,8 @@
 # Implementation of TaskHandling
 # -------------------------------------------
 impl TaskHandling.add_task {
-    self ++> task;
+    task_node = Task(task=task, date=date, time=time);
+    self ++> task_node;
     return "Task added successfully";
 }
 impl TaskHandling.check_scheduled_tasks {
