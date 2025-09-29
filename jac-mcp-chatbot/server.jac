@@ -104,7 +104,6 @@ walker interact {
     can init_session with `root entry {
         visit [-->](`?Session)(?id == self.session_id) else {
             session_node = here ++> Session(id=self.session_id, chat_history=[], file_path=self.file_path, status=1);
-            print("Session Node Created");
             visit session_node;
         }
     }

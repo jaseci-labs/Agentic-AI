@@ -13,6 +13,9 @@ sem VideoChat.respond_with_video = """Answer the user's message using the provid
 
 sem RagChat.respond = """Generate a helpful response to the user's message. Use available mcp tool when needed.Use list_mcp_tools to find out what are the available tools. Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper. """;
 
+sem QAChat.respond = """Generate a helpful response to the user's message. Use available mcp tool when needed. Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper. """;
+
+
 """Get available MCP tool names."""
 def list_mcp_tools() -> list[str] {
     return mcp_client.list_mcp_tools();
@@ -29,32 +32,32 @@ def use_mcp_tool(name: str, arguments: dict[str, str]) -> str {
 }
 
 impl ImageChat.chat {
-        img_path = visitor.file_path;
-        response = self.respond_with_image(
-            img=Image(img_path),
-            text=visitor.message,
-            chat_history=visitor.chat_history
-        );
+    img_path = visitor.file_path;
+    response = self.respond_with_image(
+        img=Image(img_path),
+        text=visitor.message,
+        chat_history=visitor.chat_history
+    );
 
-        visitor.chat_history.append({"role": "assistant", "content": response});
-        self.chat_history = visitor.chat_history;
-        visitor.response = response;
-        report {"response": response, "chat_history": visitor.chat_history};
+    visitor.chat_history.append({"role": "assistant", "content": response});
+    self.chat_history = visitor.chat_history;
+    visitor.response = response;
+    report {"response": response, "chat_history": visitor.chat_history};
 }
 
 impl VideoChat.chat {
-        video_path = visitor.file_path;
-        response = self.respond_with_video(
-            video=Video(video_path),
-            text=visitor.message,
-            chat_history=visitor.chat_history
-        );
+    video_path = visitor.file_path;
+    response = self.respond_with_video(
+        video=Video(video_path),
+        text=visitor.message,
+        chat_history=visitor.chat_history
+    );
 
-        visitor.chat_history.append({"role": "assistant", "content": response});
-        self.chat_history = visitor.chat_history;
-        visitor.response = response;
-        report {"response": response, "chat_history": visitor.chat_history};
-    }
+    visitor.chat_history.append({"role": "assistant", "content": response});
+    self.chat_history = visitor.chat_history;
+    visitor.response = response;
+    report {"response": response, "chat_history": visitor.chat_history};
+}
 
 
 impl RagChat.chat {
