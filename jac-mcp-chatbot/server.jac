@@ -85,8 +85,6 @@ node QAChat(Chat) {
 
     def respond(message:str, chat_history:list[dict]) -> str
         by llm(
-            method="ReAct",
-            tools=([use_mcp_tool, list_mcp_tools]),
             messages=chat_history,
             max_react_iterations=6
         );

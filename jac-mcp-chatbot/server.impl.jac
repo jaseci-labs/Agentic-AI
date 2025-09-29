@@ -13,7 +13,7 @@ sem VideoChat.respond_with_video = """Answer the user's message using the provid
 
 sem RagChat.respond = """Generate a helpful response to the user's message. Use available mcp tool when needed.Use list_mcp_tools to find out what are the available tools. Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper. """;
 
-sem QAChat.respond = """Generate a helpful response to the user's message. Use available mcp tool when needed. Always pass arguments as a flat dictionary (e.g., {\"query\": \"Your search query\"}), never as a list or schema_dict_wrapper. """;
+sem QAChat.respond = """Generate a helpful response to the user's message.""";
 
 
 impl ImageChat.chat {
