@@ -6,7 +6,7 @@ This module is part of the Interview Platform and provides functionality for gen
 
 - `candidate.py` – Logic related to candidate profiles and question handling.
 - `company.py` – Logic for company profiles and question management.
-- `interview_backend.jac` – Jac language backend for orchestrating interview workflows.
+- `interview.jac` – Jac language backend for orchestrating interview workflows.
 
 ## Usage
 
@@ -18,7 +18,7 @@ This module is part of the Interview Platform and provides functionality for gen
    - Use `company.py` to manage company data and question pools.
 
 3. **Interview Orchestration**:  
-   - The `interview_backend.jac` file defines the workflow for generating, assigning, and evaluating interview questions.
+   - The `interview.jac` file defines the workflow for generating, assigning, and evaluating interview questions.
 
 ## Getting Started
 
@@ -35,7 +35,7 @@ To run the project, use two terminals.
 
    ```
    cd BE
-   jac serve interview_backend.jac
+   jac serve interview.jac
    ```
 
 2. **Terminal 2:**  
