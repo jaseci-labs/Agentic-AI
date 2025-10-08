@@ -81,18 +81,31 @@ walker planner_agent {
     def generate_executing_plan_to_generate_better_content(utterance: str, agents: str = ", ".join([a.value for a in AgentTypes])) -> str by llm();
     can execute with `root entry {
         print("planner agent executed");
+        self.session.add_agent_execution("PLANNER_AGENT");
+        
         planner_response = self.generate_executing_plan_to_generate_better_content(
             self.utterance, 
             ", ".join([a.value for a in AgentTypes])
         );
         write_content("planner_agent", planner_response);
         self.session.current_state["planner_response"] = planner_response;
+        print("Current state after planner agent:", self.session.current_state);
+        print("Execution sequence:", self.session.get_execution_summary());
+        
         next_agent: AgentTypes = self.call_next_agent(
             self.utterance, 
             "planner response: " + planner_response, 
             self.session.current_state
         );
         print("Next agent to execute:", next_agent);
+
+        # Check for loop prevention
+        if next_agent != AgentTypes.END and self.session.should_prevent_loop(next_agent.value) {
+            print("🛑 Loop prevention triggered! Forcing END to prevent infinite loop.");
+            print("Execution summary:", self.session.get_execution_summary());
+            self.session.current_state["done"] = True;
+            disengage;
+        }
 
         if next_agent == AgentTypes.END {
             self.session.current_state["done"] = True;
@@ -122,9 +135,13 @@ walker writer_agent {
     def write_better_content(utterance: str, current_state: dict) -> str by llm();
     can execute with `root entry {
         print("writer agent executed");
+        self.session.add_agent_execution("WRITER_AGENT");
+        
         writer_response = self.write_better_content(self.utterance, self.session.current_state);
         self.session.current_state["writer_response"] = writer_response;
         self.session.current_state["review_response"] = "requested review";
+        print("Current state after writer agent:", self.session.current_state);
+        print("Execution sequence:", self.session.get_execution_summary());
         
         next_agent: AgentTypes = self.call_next_agent(
             self.utterance, 
@@ -133,6 +150,14 @@ walker writer_agent {
         );
         write_content("writer_agent", writer_response);
         print("Next agent to execute:", next_agent);
+
+        # Check for loop prevention
+        if next_agent != AgentTypes.END and self.session.should_prevent_loop(next_agent.value) {
+            print("🛑 Loop prevention triggered! Forcing END to prevent infinite loop.");
+            print("Execution summary:", self.session.get_execution_summary());
+            self.session.current_state["done"] = True;
+            disengage;
+        }
 
         if next_agent == AgentTypes.END {
             self.session.current_state["done"] = True;
@@ -168,15 +193,28 @@ walker review_agent {
     );
     can execute with `root entry {
         print("review agent executed");
+        self.session.add_agent_execution("REVIEW_AGENT");
+        
         review_response = self.check_passed_max_word_count(self.utterance, self.session.current_state);
         write_content("review_agent", review_response);
         self.session.current_state["review_response"] = review_response;
+        print("Current state after review agent:", self.session.current_state);
+        print("Execution sequence:", self.session.get_execution_summary());
+        
         next_agent: AgentTypes = self.call_next_agent(
             self.utterance, 
             "review response: " + review_response, 
             self.session.current_state
         );
         print("Next agent to execute:", next_agent);
+        
+        # Check for loop prevention
+        if next_agent != AgentTypes.END and self.session.should_prevent_loop(next_agent.value) {
+            print("🛑 Loop prevention triggered! Forcing END to prevent infinite loop.");
+            print("Execution summary:", self.session.get_execution_summary());
+            self.session.current_state["done"] = True;
+            disengage;
+        }
         
         if next_agent == AgentTypes.END {
             self.session.current_state["done"] = True;
