@@ -7,12 +7,19 @@ node Memory {}
 node Session {
     has history: list = [];
     has created_at: str = get_current_datetime();
+    has current_state: dict = {};
 
     def add_history(entry: str) {
         self.history = self.history + [entry];
     }
     def get_history -> str {
         return "\n".join(self.history[-10:]);
+    }
+    def set_current_state(state: dict) {
+        self.current_state = state;
+    }
+    def get_current_state -> dict {
+        return self.current_state;
     }
 }
 
