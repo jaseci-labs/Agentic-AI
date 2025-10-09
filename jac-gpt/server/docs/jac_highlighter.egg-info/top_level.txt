@@ -1,1 +1,0 @@
-jac_syntax_highlighter

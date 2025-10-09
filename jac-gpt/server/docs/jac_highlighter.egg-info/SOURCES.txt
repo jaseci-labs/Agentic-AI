@@ -1,9 +1,0 @@
-README.md
-jac_syntax_highlighter.py
-pyproject.toml
-jac_highlighter.egg-info/PKG-INFO
-jac_highlighter.egg-info/SOURCES.txt
-jac_highlighter.egg-info/dependency_links.txt
-jac_highlighter.egg-info/entry_points.txt
-jac_highlighter.egg-info/requires.txt
-jac_highlighter.egg-info/top_level.txt

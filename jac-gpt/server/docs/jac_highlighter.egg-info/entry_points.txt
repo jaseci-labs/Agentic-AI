@@ -1,2 +1,0 @@
-[pygments.lexers]
-jaclexer = jac_syntax_highlighter:JacLexer
