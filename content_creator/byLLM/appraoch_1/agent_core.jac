@@ -8,6 +8,9 @@ node Session {
     has history: list = [];
     has created_at: str = get_current_datetime();
     has current_state: dict = {};
+    has agent_execution_sequence: list = [];
+    has max_iterations: int = 3;
+    has max_consecutive_same_agent: int = 3;
 
     def add_history(entry: str) {
         self.history = self.history + [entry];
@@ -20,6 +23,41 @@ node Session {
     }
     def get_current_state -> dict {
         return self.current_state;
+    }
+    def add_agent_execution(agent_name: str) {
+        self.agent_execution_sequence = self.agent_execution_sequence + [agent_name];
+    }
+    def get_execution_count -> int {
+        return len(self.agent_execution_sequence);
+    }
+    def get_consecutive_count(agent_name: str) -> int {
+        count = 0;
+        for i in range(len(self.agent_execution_sequence) - 1, -1, -1) {
+            if self.agent_execution_sequence[i] == agent_name {
+                count += 1;
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
+    def should_prevent_loop(agent_name: str) -> bool {
+        if self.get_execution_count() >= self.max_iterations {
+            return True;
+        }
+        if self.get_consecutive_count(agent_name) >= self.max_consecutive_same_agent { # Check if same agent is being called too many times consecutively
+            return True;
+        }
+        if len(self.agent_execution_sequence) >= 4 { # Check for ping-pong pattern (A->B->A->B...)
+            recent = self.agent_execution_sequence[-4:];
+            if recent[0] == recent[2] and recent[1] == recent[3] and recent[0] != recent[1] {
+                return True;
+            }
+        }
+        return False;
+    }
+    def get_execution_summary -> str {
+        return " -> ".join(self.agent_execution_sequence);
     }
 }
 
