@@ -59,7 +59,8 @@ APPROACH:
 - Never generate new code - only curate existing examples.
 - Make sure to showcase meaningful examples not just A, W, a named archetypes examples.
 - Make sure to add comments using '#' wherever needed.
-- Cite source sections when possible
+- Always preserve and include the "Sources:" section with clickable Markdown links from search results
+- Format responses in Markdown for proper link rendering
 
 KEY JAC CONCEPTS: nodes, walkers, objects, edges, `by llm()` functions, OSP (Object-Spatial Programming), MTLLM (AI-first programming)""";
 
@@ -534,7 +535,8 @@ impl get_documentation_content.fetch_content {
 # - For code requests: Return the exact official example with source section reference
 # - For concept questions: First explain using `search_docs` information, then provide relevant official examples from `refer_full_language_examples`
 # - For mixed requests: Use `search_docs` for explanation, then show official examples
-# - Always cite the source section/title when possible
+# - Always preserve the "Sources:" section from search_docs results with clickable Markdown links
+# - Use proper Markdown formatting to ensure links are clickable: [filename](url)
 # - Be clear when no official example exists for a specific request
 
 # REMEMBER: You are NOT a code generator. You are a curator of official JAC examples. Only provide actual, existing code examples from the documentation using the `refer_full_language_examples` tool.""";

@@ -145,14 +145,46 @@ obj RagEngine {
         results = db.similarity_search_with_score(query,k=chunck_nos);
         return results;
     }
+    """Convert local file path to GitHub URL"""
+    def convert_to_github_url(source_path: str) -> str {
+        
+        # Handle different path formats that might be returned
+        clean_path = source_path;
+        
+        # Remove absolute path prefix and keep only the relative path from docs
+        if "/docs/" in clean_path {
+            # Extract everything after the last "/docs/"
+            docs_index = clean_path.rfind("/docs/");
+            relative_path = clean_path[docs_index + 6:];  # +6 to skip "/docs/"
+        } elif clean_path.startswith('docs/') {
+            # Remove 'docs/' prefix
+            relative_path = clean_path[5:];
+        } else {
+            # Assume it's already a relative path within docs
+            relative_path = clean_path;
+        }
+        
+        # GitHub repository base URL - the docs are in docs/docs/ in the jaseci repo
+        github_base = "https://github.com/jaseci-labs/jaseci/tree/main/docs/docs";
+        
+        # Combine base URL with relative path
+        github_url = f"{github_base}/{relative_path}";
+        
+        return github_url;
+    }
 
     def search(query: str, chunck_nos: int=5) {
         results = self.get_from_chroma(query=query, chunck_nos=chunck_nos);
         summary = "";
+        sources = [];
+        
         for (doc, score) in results {
             page = doc.metadata.get('page');
             source = doc.metadata.get('source');
             chunk_txt = doc.page_content[:400];
+            
+            # Convert local path to GitHub URL
+            github_url = self.convert_to_github_url(source);
             
             # Handle display for different file types
             if page is not None {
@@ -161,7 +193,36 @@ obj RagEngine {
                 # For markdown files without page numbers
                 summary += f"{source}: {chunk_txt}\n";
             }
+            
+            # Collect unique sources with their GitHub URLs
+            if github_url not in sources {
+                sources.append(github_url);
+            }
         }
+        
+        # Add sources section at the end with clickable Markdown links
+        if sources {
+            summary += "\n\n**Sources:**\n";
+            for source_url in sources {
+                # Extract meaningful path from URL for better link text
+                url_parts = source_url.split('/');
+                # Get the path after 'docs/docs/'
+                if 'docs' in url_parts {
+                    docs_index = url_parts.index('docs');
+                    if docs_index + 1 < len(url_parts) and url_parts[docs_index + 1] == 'docs' {
+                        # Get path from the second 'docs' onwards
+                        relative_path = '/'.join(url_parts[docs_index + 2:]);
+                        link_text = relative_path if relative_path else url_parts[-1];
+                    } else {
+                        link_text = url_parts[-1];
+                    }
+                } else {
+                    link_text = url_parts[-1];
+                }
+                summary += f"- [{link_text}]({source_url})\n";
+            }
+        }
+        
         return summary;
     }
 }
