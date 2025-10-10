@@ -5,7 +5,7 @@ import from fastapi { HTTPException, status }
 import from jac_cloud.jaseci.utils.logger { logger }
 import from utils { convert_date_to_valid_format }
 import from mtp { extract_memory_details, update_memory_details }
-import from mtllm.llm { Image }
+import from byllm { Image }
 import from google_maps_service { google_location_service }
 import from memory { visit_memories }
 import from nodes_and_edges { session, sessions, memory, memories }

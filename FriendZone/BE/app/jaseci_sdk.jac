@@ -1,5 +1,6 @@
 import from jac_cloud.jaseci.models { User }
 import from jac_cloud.core.archetype{ BaseAnchor, NodeAnchor }
+import from jaclang.runtimelib.machine { JacMachine as Jac } 
 import from jac_cloud.jaseci.utils.logger { logger }
 import from bson { ObjectId }
 
@@ -16,7 +17,7 @@ def get_current_user() {
 
 def grant_permission_to_all(permission_level: str, node: any) {
     logger.debug(f"jaseci_sdk | grant_permission_to_all | Granting permission: {permission_level}");
-    _.perm_grant(node, level=permission_level);
+    Jac.perm_grant(node, level=permission_level);
 }
 
 def grant_permission(permission_level: str, node: any, root_id: str) {
@@ -25,7 +26,7 @@ def grant_permission(permission_level: str, node: any, root_id: str) {
     if (not root_id.startswith("n:")) {
         root_id = f"n::{root_id}";
     } 
-    _.allow_root(node, BaseAnchor.ref(root_id), level=permission_level);
+    Jac.allow_root(node, BaseAnchor.ref(root_id), level=permission_level);
 }
 
 def revoke_permission(node: any, root_id: str) {
@@ -34,7 +35,7 @@ def revoke_permission(node: any, root_id: str) {
     if (not root_id.startswith("n:")) {
         root_id = f"n::{root_id}";
     } 
-    _.disallow_root(node, BaseAnchor.ref(root_id));
+    Jac.disallow_root(node, BaseAnchor.ref(root_id));
 }
 
 def get_node_owner(node: any) {

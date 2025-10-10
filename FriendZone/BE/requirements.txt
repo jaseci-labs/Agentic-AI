@@ -1,5 +1,5 @@
-mtllm[video]
-jac-cloud==0.2.4
+byllm==0.4.4
+jac-cloud==0.2.9
 requests==2.32.4
 python-dateutil==2.9.0
-boto3
+boto3==1.40.49

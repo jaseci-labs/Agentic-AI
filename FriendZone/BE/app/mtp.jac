@@ -1,4 +1,4 @@
-import from mtllm.llm  { Model, Image }
+import from byllm { Model, Image }
 import from typing { List, Dict, Any }
 
 glob llm = Model(model_name="gpt-4.1");
