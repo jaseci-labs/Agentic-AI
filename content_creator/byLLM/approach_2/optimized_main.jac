@@ -8,18 +8,18 @@ import sys;
 glob llm = Model(model_name="gpt-4o");
 
 enum AgentTypes {
-    PLANNER_AGENT = "planner_agent",
-    WRITER_AGENT  = "writer_agent",
-    REVIEW_AGENT  = "review_agent",
-    END = "end"
+    PLANNER_AGENT,
+    WRITER_AGENT,
+    REVIEW_AGENT,
+    END
 }
 
 enum WorkflowStage {
-    PLANNING = "planning",
-    WRITING = "writing", 
-    REVIEWING = "reviewing",
-    REVISING = "revising",
-    COMPLETED = "completed"
+    PLANNING,
+    WRITING, 
+    REVIEWING,
+    REVISING,
+    COMPLETED
 }
 
 def write_content(agent: str, response: str) {
@@ -36,6 +36,7 @@ def write_content(agent: str, response: str) {
 
 # Enhanced Supervisor with deterministic routing logic
 node Supervisor {
+
     def determine_next_agent(
         utterance: str, 
         current_state: dict, 
@@ -45,7 +46,7 @@ node Supervisor {
         # Rule-based routing to avoid LLM inconsistencies
         
         # Check if workflow is completed
-        if current_state.get("approved", False) or current_state.get("stage") == "completed" {
+        if current_state.get("approved", False) or current_state.get("stage") == WorkflowStage.COMPLETED {
             return AgentTypes.END;
         }
         
@@ -56,27 +57,27 @@ node Supervisor {
         }
         
         # Deterministic stage-based routing
-        current_stage = current_state.get("stage", "planning");
+        current_stage = current_state.get("stage", WorkflowStage.PLANNING);
         
-        if current_stage == "planning" {
+        if current_stage == WorkflowStage.PLANNING {
             if not current_state.get("planning_complete", False) {
                 return AgentTypes.PLANNER_AGENT;
             }
         }
         
-        if current_stage == "writing" {
+        if current_stage == WorkflowStage.WRITING {
             if not current_state.get("content_created", False) {
                 return AgentTypes.WRITER_AGENT;
             }
         }
         
-        if current_stage == "reviewing" {
+        if current_stage == WorkflowStage.REVIEWING {
             if not current_state.get("review_complete", False) {
                 return AgentTypes.REVIEW_AGENT;
             }
         }
         
-        if current_stage == "revising" {
+        if current_stage == WorkflowStage.REVISING {
             # Reset review flags for next iteration
             current_state["review_complete"] = False;
             return AgentTypes.WRITER_AGENT;
@@ -108,7 +109,7 @@ node PlannerAgent(Agent) {
         
         # Update state with plan
         visitor.session.current_state["plan"] = plan;
-        visitor.session.current_state["stage"] = WorkflowStage.WRITING.value;
+        visitor.session.current_state["stage"] = WorkflowStage.WRITING;
         visitor.session.current_state["planning_complete"] = True;
         
         print("✅ Plan created, moving to writing stage");
@@ -135,7 +136,7 @@ node WriterAgent(Agent) {
         
         # Update state with content and reset review flags
         visitor.session.current_state["content"] = content;
-        visitor.session.current_state["stage"] = WorkflowStage.REVIEWING.value;
+        visitor.session.current_state["stage"] = WorkflowStage.REVIEWING;
         visitor.session.current_state["content_created"] = True;
         visitor.session.current_state["review_complete"] = False;  # Reset for new review
         
@@ -193,10 +194,10 @@ node ReviewAgent(Agent) {
         visitor.session.current_state["feedback"] = feedback;
         
         if approved {
-            visitor.session.current_state["stage"] = WorkflowStage.COMPLETED.value;
+            visitor.session.current_state["stage"] = WorkflowStage.COMPLETED;
             print("✅ Content approved, workflow complete");
         } else {
-            visitor.session.current_state["stage"] = WorkflowStage.REVISING.value;
+            visitor.session.current_state["stage"] = WorkflowStage.REVISING;
             print("📝 Content needs revision, sending back to writer");
         }
         
@@ -221,7 +222,7 @@ walker agent_executor {
         }
         
         # Get current stage
-        current_stage = self.session.current_state.get("stage", WorkflowStage.PLANNING.value);
+        current_stage = self.session.current_state.get("stage", WorkflowStage.PLANNING);
         
         next_agent: AgentTypes = here.determine_next_agent(
             self.utterance, 
@@ -232,7 +233,7 @@ walker agent_executor {
         
         print(f"📍 Current stage: {current_stage}, Next agent: {next_agent}");
         
-        if next_agent == AgentTypes.END or self.session.current_state.get("stage") == WorkflowStage.COMPLETED.value {
+        if next_agent == AgentTypes.END or self.session.current_state.get("stage") == WorkflowStage.COMPLETED {
             self.session.current_state["done"] = True;
             print("✅ Workflow completed successfully!");
             
@@ -266,7 +267,7 @@ walker agent_executor {
         }
 
         # Initialize workflow state
-        self.session.current_state["stage"] = WorkflowStage.PLANNING.value;
+        self.session.current_state["stage"] = WorkflowStage.PLANNING;
         self.session.current_state["utterance"] = self.utterance;
         
         print(f"🚀 Starting workflow for: {self.utterance}");
