@@ -1,4 +1,6 @@
 # import from agent_core { supervisor, agent, Toolbox}
+import json;
+import time;
 import from agent_core { Memory, Session }
 import from byllm.llm { Model }
 import sys;
@@ -13,7 +15,6 @@ enum AgentTypes {
 }
 
 def write_content(agent: str, response: str) {
-    import json, time;
     with open("output.jsonl", "a") as f {
         rec = {
             "ts": int(time.time()),
@@ -152,8 +153,7 @@ walker agent_executor {
     can start_routing with Supervisor entry {
         # Start the workflow by making the first routing decision
         next_agent: AgentTypes = here.call_next_agent(self.utterance, self.session.current_state);
-        print("Next agent to execute:", next_agent);
-        
+
         if next_agent == AgentTypes.END {
             self.session.current_state["done"] = True;
             print("✅ Stopping: better/approved response reached.");
