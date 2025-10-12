@@ -7,6 +7,8 @@ import sys;
 
 glob llm = Model(model_name="gpt-4o");
 
+
+"Choose Planner agent for planning tasks, writer agent for writing tasks, review agent for reviewing tasks"
 enum AgentTypes {
     PLANNER_AGENT,
     WRITER_AGENT,
@@ -34,58 +36,22 @@ def write_content(agent: str, response: str) {
     }
 }
 
-# Enhanced Supervisor with deterministic routing logic
+# Supervisor with LLM-based routing logic
 node Supervisor {
+    """You are a workflow supervisor for a content creation pipeline. Route based on the current stage:
 
-    def determine_next_agent(
-        utterance: str, 
-        current_state: dict, 
-        execution_history: list,
-        stage: str
-    ) -> AgentTypes {
-        # Rule-based routing to avoid LLM inconsistencies
-        
-        # Check if workflow is completed
-        if current_state.get("approved", False) or current_state.get("stage") == WorkflowStage.COMPLETED {
-            return AgentTypes.END;
-        }
-        
-        # Check for infinite loop prevention
-        if len(execution_history) >= 10 {
-            print("⚠️ Max iterations reached in supervisor");
-            return AgentTypes.END;
-        }
-        
-        # Deterministic stage-based routing
-        current_stage = current_state.get("stage", WorkflowStage.PLANNING);
-        
-        if current_stage == WorkflowStage.PLANNING {
-            if not current_state.get("planning_complete", False) {
-                return AgentTypes.PLANNER_AGENT;
-            }
-        }
-        
-        if current_stage == WorkflowStage.WRITING {
-            if not current_state.get("content_created", False) {
-                return AgentTypes.WRITER_AGENT;
-            }
-        }
-        
-        if current_stage == WorkflowStage.REVIEWING {
-            if not current_state.get("review_complete", False) {
-                return AgentTypes.REVIEW_AGENT;
-            }
-        }
-        
-        if current_stage == WorkflowStage.REVISING {
-            # Reset review flags for next iteration
-            current_state["review_complete"] = False;
-            return AgentTypes.WRITER_AGENT;
-        }
-        
-        # Default fallback
-        return AgentTypes.END;
-    }
+    Workflow Stages & Routing Rules:
+    - PLANNING stage + no plan -> PLANNER_AGENT
+    - WRITING stage + no content -> WRITER_AGENT  
+    - REVIEWING stage + content exists but not reviewed -> REVIEW_AGENT
+    - REVISING stage + content needs revision -> WRITER_AGENT (CRITICAL: Always route to WRITER_AGENT when stage is REVISING)
+    - COMPLETED stage or approved=True -> END
+
+    Available Agents: PLANNER_AGENT, WRITER_AGENT, REVIEW_AGENT, END
+
+    IMPORTANT: When current_state["stage"] == WorkflowStage.REVISING, you MUST return WRITER_AGENT to revise the content.
+    Only return END when stage is COMPLETED or approved is True."""
+    def call_next_agent(utterance: str, current_state: dict) -> AgentTypes by llm(method="Reason");
 }
 
 # Base Agent class
@@ -158,7 +124,7 @@ node ReviewAgent(Agent) {
     2. Content quality and clarity
     3. Alignment with plan objectives
     4. Whether the content is approved or needs revision
-    Be clear about approval status in your response."""
+    Be clear about approval status in your response, if it doesn't meet the word count, do not approve."""
     def review_content(content: str, plan: str, max_words: int) -> str by llm(
         method="ReAct",
         tools=[self.get_max_word_count]
@@ -181,11 +147,22 @@ node ReviewAgent(Agent) {
         review_result = self.review_content(content, plan, max_words);
         write_content("review_agent", review_result);
         
-        # Extract approval status from review text
-        approved = ("approved" in review_result.lower() or 
-                   "meets" in review_result.lower() or
-                   "good" in review_result.lower() or
-                   "passes" in review_result.lower());
+        # Extract approval status from review text - be more precise
+        review_lower = review_result.lower();
+        
+        # Check for explicit rejection indicators first
+        is_rejected = ("not approved" in review_lower or 
+                      "needs revision" in review_lower or
+                      "exceeds" in review_lower or
+                      "too long" in review_lower or
+                      "must be revised" in review_lower);
+        
+        # Only approve if explicitly approved AND not rejected
+        is_approved = ("approval status: approved" in review_lower or
+                      "status: approved" in review_lower or
+                      (("approved" in review_lower or "passes" in review_lower) and not is_rejected));
+        
+        approved = is_approved and not is_rejected;
         feedback = review_result;
         
         # Update state based on review
@@ -221,16 +198,10 @@ walker agent_executor {
             return;
         }
         
-        # Get current stage
+        # Use LLM-based supervisor to determine next agent
+        next_agent: AgentTypes = here.call_next_agent(self.utterance, self.session.current_state);
+        
         current_stage = self.session.current_state.get("stage", WorkflowStage.PLANNING);
-        
-        next_agent: AgentTypes = here.determine_next_agent(
-            self.utterance, 
-            self.session.current_state,
-            self.session.agent_execution_sequence,
-            current_stage
-        );
-        
         print(f"📍 Current stage: {current_stage}, Next agent: {next_agent}");
         
         if next_agent == AgentTypes.END or self.session.current_state.get("stage") == WorkflowStage.COMPLETED {
