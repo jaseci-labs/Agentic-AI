@@ -1,11 +1,12 @@
 # Optimized Multi-Agent Content Creator Workflow
 import json;
 import time;
+import from typing {List}
 import from agent_core { Memory, Session }
 import from byllm.llm { Model }
 import sys;
 
-glob llm = Model(model_name="gpt-4o");
+glob llm = Model(model_name="gpt-4o-mini", verbose=False);
 
 
 "Choose Planner agent for planning tasks, writer agent for writing tasks, review agent for reviewing tasks"
@@ -38,19 +39,23 @@ def write_content(agent: str, response: str) {
 
 # Supervisor with LLM-based routing logic
 node Supervisor {
-    """You are a workflow supervisor for a content creation pipeline. Route based on the current stage:
+    """You are a workflow supervisor. Follow these rules in EXACT ORDER:
 
-    Workflow Stages & Routing Rules:
-    - PLANNING stage + no plan -> PLANNER_AGENT
-    - WRITING stage + no content -> WRITER_AGENT  
-    - REVIEWING stage + content exists but not reviewed -> REVIEW_AGENT
-    - REVISING stage + content needs revision -> WRITER_AGENT (CRITICAL: Always route to WRITER_AGENT when stage is REVISING)
-    - COMPLETED stage or approved=True -> END
+    1. END CONDITIONS (check first):
+       - current_state["approved"] == True → return END
+       - "COMPLETED" in str(current_state["stage"]) → return END  
+       - current_state.get("revision_count", 0) >= 5 → return END
 
-    Available Agents: PLANNER_AGENT, WRITER_AGENT, REVIEW_AGENT, END
+    2. STAGE ROUTING (if not ending):
+       - "PLANNING" in str(current_state["stage"]) → return PLANNER_AGENT
+       - "WRITING" in str(current_state["stage"]) → return WRITER_AGENT
+       - "REVIEWING" in str(current_state["stage"]) → return REVIEW_AGENT
+       - "REVISING" in str(current_state["stage"]) → return WRITER_AGENT
 
-    IMPORTANT: When current_state["stage"] == WorkflowStage.REVISING, you MUST return WRITER_AGENT to revise the content.
-    Only return END when stage is COMPLETED or approved is True."""
+    🚨 CRITICAL: "REVISING" stage means content was REJECTED and needs REWRITING
+    → ALWAYS return WRITER_AGENT for REVISING (never REVIEW_AGENT, never END)
+    
+    Only return: PLANNER_AGENT, WRITER_AGENT, REVIEW_AGENT, or END"""
     def call_next_agent(utterance: str, current_state: dict) -> AgentTypes by llm(method="Reason");
 }
 
@@ -96,6 +101,7 @@ node WriterAgent(Agent) {
         
         plan = visitor.session.current_state.get("plan", "");
         feedback = visitor.session.current_state.get("feedback", "");
+        print(f"feedback received for writer agent: {feedback}");
         
         content = self.create_content(visitor.utterance, plan, feedback);
         write_content("writer_agent", content);
@@ -111,6 +117,14 @@ node WriterAgent(Agent) {
     }
 }
 
+obj ReviewResult {
+    has is_approved: bool;
+    has review_comments: str;
+}
+
+sem ReviewResult.is_approved = "if the content meets the criteria, set to true; otherwise, false";
+sem ReviewResult.review_comments = "detailed feedback on content quality, clarity, alignment with plan, and max word count compliance.";
+
 # Enhanced Review Agent
 node ReviewAgent(Agent) {
     has agent_type: AgentTypes = AgentTypes.REVIEW_AGENT;
@@ -124,10 +138,11 @@ node ReviewAgent(Agent) {
     2. Content quality and clarity
     3. Alignment with plan objectives
     4. Whether the content is approved or needs revision
-    Be clear about approval status in your response, if it doesn't meet the word count, do not approve."""
-    def review_content(content: str, plan: str, max_words: int) -> str by llm(
-        method="ReAct",
-        tools=[self.get_max_word_count]
+    Be clear about approval status in your response, if it doesn't meet the word count, do not approve.
+    DO NOT return none, null, or empty responses. Always return a structured ReviewResult object with is_approved and review_comments fields.
+    """
+    def review_content(content: str, plan: str, max_words_count: int) -> ReviewResult by llm(
+        method="Reason",
     );
     
     can execute_review with agent_executor entry {
@@ -145,25 +160,15 @@ node ReviewAgent(Agent) {
         
         max_words = self.get_max_word_count();
         review_result = self.review_content(content, plan, max_words);
-        write_content("review_agent", review_result);
+        print(f"📝 Review completed={review_result}");
+        write_content("review_agent", review_result.review_comments);
         
-        # Extract approval status from review text - be more precise
-        review_lower = review_result.lower();
+        # Extract structured data from ReviewResult object
+        approved = review_result.is_approved;
+        feedback = review_result.review_comments;
         
-        # Check for explicit rejection indicators first
-        is_rejected = ("not approved" in review_lower or 
-                      "needs revision" in review_lower or
-                      "exceeds" in review_lower or
-                      "too long" in review_lower or
-                      "must be revised" in review_lower);
-        
-        # Only approve if explicitly approved AND not rejected
-        is_approved = ("approval status: approved" in review_lower or
-                      "status: approved" in review_lower or
-                      (("approved" in review_lower or "passes" in review_lower) and not is_rejected));
-        
-        approved = is_approved and not is_rejected;
-        feedback = review_result;
+        # Track revision attempts
+        revision_count = visitor.session.current_state.get("revision_count", 0);
         
         # Update state based on review
         visitor.session.current_state["review_complete"] = True;
@@ -174,8 +179,18 @@ node ReviewAgent(Agent) {
             visitor.session.current_state["stage"] = WorkflowStage.COMPLETED;
             print("✅ Content approved, workflow complete");
         } else {
-            visitor.session.current_state["stage"] = WorkflowStage.REVISING;
-            print("📝 Content needs revision, sending back to writer");
+            # Increment revision count and check limit
+            revision_count += 1;
+            visitor.session.current_state["revision_count"] = revision_count;
+            
+            if revision_count >= 5 {
+                visitor.session.current_state["stage"] = WorkflowStage.COMPLETED;
+                visitor.session.current_state["approved"] = True;  # Force completion
+                print(f"⚠️ Max revisions ({revision_count}) reached, stopping workflow");
+            } else {
+                visitor.session.current_state["stage"] = WorkflowStage.REVISING;
+                print(f"📝 Content needs revision (attempt {revision_count}/5), sending back to writer");
+            }
         }
         
         visit [<--](`?Supervisor);
@@ -198,10 +213,16 @@ walker agent_executor {
             return;
         }
         
+        current_stage = self.session.current_state.get("stage", WorkflowStage.PLANNING);
+        approved = self.session.current_state.get("approved", False);
+        revision_count = self.session.current_state.get("revision_count", 0);
+        
+        # Debug information
+        print(f"🔍 Debug - Stage: {current_stage}, Approved: {approved}, Revisions: {revision_count}");
+        
         # Use LLM-based supervisor to determine next agent
         next_agent: AgentTypes = here.call_next_agent(self.utterance, self.session.current_state);
         
-        current_stage = self.session.current_state.get("stage", WorkflowStage.PLANNING);
         print(f"📍 Current stage: {current_stage}, Next agent: {next_agent}");
         
         if next_agent == AgentTypes.END or self.session.current_state.get("stage") == WorkflowStage.COMPLETED {
