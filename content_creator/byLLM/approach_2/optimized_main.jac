@@ -6,10 +6,9 @@ import from agent_core { Memory, Session }
 import from byllm.llm { Model }
 import sys;
 
-glob llm = Model(model_name="gpt-4o-mini", verbose=False);
+glob llm = Model(model_name="gpt-4o", verbose=False);
 
 
-"Choose Planner agent for planning tasks, writer agent for writing tasks, review agent for reviewing tasks"
 enum AgentTypes {
     PLANNER_AGENT,
     WRITER_AGENT,
@@ -24,6 +23,12 @@ enum WorkflowStage {
     REVISING,
     COMPLETED
 }
+
+sem WorkflowStage.PLANNING = "initial planning stage";
+sem WorkflowStage.WRITING = "content creation stage";
+sem WorkflowStage.REVIEWING = "content review stage";
+sem WorkflowStage.REVISING = "content revision stage";
+sem WorkflowStage.COMPLETED = "workflow completed";
 
 def write_content(agent: str, response: str) {
     with open("output.jsonl", "a") as f {
@@ -42,8 +47,7 @@ node Supervisor {
     """You are a workflow supervisor. Follow these rules in EXACT ORDER:
 
     1. END CONDITIONS (check first):
-       - current_state["approved"] == True → return END
-       - "COMPLETED" in str(current_state["stage"]) → return END  
+       - current_state["approved"] == True → return END 
        - current_state.get("revision_count", 0) >= 5 → return END
 
     2. STAGE ROUTING (if not ending):
@@ -133,14 +137,22 @@ node ReviewAgent(Agent) {
         return 100;
     }
     
-    """Review the content against the plan and word count limit. Provide feedback on:
-    1. Word count (max 100 words)
-    2. Content quality and clarity
-    3. Alignment with plan objectives
-    4. Whether the content is approved or needs revision
-    Be clear about approval status in your response, if it doesn't meet the word count, do not approve.
-    DO NOT return none, null, or empty responses. Always return a structured ReviewResult object with is_approved and review_comments fields.
-    """
+    """Review the content for APPROVAL. Only reject if content has CRITICAL issues:
+
+    CRITICAL REJECTION CRITERIA (is_approved = false):
+    1. Word count exceeds 100 words (MANDATORY rejection)
+    2. Content is completely unrelated to the plan
+    3. Content is gibberish or incomprehensible
+
+    APPROVAL CRITERIA (is_approved = true):
+    - Word count is 100 words or less
+    - Content is reasonably related to the plan  
+    - Content is understandable
+
+    DO NOT reject for minor improvements, suggestions, or subjective preferences.
+    If content meets basic requirements, APPROVE it even if it could be improved.
+    
+    Return ReviewResult with is_approved and detailed review_comments."""
     def review_content(content: str, plan: str, max_words_count: int) -> ReviewResult by llm(
         method="Reason",
     );
@@ -221,7 +233,7 @@ walker agent_executor {
         print(f"🔍 Debug - Stage: {current_stage}, Approved: {approved}, Revisions: {revision_count}");
         
         # Use LLM-based supervisor to determine next agent
-        next_agent: AgentTypes = here.call_next_agent(self.utterance, self.session.current_state);
+        next_agent = here.call_next_agent(self.utterance, self.session.current_state);
         
         print(f"📍 Current stage: {current_stage}, Next agent: {next_agent}");
         
