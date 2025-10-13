@@ -1,4 +1,3 @@
-# import from agent_core { supervisor, agent, Toolbox}
 import from agent_core { Memory, Session }
 import from byllm.llm { Model }
 import sys;
@@ -6,10 +5,10 @@ import sys;
 glob llm = Model(model_name="gpt-4o");
 
 enum AgentTypes {
-    PLANNER_AGENT = "planner_agent",
-    WRITER_AGENT  = "writer_agent",
-    REVIEW_AGENT  = "review_agent",
-    END = "end"
+    PLANNER_AGENT,
+    WRITER_AGENT,
+    REVIEW_AGENT,
+    END
 }
 
 def write_content(agent: str, response: str) {
@@ -20,39 +19,66 @@ def write_content(agent: str, response: str) {
             "agent": agent,
             "response": response
         };
-        f.write(json.dumps(rec, ensure_ascii=False, indent=2));
+        f.write(json.dumps(rec, ensure_ascii=False));
         f.write("\n");
     }
 }
 
-walker SupervisorAgent {
-    has utterance: str = "";
-    has session_id: str = "";
+walker agent {
+    obj __specs__ {
+        static has auth: bool = False;
+    }
 
-    def call_next_agent(utterance: str, current_state: dict) -> AgentTypes by llm(
-        method="reasoning"
-    );
-    def start_execution(utterance: str, history: str) {
-        next_agent: AgentTypes = self.call_next_agent(self.utterance, self.session.current_state);
+    def find_next_agent(user_input: dict, current_agent_response: str, current_state: dict) -> AgentTypes by llm();
+    def call_next_agent(user_input: dict, current_agent_response: str = "", current_state: dict) -> None {        
+        next_agent = self.find_next_agent(user_input, current_agent_response, current_state);
         print("Next agent to execute:", next_agent);
-
+        
         if next_agent == AgentTypes.END {
             self.session.current_state["done"] = True;
-            print("✅ Stopping: better/approved response reached.");
+            print("Stopping: better/approved response reached.");
+            if "article" in self.session.current_state {
+                final_content = self.session.current_state["article"];
+                with open("final_output.md", "w") as f {
+                    f.write(final_content);
+                }
+                print("Final content saved to 'final_output.md'.");
+            } else {
+                print("No article content found to save.");
+            }
             disengage;
+
         } elif next_agent == AgentTypes.PLANNER_AGENT {
-            planner_agent(session=self.session, utterance=utterance) spawn root;
+            plan_handling = [root --> (`?PlanerHandling)][0];
+            planner_agent(session=self.session, user_input=user_input) spawn plan_handling;
+
         } elif next_agent == AgentTypes.WRITER_AGENT {
-            writer_agent(session=self.session, utterance=utterance) spawn root;
+            writer_handling = [root --> (`?WriterHandling)][0];
+            writer_agent(session=self.session, user_input=user_input) spawn writer_handling;
+
         } elif next_agent == AgentTypes.REVIEW_AGENT {
-            review_agent(session=self.session, utterance=utterance) spawn root;
+            review_handling = [root --> (`?ReviewHandling)][0];
+            review_agent(session=self.session, user_input=user_input) spawn review_handling;
+
         } else {
             print("No valid next agent found, stopping execution.");
-            self.session.current_state["done"] = True;
             disengage;
         }
     }
+}
 
+walker SupervisorAgent(agent) {
+    has user_input: dict = {
+        field: "",
+        topic: "",
+        output_format: "",
+        tone: "",
+        audience: "",
+        write_as: "",
+    };
+    has session_id: str = "";
+
+    def find_next_agent(user_input: dict, current_agent_response: str, current_state: dict) -> AgentTypes by llm();
     can supervise with `root entry {
         memory_list = [root --> (`?Memory)];
         if not memory_list {
@@ -65,149 +91,137 @@ walker SupervisorAgent {
         } else {
             self.session = &(self.session_id);
         }
+
+        if not [root --> (`?PlanerHandling)] {
+            root ++> PlanerHandling();
+        }
+        if not [root --> (`?WriterHandling)] {
+            root ++> WriterHandling();
+        }
+        if not [root --> (`?ReviewHandling)] {
+            root ++> ReviewHandling();
+        }
         
-        self.start_execution(self.utterance, self.session.get_history());
+        self.call_next_agent(
+            self.user_input, 
+            "", 
+            self.session.current_state
+        );
         print();
     }
 }
 
-walker planner_agent {
+walker planner_agent(agent) {
     has session: Session;
-    has utterance: str = "";
+    has user_input: dict = {
+        topic: "",
+        context: "",
+    };
+}
 
-    def call_next_agent(utterance: str, current_agent_response: str, current_state: dict) -> AgentTypes by llm(
-        method="reasoning"
-    );
-    def generate_executing_plan_to_generate_better_content(utterance: str, agents: str = ", ".join([a.value for a in AgentTypes])) -> str by llm();
-    can execute with `root entry {
+walker writer_agent(agent) {
+    has session: Session;
+    has user_input: dict = {
+        topic: "",
+        output_format: "",
+        tone: "",
+        audience: "",
+        write_as: "",
+    };
+}
+
+walker review_agent(agent) {
+    has session: Session;
+    has user_input: dict = {
+        tone: "",
+    };
+}
+
+# walker media_agent {
+#     has session: Session;
+
+#     can execute with `root entry {
+#         print("media agent executed");
+#         media_response = "Media content created: An infographic illustrating the key features and applications of Agentic AI, along with a short video explaining the concept in simple terms.";
+#         self.session.current_state["media_response"] = media_response;
+#         print("Media content details added to session history.", self.session.current_state);
+#         # return media_response;
+#     } 
+# }
+
+
+node PlanerHandling {
+    def plan_the_content(topic: str, context: str) -> str by llm();
+    can execute with planner_agent entry {
         print("planner agent executed");
-        planner_response = self.generate_executing_plan_to_generate_better_content(
-            self.utterance, 
-            ", ".join([a.value for a in AgentTypes])
+        plan = self.plan_the_content(visitor.user_input["topic"], "");
+        write_content("planner_agent", plan);
+        visitor.session.current_state["plan"] = plan;
+        visitor.call_next_agent(
+            visitor.user_input, 
+            "planner response: " + plan, 
+            visitor.session.current_state
         );
-        write_content("planner_agent", planner_response);
-        self.session.current_state["planner_response"] = planner_response;
-        next_agent: AgentTypes = self.call_next_agent(
-            self.utterance, 
-            "planner response: " + planner_response, 
-            self.session.current_state
-        );
-        print("Next agent to execute:", next_agent);
-
-        if next_agent == AgentTypes.END {
-            self.session.current_state["done"] = True;
-            print("✅ Stopping: better/approved response reached.");
-            disengage;
-        } elif next_agent == AgentTypes.PLANNER_AGENT {
-            planner_agent(session=self.session, utterance=utterance) spawn root;
-        } elif next_agent == AgentTypes.WRITER_AGENT {
-            writer_agent(session=self.session, utterance=utterance) spawn root;
-        } elif next_agent == AgentTypes.REVIEW_AGENT {
-            review_agent(session=self.session, utterance=utterance) spawn root;
-        } else {
-            print("No valid next agent found, stopping execution.");
-            self.session.current_state["done"] = True;
-            disengage;
-        }
     }
 }
+sem PlanerHandling.plan_the_content = "You are a content planning expert. Create a detailed, actionable plan for a blog post, including title, introduction, main sections, code snippet placement, and conclusion.";
 
-walker writer_agent {
-    has session: Session;
-    has utterance: str = "";
-    
-    def call_next_agent(utterance: str, current_agent_response: str, current_state: dict) -> AgentTypes by llm(
-        method="reasoning"
-    );
-    def write_better_content(utterance: str, current_state: dict) -> str by llm();
-    can execute with `root entry {
+node WriterHandling {
+    def write_the_content(topic: str, output_format: str, plan: str, tone: str, audience: str, write_as: str) -> str by llm();
+    can execute with writer_agent entry {
         print("writer agent executed");
-        writer_response = self.write_better_content(self.utterance, self.session.current_state);
-        self.session.current_state["writer_response"] = writer_response;
-        self.session.current_state["review_response"] = "requested review";
-        
-        next_agent: AgentTypes = self.call_next_agent(
-            self.utterance, 
-            "writer response: " + writer_response, 
-            self.session.current_state
+        content = self.write_the_content(
+            visitor.user_input["topic"], 
+            visitor.user_input["output_format"], 
+            visitor.session.current_state["plan"], 
+            visitor.user_input["tone"], 
+            visitor.user_input["audience"], 
+            visitor.user_input["write_as"]
         );
-        write_content("writer_agent", writer_response);
-        print("Next agent to execute:", next_agent);
-
-        if next_agent == AgentTypes.END {
-            self.session.current_state["done"] = True;
-            print("✅ Stopping: better/approved response reached.");
-            disengage;
-        } elif next_agent == AgentTypes.PLANNER_AGENT {
-            planner_agent(session=self.session, utterance=utterance) spawn root;
-        } elif next_agent == AgentTypes.WRITER_AGENT {
-            writer_agent(session=self.session, utterance=utterance) spawn root;
-        } elif next_agent == AgentTypes.REVIEW_AGENT {
-            review_agent(session=self.session, utterance=utterance) spawn root;
-        } else {
-            print("No valid next agent found, stopping execution.");
-            self.session.current_state["done"] = True;
-            disengage;
-        }
-    } 
-}
-
-walker review_agent {
-    has session: Session;
-    has utterance: str = "";
-
-    def call_next_agent(utterance: str, current_agent_response: str, current_state: dict) -> AgentTypes by llm(
-        method="reasoning"
-    );
-    def max_word_count -> int {
-        return 100;
+        write_content("writer_agent", content);
+        visitor.session.current_state["article"] = content;
+        visitor.call_next_agent(
+            visitor.user_input, 
+            "writer response: " + content, 
+            visitor.session.current_state
+        );
     }
-    def check_passed_max_word_count(utterance: str, current_state: dict) -> str by llm(
-        method="ReAct",
-        tools=([self.max_word_count])
-    );
-    can execute with `root entry {
-        print("review agent executed");
-        review_response = self.check_passed_max_word_count(self.utterance, self.session.current_state);
-        write_content("review_agent", review_response);
-        self.session.current_state["review_response"] = review_response;
-        next_agent: AgentTypes = self.call_next_agent(
-            self.utterance, 
-            "review response: " + review_response, 
-            self.session.current_state
-        );
-        print("Next agent to execute:", next_agent);
-        
-        if next_agent == AgentTypes.END {
-            self.session.current_state["done"] = True;
-            print("✅ Stopping: better/approved response reached.");
-            disengage;
-        } elif next_agent == AgentTypes.PLANNER_AGENT {
-            planner_agent(session=self.session, utterance=utterance) spawn root;
-        } elif next_agent == AgentTypes.WRITER_AGENT {
-            writer_agent(session=self.session, utterance=utterance) spawn root;
-        } elif next_agent == AgentTypes.REVIEW_AGENT {
-            review_agent(session=self.session, utterance=utterance) spawn root;
-        } else {
-            print("No valid next agent found, stopping execution.");
-            disengage;
+}
+sem WriterHandling.write_the_content = "You are an expert content writer. Write or revise a well-structured, engaging article based on the topic, content plan, tone, audience, and feedback provided.";
+
+node ReviewHandling {
+    has max_revisions: int = 3;
+
+    def review_the_content(article: str, tone: str) -> str by llm();
+    can execute with review_agent entry {
+        review = self.review_the_content(visitor.session.current_state["article"], visitor.user_input["tone"]);
+        write_content("review_agent", review);
+        visitor.session.current_state["review_agent"] = review;
+        if "review_count" not in visitor.session.current_state {
+            visitor.session.current_state["review_count"] = 0;
         }
-    } 
+        visitor.session.current_state["review_count"] += 1;
+        if visitor.session.current_state["review_count"] >= self.max_revisions {
+            visitor.session.current_state["review_agent"] = "Max revisions reached. Approving article as is. Stop further editing.";
+        }
+        visitor.call_next_agent(
+            visitor.user_input, 
+            "review response: " + review, 
+            visitor.session.current_state
+        );
+    }
 }
+sem ReviewHandling.review_the_content = "You are an expert editor. Review the article for quality, structure, engagement, and tone. Approve if excellent; otherwise, provide 2-3 actionable feedback points.";
 
-walker media_agent {
-    has session: Session;
-
-    can execute with `root entry {
-        print("media agent executed");
-        media_response = "Media content created: An infographic illustrating the key features and applications of Agentic AI, along with a short video explaining the concept in simple terms.";
-        self.session.current_state["media_response"] = media_response;
-        print("Media content details added to session history.", self.session.current_state);
-        # return media_response;
-    } 
-}
 
 with entry {
-    utterance = "Generate a readme post regarding Agentic AI.";
-    SupervisorAgent(utterance) spawn root;
+    user_input = {
+        "field": "technology",
+        "topic": "The Future of AI in Content Creation",
+        "output_format": "markdown",
+        "tone": "informative and engaging",
+        "audience": "tech enthusiasts and professionals",
+        "write_as": "a knowledgeable industry expert",
+    };
+    SupervisorAgent(user_input, "") spawn root;
 }
