@@ -1,13 +1,21 @@
 import from agent_core { Memory, Session }
 import from byllm.llm { Model }
+import from tavily { TavilyClient }
+import from dotenv { load_dotenv }
+import from openai { OpenAI }
+import base64;
 import sys;
+import os;
 
 glob llm = Model(model_name="gpt-4o");
+glob client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'));
+glob tavily_client = TavilyClient(api_key=os.getenv('TAVILY_API_KEY'));
 
 enum AgentTypes {
     PLANNER_AGENT,
     WRITER_AGENT,
     REVIEW_AGENT,
+    MEDIA_AGENT,
     END
 }
 
@@ -60,6 +68,9 @@ walker agent {
             review_handling = [root --> (`?ReviewHandling)][0];
             review_agent(session=self.session, user_input=user_input) spawn review_handling;
 
+        } elif next_agent == AgentTypes.MEDIA_AGENT {
+            media_handling = [root --> (`?MediaHandling)][0];
+            media_agent(session=self.session) spawn media_handling;
         } else {
             print("No valid next agent found, stopping execution.");
             disengage;
@@ -101,6 +112,9 @@ walker SupervisorAgent(agent) {
         if not [root --> (`?ReviewHandling)] {
             root ++> ReviewHandling();
         }
+        if not [root --> (`?MediaHandling)] {
+            root ++> MediaHandling();
+        }
         
         self.call_next_agent(
             self.user_input, 
@@ -137,18 +151,9 @@ walker review_agent(agent) {
     };
 }
 
-# walker media_agent {
-#     has session: Session;
-
-#     can execute with `root entry {
-#         print("media agent executed");
-#         media_response = "Media content created: An infographic illustrating the key features and applications of Agentic AI, along with a short video explaining the concept in simple terms.";
-#         self.session.current_state["media_response"] = media_response;
-#         print("Media content details added to session history.", self.session.current_state);
-#         # return media_response;
-#     } 
-# }
-
+walker media_agent(agent) {
+    has session: Session;
+}
 
 node PlanerHandling {
     def plan_the_content(topic: str, context: str) -> str by llm();
@@ -167,7 +172,16 @@ node PlanerHandling {
 sem PlanerHandling.plan_the_content = "You are a content planning expert. Create a detailed, actionable plan for a blog post, including title, introduction, main sections, code snippet placement, and conclusion.";
 
 node WriterHandling {
-    def write_the_content(topic: str, output_format: str, plan: str, tone: str, audience: str, write_as: str) -> str by llm();
+    def perform_tavily_search(topic: str) -> str {
+        search_results = tavily_client.search(topic, limit=3);
+        snippets = [r["content"] for r in response.get("results", []) if "content" in r];
+        print("tavily search results:", snippets);
+        return "\n".join(snippets);
+    }
+    def write_the_content(topic: str, output_format: str, plan: str, tone: str, audience: str, write_as: str) -> str by llm(
+        method = "ReAct",
+        tools = ([self.perform_tavily_search])
+    );
     can execute with writer_agent entry {
         print("writer agent executed");
         content = self.write_the_content(
@@ -202,7 +216,7 @@ node ReviewHandling {
         }
         visitor.session.current_state["review_count"] += 1;
         if visitor.session.current_state["review_count"] >= self.max_revisions {
-            visitor.session.current_state["review_agent"] = "Max revisions reached. Approving article as is. Stop further editing.";
+            visitor.session.current_state["review_agent"] = "Max revisions reached. Approving article as is. Generate media as the final step";
         }
         visitor.call_next_agent(
             visitor.user_input, 
@@ -213,8 +227,48 @@ node ReviewHandling {
 }
 sem ReviewHandling.review_the_content = "You are an expert editor. Review the article for quality, structure, engagement, and tone. Approve if excellent; otherwise, provide 2-3 actionable feedback points.";
 
+node MediaHandling {
+
+    def create_prompt_to_generate_media(article: str) -> str by llm();
+    def generate_media_for_article(prompt: str) -> None {
+        result = client.images.generate(
+            model="gpt-image-1",
+            prompt=prompt,
+            size="1536x1024",
+            n=1
+        );
+        image_base64 = result.data[0].b64_json;
+        image_bytes = base64.b64decode(image_base64);
+
+        output_path = "article_image.png";
+        with open(output_path, "wb") as f {
+            f.write(image_bytes);
+        }
+        print(f"✅ Image saved as {output_path}");
+    }
+    can execute with media_agent entry {
+        article = visitor.session.current_state.get("article", "");
+
+        if not article {
+            print("No article found to generate media for.");
+            disengage;
+        }
+        prompt = self.create_prompt_to_generate_media(article);
+        write_content("media_agent", prompt);
+        self.generate_media_for_article(prompt);
+        visitor.session.current_state["media_generated"] = True;
+        visitor.call_next_agent(
+            visitor.user_input, 
+            "Media generated, go to END", 
+            visitor.session.current_state
+        );
+    }
+}
+sem MediaHandling.create_prompt_to_generate_media = "You are an expert at creating concise DALL-E prompts. Based on the article, create a graphic flyer-style prompt that represents the main theme, including the title as text.";
 
 with entry {
+    load_dotenv();
+
     user_input = {
         "field": "technology",
         "topic": "The Future of AI in Content Creation",
