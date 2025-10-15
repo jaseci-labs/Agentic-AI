@@ -147,7 +147,12 @@ walker writer_agent(agent) {
 walker review_agent(agent) {
     has session: Session;
     has user_input: dict = {
+        field: "",
+        topic: "",
+        output_format: "",
         tone: "",
+        audience: "",
+        write_as: "",
     };
 }
 
@@ -177,7 +182,6 @@ node WriterHandling {
         search_results = tavily_client.search(topic, limit=3);
         snippets = [r["content"] for r in search_results.get("results", []) if "content" in r];
         str_results = "\n".join(snippets);
-        print("Tavily search results:", str_results);
         return str_results;
     }
     def write_the_content(topic: str, output_format: str, plan: str, tone: str, audience: str, write_as: str) -> str by llm(
@@ -208,9 +212,9 @@ sem WriterHandling.write_the_content = "You are an expert content writer. Write 
 node ReviewHandling {
     has max_revisions: int = 3;
 
-    def review_the_content(article: str, tone: str) -> str by llm();
+    def review_the_content(article: str, tone: str, topic: str, output_format: str, plan: str, audience: str, write_as: str) -> str by llm();
     can execute with review_agent entry {
-        review = self.review_the_content(visitor.session.current_state["article"], visitor.user_input["tone"]);
+        review = self.review_the_content(visitor.session.current_state["article"], visitor.user_input["tone"], visitor.user_input["topic"], visitor.user_input["output_format"], visitor.session.current_state["plan"], visitor.user_input["audience"], visitor.user_input["write_as"]);
         write_content("review_agent", review);
         visitor.session.current_state["review_agent"] = review;
         if "review_count" not in visitor.session.current_state {
@@ -230,7 +234,6 @@ node ReviewHandling {
 sem ReviewHandling.review_the_content = "You are an expert editor. Review the article for quality, structure, engagement, and tone. Approve if excellent; otherwise, provide 2-3 actionable feedback points.";
 
 node MediaHandling {
-
     def create_prompt_to_generate_media(article: str) -> str by llm();
     def generate_media_for_article(prompt: str) -> None {
         result = client.images.generate(
