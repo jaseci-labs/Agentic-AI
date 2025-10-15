@@ -41,7 +41,6 @@ sem WorkflowStage.REVISING = "Content rejected and needs rewriting - route to WR
 sem WorkflowStage.COMPLETED = "Final stage - route to END to terminate workflow";
 
 
-
 def write_content(agent: str, response: str) {
     with open("output.jsonl", "a") as f {
         rec = {
