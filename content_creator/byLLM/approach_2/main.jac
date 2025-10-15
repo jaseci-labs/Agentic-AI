@@ -1,4 +1,3 @@
-# Optimized Multi-Agent Content Creator Workflow
 import json;
 import time;
 import from typing {List}
