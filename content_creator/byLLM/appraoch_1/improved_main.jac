@@ -169,14 +169,16 @@ node PlanerHandling {
         );
     }
 }
-sem PlanerHandling.plan_the_content = "You are a content planning expert. Create a detailed, actionable plan for a blog post, including title, introduction, main sections, code snippet placement, and conclusion.";
+sem PlanerHandling.plan_the_contenct = "You are a content planning expert. Create a detailed, actionable plan for a blog post, including title, introduction, main sections, code snippet placement, and conclusion.";
 
 node WriterHandling {
     def perform_tavily_search(topic: str) -> str {
+        print("Performing Tavily search for topic:", topic);
         search_results = tavily_client.search(topic, limit=3);
-        snippets = [r["content"] for r in response.get("results", []) if "content" in r];
-        print("tavily search results:", snippets);
-        return "\n".join(snippets);
+        snippets = [r["content"] for r in search_results.get("results", []) if "content" in r];
+        str_results = "\n".join(snippets);
+        print("Tavily search results:", str_results);
+        return str_results;
     }
     def write_the_content(topic: str, output_format: str, plan: str, tone: str, audience: str, write_as: str) -> str by llm(
         method = "ReAct",
@@ -244,7 +246,7 @@ node MediaHandling {
         with open(output_path, "wb") as f {
             f.write(image_bytes);
         }
-        print(f"✅ Image saved as {output_path}");
+        print(f"Image saved as {output_path}");
     }
     can execute with media_agent entry {
         article = visitor.session.current_state.get("article", "");
@@ -258,7 +260,7 @@ node MediaHandling {
         self.generate_media_for_article(prompt);
         visitor.session.current_state["media_generated"] = True;
         visitor.call_next_agent(
-            visitor.user_input, 
+            {}, 
             "Media generated, go to END", 
             visitor.session.current_state
         );
