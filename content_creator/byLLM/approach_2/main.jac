@@ -54,20 +54,6 @@ def write_content(agent: str, response: str) {
 }
 
 node Supervisor {
-    """Decide the next agent based on current_state:
-    
-    First, check end conditions:
-    - If current_state["approved"] == True → return END
-    - If current_state.get("revision_count", 0) >= 5 → return END
-    
-    Then route based on current_state["stage"]:
-    - PLANNING → PLANNER_AGENT
-    - WRITING → WRITER_AGENT
-    - REVIEWING → REVIEW_AGENT
-    - REVISING → WRITER_AGENT (content needs rewriting)
-    - COMPLETED → END
-    
-    Return the appropriate AgentTypes value."""
     def call_next_agent(utterance: str, current_state: dict) -> AgentTypes by llm(method="Reason");
 }
 
@@ -87,8 +73,7 @@ node PlannerAgent(Agent) {
         
         plan = self.create_content_plan(visitor.utterance, visitor.session.current_state);
         write_content("planner_agent", plan);
-        
-        # Update state with plan
+
         visitor.session.current_state["plan"] = plan;
         visitor.session.current_state["stage"] = WorkflowStage.WRITING;
         visitor.session.current_state["planning_complete"] = True;
@@ -114,12 +99,11 @@ node WriterAgent(Agent) {
         
         content = self.create_content(visitor.utterance, plan, feedback);
         write_content("writer_agent", content);
-        
-        # Update state with content and reset review flags
+
         visitor.session.current_state["content"] = content;
         visitor.session.current_state["stage"] = WorkflowStage.REVIEWING;
         visitor.session.current_state["content_created"] = True;
-        visitor.session.current_state["review_complete"] = False;  # Reset for new review
+        visitor.session.current_state["review_complete"] = False;
         
         print("Content created, moving to review stage");
         visit [<--](`?Supervisor);
@@ -141,22 +125,6 @@ node ReviewAgent(Agent) {
         return 100;
     }
     
-    """Review the content for APPROVAL. Only reject if content has CRITICAL issues:
-
-    CRITICAL REJECTION CRITERIA (is_approved = false):
-    1. Word count exceeds 100 words (MANDATORY rejection)
-    2. Content is completely unrelated to the plan
-    3. Content is gibberish or incomprehensible
-
-    APPROVAL CRITERIA (is_approved = true):
-    - Word count is 100 words or less
-    - Content is reasonably related to the plan  
-    - Content is understandable
-
-    DO NOT reject for minor improvements, suggestions, or subjective preferences.
-    If content meets basic requirements, APPROVE it even if it could be improved.
-    
-    Return ReviewResult with is_approved and detailed review_comments."""
     def review_content(content: str, plan: str, max_words_count: int) -> ReviewResult by llm(
         method="Reason",
     );
@@ -226,8 +194,6 @@ walker agent_executor {
         current_stage = self.session.current_state.get("stage", WorkflowStage.PLANNING);
         approved = self.session.current_state.get("approved", False);
         revision_count = self.session.current_state.get("revision_count", 0);
-        
-        print(f"Debug - Stage: {current_stage}, Approved: {approved}, Revisions: {revision_count}");
 
         next_agent = here.call_next_agent(self.utterance, self.session.current_state);
         
