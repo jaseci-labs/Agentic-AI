@@ -19,10 +19,6 @@ sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and
 sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback";
 sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives";
 sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached";
-# sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and strategies, current_state['stage'] =PLANNING → PLANNER_AGENT";
-# sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback, current_state['stage'] =WRITING → WRITER_AGENT";
-# sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives, current_state['stage'] =REVIEWING → REVIEW_AGENT";
-# sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached, current_state['stage'] =COMPLETED → END";
 
 
 enum WorkflowStage {
