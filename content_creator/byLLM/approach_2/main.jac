@@ -16,6 +16,16 @@ enum AgentTypes {
     END
 }
 
+# sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and strategies";
+# sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback";
+# sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives";
+# sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached";
+sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and strategies, current_state['stage'] =PLANNING → PLANNER_AGENT";
+sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback, current_state['stage'] =WRITING → WRITER_AGENT";
+sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives, current_state['stage'] =REVIEWING → REVIEW_AGENT";
+sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached, current_state['stage'] =COMPLETED → END";
+
+
 enum WorkflowStage {
     PLANNING,
     WRITING, 
@@ -24,11 +34,13 @@ enum WorkflowStage {
     COMPLETED
 }
 
-sem WorkflowStage.PLANNING = "initial planning stage";
-sem WorkflowStage.WRITING = "content creation stage";
-sem WorkflowStage.REVIEWING = "content review stage";
-sem WorkflowStage.REVISING = "content revision stage";
-sem WorkflowStage.COMPLETED = "workflow completed";
+sem WorkflowStage.PLANNING = "Initial stage - route to PLANNER_AGENT to create content strategy";
+sem WorkflowStage.WRITING = "Content creation stage - route to WRITER_AGENT to write or revise content";
+sem WorkflowStage.REVIEWING = "Quality check stage - route to REVIEW_AGENT to evaluate content";
+sem WorkflowStage.REVISING = "Content rejected and needs rewriting - route to WRITER_AGENT (NOT review agent)";
+sem WorkflowStage.COMPLETED = "Final stage - route to END to terminate workflow";
+
+
 
 def write_content(agent: str, response: str) {
     with open("output.jsonl", "a") as f {
@@ -44,31 +56,27 @@ def write_content(agent: str, response: str) {
 
 # Supervisor with LLM-based routing logic
 node Supervisor {
-    """You are a workflow supervisor. Follow these rules in EXACT ORDER:
-
-    1. END CONDITIONS (check first):
-       - current_state["approved"] == True → return END 
-       - current_state.get("revision_count", 0) >= 5 → return END
-
-    2. STAGE ROUTING (if not ending):
-       - "PLANNING" in str(current_state["stage"]) → return PLANNER_AGENT
-       - "WRITING" in str(current_state["stage"]) → return WRITER_AGENT
-       - "REVIEWING" in str(current_state["stage"]) → return REVIEW_AGENT
-       - "REVISING" in str(current_state["stage"]) → return WRITER_AGENT
-
-    🚨 CRITICAL: "REVISING" stage means content was REJECTED and needs REWRITING
-    → ALWAYS return WRITER_AGENT for REVISING (never REVIEW_AGENT, never END)
+    """Decide the next agent based on current_state:
     
-    Only return: PLANNER_AGENT, WRITER_AGENT, REVIEW_AGENT, or END"""
+    First, check end conditions:
+    - If current_state["approved"] == True → return END
+    - If current_state.get("revision_count", 0) >= 5 → return END
+    
+    Then route based on current_state["stage"]:
+    - PLANNING → PLANNER_AGENT
+    - WRITING → WRITER_AGENT
+    - REVIEWING → REVIEW_AGENT
+    - REVISING → WRITER_AGENT (content needs rewriting)
+    - COMPLETED → END
+    
+    Return the appropriate AgentTypes value."""
     def call_next_agent(utterance: str, current_state: dict) -> AgentTypes by llm(method="Reason");
 }
 
-# Base Agent class
 node Agent {
     has agent_type: AgentTypes;
 }
 
-# Enhanced Planner Agent
 node PlannerAgent(Agent) {
     has agent_type: AgentTypes = AgentTypes.PLANNER_AGENT;
     
@@ -76,7 +84,7 @@ node PlannerAgent(Agent) {
     def create_content_plan(utterance: str, current_state: dict) -> str by llm();
     
     can execute_plan with agent_executor entry {
-        print("🎯 Planner Agent: Creating content strategy");
+        print("Planner Agent: Creating content strategy");
         visitor.session.add_agent_execution("PLANNER_AGENT");
         
         plan = self.create_content_plan(visitor.utterance, visitor.session.current_state);
@@ -87,7 +95,7 @@ node PlannerAgent(Agent) {
         visitor.session.current_state["stage"] = WorkflowStage.WRITING;
         visitor.session.current_state["planning_complete"] = True;
         
-        print("✅ Plan created, moving to writing stage");
+        print("Plan created, moving to writing stage");
         visit [<--](`?Supervisor);
     }
 }
@@ -100,7 +108,7 @@ node WriterAgent(Agent) {
     def create_content(utterance: str, plan: str, feedback: str = "") -> str by llm();
     
     can execute_write with agent_executor entry {
-        print("✍️ Writer Agent: Creating content");
+        print("Writer Agent: Creating content");
         visitor.session.add_agent_execution("WRITER_AGENT");
         
         plan = visitor.session.current_state.get("plan", "");
@@ -116,7 +124,7 @@ node WriterAgent(Agent) {
         visitor.session.current_state["content_created"] = True;
         visitor.session.current_state["review_complete"] = False;  # Reset for new review
         
-        print("✅ Content created, moving to review stage");
+        print("Content created, moving to review stage");
         visit [<--](`?Supervisor);
     }
 }
@@ -158,21 +166,21 @@ node ReviewAgent(Agent) {
     );
     
     can execute_review with agent_executor entry {
-        print("🔍 Review Agent: Evaluating content");
+        print("Review Agent: Evaluating content");
         visitor.session.add_agent_execution("REVIEW_AGENT");
         
         content = visitor.session.current_state.get("content", "");
         plan = visitor.session.current_state.get("plan", "");
         
         if not content {
-            print("❌ No content to review, returning to supervisor");
+            print("No content to review, returning to supervisor");
             visit [<--](`?Supervisor);
             return;
         }
         
         max_words = self.get_max_word_count();
         review_result = self.review_content(content, plan, max_words);
-        print(f"📝 Review completed={review_result}");
+        print(f"Review completed={review_result}");
         write_content("review_agent", review_result.review_comments);
         
         # Extract structured data from ReviewResult object
@@ -189,7 +197,7 @@ node ReviewAgent(Agent) {
         
         if approved {
             visitor.session.current_state["stage"] = WorkflowStage.COMPLETED;
-            print("✅ Content approved, workflow complete");
+            print("Content approved, workflow complete");
         } else {
             # Increment revision count and check limit
             revision_count += 1;
@@ -198,10 +206,10 @@ node ReviewAgent(Agent) {
             if revision_count >= 5 {
                 visitor.session.current_state["stage"] = WorkflowStage.COMPLETED;
                 visitor.session.current_state["approved"] = True;  # Force completion
-                print(f"⚠️ Max revisions ({revision_count}) reached, stopping workflow");
+                print(f"Max revisions ({revision_count}) reached, stopping workflow");
             } else {
                 visitor.session.current_state["stage"] = WorkflowStage.REVISING;
-                print(f"📝 Content needs revision (attempt {revision_count}/5), sending back to writer");
+                print(f"Content needs revision (attempt {revision_count}/5), sending back to writer");
             }
         }
         
@@ -219,7 +227,7 @@ walker agent_executor {
     can route_workflow with Supervisor entry {
         # Check for infinite loop prevention
         if self.session.get_execution_count() >= self.max_iterations {
-            print("🛑 Max iterations reached, stopping workflow");
+            print("Max iterations reached, stopping workflow");
             self.session.current_state["done"] = True;
             disengage;
             return;
@@ -230,20 +238,20 @@ walker agent_executor {
         revision_count = self.session.current_state.get("revision_count", 0);
         
         # Debug information
-        print(f"🔍 Debug - Stage: {current_stage}, Approved: {approved}, Revisions: {revision_count}");
+        print(f"Debug - Stage: {current_stage}, Approved: {approved}, Revisions: {revision_count}");
         
         # Use LLM-based supervisor to determine next agent
         next_agent = here.call_next_agent(self.utterance, self.session.current_state);
         
-        print(f"📍 Current stage: {current_stage}, Next agent: {next_agent}");
+        print(f"Current stage: {current_stage}, Next agent: {next_agent}");
         
         if next_agent == AgentTypes.END or self.session.current_state.get("stage") == WorkflowStage.COMPLETED {
             self.session.current_state["done"] = True;
-            print("✅ Workflow completed successfully!");
+            print("Workflow completed successfully!");
             
             # Print final content
             final_content = self.session.current_state.get("content", "No content generated");
-            print("\n🎉 Final Content:");
+            print("\nFinal Content:");
             print("=" * 50);
             print(final_content);
             print("=" * 50);
@@ -274,7 +282,7 @@ walker agent_executor {
         self.session.current_state["stage"] = WorkflowStage.PLANNING;
         self.session.current_state["utterance"] = self.utterance;
         
-        print(f"🚀 Starting workflow for: {self.utterance}");
+        print(f"Starting workflow for: {self.utterance}");
 
         # Create agent graph if it doesn't exist
         visit [-->](`?Supervisor) else {
