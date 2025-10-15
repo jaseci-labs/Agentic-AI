@@ -53,7 +53,6 @@ def write_content(agent: str, response: str) {
     }
 }
 
-# Supervisor with LLM-based routing logic
 node Supervisor {
     """Decide the next agent based on current_state:
     
@@ -98,8 +97,7 @@ node PlannerAgent(Agent) {
         visit [<--](`?Supervisor);
     }
 }
-
-# Enhanced Writer Agent  
+  
 node WriterAgent(Agent) {
     has agent_type: AgentTypes = AgentTypes.WRITER_AGENT;
     
@@ -136,7 +134,6 @@ obj ReviewResult {
 sem ReviewResult.is_approved = "if the content meets the criteria, set to true; otherwise, false";
 sem ReviewResult.review_comments = "detailed feedback on content quality, clarity, alignment with plan, and max word count compliance.";
 
-# Enhanced Review Agent
 node ReviewAgent(Agent) {
     has agent_type: AgentTypes = AgentTypes.REVIEW_AGENT;
     
@@ -182,14 +179,11 @@ node ReviewAgent(Agent) {
         print(f"Review completed={review_result}");
         write_content("review_agent", review_result.review_comments);
         
-        # Extract structured data from ReviewResult object
         approved = review_result.is_approved;
         feedback = review_result.review_comments;
         
-        # Track revision attempts
         revision_count = visitor.session.current_state.get("revision_count", 0);
         
-        # Update state based on review
         visitor.session.current_state["review_complete"] = True;
         visitor.session.current_state["approved"] = approved;
         visitor.session.current_state["feedback"] = feedback;
@@ -198,7 +192,6 @@ node ReviewAgent(Agent) {
             visitor.session.current_state["stage"] = WorkflowStage.COMPLETED;
             print("Content approved, workflow complete");
         } else {
-            # Increment revision count and check limit
             revision_count += 1;
             visitor.session.current_state["revision_count"] = revision_count;
             
@@ -216,7 +209,6 @@ node ReviewAgent(Agent) {
     }
 }
 
-# Enhanced Walker with better state management
 walker agent_executor {
     has session: Session;
     has utterance: str = "";
@@ -224,7 +216,6 @@ walker agent_executor {
     has max_iterations: int = 10;
 
     can route_workflow with Supervisor entry {
-        # Check for infinite loop prevention
         if self.session.get_execution_count() >= self.max_iterations {
             print("Max iterations reached, stopping workflow");
             self.session.current_state["done"] = True;
@@ -236,10 +227,8 @@ walker agent_executor {
         approved = self.session.current_state.get("approved", False);
         revision_count = self.session.current_state.get("revision_count", 0);
         
-        # Debug information
         print(f"Debug - Stage: {current_stage}, Approved: {approved}, Revisions: {revision_count}");
-        
-        # Use LLM-based supervisor to determine next agent
+
         next_agent = here.call_next_agent(self.utterance, self.session.current_state);
         
         print(f"Current stage: {current_stage}, Next agent: {next_agent}");
@@ -247,8 +236,7 @@ walker agent_executor {
         if next_agent == AgentTypes.END or self.session.current_state.get("stage") == WorkflowStage.COMPLETED {
             self.session.current_state["done"] = True;
             print("Workflow completed successfully!");
-            
-            # Print final content
+
             final_content = self.session.current_state.get("content", "No content generated");
             print("\nFinal Content:");
             print("=" * 50);
@@ -257,13 +245,11 @@ walker agent_executor {
             
             disengage;
         } else {
-            # Visit the appropriate agent node
             visit [-->](`?Agent)(?agent_type == next_agent);
         }
     }
 
     can init_graph with `root entry {
-        # Initialize memory and session
         memory_list = [root --> (`?Memory)];
         if not memory_list {
             memory_list = root ++> Memory();
@@ -277,13 +263,11 @@ walker agent_executor {
             self.session = &(self.session_id);
         }
 
-        # Initialize workflow state
         self.session.current_state["stage"] = WorkflowStage.PLANNING;
         self.session.current_state["utterance"] = self.utterance;
         
         print(f"Starting workflow for: {self.utterance}");
 
-        # Create agent graph if it doesn't exist
         visit [-->](`?Supervisor) else {
             router_node = here ++> Supervisor();
             router_node ++> PlannerAgent();
