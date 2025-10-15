@@ -15,14 +15,14 @@ enum AgentTypes {
     END
 }
 
-# sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and strategies";
-# sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback";
-# sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives";
-# sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached";
-sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and strategies, current_state['stage'] =PLANNING → PLANNER_AGENT";
-sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback, current_state['stage'] =WRITING → WRITER_AGENT";
-sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives, current_state['stage'] =REVIEWING → REVIEW_AGENT";
-sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached, current_state['stage'] =COMPLETED → END";
+sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and strategies";
+sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback";
+sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives";
+sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached";
+# sem AgentTypes.PLANNER_AGENT = "Agent responsible for creating content plans and strategies, current_state['stage'] =PLANNING → PLANNER_AGENT";
+# sem AgentTypes.WRITER_AGENT = "Agent responsible for writing and revising content based on plans and feedback, current_state['stage'] =WRITING → WRITER_AGENT";
+# sem AgentTypes.REVIEW_AGENT = "Agent responsible for reviewing content quality, word count, and alignment with objectives, current_state['stage'] =REVIEWING → REVIEW_AGENT";
+# sem AgentTypes.END = "Workflow termination - use when content is approved or max revisions reached, current_state['stage'] =COMPLETED → END";
 
 
 enum WorkflowStage {
@@ -177,7 +177,7 @@ node ReviewAgent(Agent) {
 }
 
 walker agent_executor {
-    has session: Session;
+    has session: Session | None = None;
     has utterance: str = "";
     has session_id: str = "";
     has max_iterations: int = 10;
@@ -245,5 +245,5 @@ walker agent_executor {
 
 with entry {
     utterance = "Generate a readme post regarding Agentic AI.";
-    agent_executor(utterance) spawn root;
+    agent_executor(utterance=utterance) spawn root;
 }
