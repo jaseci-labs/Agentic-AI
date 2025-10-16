@@ -4,7 +4,7 @@ import from nodes_and_edges { memories, memory, comment, profile, shared_memory 
 import from jaseci_sdk { get_node_owner, get_node_by_root_id }
 import from profile { visit_profile }
 import from mtp { generate_comment_summary_and_povs, search_memories_from_query }
-
+import from ai_client { openai_client }
 
 walker visit_memories {
 
@@ -48,6 +48,7 @@ walker list_memories(visit_memories) {
 
 walker search_memories(visit_memories) {
     has query: str;
+    has use_byllm: bool = True;
 
     class __specs__ {
         has tags: list = ["memory"];

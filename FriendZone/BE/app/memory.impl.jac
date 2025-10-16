@@ -148,10 +148,15 @@ impl search_memories.search_memories with memories entry {
             );
         }
     }
-
-    mtp_response = search_memories_from_query(memories=filtered_memories, query=self.query);
+    if self.use_byllm {
+        logger.debug("friends | search_memories | Using LLM for search");
+        ai_response = search_memories_from_query(memories=filtered_memories, query=self.query);
+    } else {
+        logger.debug("friends | search_memories | Using simple keyword matching for search");
+        ai_response = openai_client.search_memories_from_query(memories=filtered_memories, query=self.query);
+    }
     response = [];
-        for index in mtp_response.ids {
+        for index in ai_response.ids {
             try {
                 response.append(
                     {

@@ -243,6 +243,98 @@ obj Openai_SDK {
             return None;
         }
     }
+
+    def search_memories_from_query(
+        memories: List[Dict[str, str]], 
+        query: str
+    ) -> List[str] {
+        search_memory_tool = [{
+            "type": "function",
+            "function": {
+                "name": "search_memories",
+                "description": "Search for memories relevant to the user's query",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ids": {
+                            "type": "array",
+                            "items": {"type": "integer"},
+                            "description": "List of IDs of memories relevant to the query"
+                        }
+                    },
+                    "required": ["ids"]
+                }
+            }
+        }];
+
+        SERCH_MEMORY_SYS_PROMPT = """
+        You are given a list of memories, each with an id and summary. 
+        
+        Your task is to identify which memories are relevant to the user's query.
+
+        # Instructions
+        - Use `serch_memories` tool to return a list of IDs of relevant memories.
+        - Only return IDs of relevant memories.
+        - If no memories are relevant, return an empty list.
+        - Do not hallucinate or make assumptions about memory content.
+        - Ensure the IDs returned are valid and exist in the provided list.
+
+        # Input Format
+        - Memories: A JSON array where each element has:
+            - id: Unique identifier for the memory.
+            - summary: A brief description of the memory.
+        - Query: A string representing what the user is searching for.
+
+        # Output Format
+        Return a JSON object with a single field:
+        - ids: An array of integers representing the IDs of relevant memories.
+        representing the IDs of relevant memories.
+        """;
+
+        USER_PROMPT = f"Memories: {json.dumps(memories)}\nQuery: {query}";
+
+        messages = [
+            {
+                "role": "system",
+                "content": SERCH_MEMORY_SYS_PROMPT
+            },
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": USER_PROMPT}]
+            }
+        ];
+        
+        response = self.client.chat.completions.create(
+            model="gpt-4.1",
+            messages=messages,
+            tools=search_memory_tool
+        );
+        logger.debug(f"ai_client | extract_memory_details | OpenAI response: {response}");
+         try {
+            arguments = response.choices[0].message.tool_calls[0].function.arguments;
+            arguments = json.loads(arguments);
+            return SimpleNamespace(**arguments);
+        } except Exception as e {
+            logger.error(f"open_ai_sdk | execute_tools | error: {e}");
+            arguments = {"ids": []};
+            return SimpleNamespace(**arguments);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 glob openai_client = Openai_SDK();
