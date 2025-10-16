@@ -29,29 +29,45 @@ impl init_session.update_session with session entry {
             logger.warning("session | init_session | City not found for the provided coordinates.");
         }
     }
-    mtp_response = extract_memory_details(
-        image=Image(self.image_url),
-        city=city,
-        date=convert_date_to_valid_format(self.date)
-    );
-    logger.debug(f"session | init_session | extracted memory details: {mtp_response}");
+
+    if self.use_byllm {
+        ai_response = extract_memory_details(
+            image=Image(self.image_url),
+            city=city,
+            date=convert_date_to_valid_format(self.date)
+        );
+    } else {
+        ai_response = openai_client.extract_memory_details(
+            image_url=self.image_url,
+            city=city,
+            date=convert_date_to_valid_format(self.date)
+        );
+        if not ai_response {
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to extract memory details from AI service."
+            );
+        }   
+    }
+
+    logger.debug(f"session | init_session | extracted memory details: {ai_response}");
     here.image_url = self.image_url;
-    here.summary = mtp_response.summary;
-    here.when = convert_date_to_valid_format(mtp_response.when);
-    here.who = mtp_response.who;
-    here.what = mtp_response.what;
+    here.summary = ai_response.summary;
+    here.when = convert_date_to_valid_format(ai_response.when);
+    here.who = ai_response.who;
+    here.what = ai_response.what;
     here.conversation.append(
         {
-            "assistant": mtp_response.follow_up_questions
+            "assistant": ai_response.follow_up_questions
         }
     );
-    if mtp_response.location_type {
-        logger.debug(f"session | init_session | Fetching places for location description: {mtp_response.location_type}");
+    if ai_response.location_type {
+        logger.debug(f"session | init_session | Fetching places for location description: {ai_response.location_type}");
         places = google_location_service.get_detailed_location(
             latitude=self.location.latitude,
             longitude=self.location.longitude,
             radius=100,
-            search_query=mtp_response.location_type,
+            search_query=ai_response.location_type,
             top_n=3
         );
         if places {
@@ -63,7 +79,7 @@ impl init_session.update_session with session entry {
     }
     response = {
         "session_id": here.session_id,
-        "follow_up_questions": mtp_response.follow_up_questions,
+        "follow_up_questions": ai_response.follow_up_questions,
         "summary": here.summary,
         "when": here.when,
         "who": here.who,
@@ -90,36 +106,57 @@ impl continue_session.visit_session with sessions entry {
 impl continue_session.update_session with session entry {
     logger.debug("session | continue_session | updating session");
     if here.image_url {
-        mtp_response = update_memory_details(
-            image=Image(here.image_url),
-            utterance=self.utterance,
-            summary=here.summary,
-            when=here.when,
-            who=here.who,
-            where=here.where,
-            what=here.what,
-            conversation=here.conversation,
-            show_summary=here.show_summary,
-            save_memory=here.save_memory
-        );
-        logger.debug(f"session | continue_session | updated memory details: {mtp_response}");
-        here.summary = mtp_response.summary;
-        here.when = mtp_response.when;
-        here.who = mtp_response.who;
-        here.where = mtp_response.where;
-        here.what = mtp_response.what;
+        if self.use_byllm {
+            ai_response = update_memory_details(
+                image=Image(here.image_url),
+                utterance=self.utterance,
+                summary=here.summary,
+                when=here.when,
+                who=here.who,
+                where=here.where,
+                what=here.what,
+                conversation=here.conversation,
+                show_summary=here.show_summary,
+                save_memory=here.save_memory
+            );
+        } else {
+            ai_response = openai_client.update_memory_details(
+                image_url=here.image_url,
+                utterance=self.utterance,
+                summary=here.summary,
+                when=here.when,
+                who=here.who,
+                where=here.where,
+                what=here.what,
+                conversation=here.conversation,
+                show_summary=here.show_summary,
+                save_memory=here.save_memory
+            );
+            if not ai_response {
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to update memory details from AI service."
+                );
+            }   
+        }
+        logger.debug(f"session | continue_session | updated memory details: {ai_response}");
+        here.summary = ai_response.summary;
+        here.when = ai_response.when;
+        here.who = ai_response.who;
+        here.where = ai_response.where;
+        here.what = ai_response.what;
         is_saved = here.save_memory;
-        here.save_memory = mtp_response.save_memory;
-        here.show_summary = mtp_response.show_summary;
+        here.save_memory = ai_response.save_memory;
+        here.show_summary = ai_response.show_summary;
         here.conversation.append(
             {
                 "user": self.utterance,
-                "assistant": mtp_response.follow_up_questions
+                "assistant": ai_response.follow_up_questions
             }
         );
         response = {
             "session_id": here.session_id,
-            "follow_up_questions": mtp_response.follow_up_questions,
+            "follow_up_questions": ai_response.follow_up_questions,
             "summary": here.summary,
             "when": here.when,
             "who": here.who,
@@ -131,7 +168,7 @@ impl continue_session.update_session with session entry {
             "show_summary": here.show_summary
         };
         report response;
-        if not is_saved and mtp_response.save_memory {
+        if not is_saved and ai_response.save_memory {
             logger.debug("session | continue_session | Saving memory as requested.");
             root spawn save_memory(
                 session_id=here.session_id
