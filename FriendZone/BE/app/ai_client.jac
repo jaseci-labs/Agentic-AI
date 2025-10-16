@@ -320,21 +320,6 @@ obj Openai_SDK {
             return SimpleNamespace(**arguments);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 glob openai_client = Openai_SDK();
