@@ -1,6 +1,10 @@
 import from dotenv { load_dotenv }
 import sys;
-import from utils { get_current_datetime }
+import from datetime { datetime }
+
+def get_current_datetime() -> str {
+    return str(datetime.now());
+}
 
 node Memory {}
 
