@@ -32,6 +32,7 @@ def write_content(agent: str, response: str) {
     }
 }
 
+
 walker agent {
     def find_next_agent(user_input: dict, current_agent_response: str, current_state: dict) -> AgentTypes by llm();
     def call_next_agent(user_input: dict, current_agent_response: str = "", current_state: dict) -> None;
@@ -90,11 +91,13 @@ walker media_agent(agent) {
     has session: Session;
 }
 
+# Nodes are considered as tool boxes for each agent to use
 node PlanerHandling {
     def plan_the_content(topic: str, context: str) -> str by llm();
     can execute with planner_agent entry;
 }
 sem PlanerHandling.plan_the_contenct = "You are a content planning expert. Create a detailed, actionable plan for a blog post, including title, introduction, main sections, code snippet placement, and conclusion.";
+
 
 node WriterHandling {
     def perform_tavily_search(topic: str) -> str;
@@ -106,6 +109,7 @@ node WriterHandling {
 }
 sem WriterHandling.write_the_content = "You are an expert content writer. Write or revise a well-structured, engaging article based on the topic, content plan, tone, audience, and feedback provided.";
 
+
 node ReviewHandling {
     has max_revisions: int = 3;
 
@@ -114,12 +118,14 @@ node ReviewHandling {
 }
 sem ReviewHandling.review_the_content = "You are an expert editor. Review the article for quality, structure, engagement, and tone. Approve if excellent; otherwise, provide 2-3 actionable feedback points.";
 
+
 node MediaHandling {
     def create_prompt_to_generate_media(article: str) -> str by llm();
     def generate_media_for_article(prompt: str) -> None;
     can execute with media_agent entry;
 }
 sem MediaHandling.create_prompt_to_generate_media = "You are an expert at creating concise DALL-E prompts. Based on the article, create a graphic flyer-style prompt that represents the main theme, including the title as text.";
+
 
 with entry {
     load_dotenv();

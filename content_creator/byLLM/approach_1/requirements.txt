@@ -1,0 +1,5 @@
+byllm==0.4.4
+
+python-dotenv==1.1.1
+openai==2.2.0
+tavily-python==0.7.12
