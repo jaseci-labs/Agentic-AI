@@ -43,7 +43,7 @@ walker agent {
         static has auth: bool = False;
     }
     def get_node_class(class_name: str) {
-        main_mod = sys.modules.get("__main__");
+        main_mod = sys.modules.get("main");
         if main_mod and hasattr(main_mod, class_name) {
             return getattr(main_mod, class_name, None);
         }
@@ -76,7 +76,7 @@ walker agent {
         }
         node_inst = node_cls();
         visit [-->(`?node_cls)] else {
-            attached_routed_node = here ++> node_inst;
+            attached_routed_node = self.session ++> node_inst;
             visit attached_routed_node;
         }
     }
