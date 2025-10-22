@@ -4,7 +4,7 @@ from streamlit.components.v1 import html as components_html
 
 # --- PAGE CONFIG ---
 st.set_page_config(
-    page_title="Jivas Assistant",
+    page_title="Task Manager",
     layout="wide",
 )
 
@@ -115,7 +115,7 @@ with st.sidebar:
         st.success("Virtual session reset!")
 
 # --- TITLE ---
-st.title("🤖 Jivas Assistant")
+st.title("🤖 Task Manager")
 
 # --- TABS ---
 tab1, tab2 = st.tabs(["💬 Chat", "📅 Scheduled Tasks"])
