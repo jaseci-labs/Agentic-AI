@@ -39,16 +39,16 @@ pip install -r requirements.txt
 ## Environment Configuration
 
 1. Copy the environment template:
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   ```
 
 2. Set up your API key:
    - Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
    - Add it to your `.env` file:
-```
-GEMINI_API_KEY=...
-```
+   ```
+   GEMINI_API_KEY=...
+   ```
 
 ## Run the App
 
