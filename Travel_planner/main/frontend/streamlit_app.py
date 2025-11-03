@@ -1,5 +1,7 @@
 import streamlit as st
 import time
+import json
+import requests
 
 st.set_page_config(
     page_title="Travel Planner AI",
@@ -18,53 +20,41 @@ def display_chat_messages():
 
 def sidebar():
     with st.sidebar:
-        st.title("🛠️ Settings")
-        
-        # Add travel preferences
-        st.subheader("Travel Preferences")
-        budget = st.slider("Budget ($)", 100, 10000, 1000, 100)
-        duration = st.slider("Duration (days)", 1, 30, 7)
-        
-        # Travel style
-        st.subheader("Travel Style")
-        travel_style = st.multiselect(
-            "Select your interests",
-            ["Culture & History", "Nature & Adventure", "Food & Dining", 
-             "Nightlife & Entertainment", "Shopping", "Relaxation"],
-            default=["Culture & History"]
-        )
-        
-        # Clear conversation button
+        st.title("Welcome to Travel Planner AI!")
         if st.button("Clear Conversation"):
             st.session_state.messages = []
-            st.experimental_rerun()
+            st.rerun()
 
 def main():
-    # Sidebar
     sidebar()
-    
-    # Main content
     st.title("✈️ Travel Planner AI")
-    
     initialize_session_state()
     display_chat_messages()
 
-    if prompt := st.chat_input("What are your travel plans?"):
-        # Add user message to chat history
+    prompt = st.chat_input("What are your travel plans?")
+    if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Add assistant response to chat history
         with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            # Simulate stream of response with milliseconds delay
-            full_response = "I'm your travel planning assistant! I can help you plan your trip. However, I'm currently in development mode."
-            for chunk in full_response.split():
-                time.sleep(0.05)
-                message_placeholder.markdown(f"{chunk} ", unsafe_allow_html=True)
+            with st.spinner("Thinking..."):
+                payload = {"user_message": prompt}
+                try:
+                    response = requests.post(
+                        "http://localhost:8000/walker/chat",
+                        json=payload,
+                        timeout=15
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    agent_response = data.get("reports", [{}])[0].get("response", "Sorry, no response.")
+                except Exception as e:
+                    agent_response = f"Error: {e}"
+                st.markdown(agent_response)
+                st.session_state.messages.append({"role": "assistant", "content": agent_response})
             
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        
 
 if __name__ == "__main__":
     main()
