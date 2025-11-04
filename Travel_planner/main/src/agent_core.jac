@@ -20,8 +20,8 @@ obj UserInput{
     has preferences: list[str];
 }
 
-obj llm{
-    has tools: list;
+obj brain{
+    has tools: list = [];
 
     """
     Generate a result based on the current_goal, system prompt, and memory context
@@ -35,6 +35,14 @@ obj llm{
 
 }
 
+walker traverse_agent{
+    has next_agent_input_data: str;
+
+    can travel with `root entry{
+        visit [-->];
+    }
+
+}
 
 obj memory{
     has items: list = [];
@@ -56,46 +64,52 @@ node BaseAgent{
     has agent_type: AgentType;
     has current_goal: str;
     has system_prompt: str;
-    has llm: llm = llm([self.tools]);
+    has brain: brain = brain();
     has memory: memory = memory();
     has tools: list = [];
     has agent_status: str = "Not started";
     has execution_count: int = 0;
     has max_executions: int = 3;
-    has final_result: dict = {};
 
     def change_agent_status(){
         if self.agent_status == "Not started"{
             self.agent_status = "In progress";
-            print(f"The {self.AgentType} is now running...");
+            print(f"The {self.agent_type} is now running...");
         } elif self.agent_status == "In progress"{
             self.agent_status = "Completed";
-            print(f"{self.AgentType} execution completed.");
+            print(f"{self.agent_type} execution completed.");
             self.agent_status == "Not started";
         }
     }
 
     def print_final_result(final_result: dict){
         for (key, value) in final_result.items(){
-            print(f"{key}: {value}")
+            print(f"{key}: {value}");
         }
     }
 
-    can execute with manage_travel_planner entry{
+    can execute with traverse_agent entry{
         self.change_agent_status();
-        agent_result = llm.generate_result(self.current_goal, self.system_prompt, self.memory.get_context());
-        observation_result  = llm.observe_result(self.current_goal, self.system_prompt, self.memory.get_context());
-        self.memory.append({"execution": self.iteration_count, "result": agent_result, "observation": observation_result});
+        self.memory.append({"execution": self.execution_count, "input": visitor.next_agent_input_data});
+        agent_result = self.brain.generate_result(self.current_goal, self.system_prompt, self.memory.get_context());
+        observation_result  = self.brain.observe_result(self.current_goal, self.system_prompt, self.memory.get_context());
+        print(observation_result);
+
+        self.memory.append({"execution": self.execution_count, "result": agent_result, "observation": observation_result});
         
-        if observation_result == True{
+        if observation_result == False{
             final_result = {"agent": self.agent_type, "result": agent_result};
-        } elif execution_count > self.max_executions{
+        } elif self.execution_count > self.max_executions{
             final_result = {"agent": self.agent_type, "result": "Agent failed to complete the task within the maximum allowed executions."};
         } else{
             self.execution_count += 1;
         }
         self.change_agent_status();
         self.print_final_result(final_result);
+        report {"response": final_result["result"]};
+        disengage;
+
+
     }
 }
 
