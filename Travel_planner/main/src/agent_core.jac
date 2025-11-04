@@ -4,12 +4,12 @@ import from dotenv { load_dotenv }
 glob llm = Model(model_name="gemini/gemini-2.0-flash");
 
 enum AgentType {
-  Trip_Intake_Agent,
-  Flight_Finder_Agent,
-  City_Advisor_Agent,
-  Accommodation_Curation_Agent,
-  Daily_Itinerary_Agent,
-  Quality_Review_Agent,
+    Trip_Intake_Agent,
+    Flight_Finder_Agent,
+    City_Advisor_Agent,
+    Accommodation_Curation_Agent,
+    Daily_Itinerary_Agent,
+    Quality_Review_Agent,
 }
 
 obj UserInput{
@@ -67,17 +67,21 @@ node BaseAgent{
     has brain: brain = brain();
     has memory: memory = memory();
     has tools: list = [];
+    has iteration_count: int = 0;
     has agent_status: str = "Not started";
-    has execution_count: int = 0;
-    has max_executions: int = 3;
+    has retry_count: int = 0;
+    has max_retries: int = 3;
+    has enable_observation: bool = True;
+    has is_final_agent: False;
+    has final_result: dict = {};
 
-    def change_agent_status(){
+    def show_agent_status(){
         if self.agent_status == "Not started"{
             self.agent_status = "In progress";
-            print(f"The {self.agent_type} is now running...");
+            print(f"\nThe {self.agent_type} is now running...");
         } elif self.agent_status == "In progress"{
             self.agent_status = "Completed";
-            print(f"{self.agent_type} execution completed.");
+            print(f"\n{self.agent_type} execution completed.");
             self.agent_status == "Not started";
         }
     }
@@ -89,27 +93,33 @@ node BaseAgent{
     }
 
     can execute with traverse_agent entry{
-        self.change_agent_status();
-        self.memory.append({"execution": self.execution_count, "input": visitor.next_agent_input_data});
+        self.show_agent_status();
+        self.memory.append({"iteration": self.iteration_count, "input_data": visitor.next_agent_input_data});
+
         agent_result = self.brain.generate_result(self.current_goal, self.system_prompt, self.memory.get_context());
-        observation_result  = self.brain.observe_result(self.current_goal, self.system_prompt, self.memory.get_context());
-        print(observation_result);
+        self.memory.append({"iteration": self.iteration_count, "agent_result": agent_result});
 
-        self.memory.append({"execution": self.execution_count, "result": agent_result, "observation": observation_result});
-        
-        if observation_result == False{
-            final_result = {"agent": self.agent_type, "result": agent_result};
-        } elif self.execution_count > self.max_executions{
-            final_result = {"agent": self.agent_type, "result": "Agent failed to complete the task within the maximum allowed executions."};
-        } else{
-            self.execution_count += 1;
+        agent_result_observation = None;
+        if self.enable_observation {
+            agent_result_observation = self.brain.observe_result(self.current_goal, self.system_prompt,self.memory.get_context());
+            self.memory.append({"iteration": self.iteration_count, "agent_result_observation": agent_result_observation});
         }
-        self.change_agent_status();
-        self.print_final_result(final_result);
-        report {"response": final_result["result"]};
-        disengage;
 
+        result = agent_result;
 
+        if self.enable_observation and (agent_result_observation is False) {
+            if self.retry_count < self.max_retries {
+                self.retry_count += 1;
+                visit self;  # re-execute agent
+            } else {
+                result = "The agent could not complete the task because execution exceeded the maximum iteration limit.";
+            }
+        }
+        self.final_result = {"agent": self.agent_type, "result": result};
+        visitor.next_agent_input_data = self.final_result #Next agent's input is the current agents output
+
+        self.show_agent_status();
+        self.print_final_result(result);
     }
 }
 
