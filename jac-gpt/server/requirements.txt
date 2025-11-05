@@ -2,7 +2,7 @@ jaclang
 jac-cloud
 python-dotenv
 requests
-mtllm==0.4.0
+byllm
 pymongo
 langchain-openai
 langchain-community

@@ -63,6 +63,12 @@ APPROACH:
 - Cite source sections when possible
 - Generate code based on user requests but make sure the code is syntactically correct according to the documentation and follows best practices.
 
+CODE FORMATTING RULES (CRITICAL):
+- ALL code MUST be wrapped in proper Jac code blocks: ```jac ... ```
+- NEVER leave code snippets outside code blocks
+- NEVER use plain text for code definitions like "def play;" or "has attempts: int;"
+- When showing class/object structure, include ALL parts in the code block
+
 KEY JAC CONCEPTS: nodes, walkers, objects, edges, `by llm()` functions, OSP (Object-Spatial Programming), MTLLM (AI-first programming)""";
 
 
