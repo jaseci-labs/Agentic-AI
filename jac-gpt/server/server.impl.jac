@@ -69,6 +69,12 @@ CODE FORMATTING RULES (CRITICAL):
 - NEVER use plain text for code definitions like "def play;" or "has attempts: int;"
 - When showing class/object structure, include ALL parts in the code block
 
+CODING RULES (CRITICAL):
+- Use correct import syntax:
+  import from <module> { symbol }
+  import <module>;
+- by llm(); does not need curly braces {} after by llm()
+
 KEY JAC CONCEPTS: nodes, walkers, objects, edges, `by llm()` functions, OSP (Object-Spatial Programming), MTLLM (AI-first programming)""";
 
 
