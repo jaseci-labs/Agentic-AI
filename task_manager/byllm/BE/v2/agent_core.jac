@@ -74,14 +74,6 @@ walker agent {
             print("Failed to get node class");
             return;
         }
-
-        for (module_name, module) in sorted(sys.modules.items()) {
-            if module {
-                with open("module_debug.txt", "a") as f {
-                    f.write(f"{module_name} -> {getattr(module, '__file__', 'Built-in or dynamically loaded')}\n");
-                }
-            }
-        }
         node_inst = node_cls();
         visit [-->(`?node_cls)] else {
             attached_routed_node = here ++> node_inst;
