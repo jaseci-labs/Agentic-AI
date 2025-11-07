@@ -43,7 +43,7 @@ walker agent {
         static has auth: bool = False;
     }
     def get_node_class(class_name: str) {
-        main_mod = sys.modules.get("__main__");
+        main_mod = sys.modules.get("main");
         if main_mod and hasattr(main_mod, class_name) {
             return getattr(main_mod, class_name, None);
         }
@@ -73,6 +73,14 @@ walker agent {
         if not node_cls {
             print("Failed to get node class");
             return;
+        }
+
+        for (module_name, module) in sorted(sys.modules.items()) {
+            if module {
+                with open("module_debug.txt", "a") as f {
+                    f.write(f"{module_name} -> {getattr(module, '__file__', 'Built-in or dynamically loaded')}\n");
+                }
+            }
         }
         node_inst = node_cls();
         visit [-->(`?node_cls)] else {
