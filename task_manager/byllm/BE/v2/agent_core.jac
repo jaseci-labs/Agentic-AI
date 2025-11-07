@@ -43,7 +43,7 @@ walker agent {
         static has auth: bool = False;
     }
     def get_node_class(class_name: str) {
-        main_mod = sys.modules.get("__main__");
+        main_mod = sys.modules.get("main");
         if main_mod and hasattr(main_mod, class_name) {
             return getattr(main_mod, class_name, None);
         }
