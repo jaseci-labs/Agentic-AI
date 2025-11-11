@@ -5,7 +5,7 @@ import from byllm.llm { Model }
 
 glob llm = Model(model_name="gemini/gemini-2.0-flash");
 
-walker chat {
+walker chat{
     has user_message: str;
 
     obj __specs__ {
@@ -13,7 +13,7 @@ walker chat {
     }
 
     can execute with `root entry {
-        if [-->](`?Session) {
+        if [-->(`?Session)] {
             visit [-->];
         } else {
             new_session = here ++> Session();
@@ -50,7 +50,8 @@ node TripIntakeAgent(BaseAgent){
     has agent_type: AgentType = AgentType.UI_Agent;
     has agent_role: AgentRole = AgentRole.Trip_Intake_Agent;
     has goal: str = "Your goal is to communicate with the user, collect information and make user adjustements accordingly";
-    has system_prompt: str = "You are a trip intake conversational agent. You collect information such as destination, starting point, budget, duration, and preferences from the user for planning a trip. Once the user has confirmed information start the next agents and provide them with the required information";
+    has system_prompt: str = "You are a trip intake conversational agent. You collect information such as destination, starting point, budget, duration, and preferences from the user for planning a trip. Confirm each request from the user";
+    has allow_delegation: bool = True;
     has enable_observation: bool = False;
 }
 
@@ -62,15 +63,6 @@ node TripCreator(BaseAgent){
 }
 
 
-
 with entry{
     load_dotenv();
-    new_session = root ++> Session();
-    while True{
-        user_message = input("User: ");
-        user_input = {"source": "user", "input": user_message};
-        ai = AgentVisitor(user_input) spawn new_session;
-        print("Travel Agent:", ai.next_agent_input_data["result"]);
-        print();
-    }
 }
