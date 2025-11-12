@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Jac Cloud deployment provides a Kubernetes-based system for running JAC applications using the `jac-splice-orc` plugin. This setup includes:
+Jac Cloud provides a Kubernetes-based deployment template to easily deploy your service into your cluster. This setup includes:
 
 1. A Docker image with all necessary dependencies
 2. Kubernetes configuration for essential resources (namespaces, service accounts, roles, etc.)
@@ -67,6 +67,7 @@ kubectl apply -f jac-cloud/scripts/jac-cloud.yml
 ```
 
 This sets up:
+
 - RBAC roles and bindings
 - The Jac Cloud deployment in the `littlex` namespace
 
@@ -101,39 +102,12 @@ You should see the Jac Cloud pod running along with all associated resources.
 
 The following environment variables can be configured for your deployment:
 
-| Variable          | Description                              | Default Value |
-|--------------------|------------------------------------------|---------------|
-| `NAMESPACE`        | Target namespace for the deployment     | `default`     |
-| `CONFIGMAP_NAME`   | Name of the ConfigMap to mount          | `module-config` |
-| `FILE_NAME`        | JAC file to execute in the pod          | `example.jac` |
-| `OPENAI_API_KEY`   | OpenAI API key (from secret)            | None          |
-
-### ConfigMap Configuration
-
-The `module-config.yml` file defines configuration for dynamically loaded modules:
-
-```json
-{
-  "numpy": {
-    "lib_mem_size_req": "100Mi",
-    "dependency": [],
-    "lib_cpu_req": "500m",
-    "load_type": "remote"
-  },
-  "transformers": {
-    "lib_mem_size_req": "2000Mi",
-    "dependency": ["torch", "transformers"],
-    "lib_cpu_req": "1.0",
-    "load_type": "remote"
-  },
-  "sentence_transformers": {
-    "lib_mem_size_req": "2000Mi",
-    "dependency": ["sentence-transformers"],
-    "lib_cpu_req": "1.0",
-    "load_type": "remote"
-  }
-}
-```
+| Variable         | Description                         | Default Value   |
+| ---------------- | ----------------------------------- | --------------- |
+| `NAMESPACE`      | Target namespace for the deployment | `default`       |
+| `CONFIGMAP_NAME` | Name of the ConfigMap to mount      | `module-config` |
+| `FILE_NAME`      | JAC file to execute in the pod      | `example.jac`   |
+| `OPENAI_API_KEY` | OpenAI API key (from secret)        | None            |
 
 ## Troubleshooting and Validation
 

@@ -412,7 +412,7 @@ curl -X POST http://localhost:8080/walker/get_weather \
 
 ## Jac Cloud Deployment
 
-Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-orc` plugin for running JAC applications with built-in scaling and module management.
+Jac Cloud provides a Kubernetes-based deployment template to easily deploy your service into your cluster.
 
 ### Jac Cloud Setup
 
@@ -423,8 +423,7 @@ Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-or
         ├── scripts/
         │   ├── Dockerfile
         │   ├── init_jac_cloud.sh
-        │   ├── jac-cloud.yml
-        │   └── module-config.yml
+        │   └── jac-cloud.yml
         └── weather_api.jac
         ```
 
@@ -456,8 +455,6 @@ Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-or
         # 2. Update image reference in jac-cloud.yml
         sed -i 's|image: .*|image: your-dockerhub-username/jac-cloud:latest|' jac-cloud/scripts/jac-cloud.yml
 
-        # 3. Apply module configuration first
-        kubectl apply -f jac-cloud/scripts/module-config.yml
 
         # 4. Deploy Jac Cloud application
         kubectl apply -f jac-cloud/scripts/jac-cloud.yml
@@ -541,8 +538,6 @@ Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-or
                 env:
                 - name: NAMESPACE
                   value: "littlex"
-                - name: CONFIGMAP_NAME
-                  value: "module-config"
                 - name: FILE_NAME
                   value: "weather_api.jac"
                 - name: OPENAI_API_KEY
@@ -560,10 +555,6 @@ Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-or
                   requests:
                     cpu: "500m"
                     memory: "1Gi"
-              volumes:
-              - name: config-volume
-                configMap:
-                  name: module-config
         ---
         apiVersion: v1
         kind: Service
@@ -578,49 +569,6 @@ Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-or
             port: 80
             targetPort: 8000
           type: LoadBalancer
-        ```
-
-    === "module-config.yml"
-        ```yaml
-        # jac-cloud/scripts/module-config.yml
-        apiVersion: v1
-        kind: Namespace
-        metadata:
-          name: littlex
-        ---
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: module-config
-          namespace: littlex
-        data:
-          config.json: |
-            {
-              "numpy": {
-                "lib_mem_size_req": "100Mi",
-                "dependency": [],
-                "lib_cpu_req": "500m",
-                "load_type": "remote"
-              },
-              "transformers": {
-                "lib_mem_size_req": "2000Mi",
-                "dependency": ["torch", "transformers"],
-                "lib_cpu_req": "1.0",
-                "load_type": "remote"
-              },
-              "sentence_transformers": {
-                "lib_mem_size_req": "2000Mi",
-                "dependency": ["sentence-transformers"],
-                "lib_cpu_req": "1.0",
-                "load_type": "remote"
-              },
-              "requests": {
-                "lib_mem_size_req": "50Mi",
-                "dependency": ["requests"],
-                "lib_cpu_req": "100m",
-                "load_type": "remote"
-              }
-            }
         ```
 
     === "Dockerfile"
@@ -638,7 +586,7 @@ Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-or
             && rm -rf /var/lib/apt/lists/*
 
         # Install Jac and required packages
-        RUN pip install jaclang jac-splice-orc
+        RUN pip install jaclang
 
         # Copy application files
         COPY weather_api.jac .
@@ -654,7 +602,6 @@ Jac Cloud provides a Kubernetes-based deployment system using the `jac-splice-or
         ENV JAC_FILE=weather_api.jac
         ENV PORT=8000
         ENV NAMESPACE=littlex
-        ENV CONFIGMAP_NAME=module-config
 
         # Health check
         HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -671,7 +618,6 @@ The Jac Cloud deployment supports the following environment variables:
 | Variable          | Description                              | Default Value |
 |--------------------|------------------------------------------|---------------|
 | `NAMESPACE`        | Target namespace for the deployment     | `default`     |
-| `CONFIGMAP_NAME`   | Name of the ConfigMap to mount          | `module-config` |
 | `FILE_NAME`        | JAC file to execute in the pod          | `example.jac` |
 | `OPENAI_API_KEY`   | OpenAI API key (from secret)            | None          |
 
@@ -686,9 +632,6 @@ docker push your-dockerhub-username/jac-cloud:latest
 
 # 2. Update image reference in jac-cloud.yml
 sed -i 's|image: .*|image: your-dockerhub-username/jac-cloud:latest|' jac-cloud/scripts/jac-cloud.yml
-
-# 3. Apply module configuration first
-kubectl apply -f jac-cloud/scripts/module-config.yml
 
 # 4. Deploy Jac Cloud application
 kubectl apply -f jac-cloud/scripts/jac-cloud.yml
@@ -706,7 +649,6 @@ kubectl logs -f deployment/jac-cloud -n littlex
 # Update configurations
 # 1. Modify the YAML files as needed
 # 2. Apply the changes:
-kubectl apply -f jac-cloud/scripts/module-config.yml
 kubectl apply -f jac-cloud/scripts/jac-cloud.yml
 
 # Scale for handling more traffic
@@ -739,9 +681,6 @@ kubectl get all -n littlex
 ### Advanced Configuration Management
 
 ```bash
-# Update module configurations dynamically
-kubectl patch configmap module-config -n littlex --patch '{"data":{"config.json":"{\"numpy\":{\"lib_mem_size_req\":\"200Mi\",\"dependency\":[],\"lib_cpu_req\":\"1.0\",\"load_type\":\"remote\"}}"}}'
-
 # Restart deployment to pick up config changes
 kubectl rollout restart deployment/jac-cloud -n littlex
 
@@ -945,8 +884,6 @@ kubectl top pods -n littlex
 
 !!! summary "Deployment Guidelines"
     - **Create namespaces beforehand**: Ensure target namespaces exist before deployment
-    - **Use the Jac Cloud system**: Leverage the built-in `jac-splice-orc` plugin for dynamic module management
-    - **Configure modules properly**: Define resource requirements for each module in the ConfigMap
     - **Monitor resource usage**: Track CPU and memory consumption for optimal scaling
     - **Secure API keys**: Use Kubernetes secrets for sensitive configuration
     - **Plan for module dependencies**: Configure dependencies correctly in the module configuration
