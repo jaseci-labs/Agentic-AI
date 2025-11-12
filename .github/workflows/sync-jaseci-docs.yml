@@ -75,7 +75,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create \
+          PR_URL=$(gh pr create \
             --title "🔄 Weekly Docs Sync from jaseci-labs/jaseci" \
             --body "## Automated Documentation Sync
 
@@ -90,14 +90,25 @@ jobs:
           - Sync Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           
           ### Review Checklist
-          - [ ] Review documentation changes
-          - [ ] Verify RAG engine compatibility
-          - [ ] Test jac-gpt with updated docs
+          - [x] Documentation synced from upstream
+          - [x] Automated merge enabled
           
           ---
-          *This PR was automatically created by the [Sync Jaseci Docs workflow](.github/workflows/sync-jaseci-docs.yml)*" \
+          *This PR was automatically created and will be auto-merged by the [Sync Jaseci Docs workflow](.github/workflows/sync-jaseci-docs.yml)*" \
             --head $BRANCH_NAME \
-            --base main
+            --base main)
+          
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+          echo "Created PR: $PR_URL"
+      
+      - name: Auto-merge Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Enable auto-merge
+          gh pr merge $PR_URL --auto --squash --delete-branch
+          echo "✅ PR will be automatically merged once checks pass"
       
       - name: No changes summary
         if: steps.check_changes.outputs.has_changes == 'false'
