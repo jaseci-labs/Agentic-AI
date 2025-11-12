@@ -1,0 +1,105 @@
+name: Sync Jaseci Docs
+
+on:
+  # Run every Monday at 00:00 UTC
+  schedule:
+    - cron: '0 0 * * 1'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Agentic-AI repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      
+      - name: Create sync branch
+        run: |
+          BRANCH_NAME="sync-jaseci-docs-$(date +%Y%m%d-%H%M%S)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b $BRANCH_NAME
+      
+      - name: Clone jaseci repository
+        run: |
+          git clone --depth 1 https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
+      
+      - name: Remove old docs and copy new docs
+        run: |
+          # Remove old docs directory
+          rm -rf jac-gpt/server/docs
+          
+          # Copy new docs directory
+          cp -r /tmp/jaseci/docs/docs jac-gpt/server/docs
+          
+          echo "Docs synced successfully"
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add jac-gpt/server/docs
+          
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected"
+          fi
+      
+      - name: Commit changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git commit -m "chore: sync docs from jaseci-labs/jaseci
+
+          Automated sync of documentation from jaseci-labs/jaseci repository.
+          Updated on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+      
+      - name: Push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git push origin $BRANCH_NAME
+      
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "🔄 Weekly Docs Sync from jaseci-labs/jaseci" \
+            --body "## Automated Documentation Sync
+
+          This PR updates the Jaseci documentation from the [jaseci-labs/jaseci](https://github.com/jaseci-labs/jaseci) repository.
+          
+          ### Changes
+          - Updated \`jac-gpt/server/docs/\` directory with the latest documentation
+          
+          ### Source
+          - Repository: \`jaseci-labs/jaseci\`
+          - Path: \`docs/docs/\`
+          - Sync Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ### Review Checklist
+          - [ ] Review documentation changes
+          - [ ] Verify RAG engine compatibility
+          - [ ] Test jac-gpt with updated docs
+          
+          ---
+          *This PR was automatically created by the [Sync Jaseci Docs workflow](.github/workflows/sync-jaseci-docs.yml)*" \
+            --head $BRANCH_NAME \
+            --base main
+      
+      - name: No changes summary
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          echo "✅ Docs are already up to date. No PR created."
