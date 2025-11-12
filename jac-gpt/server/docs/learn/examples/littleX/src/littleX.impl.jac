@@ -1,8 +1,7 @@
 
 impl search_tweets {
-    query_embedding = sentence_transformer.encode([query]);
-    tweet_embeddings = sentence_transformer.encode([tweet]);
-    similarity = cosine_similarity(query_embedding, tweet_embeddings)[0];
+    transformed = vectorizer.fit_transform([query, tweet]);
+    similarity = cosine_similarity(transformed[0], transformed[1])[0];
     return similarity;
 }
 
@@ -36,6 +35,7 @@ impl Tweet.update {
 
 impl Tweet.delete {
         del self;
+        disengage;
     }
 
 impl Tweet.like_tweet {
@@ -53,7 +53,7 @@ impl Tweet.remove_like {
 
 impl Tweet.comment {
         current_profile = [root-->(`?Profile)];
-        comment_node = current_profile[0] ++> Comment(content=visitor.content);
+        comment_node = current_profile[0] +>:Post():+> Comment(content=visitor.content);
         grant(comment_node[0], level=ConnectPerm);
         self ++> comment_node[0];
         report comment_node[0];
@@ -83,6 +83,7 @@ impl Comment.update {
 
 impl Comment.delete {
         del self;
+        disengage;
     }
 
 impl visit_profile.visit_profile {
@@ -104,9 +105,13 @@ impl load_user_profiles.load_profiles {
         }
     }
 
+impl load_user_profiles.report_profiles {
+    report self.profiles;
+}
+
 impl create_tweet.tweet {
-        embedding = sentence_transformer.encode(self.content).tolist();
-        tweet_node = here +>:Post:+> Tweet(content=self.content, embedding=embedding);
+        embedding = vectorizer.fit_transform([self.content]).toarray().tolist();
+        tweet_node = here +>:Post():+> Tweet(content=self.content, embedding=embedding);
         grant(tweet_node[0], level=ConnectPerm);
         report tweet_node;
     }
@@ -116,5 +121,9 @@ impl load_feed.load {
         for user_node in [->:Follow:->(`?Profile)] {
             visit [user_node-->(`?Tweet)];
         }
-        report self.results;
     }
+
+impl load_feed.report_feed {
+        self.results.sort(key=lambda x:dict:x['similarity'][0], reverse=True);
+        report self.results;
+}

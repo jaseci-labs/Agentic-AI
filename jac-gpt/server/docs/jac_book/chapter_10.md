@@ -1,9 +1,12 @@
 # Chapter 10: Walkers and Abilities
 
-Walkers are the heart of Object-Spatial Programming - they are mobile computational entities that traverse your graph and execute code at each location. Combined with abilities, they enable reactive, event-driven programming where computation happens exactly where and when it's needed.
+In the previous chapters, you learned how to build the static structure of your application using nodes and edges. Now, you will learn how to put that structure into motion. The primary way you interact with and process your graph is by using walkers.
 
 !!! topic "Mobile Computation Philosophy"
-    Unlike traditional functions that operate on data passed to them, walkers travel to where data lives, making computation truly spatial and enabling powerful distributed processing patterns.
+    Walkers introduce a fundamental shift from traditional programming. This is the core philosophy of Object-Spatial Programming.
+    - In traditional programming, you write a function and then bring data to your code to be processed.
+    - In Jac, you create a walker and send your code to your data.
+    This model of "mobile computation" is incredibly effective for working with the complex, interconnected data found in AI and other modern systems.
 
 ## Walker Creation
 
@@ -11,6 +14,8 @@ Walkers are the heart of Object-Spatial Programming - they are mobile computatio
     Walkers are special objects that can move through your graph, carrying state and executing abilities when they encounter different types of nodes and edges.
 
 ### Basic Walker Declaration
+
+A walker is defined with the walker archetype. Like an obj, it can have has attributes to store data and def methods for internal logic. At this stage, a walker is just an object; it doesn't move or interact with the graph until it is "spawned."
 
 !!! example "Simple Walker"
     === "Jac"
@@ -72,6 +77,12 @@ Walkers are the heart of Object-Spatial Programming - they are mobile computatio
     Abilities are methods that execute automatically when certain events occur during graph traversal. They create reactive, context-aware behavior.
 
 ### Entry and Exit Abilities
+
+The most common abilities are entry and exit abilities.
+- An `entry` ability triggers when a walker arrives at a node or edge.
+- An `exit` ability triggers when a walker leaves a node or edge.
+
+You can create specialized entry abilities that only trigger for specific node or edge types.
 
 !!! example "Basic Abilities"
     === "Jac"
