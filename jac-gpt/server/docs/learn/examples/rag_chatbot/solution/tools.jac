@@ -9,7 +9,7 @@ import from langchain_chroma {Chroma}
 glob SERPER_API_KEY: str = os.getenv('SERPER_API_KEY', '');
 
 obj RagEngine {
-    has file_path: str = "docs";
+    has file_path: str = "uploads/user_session_123";
     has chroma_path: str = "chroma";
 
     def postinit {
@@ -23,7 +23,13 @@ obj RagEngine {
 
     def load_documents {
         document_loader = PyPDFDirectoryLoader(self.file_path);
-        return document_loader.load();
+        docs = document_loader.load();
+        for i in range(min(3, len(docs))) {
+            doc = docs[i];
+            source = doc.metadata.get('source', 'unknown');
+            page = doc.metadata.get('page', 'unknown');
+        }
+        return docs;
     }
 
     def load_document(file_path: str) {
@@ -109,10 +115,13 @@ obj RagEngine {
     def search(query: str, chunck_nos: int=5) {
         results = self.get_from_chroma(query=query, chunck_nos=chunck_nos);
         summary = "";
-        for (doc, score) in results {
+        for i in range(len(results)) {
+            doc = results[i][0];
+            score = results[i][1];
             page = doc.metadata.get('page');
             source = doc.metadata.get('source');
-            chunk_txt = doc.page_content[:400];
+            chunk_txt = doc.page_content[0:400] if len(doc.page_content) > 400 else doc.page_content;
+            preview = chunk_txt[0:100] if len(chunk_txt) > 100 else chunk_txt;
             summary += f"{source} page {page}: {chunk_txt}\n";
         }
         return summary;

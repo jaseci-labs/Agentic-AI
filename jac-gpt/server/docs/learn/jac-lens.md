@@ -4,6 +4,30 @@
     <h2 style="color: white; font-weight: 300; font-size: 1.2em; margin-top: 5px; margin-bottom: 0; opacity: 0.8;">Manage your jac cloud data at ease</h2>
 </div>
 
+<style>
+.md-typeset .grid.cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.md-typeset .grid.cards > * {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.md-typeset .grid.cards.single-column {
+    grid-template-columns: 1fr;
+}
+
+@media (max-width: 768px) {
+    .md-typeset .grid.cards {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 
 
 Jac Lens is a powerful Progressive Web App (PWA) that provides an intuitive visual interface for exploring and managing your Jac graph data. It allows you to connect to your Jac server, navigate through node relationships, and modify node properties in real-time.
@@ -16,7 +40,7 @@ Jac Lens is a powerful Progressive Web App (PWA) that provides an intuitive visu
 - **Browser**: Chrome recommended for optimal experience
 - **Installation**: Follow browser prompts to install as a Progressive Web App (PWA)
 
-<div class="grid cards" markdown>
+<div class="grid cards single-column" markdown>
 
 -   __Install as PWA__
 
@@ -221,32 +245,3 @@ If you encounter issues not covered here:
 3. **Ensure you're using a compatible browser** (Chrome recommended)
 4. **Contact the Jac community** for additional support
 
-## Next Steps
-
-<div class="grid cards" markdown>
-
--   __Explore Jac Cloud__
-
-    ---
-
-    *Scale your applications*
-
-    [Jac Cloud Introduction](jac-cloud/introduction.md){ .md-button .md-button--primary }
-
--   __Learn Object-Spatial Programming__
-
-    ---
-
-    *Master Jac's core concepts*
-
-    [Nodes and Edges](data_spatial/nodes_and_edges.md){ .md-button }
-
--   __Try the Playground__
-
-    ---
-
-    *Experiment with Jac*
-
-    [Jac Playground](jac_playground.md){ .md-button .md-button--primary }
-
-</div>
