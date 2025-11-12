@@ -1,167 +1,240 @@
-# <span style="color: orange">Code Walkthrough: AI-Powered Game Level Generation
+# <span style="color: orange">Tutorial: Building an AI-Powered RPG Level Generator
 
-Welcome to the fascinating world of AI-driven game development! In this walkthrough, we'll explore how Large Language Models (LLMs) can be seamlessly integrated into code to generate dynamic game levels. We'll dive deep into the `by llm` syntax, examine how structured datatypes provide crucial context to AI models, and see how it all comes together in a complete level generation system. The full implementation of the game is available in the [github repo](https://github.com/jaseci-labs/jaseci/tree/main/jac/examples/rpg_game).
+In this tutorial, we’ll build a dynamic RPG level generator using LLMs and Jaclang’s `by llm` syntax. The tutorial covers creating a system that uses AI to generate balanced, progressively challenging game levels.
+
+The system creates game levels automatically through structured data types for spatial positioning and game elements, progressive difficulty scaling that adapts to player progress, and dynamic map rendering from AI-generated data.
+
+You’ll write code, test it, and see AI-generated levels come to life.
+
+<!-- This tutorial demonstrates how to build a dynamic RPG game level generator using Large Language Models (LLMs) and Jaclang's `by llm` syntax. The tutorial covers creating a system that uses AI to generate balanced, progressively challenging game levels. -->
+
+<!-- <div align="center">
+    <img src="/learn/examples/mtp_examples/assets/rpg_demo.gif" alt="Animated demo of AI-powered RPG level generation" width="528" height="330" loading="lazy" />
+</div> -->
 
 <div align="center">
-  <video width="480" height="300" autoplay loop muted playsinline>
-    <source src="/learn/examples/mtp_examples/assets/rpg_demo.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+    <img src="/learn/examples/mtp_examples/assets/rpg_demo.gif"
+         alt="Animated demo of AI-powered RPG level generation"
+         width="528"
+         height="330"
+         loading="lazy"
+         style="mix-blend-mode: screen;" />
 </div>
 
-## <span style="color: orange">The Power of `by llm` - Delegating Logic to AI
+<!-- <div align="center" style="margin-top: 20px;">
+  <iframe width="560" height="315" src="https://www.youtube.com/watch?v=FSIZmwfQD1s"
+          title="RPG Level Generator Tutorial"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+  </iframe>
+</div> -->
 
-At the heart of this magic are two crucial `by llm` method definitions that delegate complex game logic entirely to the AI:
+<!-- #### 📺 **Watch the Tutorial**:
 
-```jac
-def create_next_level (last_levels: list[Level], difficulty: int, level_width: int, level_height: int)
--> Level by llm();
+You can find the complete video walkthrough of this RPG level generator tutorial. The video covers each step in detail and shows the AI generation process in action.
 
-def create_next_map(level: Level) -> Map by llm();
+<div align="center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/FSIZmwfQD1s?si=rNdyOUNiipFDr6Fn" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div> -->
+
+<!-- ## <span style="color: orange">Overview
+
+This tutorial covers building an AI-driven RPG level generator using Jaclang's `by llm` syntax. The system creates game levels automatically through structured data types for spatial positioning and game elements, progressive difficulty scaling that adapts to player progress, and dynamic map rendering from AI-generated data. -->
+
+## <span style="color: orange">Prerequisites
+
+Required dependencies:
+
+```bash
+pip install byllm
 ```
 
-Let's break these down to understand what's happening under the hood.
-
-### <span style="color: orange">The Level Creation Method
-
-```jac
-def create_next_level (last_levels: list[Level], difficulty: int, level_width: int, level_height: int)
--> Level by llm();
+OpenAI API key configuration:
+```bash
+export OPENAI_API_KEY="your-api-key-here"
 ```
 
-This method is absolutely brilliant in its simplicity. Notice what we're NOT doing here - there's no complex procedural generation algorithm, no rule-based systems, no hardcoded patterns. Instead, we're giving the LLM:
+- Basic knowledge of [Jaclang syntax](/jac_book/)
+- Familiarity with game development concepts (optional)
 
-- **Historical Context**: `last_levels: list[Level]` - The AI can see what levels were previously generated, allowing it to create variety and progression
-- **Difficulty Guidance**: `difficulty: int` - A simple integer that the AI interprets to scale challenge appropriately
-- **Spatial Constraints**: `level_width: int, level_height: int` - Boundaries that the AI must respect
-- **Expected Output**: `-> Level` - The AI knows exactly what structure it needs to return
+## <span style="color: orange">Implementation Steps
 
-The LLM processes this information and generates a completely new `Level` object with appropriate attributes for the given difficulty and dimensions.
+The implementation consists of the following components:
 
-### <span style="color: orange">The Map Generation Method
+1. **Define Game Data Structures** - Create the building blocks for the game world
+2. **Implement AI-Powered Methods** - Use `by llm` to delegate level creation to AI
+3. **Build the Level Manager** - Coordinate the generation process
+4. **Test and Iterate** - Run the system and validate AI-generated levels
 
-```jac
-def create_next_map(level: Level) -> Map by llm();
-```
+## <span style="color: orange">Step 1: Define Game Data Structures
 
-This is where the real magic happens. The AI takes a high-level `Level` configuration and transforms it into a detailed `Map` with specific positions for walls, enemies, and the player. The LLM understands:
+**What we’re going to do:**
 
-- The level's constraints (width, height, difficulty)
-- How many walls and enemies should be placed
-- Where to position elements for balanced gameplay
-- How to create a playable and challenging layout
+We’ll set up the core data structures for the game world: positions, walls, levels, and maps. These serve as a vocabulary that the AI uses to understand and generate game content.
 
-## <span style="color: orange">How Datatypes Become AI Context
+### <span style="color: orange">Basic Position and Wall Objects
 
-The structured datatypes aren't just code organization - they're the secret sauce that makes the AI understand our domain. Let's examine how each datatype provides crucial context:
+Create a new file called `level_manager.jac` and start by writing the foundational objects:
 
-### <span style="color: orange">Foundation: Position and Spatial Understanding
-
-```jac
+```jac linenums="1"
 obj Position {
-    has x: int, y: int;
+    has x: int, y: int;     # 2D coordinate
+
 }
-```
 
-This simple structure teaches the AI about 2D coordinate systems. When the LLM sees `Position`, it immediately understands spatial relationships, boundaries, and movement constraints.
-
-### <span style="color: orange">Building Blocks: Walls and Obstacles
-
-```jac
 obj Wall {
-    has start_pos: Position, end_pos: Position;
+    has start_pos: Position, end_pos: Position;       # wall starts and ends here
 }
 ```
 
-By defining walls with start and end positions, we're teaching the AI about:
-- Linear structures in game spaces
-- How walls can form corridors, rooms, and barriers
-- Spatial constraints for player movement
+- `Position` (Lines 1-2) defines a point in 2D space. `Wall` (Lines 6-7) uses two positions (`start_pos` and  `end_pos`) to define a barrier.
 
-### <span style="color: orange">Game Configuration: The Level Object
+### <span style="color: orange">Game Configuration Objects
 
-```jac
+Next, define the main game configuration:
+
+```jac linenums="9"
 obj Level {
-    has name: str, difficulty: int;
-    has width: int, height: int, num_wall: int, num_enemies: int;
-    has time_countdown: int, n_retries_allowed: int;
+    has name: str, difficulty: int;     # difficulty scaling
+    has width: int, height: int, num_wall: int; # spatial constraints
+    has num_enemies: int; time_countdown: int;  # enemies + time
+    n_retries_allowed: int;     # retries allowed
 }
-```
 
-This is where the AI learns about game design principles:
-- **Difficulty Scaling**: Higher difficulty should mean more enemies, complex layouts
-- **Spatial Design**: Width and height define the playground
-- **Game Balance**: Number of walls vs. open space, enemy density
-- **Player Experience**: Time pressure and retry mechanics
-
-### <span style="color: orange">The Complete Picture: Map Object
-
-```jac
 obj Map {
-    has level: Level, walls: list[Wall], small_obstacles: list[Position];
-    has enemies: list[Position];
-    has player_pos: Position;
+    has level: Level, walls: list[Wall];    # embeds Level + walls
+    has small_obstacles: list[Position];    # extra blocks
+    has enemies: list[Position];    # enemy positions
+    has player_pos: Position;       # player start
 }
 ```
 
-This structure gives the AI a complete mental model of a game level:
-- **Hierarchical Understanding**: A map belongs to a level
-- **Element Relationships**: How walls, obstacles, enemies, and player interact
-- **Spatial Distribution**: Lists of positions create patterns and layouts
-- **Game Flow**: Player positioning relative to challenges
+- `Level` (Lines 9-13) describes rules. `Map` (Lines 16-20) describes actual placement of objects.
 
-## <span style="color: orange">The Level Manager: Orchestrating AI-Driven Generation
+## <span style="color: orange">Step 2: Implement AI-Powered Generation Methods
 
-Now let's see how the `LevelManager` brings everything together:
+**What we’re going to do:**
+We’ll connect to an LLM (GPT-4o here) and define AI-powered methods for generating new levels and maps.
+
+At the top of `level_manager.jac`, import the model:
 
 ```jac
+import from byllm.lib { Model }
+
+glob llm = Model(model_name="gpt-4o", verbose=True);
+```
+
+- `glob llm` sets up GPT-4o as our generator, with `verbose=True` so we can see detailed outputs.
+
+Now define the `LevelManager` object:
+
+```jac linenums="22"
 obj LevelManager {
     has current_level: int = 0, current_difficulty: int = 1,
         prev_levels: list[Level] = [], prev_level_maps: list[Map] = [];
 
-    # ...by llm methods defined above...
+    def create_next_level (last_levels: list[Level], difficulty: int, level_width: int, level_height: int)
+    -> Level by llm();
 
-    def get_next_level -> tuple(Level, Map) {
-        self.current_level += 1;
-        # Keeping Only the Last 3 Levels
-        if len(self.prev_levels) > 3 {
-            self.prev_levels.pop(0);
-            self.prev_level_maps.pop(0);
-        }
-        # Generating the New Level
-        new_level = self.create_next_level(
-            self.prev_levels,
-            self.current_difficulty,
-            20, 20
-        );
-
-        self.prev_levels.append(new_level);
-        # Generating the Map of the New Level
-        new_level_map = self.create_next_map(new_level);
-        self.prev_level_maps.append(new_level_map);
-        # Increasing the Difficulty for end of every 2 Levels
-        if self.current_level % 2 == 0 {
-            self.current_difficulty += 1;
-        }
-        return (new_level, new_level_map);
-    }
+    def create_next_map(level: Level) -> Map by llm();
 }
 ```
 
-### <span style="color: orange">The Intelligence Behind the Scenes
+- The key parts are **Lines 26 and 29**: the `by llm` keyword makes the AI responsible for generating `Level` and `Map` objects.
 
-The `LevelManager` implements several clever design patterns:
+- For `create_next_level()` (Line 26), we pass these arguments to retuen a complete level as the output:
+    - Historical Context: last_levels ensures variety
+    - Difficulty Guidance: difficulty scales challenge
+    - Spatial Constraints: level_width, level_height
 
-1. **Memory Management**: Only keeps the last 3 levels to provide recent context without overwhelming the AI
-2. **Progressive Difficulty**: Automatically scales challenge every 2 levels
-3. **Two-Phase Generation**: First creates the level concept, then generates the detailed map
-4. **Context Preservation**: Maintains history for the AI to create varied, non-repetitive content
+- For `create_next_map()` (Line 29) we return a detailed map as the output by:
+    - Taking a high-level `Level`
+    - Generating specific positions for walls, enemies, and player
+    - Producing a balanced, playable layout
 
-### <span style="color: orange">Converting AI Output to Game Format
+<!-- ### <span style="color: orange">AI Method Implementation
 
-Finally, the `get_map` function transforms the AI-generated `Map` object into actual game tiles:
+The `by llm` methods work as follows:
 
+**Level Creation Method**
 ```jac
+def create_next_level (last_levels: list[Level], difficulty: int, level_width: int, level_height: int)
+-> Level by llm();
+```
+
+**Method parameters:**
+- **Historical Context**: `last_levels` - Previous levels for ensuring variety
+- **Difficulty Guidance**: `difficulty` - Scale the challenge appropriately
+- **Spatial Constraints**: `level_width, level_height` - Boundary parameters
+- **Expected Output**: Return a complete `Level` object
+
+**Map Generation Method**
+```jac
+def create_next_map(level: Level) -> Map by llm();
+```
+
+**Method function:**
+
+- Takes a high-level `Level` configuration
+- Generates specific positions for walls, enemies, and the player
+- Creates a balanced, playable layout
+- Returns a detailed `Map` object -->
+
+??? note "AI Data Structure Understanding"
+    The AI automatically understands data structures. When you pass a `Level` object, the AI knows about all its properties (difficulty, dimensions, enemy count, etc.) and uses this context to make intelligent decisions.
+
+## <span style="color: orange">Step 3: Manage Level Flow
+
+**What we’re going to do:**
+We’ll write logic to coordinate AI generation: keep track of past levels, scale difficulty, and return a new `Level` + `Map`.
+
+Inside `LevelManager`, add:
+
+```jac linenums="31"
+def get_next_level -> tuple(Level, Map) {
+    self.current_level += 1;
+
+    # Keeping Only the Last 3 Levels
+    if len(self.prev_levels) > 3 {
+        self.prev_levels.pop(0);
+        self.prev_level_maps.pop(0);
+    }
+
+    # Generating the New Level
+    new_level = self.create_next_level(
+        self.prev_levels,
+        self.current_difficulty,
+        20, 20
+    );
+
+    self.prev_levels.append(new_level);
+
+    # Generating the Map of the New Level
+    new_level_map = self.create_next_map(new_level);
+    self.prev_level_maps.append(new_level_map);
+
+    # Increasing the Difficulty for end of every 2 Levels
+    if self.current_level % 2 == 0 {
+        self.current_difficulty += 1;
+    }
+
+    return (new_level, new_level_map);
+}
+```
+
+This method executes the following sequence:
+
+1. **Level Counter**: Increments the level number
+2. **Memory Management**: Keeps only the last 3 levels
+3. **AI Level Generation**: Calls the AI to create a new level
+4. **AI Map Generation**: Requests the AI to generate map
+5. **Difficulty Progression**: Increases difficulty every 2 levels
+6. **Return Results**: Returns both the level config and detailed map
+
+Now let’s add a visualization helper that converts maps into tile grids. Create a function that converts the AI-generated `Map` into game tiles:
+
+```jac linenums="60"
 def get_map(map: Map) -> str {
     map_tiles = [['.' for _ in range(map.level.width)] for _ in range(map.level.height)];
 
@@ -190,26 +263,97 @@ def get_map(map: Map) -> str {
 }
 ```
 
-This function demonstrates how structured AI output gets converted into the visual representation that players actually see and interact with.
+**Now:**
 
-## <span style="color: orange">The Complete Integration
+- walls become `B`
+- enemies become `E`
+- player starts at `P`
+- border walls wrap around the map
 
-The beauty of this system lies in how the LLM understands the entire domain through these datatypes. When `create_next_level` is called, the AI doesn't just generate random numbers - it considers:
 
-- Game progression (from previous levels)
-- Player challenge curve (difficulty scaling)
-- Spatial constraints (dimensions)
-- Balanced gameplay (enemy count, wall placement)
+<!-- ### <span style="color: orange">Map Conversion Process
 
-When `create_next_map` is called, the AI takes that high-level design and creates:
+The conversion function executes these operations:
 
-- Strategic wall placement for interesting navigation
-- Enemy positioning that creates meaningful challenges
-- Player spawn points that feel fair but not trivial
-- Spatial flow that encourages exploration
+1. **Initialize Grid**: Creates a 2D array filled with '.' (empty space)
+2. **Place Walls**: Converts `Wall` objects into 'B' (block) characters
+3. **Add Obstacles**: Places small obstacles as additional 'B' characters
+4. **Position Enemies**: Places 'E' characters at enemy positions
+5. **Place Player**: Sets 'P' character at the player's starting position
+6. **Add Borders**: Surrounds the entire map with walls for boundaries
 
-## <span style="color: orange">Wrapping Up
+**Game Symbols:**
 
-This walkthrough demonstrates the incredible power of combining structured datatypes with AI delegation. The `by llm` syntax isn't just about avoiding implementation - it's about leveraging AI's pattern recognition and creative capabilities to solve complex design problems. The datatypes become the vocabulary through which we communicate game design concepts to the AI, resulting in dynamic, engaging, and well-balanced game content.
+- `.` = Empty space (walkable)
+- `B` = Block/Wall (impassable)
+- `E` = Enemy (dangerous)
+- `P` = Player (starting position) -->
 
-The next time you're building complex systems, consider: what if instead of hardcoding the logic, you defined the structure and let AI fill in the creativity?
+## <span style="color: orange">Step 4: Test the AI Level Generator
+
+We’ll test the system by generating AI levels and printing their difficulty, enemies, and maps.
+
+Create a new file called `test_generator.jac`:
+
+```jac linenums="1"
+import from level_manager { LevelManager }
+
+with entry {
+    level_manager = LevelManager();
+
+    print("Generating 3 AI-powered levels...\n");
+
+    for i in range(3) {
+        level, map_obj = level_manager.get_next_level();
+        visual_map = level_manager.get_map(map_obj);
+
+        print(f"=== LEVEL {i+1} ===");
+        print(f"Difficulty: {level.difficulty}");
+        print(f"Enemies: {level.num_enemies}");
+        print(f"Walls: {level.num_wall}");
+        print("Map:");
+        for row in visual_map {
+            print(row);
+        }
+        print("\n");
+    }
+}
+```
+
+Run this script:
+```bash
+jac run test_generator.jac
+```
+
+Expected output (AI may vary):
+```
+=== LEVEL 1 ===
+Difficulty: 1
+Enemies: 2
+Walls: 3
+Map:
+BBBBBBBBBBBBBBBBBBBBBB
+B..................B
+B.....B............B
+B..................B
+B........E.........B
+B..................B
+B..........P.......B
+B..................B
+B.E................B
+BBBBBBBBBBBBBBBBBBBBBB
+```
+
+## <span style="color: orange">Summary
+
+<!-- This tutorial demonstrates building an AI-powered RPG level generator that implements: -->
+Now you have:
+
+- **AI Integration**: Using `by llm` syntax to delegate complex generation tasks
+- **Structured Data Design**: Creating types that guide AI understanding
+- **Progressive Systems**: Building difficulty curves and variety mechanisms
+- **Practical Application**: Converting AI output into usable game content
+
+The approach combines structured programming with AI creativity. The developer provides the framework and constraints, while the AI handles the creative details.
+
+For more details access the [full documentation of MTP](/learn/jac-byllm/with_llm).
