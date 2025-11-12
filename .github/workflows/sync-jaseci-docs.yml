@@ -101,14 +101,14 @@ jobs:
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
           echo "Created PR: $PR_URL"
       
-      - name: Auto-merge Pull Request
+      - name: Merge Pull Request
         if: steps.check_changes.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Enable auto-merge
-          gh pr merge $PR_URL --auto --squash --delete-branch
-          echo "✅ PR will be automatically merged once checks pass"
+          # Merge the PR immediately
+          gh pr merge $PR_URL --squash --delete-branch
+          echo "✅ PR merged successfully and branch deleted"
       
       - name: No changes summary
         if: steps.check_changes.outputs.has_changes == 'false'
