@@ -1,5 +1,7 @@
 import from byllm.llm { Model }
 import from dotenv { load_dotenv }
+import from agent_brain {brain}
+import from agent_memory {memory}
 
 glob llm = Model(model_name="gpt-4o-mini", verbose=False);
 
@@ -25,97 +27,10 @@ enum AgentRole {
 }
 
 """
-Represents the output of an agent's processing.
-Contains both the reasoning (thought) and the actual result.
-"""
-obj AgentResult {
-    has thought: str;  # Agent's reasoning process
-    has result: str;   # Final output or decision
-}
-
-obj NextAgent {
-    has agent_role: AgentRole;
-    has agent_input_data: str;
-}
-
-"""
-Agent's decision-making and processing unit.
-"""
-obj brain {
-    has tools: list = [];  # Available tools for the agent to use
-
-    """
-    If the user explicitly said "yes" after the AI asked to confirm the required information return True, else False.
-    """
-    def decide_respond(required_information: str, memory_context: dict) -> bool by llm();
-
-    """
-    Generates a result based on the current context and objective.
-    Args:
-        goal: The objective to achieve
-        system_prompt: Instructions for the agent
-        memory_context: Historical context and previous interactions
-        expected_output: The expected output format/contract
-    Returns:
-        agent_result: Contains both thought process and final result
-    """
-    def generate_result(goal: str, system_prompt: str, memory_context: list, expected_output: str) -> AgentResult
-        by llm(method="ReAct", tools=self.tools);
-
-    """
-    Evaluates if the generated result meets the intended goal.
-    Args:
-        goal: The objective to achieve
-        system_prompt: Instructions for the agent
-        memory_context: Historical context and previous interactions
-    Returns:
-        bool: True if result meets goal, False otherwise
-    """
-    def observe_result(goal: str, system_prompt: str, memory_context: list) -> bool
-        by llm();
-
-    """
-    Select the most suitable agent from the connected_agents list to handle the given task.
-    Provide the chosen agent with the data it needs to perform its task.
-    Ensure exactly one agent is always selected.
-    """
-    def decide_next_agent(connected_agents: list, goal: str, system_prompt: str, memory_context: list) -> NextAgent
-        by llm(method="Reason");
-}
-
-"""
 Walker responsible for traversing between agents and managing the flow of data.
 """
 walker AgentVisitor {
     has next_agent_input_data: dict;  # Data to be passed to the next agent
-}
-
-"""
-Stores and manages an agent's memory.
-"""
-obj memory {
-    has items: list = [];  # List of memory entries
-
-    """
-    Adds an item to memory.
-    """
-    def append(item: dict) -> None {
-        self.items.append(item);
-    }
-
-    """
-    Gets recent memory items.
-    """
-    def get_context(k: int = 20) {
-        return self.items[-k:];
-    }
-
-    """
-    Takes a snapshot of memory.
-    """
-    def snapshot() -> dict {
-        return {"items": self.items};
-    }
 }
 
 """
@@ -207,7 +122,6 @@ node BaseAgent {
             }
         } else {
             # Generate result for non-UI agents
-            print();
             agent_result = self.brain.generate_result(
                 self.goal,
                 self.system_prompt,
@@ -224,7 +138,8 @@ node BaseAgent {
             "iteration": self.iteration_count,
             "agent_thought": thought,
         });
-        print("thought:", thought);
+        print();
+        print("thought: ", thought);
         print();
 
         # Record result
@@ -232,7 +147,7 @@ node BaseAgent {
             "iteration": self.iteration_count,
             "agent_result": result,
         });
-        print("result:", result);
+        print("result: ", result);
         print();
 
         # Validate result if enabled
@@ -301,6 +216,7 @@ node BaseAgent {
                 "input_data": next_agent_data.agent_input_data,
             };
 
+            print();
             print(f"Routing to {next_agent.value}...");
             print();
 
