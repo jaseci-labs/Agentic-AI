@@ -44,7 +44,7 @@ def main():
                     response = requests.post(
                         "http://localhost:8000/walker/chat",
                         json=payload,
-                        timeout=200
+                        timeout=250
                     )
                     response.raise_for_status()
                     data = response.json()

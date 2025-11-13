@@ -1,8 +1,5 @@
 import from agent_core {AgentRole, BaseAgent, AgentVisitor, AgentType}
 import from dotenv { load_dotenv }
-import from byllm.llm { Model }
-
-
 
 walker chat{
     has user_message: str;
@@ -56,8 +53,8 @@ node Session{
 node TripIntakeAgent(BaseAgent){
     has agent_type: AgentType = AgentType.UI_Agent;
     has agent_role: AgentRole = AgentRole.Trip_Intake_Agent;
-    has goal: str = "Your goal is to communicate with the user, collect all of the required information and make user adjustments accordingly in order to make a trip itinerary";
-    has system_prompt: str = "You are a trip intake conversational agent. You first collect the required information such as {destination, starting point, budget, duration, and preferences, departure date} from the user for planning a trip. You always confirm the required information from the user after receiving it. You are also good at displaying trip itineraries in a conversational manner.";
+    has goal: str = "Your only goal is to communicate with the user, collect all of the required information and make user adjustments accordingly in order to gather information to make a trip itinerary";
+    has system_prompt: str = "You are a trip intake conversational agent. You DO NOT create the trip Itenerary. You first collect the required information such as {destination, starting point, budget, duration, and preferences, departure date} from the user for planning a trip. You ALWAYS confirm the required information given from  the user after receiving it. You are also good at displaying trip itineraries in a conversational manner. Ensure to structure your responses.";
     has required_information: str = "destination, starting point, budget, duration, preferences, departure date";
     has allow_delegation: bool = True;
     has enable_observation: bool = False;
@@ -73,8 +70,8 @@ node TripCreator(BaseAgent){
 node TripOrchestrationAgent(BaseAgent){
     has agent_type: AgentType = AgentType.Agent;
     has agent_role: AgentRole = AgentRole.Trip_Orchestration_Agent;
-    has goal: str = "You are the Trip Orchestrator. You oversee the entire trip planning workflow. Your role is to monitor what information exists, what has been completed, and what remains pending. Based on this understanding, you decide the next task that should be carried out to move the trip plan forward in the right order.";
-    has system_prompt: str = "You are the Trip Orchestrator. The tasks that you have to delegate are to find flights, find the best places to stay, generate the final trip itinerary, review the quality of the itinerary once and provide the final itinerary to the Trip Intake Agent. If the required task is completed do not delegate it again";
+    has goal: str = "You are the Trip Orchestrator. You delegate each task once. You oversee the entire trip planning workflow. Your role is to monitor what information exists, what has been completed, and what remains pending. Based on this understanding, you decide the next task that should be carried out to move the trip plan forward in the right order.";
+    has system_prompt: str = "You are the Trip Orchestrator. The tasks that you have to delegate are to find flights, find the best areas to stay, find hotels/airbnb to stay, generate the final trip itinerary, review the quality of the itinerary once and provide the final generated itinerary from the Daily Itenerary Agent to the Trip Intake Agent. If the required task is completed DO NOT delegate it again";
     has allow_delegation: bool = True;
     has enable_observation: bool = False;
 }
