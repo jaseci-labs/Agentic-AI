@@ -94,11 +94,58 @@ def search_flights(
     return simplified;
 }
 
-def get_tools() {
-    return {"search_flights_tool": search_flights};
+"""
+Fetch attractions for a given location using the TripAdvisor API.
+
+Args:
+    location (str): Name of the city or place to search.
+
+Returns:
+    list: attractions specific to the location.
+"""
+def search_attractions(location: str) -> list {
+    booking_com_api_key = os.getenv("BOOKING_COM_API_KEY");
+
+    if not api_key {
+        raise ValueError("TRIPADVISOR_API_KEY not set");
+    }
+
+    url = "https://booking-com15.p.rapidapi.com/api/v1/attraction/searchLocation";
+
+    params = {"query": location};
+    headers = {
+        "x-rapidapi-key": booking_com_api_key,
+        "x-rapidapi-host": "booking-com15.p.rapidapi.com"
+    };
+
+    response = requests.get(url, headers=headers, params=params).json();
+
+    products = response["data"]["products"];
+
+    attraction_names = [
+        p["title"]
+        for p in products
+        if p.get("taxonomySlug") != "transfers-services"
+    ];
+
+    return attraction_names;
 }
 
-# with entry {
-#     load_dotenv();
-# }
+
+
+
+def get_tools() {
+    return {
+        "search_flights_tool": search_flights,
+        "search_attractions_tool": search_attractions,
+    };
+}
+
+
+with entry{
+    load_dotenv();
+    get_tripadvisor_activities("Sydney");
+
+}
+
 
