@@ -1,3 +1,27 @@
+import from byllm.llm { Model }
+
+glob llm = Model(model_name="gpt-4o-mini", verbose=False);
+
+"""
+Defines the types of agents in the system:
+- UI_Agent: Handles user interface interactions
+- Agent: Core processing agent
+"""
+enum AgentType {
+    UI_Agent,
+    Agent,
+}
+
+enum AgentRole {
+    # Trip_Creator = "Trip Creator Agent",
+    Trip_Orchestration_Agent = "Trip Orchestration Agent",
+    Trip_Intake_Agent = "Trip Intake Agent",
+    Flight_Finder_Agent = "Flight Finder Agent",
+    Activities_Planner_Agent = "Activities Planner Agent",
+    Accommodation_Curation_Agent = "Accommodation Curation Agent",
+    Daily_Itinerary_Agent = "Daily Itinerary Agent",
+    Quality_Review_Agent = "Quality Review Agent",
+}
 
 """
 Represents the output of an agent's processing.
@@ -13,19 +37,26 @@ obj NextAgent {
     has agent_input_data: str;
 }
 
+
 """
 Agent's decision-making and processing unit.
 """
 obj brain {
     has tools: list = [];  # Available tools for the agent to use
 
+    def append_tools(tools: list) {
+        self.tools = tools;
+    }
+
     """
     If the user explicitly said "yes" after the AI asked to confirm the required information return True, else False.
     """
-    def decide_respond(required_information: str, memory_context: dict) -> bool by llm();
+    def decide_respond(required_information: str, memory_context: dict) -> bool
+        by llm();
 
     """
     Generates a result based on the current context and objective.
+    Use when required.
     Args:
         goal: The objective to achieve
         system_prompt: Instructions for the agent

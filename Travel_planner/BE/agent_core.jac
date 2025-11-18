@@ -1,30 +1,10 @@
 import from byllm.llm { Model }
+import from tools {get_tools}
 import from dotenv { load_dotenv }
-import from agent_brain {brain}
+import from agent_brain {brain, AgentType, AgentRole, AgentResult}
 import from agent_memory {memory}
 
 glob llm = Model(model_name="gpt-4o-mini", verbose=False);
-
-"""
-Defines the types of agents in the system:
-- UI_Agent: Handles user interface interactions
-- Agent: Core processing agent
-"""
-enum AgentType {
-    UI_Agent,
-    Agent,
-}
-
-enum AgentRole {
-    # Trip_Creator = "Trip Creator Agent",
-    Trip_Orchestration_Agent = "Trip Orchestration Agent",
-    Trip_Intake_Agent = "Trip Intake Agent",
-    Flight_Finder_Agent = "Flight Finder Agent",
-    City_Advisor_Agent = "City Advisor Agent",
-    Accommodation_Curation_Agent = "Accommodation Curation Agent",
-    Daily_Itinerary_Agent = "Daily Itinerary Agent",
-    Quality_Review_Agent = "Quality Review Agent",
-}
 
 """
 Walker responsible for traversing between agents and managing the flow of data.
@@ -45,9 +25,9 @@ node BaseAgent {
     has system_prompt: str;        # Instructions/context for the agent
 
     # Component instances
+    has tools: list = [];          # Available tools for the agent
     has brain: brain = brain();    # Cognitive processing unit
     has memory: memory = memory(); # Historical context storage
-    has tools: list = [];          # Available tools for the agent
     has required_information: str = "Not Specified";
     has expected_output: str = "Not Specified";
 
@@ -60,8 +40,10 @@ node BaseAgent {
     # Behavior flags
     has allow_delegation: bool = False;  # Whether agent can delegate to others
     has enable_observation: bool = True; # Whether to validate results
+    has tools_added: bool = False;
 
     # Results
+
     has final_result: str = "";          # Final output of the agent
 
     """
@@ -85,6 +67,16 @@ node BaseAgent {
     Main execution logic for the agent.
     """
     can execute with AgentVisitor entry {
+
+        if self.tools_added == False{
+            tools = get_tools();              # full {name: function} dict
+            print("tools", tools);
+            funcs_to_add = [tools[name] for name in self.tools if name in tools];
+            print(funcs_to_add);
+            self.brain.append_tools(funcs_to_add);
+            self.tools_added = True;
+            print("tools added:", self.brain.tools);
+        }
         # Initialize execution
         self.show_agent_status();
 
@@ -97,6 +89,7 @@ node BaseAgent {
 
         decision = False;
 
+        print(self.brain.tools);
         if (self.agent_type == AgentType.UI_Agent) and (visitor.next_agent_input_data["source"] == "user") {
             decision = self.brain.decide_respond(self.required_information, self.memory.get_context());
             # print(decision);
