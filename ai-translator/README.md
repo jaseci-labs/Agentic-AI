@@ -1,4 +1,4 @@
-# ai-translator
+# AI-translator
 
 A beautiful AI-powered translation app built with Jaseci Stack, featuring real-time translation to multiple languages using GPT-4o.
 
