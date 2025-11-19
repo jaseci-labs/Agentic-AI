@@ -94,58 +94,215 @@ def search_flights(
     return simplified;
 }
 
+
 """
-Fetch attractions for a given location using the TripAdvisor API.
+Fetch attractions for a given location and return the top options within a given budget.
 
 Args:
-    location (str): Name of the city or place to search.
+    location (str): Name of the city to search.
+    start_date (str): Start date in YYYY-MM-DD format.
+    duration (int): Number of days for which attractions are relevant.
+    budget (float): Maximum price allowed.
 
 Returns:
-    list: attractions specific to the location.
+    list: Up to five attractions within the budget.
 """
-def search_attractions(location: str) -> list {
-    booking_com_api_key = os.getenv("BOOKING_COM_API_KEY");
+def search_attractions(location: str, start_date: str, duration: int, budget: float) {
 
-    if not api_key {
-        raise ValueError("TRIPADVISOR_API_KEY not set");
+
+    RAPID_API_KEY = os.getenv("RAPID_API_KEY");
+
+    if not RAPID_API_KEY{
+        raise ValueError("RAPID_API_KEY not found in environment variables");
     }
 
-    url = "https://booking-com15.p.rapidapi.com/api/v1/attraction/searchLocation";
-
-    params = {"query": location};
     headers = {
-        "x-rapidapi-key": booking_com_api_key,
-        "x-rapidapi-host": "booking-com15.p.rapidapi.com"
+        "X-RapidAPI-Key": RAPID_API_KEY,
+        "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
     };
 
-    response = requests.get(url, headers=headers, params=params).json();
+    start_date = datetime.strptime(start_date, "%Y-%m-%d").date();
+    end_date = start_date + timedelta(days=duration);
 
-    products = response["data"]["products"];
+    loc_resp = requests.get(
+        "https://booking-com.p.rapidapi.com/v1/hotels/locations",
+        headers=headers,
+        params={
+            "name": location,
+            "locale": "en-gb",
+        },
+    );
+    loc_resp.raise_for_status();
+    locations = loc_resp.json();
 
-    attraction_names = [
-        p["title"]
-        for p in products
-        if p.get("taxonomySlug") != "transfers-services"
-    ];
+    if not locations{
+        raise ValueError(f"No destination found for location: {location}");
+    }
 
-    return attraction_names;
+    dest_id = locations[0].get("dest_id");
+    dest_type = locations[0].get("dest_type");
+
+    search_resp = requests.get(
+        "https://booking-com.p.rapidapi.com/v1/attractions/search",
+        headers=headers,
+        params={
+            "dest_id": dest_id,
+            "dest_type": dest_type,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+            "order_by": "trending",
+            "currency": "USD",
+            "locale": "en-gb",
+            "page_number": 0,
+        },
+    );
+    search_resp.raise_for_status();
+    data = search_resp.json();
+
+    results = data.get("products", []);
+
+
+    attractions = [];
+
+    for product in results{
+        rep_price = product.get("representativePrice") or {};
+        charge_amount = rep_price.get("chargeAmount");
+        currency = rep_price.get("currency");
+
+        if charge_amount is None{
+            continue;
+        }
+
+        if charge_amount <= budget{
+            attractions.append({
+                "name": product.get("name"),
+                "shortDescription": product.get("shortDescription"),
+                "chargeAmount": charge_amount,
+                "currency": currency,
+            });
+
+            if len(attractions) == 5{
+                break;
+            }
+        }
+    }
+    return attractions;
+    
 }
 
 
+"""
+Fetch hotels for a given location and return the top options closest to a given budget.
+
+Args:
+    location (str): Name of the city to search.
+    start_date (str): Check-in date in YYYY-MM-DD format.
+    duration (int): Number of nights to stay.
+    budget (float): Maximum price allowed.
+
+Returns:
+    list: Up to five hotels within the budget.
+"""
+def search_hotels(location: str, start_date: str, duration: int, budget: float) {
+
+    RAPID_API_KEY = os.getenv("RAPID_API_KEY");
+
+    if not RAPID_API_KEY{
+        raise ValueError("RAPID_API_KEY not found in environment variables");
+    }
+
+    headers = {
+        "X-RapidAPI-Key": RAPID_API_KEY,
+        "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    };
+
+    checkin = datetime.strptime(start_date, "%Y-%m-%d").date();
+    checkout = checkin + timedelta(days=duration);
+
+    loc_resp = requests.get(
+        "https://booking-com.p.rapidapi.com/v1/hotels/locations",
+        headers=headers,
+        params={
+            "name": location,
+            "locale": "en-gb",
+        },
+    );
+    loc_resp.raise_for_status();
+    locations = loc_resp.json();
+
+    if not locations{
+        raise ValueError(f"No destination found for location: {location}");
+    }
+
+    dest_id = locations[0].get("dest_id");
+    dest_type = locations[0].get("dest_type");
+
+    search_resp = requests.get(
+        "https://booking-com.p.rapidapi.com/v1/hotels/search",
+        headers=headers,
+        params={
+            "dest_id": dest_id,
+            "dest_type": dest_type,
+            "checkin_date": checkin.isoformat(),
+            "checkout_date": checkout.isoformat(),
+            "adults_number": 1,
+            "room_number": 1,
+            "order_by": "popularity",
+            "filter_by_currency": "USD",
+            "locale": "en-gb",
+            "units": "metric",
+            "page_number": 0,
+            "include_adjacency": "true",
+        },
+    );
+    search_resp.raise_for_status();
+    data = search_resp.json();
+
+    results = data.get("result", []);
+    hotels = [];
+
+    # collect only the needed fields, skip if price is missing
+    for h in results {
+        price = h.get("min_total_price");
+        if price is None{
+            continue;
+        }
+
+        if price > budget{
+            continue;
+        }
+
+        hotels.append({
+            "name": h.get("hotel_name"),
+            "address": h.get("address"),
+            "min_total_price": price,
+            "currency": h.get("currencycode"),
+            "url": h.get("url"),
+        });
+    }
+
+    if not hotels{
+        return [];
+    }
+
+    # sort by closeness to budget and take top 5 (or fewer if less available)
+    hotels = sorted(
+        hotels,
+        key=lambda x: float :  abs(x.get("min_total_price") - budget)
+    );
+
+    return hotels[:5];
+}
 
 
 def get_tools() {
     return {
         "search_flights_tool": search_flights,
         "search_attractions_tool": search_attractions,
+        "search_hotels_tool": search_hotels
     };
 }
 
 
-with entry{
-    load_dotenv();
-    get_tripadvisor_activities("Sydney");
-
-}
 
 
