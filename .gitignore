@@ -6,3 +6,4 @@ mydatabase
 .env
 *.json
 *.jsonl
+node_modules/
