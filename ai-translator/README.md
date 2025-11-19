@@ -1,4 +1,4 @@
-# todo-app
+# ai-translator
 
 ## Running Jac Code
 
