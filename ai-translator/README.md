@@ -49,6 +49,6 @@ The app will start and you can access it in your browser.
 - 🎨 Beautiful gradient UI with smooth animations
 - 🌐 Support for multiple languages (Spanish, French, German, Welsh, Japanese, Chinese, Italian, Portuguese)
 - ⚡ Fast and responsive interface
-- 💫 Modern React-based frontend with Jaseci backend
+- 💫 Modern React-based frontend and a backend with Jaseci stack
 
 Happy coding with Jac!
