@@ -2,7 +2,7 @@
 
 A beautiful AI-powered translation app built with Jaseci Stack, featuring real-time translation to multiple languages using GPT-4o.
 
-![AI Translator App](https://github.com/user-attachments/assets/c8b5a8e4-8b5a-4f0e-9b5e-8f5e5e5e5e5e)
+![AI Translator App](image.png)
 
 ## Prerequisites
 
