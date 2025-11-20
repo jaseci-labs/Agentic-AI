@@ -12,14 +12,26 @@ enum AgentType {
     Agent,
 }
 
+glob agent_results_store: dict = {};
+
+"""
+Access the result of a specific agent.
+Args:
+    agent_role (AgentRole): Role identifier of the required agent
+Returns:
+    str: Result output from the specified agent
+"""
+def access_agent_results(agent_role: AgentRole) {
+    return agent_results_store[agent_role.value];
+}
+
 enum AgentRole {
-    # Trip_Creator = "Trip Creator Agent",
     Trip_Orchestration_Agent = "Trip Orchestration Agent",
     Trip_Intake_Agent = "Trip Intake Agent",
     Flight_Finder_Agent = "Flight Finder Agent",
     Activities_Planner_Agent = "Activities Planner Agent",
     Accommodation_Curation_Agent = "Accommodation Curation Agent",
-    Daily_Itinerary_Agent = "Daily Itinerary Agent",
+    Itinerary_Builder_Agent = "Itinerary Builder Agent",
     Quality_Review_Agent = "Quality Review Agent",
 }
 
@@ -33,8 +45,8 @@ obj AgentResult {
 }
 
 obj NextAgent {
-    has agent_role: AgentRole;
-    has agent_input_data: str;
+    has agent_role: AgentRole;  # Role of the next agent to execute
+    has agent_input_data: str;  # Input data to pass to the next agent
 }
 
 
@@ -44,12 +56,13 @@ Agent's decision-making and processing unit.
 obj brain {
     has tools: list = [];  # Available tools for the agent to use
 
-    def append_tools(tools: list) {
-        self.tools = tools;
+    """Stores the result of an agent's execution in the global results store."""
+    def store_agent_result(agent: AgentRole, result: str) {
+        agent_results_store[agent.value] = result;
     }
 
     """
-    If the user explicitly said "yes" after the AI asked to confirm the required information return True, else False.
+    If the user explicitly said "yes" after the user has provided ALL the required_information and the AI asked to confirm the required_information return True, else False.
     """
     def decide_respond(required_information: str, memory_context: dict) -> bool
         by llm();
@@ -82,9 +95,10 @@ obj brain {
 
     """
     Select the most suitable agent from the connected_agents list to handle the given task.
-    Provide the chosen agent with the data it needs to perform its task.
+    Provide the chosen agent with the data it needs to perform its task. 
     Ensure exactly one agent is always selected.
+    Access agents results when required.
     """
     def decide_next_agent(connected_agents: list, goal: str, system_prompt: str, memory_context: list) -> NextAgent
-        by llm(method="Reason");
+        by llm(method="ReAct", tools=[access_agent_results]);
 }

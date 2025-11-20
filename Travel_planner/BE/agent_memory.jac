@@ -14,7 +14,7 @@ obj memory {
     """
     Gets recent memory items.
     """
-    def get_context(k: int = 20) {
+    def get_context(k: int = 20) -> list {
         return self.items[-k:];
     }
 

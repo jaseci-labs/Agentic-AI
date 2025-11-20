@@ -38,21 +38,24 @@ def main():
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            
             with st.spinner("Thinking..."):
                 payload = {"user_message": prompt}
                 try:
                     response = requests.post(
                         "http://localhost:8000/walker/chat",
                         json=payload,
-                        timeout=250
+                        timeout=500
                     )
                     response.raise_for_status()
                     data = response.json()
                     agent_response = data.get("reports", [{}])[0].get("response", "Sorry, no response.")
                 except Exception as e:
                     agent_response = f"Error: {e}"
-                st.markdown(agent_response)
-                st.session_state.messages.append({"role": "assistant", "content": agent_response})
+            
+            message_placeholder.markdown(agent_response)
+            st.session_state.messages.append({"role": "assistant", "content": agent_response})
             
         
 

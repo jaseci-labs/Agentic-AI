@@ -1,10 +1,12 @@
 import from byllm.llm { Model }
-import from tools {get_tools}
+import from tools { get_tools }
 import from dotenv { load_dotenv }
-import from agent_brain {brain, AgentType, AgentRole, AgentResult}
-import from agent_memory {memory}
+import from agent_brain { brain, AgentType, AgentRole, AgentResult }
+import from agent_memory { memory }
 
+# Global LLM instance used for agent reasoning and decision-making
 glob llm = Model(model_name="gpt-4o-mini", verbose=False);
+
 
 """
 Walker responsible for traversing between agents and managing the flow of data.
@@ -12,6 +14,7 @@ Walker responsible for traversing between agents and managing the flow of data.
 walker AgentVisitor {
     has next_agent_input_data: dict;  # Data to be passed to the next agent
 }
+
 
 """
 Base agent node that provides core functionality for all agent types.
@@ -39,12 +42,11 @@ node BaseAgent {
 
     # Behavior flags
     has allow_delegation: bool = False;  # Whether agent can delegate to others
-    has enable_observation: bool = True; # Whether to validate results
+    has enable_observation: bool = False;  # Whether to validate results
     has tools_added: bool = False;
 
     # Results
-
-    has final_result: str = "";          # Final output of the agent
+    has final_result: str = "";  # Final output of the agent
 
     """
     Updates and shows the agent's status.
@@ -68,31 +70,31 @@ node BaseAgent {
     """
     can execute with AgentVisitor entry {
 
-        if self.tools_added == False{
-            tools = get_tools();              # full {name: function} dict
-            print("tools", tools);
-            funcs_to_add = [tools[name] for name in self.tools if name in tools];
-            print(funcs_to_add);
-            self.brain.append_tools(funcs_to_add);
-            self.tools_added = True;
-            print("tools added:", self.brain.tools);
-        }
+
+        tools = get_tools();  # retrieve available tools
+        funcs_to_add = [tools[name] for name in self.tools if name in tools];
+        self.brain.tools = funcs_to_add;  # Assign tools to brain
         # Initialize execution
         self.show_agent_status();
+
+        if len(self.tools) > 0 {
+            print(f"tools: {self.tools}");
+            print();
+        }
 
         self.memory.append({
             "iteration": self.iteration_count,
             "input_data": visitor.next_agent_input_data,
         });
 
-        # print("input", visitor.next_agent_input_data);
+        print("input: ", visitor.next_agent_input_data);
+        print();
 
+        # Decision phase
         decision = False;
 
-        print(self.brain.tools);
         if (self.agent_type == AgentType.UI_Agent) and (visitor.next_agent_input_data["source"] == "user") {
             decision = self.brain.decide_respond(self.required_information, self.memory.get_context());
-            # print(decision);
             print();
 
             if decision == True {
@@ -123,14 +125,17 @@ node BaseAgent {
             );
         }
 
+        self.brain.tools = [];
+
         thought = agent_result.thought;
-        result  = agent_result.result;
+        result = agent_result.result;
 
         # Record thought process
         self.memory.append({
             "iteration": self.iteration_count,
             "agent_thought": thought,
         });
+
         print();
         print("thought: ", thought);
         print();
@@ -140,6 +145,7 @@ node BaseAgent {
             "iteration": self.iteration_count,
             "agent_result": result,
         });
+
         print("result: ", result);
         print();
 
@@ -168,7 +174,7 @@ node BaseAgent {
                 self.retry_count += 1;
                 print("[INFO] Re-executing agent...");
                 print();
-                visit self;  # Re-execute agent
+                visit self;  # Re-execute current agent
             } else {
                 result = "[INFO] The agent could not complete the task because execution exceeded the maximum retry limit.";
                 print(result);
@@ -182,19 +188,20 @@ node BaseAgent {
         # Update status
         self.show_agent_status();
 
-        # Efficient agent navigation and delegation
+        # Delegation phase
         should_delegate = False;
 
         if self.agent_type == AgentType.Agent {
             should_delegate = self.allow_delegation;
         } else {
+            # For UI agents, only delegate if user confirmed workflow continuation
             should_delegate = (decision == True) and (self.allow_delegation == True);
         }
 
         if should_delegate {
             connected_agents = [-->(`?BaseAgent)] + [<--(`?BaseAgent)];
-            # print(connected_agents);
 
+            # Decide which agent should handle the next step
             next_agent_data = self.brain.decide_next_agent(
                 connected_agents,
                 self.goal,
@@ -218,14 +225,19 @@ node BaseAgent {
                 visit [<--(`?BaseAgent: agent_role == next_agent)];
             }
         } else {
-            visitor.next_agent_input_data = {
-                "source": self.agent_role.value,
-                "result": self.final_result,
-            };
+            self.brain.store_agent_result(self.agent_role, self.final_result);  # Store result globally
 
             if self.agent_type == AgentType.Agent {
-                visit [<--];
+                visitor.next_agent_input_data = {
+                    "source": self.agent_role.value,
+                    "result": "Agent result stored successfully",
+                };
+                visit [<--];  # Return to parent agent
             } else {
+                visitor.next_agent_input_data = {
+                    "source": self.agent_role.value,
+                    "result": self.final_result,
+                };
                 disengage;
             }
         }
