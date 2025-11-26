@@ -1,7 +1,6 @@
 import from react { useState }
 cl import ".styles.css";
 
-
 def app()  -> any {
     let [inputText, setInputText] = useState("");
     let [targetLang, setTargetLang] = useState("Spanish");
@@ -31,7 +30,6 @@ def app()  -> any {
                     Powered by GPT-4o - Translate to any language instantly
                 </p>
             </div>
-
             <div className="textarea-wrapper">
                 <textarea
                     value={inputText}
@@ -40,7 +38,6 @@ def app()  -> any {
                     className="translator-textarea"
                 />
             </div>
-
             <div className="translator-controls">
                 <div className="language-selector-wrapper">
                     <label className="language-label">
@@ -48,7 +45,9 @@ def app()  -> any {
                     </label>
                     <select
                         value={targetLang}
-                        onChange={lambda  e: any  -> None{ setTargetLang(e.target.value);} }
+                        onChange={lambda  e: any  -> None{ setTargetLang(
+                            e.target.value
+                        );} }
                         className="language-select"
                     >
                         <option value="Spanish">
@@ -77,7 +76,6 @@ def app()  -> any {
                         </option>
                     </select>
                 </div>
-
                 <div className="button-wrapper">
                     <button
                         onClick={handleTranslate}
@@ -88,7 +86,6 @@ def app()  -> any {
                     </button>
                 </div>
             </div>
-
             {(
                 <div className="result-wrapper">
                     <div className="result-content">
@@ -107,7 +104,11 @@ def app()  -> any {
                         </div>
                         <div className="original-text-box">
                             <p className="original-text">
-                                <strong>Original:</strong> {translation.original}
+                                <strong>
+                                    Original:
+                                </strong>
+                                
+                                {translation.original}
                             </p>
                         </div>
                     </div>
@@ -115,9 +116,10 @@ def app()  -> any {
             )
             if translation
             else None}
-
             {(
-                None if translation else (
+                None
+                if translation
+                else (
                     <div className="empty-state">
                         <div className="empty-state-icon">
                             💬
@@ -129,7 +131,6 @@ def app()  -> any {
                 )
             )}
         </div>
-
         <div className="translator-footer">
             <p className="footer-text">
                 Made with ❤️ using Jaseci Stack
