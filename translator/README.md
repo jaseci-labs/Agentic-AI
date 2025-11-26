@@ -4,7 +4,11 @@
 
 make sure node modules are installed:
 ```bash
-npm install
+pip install jac-client
+```
+
+```bash
+jac create_jac_app translator
 ```
 
 To run your Jac code, use the Jac CLI:
