@@ -22,6 +22,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@jac-client/utils": path.resolve(__dirname, "src/client_runtime.js"),
+      "@jac-client/assets": path.resolve(__dirname, "src/assets"),
     },
   },
 });

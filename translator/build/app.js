@@ -10,7 +10,7 @@ function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" !=
 function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 import { __jacJsx, __jacSpawn } from "@jac-client/utils";
 import { useState } from "react";
-import { jacSpawn } from "@jac-client/utils";
+import "./styles.css";
 function app() {
   var _useState = useState(""),
     _useState2 = _slicedToArray(_useState, 2),
@@ -45,7 +45,7 @@ function app() {
           case 1:
             setLoading(true);
             _context.n = 2;
-            return jacSpawn("translate_text", "", {
+            return __jacSpawn("translate_text", "", {
               "phrase": inputText,
               "language": targetLang
             });
@@ -61,109 +61,38 @@ function app() {
     return _handleTranslate.apply(this, arguments);
   }
   return __jacJsx("div", {
-    "style": {
-      "minHeight": "100vh",
-      "background": "linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%)",
-      "padding": "40px 20px",
-      "fontFamily": "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-    }
+    "className": "translator-container"
   }, [__jacJsx("div", {
-    "style": {
-      "maxWidth": "700px",
-      "margin": "0 auto",
-      "background": "rgba(255, 255, 255, 0.95)",
-      "borderRadius": "24px",
-      "padding": "40px",
-      "boxShadow": "0 20px 60px rgba(0, 0, 0, 0.3), 0 0 100px rgba(102, 126, 234, 0.5)"
-    }
+    "className": "translator-card"
   }, [__jacJsx("div", {
-    "style": {
-      "textAlign": "center",
-      "marginBottom": "32px"
-    }
+    "className": "translator-header"
   }, [__jacJsx("div", {
-    "style": {
-      "fontSize": "64px",
-      "marginBottom": "16px",
-      "animation": "bounce 2s infinite"
-    }
+    "className": "translator-icon"
   }, ["🌍"]), __jacJsx("h1", {
-    "style": {
-      "fontSize": "42px",
-      "fontWeight": "800",
-      "background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      "WebkitBackgroundClip": "text",
-      "WebkitTextFillColor": "transparent",
-      "backgroundClip": "text",
-      "marginBottom": "8px"
-    }
+    "className": "translator-title"
   }, ["AI Translator"]), __jacJsx("p", {
-    "style": {
-      "color": "#6b7280",
-      "fontSize": "16px",
-      "fontWeight": "500"
-    }
+    "className": "translator-subtitle"
   }, ["Powered by GPT-4o - Translate to any language instantly"])]), __jacJsx("div", {
-    "style": {
-      "background": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      "padding": "3px",
-      "borderRadius": "16px",
-      "marginBottom": "24px"
-    }
+    "className": "textarea-wrapper"
   }, [__jacJsx("textarea", {
     "value": inputText,
     "onChange": function onChange(e) {
       setInputText(e.target.value);
     },
     "placeholder": "✨ Enter your text here to translate...",
-    "style": {
-      "width": "100%",
-      "padding": "20px",
-      "fontSize": "18px",
-      "border": "none",
-      "borderRadius": "14px",
-      "fontFamily": "inherit",
-      "resize": "vertical",
-      "minHeight": "120px",
-      "background": "#ffffff",
-      "outline": "none"
-    }
+    "className": "translator-textarea"
   }, [])]), __jacJsx("div", {
-    "style": {
-      "display": "flex",
-      "gap": "16px",
-      "marginBottom": "24px",
-      "flexWrap": "wrap"
-    }
+    "className": "translator-controls"
   }, [__jacJsx("div", {
-    "style": {
-      "flex": "1",
-      "minWidth": "200px"
-    }
+    "className": "language-selector-wrapper"
   }, [__jacJsx("label", {
-    "style": {
-      "display": "block",
-      "fontSize": "14px",
-      "fontWeight": "600",
-      "color": "#374151",
-      "marginBottom": "8px"
-    }
+    "className": "language-label"
   }, ["🎯 Target Language"]), __jacJsx("select", {
     "value": targetLang,
     "onChange": function onChange(e) {
       setTargetLang(e.target.value);
     },
-    "style": {
-      "width": "100%",
-      "padding": "14px",
-      "fontSize": "16px",
-      "border": "2px solid #e5e7eb",
-      "borderRadius": "12px",
-      "background": "#ffffff",
-      "fontWeight": "500",
-      "cursor": "pointer",
-      "outline": "none"
-    }
+    "className": "language-select"
   }, [__jacJsx("option", {
     "value": "Spanish"
   }, ["🇪🇸 Spanish"]), __jacJsx("option", {
@@ -181,117 +110,39 @@ function app() {
   }, ["🇮🇹 Italian"]), __jacJsx("option", {
     "value": "Portuguese"
   }, ["🇵🇹 Portuguese"])])]), __jacJsx("div", {
-    "style": {
-      "display": "flex",
-      "alignItems": "flex-end"
-    }
+    "className": "button-wrapper"
   }, [__jacJsx("button", {
     "onClick": handleTranslate,
     "disabled": loading,
-    "style": {
-      "padding": "14px 32px",
-      "background": loading ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      "color": "#ffffff",
-      "border": "none",
-      "borderRadius": "12px",
-      "fontSize": "18px",
-      "fontWeight": "700",
-      "cursor": loading ? "not-allowed" : "pointer",
-      "boxShadow": loading ? "none" : "0 4px 15px rgba(102, 126, 234, 0.4)",
-      "transition": "all 0.3s ease",
-      "minWidth": "160px"
-    }
+    "className": "translate-button"
   }, [loading ? "\u23F3 Translating..." : "\u2728 Translate"])])]), translation ? __jacJsx("div", {
-    "style": {
-      "background": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      "padding": "3px",
-      "borderRadius": "16px",
-      "marginTop": "32px",
-      "animation": "fadeIn 0.5s ease-in"
-    }
+    "className": "result-wrapper"
   }, [__jacJsx("div", {
-    "style": {
-      "background": "#ffffff",
-      "padding": "28px",
-      "borderRadius": "14px"
-    }
+    "className": "result-content"
   }, [__jacJsx("div", {
-    "style": {
-      "display": "flex",
-      "alignItems": "center",
-      "gap": "8px",
-      "marginBottom": "16px"
-    }
+    "className": "result-header"
   }, [__jacJsx("span", {
-    "style": {
-      "fontSize": "24px"
-    }
+    "className": "result-icon"
   }, ["✅"]), __jacJsx("p", {
-    "style": {
-      "color": "#059669",
-      "fontSize": "16px",
-      "fontWeight": "700",
-      "margin": "0"
-    }
+    "className": "result-title"
   }, ["Translation to ", translation.language])]), __jacJsx("div", {
-    "style": {
-      "background": "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-      "padding": "20px",
-      "borderRadius": "12px",
-      "border": "2px solid #fbbf24"
-    }
+    "className": "translation-box"
   }, [__jacJsx("p", {
-    "style": {
-      "fontSize": "20px",
-      "color": "#1f2937",
-      "fontWeight": "600",
-      "margin": "0",
-      "lineHeight": "1.6"
-    }
+    "className": "translation-text"
   }, [translation.translation])]), __jacJsx("div", {
-    "style": {
-      "marginTop": "16px",
-      "padding": "12px",
-      "background": "#f3f4f6",
-      "borderRadius": "8px"
-    }
+    "className": "original-text-box"
   }, [__jacJsx("p", {
-    "style": {
-      "fontSize": "14px",
-      "color": "#6b7280",
-      "margin": "0",
-      "fontStyle": "italic"
-    }
+    "className": "original-text"
   }, [__jacJsx("strong", {}, ["Original:"]), " ", translation.original])])])]) : null, translation ? null : __jacJsx("div", {
-    "style": {
-      "textAlign": "center",
-      "padding": "40px",
-      "color": "#9ca3af",
-      "fontSize": "16px"
-    }
+    "className": "empty-state"
   }, [__jacJsx("div", {
-    "style": {
-      "fontSize": "48px",
-      "marginBottom": "16px"
-    }
+    "className": "empty-state-icon"
   }, ["💬"]), __jacJsx("p", {
-    "style": {
-      "margin": "0",
-      "fontWeight": "500"
-    }
+    "className": "empty-state-text"
   }, ["Your translation will appear here"])])]), __jacJsx("div", {
-    "style": {
-      "textAlign": "center",
-      "marginTop": "32px",
-      "color": "#ffffff",
-      "fontSize": "14px",
-      "fontWeight": "500",
-      "textShadow": "0 2px 4px rgba(0, 0, 0, 0.2)"
-    }
+    "className": "translator-footer"
   }, [__jacJsx("p", {
-    "style": {
-      "margin": "0"
-    }
-  }, ["Made with ❤️ using Jac & GPT-4o"])])]);
+    "className": "footer-text"
+  }, ["Made with ❤️ using Jaseci Stack"])])]);
 }
 export { app };
