@@ -264,72 +264,7 @@ Explore more Jac applications:
 ### Tutorials
 
 1. [Building Your First Jac App](https://docs.jaseci.org/jac-client/guide-example/intro)
-2. [Styling in Jac](https://docs.jaseci.org/jac-client/styling/intro)
-3. [Agentic AI with byLLM](https://docs.jaseci.org/learn/jac-byllm/agentic_ai)
 
-## 🛠️ Development
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-Outputs optimized files to `/build` directory.
-
-### Run Production Preview
-
-```bash
-npm run preview
-```
-
-### Hot Reload
-
-The dev server (`jac serve`) supports hot reload:
-- Frontend changes: Auto-reload UI
-- Backend changes: Restart server automatically
-
-## 🐛 Troubleshooting
-
-### Translation Not Working
-
-1. **Check API Key**: Ensure `OPENAI_API_KEY` is set
-   ```bash
-   echo $OPENAI_API_KEY
-   ```
-
-2. **Verify Model Access**: Ensure you have GPT-4o access
-   ```bash
-   # Test with curl
-   curl https://api.openai.com/v1/models \
-     -H "Authorization: Bearer $OPENAI_API_KEY"
-   ```
-
-3. **Check Server Logs**: Look for errors in terminal
-
-### Styling Issues
-
-1. **Clear Cache**: Delete `/build` directory
-   ```bash
-   rm -rf build/
-   ```
-
-2. **Rebuild**: Restart dev server
-   ```bash
-   jac serve app.jac
-   ```
-
-### Port Already in Use
-
-Change the port in `vite.config.js`:
-
-```js
-export default defineConfig({
-  server: {
-    port: 8001  // Change to any available port
-  }
-});
-```
 
 ## 🤝 Contributing
 
@@ -345,11 +280,6 @@ This is an example project, but contributions are welcome!
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 🙏 Acknowledgments
-
-- **Jaseci Team** for creating the Jac language
-- **OpenAI** for GPT-4o API
-- **React Team** for the amazing UI library
 
 ## 💬 Support
 
