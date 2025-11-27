@@ -213,55 +213,6 @@ def app()  -> any {
                                 "borderRadius": 4
                             }}
                         >
-                            <Stack
-                                direction="row"
-                                alignItems="center"
-                                spacing={2}
-                                justifyContent="center"
-                            >
-                                <School
-                                    sx={{"fontSize": 48, "color": "primary.main"}}
-                                />
-                                <Box>
-                                    <Typography
-                                        variant="h3"
-                                        sx={{
-                                            "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                                            "WebkitBackgroundClip": "text",
-                                            "WebkitTextFillColor": "transparent",
-                                            "backgroundClip": "text"
-                                        }}
-                                    >
-                                        {"Smart Learning Companion"}
-                                    </Typography>
-                                    <Typography
-                                        variant="subtitle1"
-                                        color="text.secondary"
-                                        sx={{"fontWeight": 500}}
-                                    >
-                                        {"Your AI-Powered Study Assistant"}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                        </Paper>
-                    </Fade>
-                    <Fade
-                        in={True}
-                        timeout={800}
-                    >
-                        <Paper
-                            elevation={4}
-                            sx={{
-                                "height": "calc(100vh - 300px)",
-                                "minHeight": "600px",
-                                "display": "flex",
-                                "flexDirection": "column",
-                                "background": "rgba(255, 255, 255, 0.98)",
-                                "backdropFilter": "blur(20px)",
-                                "borderRadius": 4,
-                                "overflow": "hidden"
-                            }}
-                        >
                             <Box
                                 sx={{
                                     "p": 3,
