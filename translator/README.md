@@ -43,17 +43,12 @@ Before starting, ensure you have:
    cd translator
    ```
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**:
+2. **Start the development server**:
    ```bash
    jac serve app.jac
    ```
 
-4. **Open your browser**:
+3. **Open your browser**:
    Navigate to [http://localhost:8000](http://localhost:8000)
 
 That's it! 🎉 Your AI translator is now running.
