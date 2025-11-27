@@ -1,4 +1,5 @@
 import from react { useState, useEffect, useRef }
+cl import ".modern-styles.css";
 cl import from '@mui/material' {
     Container,
     Box,
@@ -17,36 +18,51 @@ cl import from '@mui/material' {
     createTheme,
     CssBaseline,
     Card,
-    CardContent
+    CardContent,
+    Grow,
+    Slide,
+    Tooltip
 }
-cl import from '@mui/icons-material' { Send, School, Psychology, AutoAwesome, Clear }
+cl import from '@mui/icons-material' {
+    Send,
+    School,
+    Psychology,
+    AutoAwesome,
+    Clear,
+    Lightbulb,
+    MenuBook,
+    Science,
+    Calculate,
+    EmojiObjects
+}
 
 cl let theme = createTheme(
     {
         "palette": {
-            "mode": "light",
-            "primary": {"main": "#6366f1", "light": "#818cf8", "dark": "#4f46e5"},
-            "secondary": {"main": "#8b5cf6", "light": "#a78bfa", "dark": "#7c3aed"},
-            "background": {
-                "default": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                "paper": "#ffffff"
-            }
+            "mode": "dark",
+            "primary": {"main": "#a78bfa", "light": "#c4b5fd", "dark": "#8b5cf6"},
+            "secondary": {"main": "#f472b6", "light": "#f9a8d4", "dark": "#ec4899"},
+            "background": {"default": "#0f172a", "paper": "rgba(30, 41, 59, 0.7)"},
+            "text": {"primary": "#f8fafc", "secondary": "#cbd5e1"}
         },
         "typography": {
-            "fontFamily": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
+            "fontFamily": "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
             "h3": {"fontWeight": 800, "letterSpacing": "-0.02em"},
             "h5": {"fontWeight": 700},
             "h6": {"fontWeight": 600}
         },
-        "shape": {"borderRadius": 16},
-        "shadows": [
-            "none",
-            "0px 2px 4px rgba(0,0,0,0.05)",
-            "0px 4px 8px rgba(0,0,0,0.08)",
-            "0px 8px 16px rgba(0,0,0,0.1)",
-            "0px 12px 24px rgba(0,0,0,0.12)",
-            "0px 16px 32px rgba(0,0,0,0.15)"
-        ]
+        "shape": {"borderRadius": 20},
+        "components": {
+            "MuiButton": {
+                "styleOverrides": {
+                    "root": {
+                        "textTransform": "none",
+                        "fontWeight": 600,
+                        "borderRadius": "16px"
+                    }
+                }
+            }
+        }
     }
 );
 
@@ -104,27 +120,96 @@ def app()  -> any {
         theme={theme}
     >
         <CssBaseline />
+        <div className="animated-bg">
+            <div className="particle particle-1"></div>
+            <div className="particle particle-2"></div>
+            <div className="particle particle-3"></div>
+            <div className="particle particle-4"></div>
+        </div>
         <Box
-            sx={{
-                "minHeight": "100vh",
-                "background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                "py": 3
-            }}
+            sx={{"minHeight": "100vh", "py": 3, "position": "relative"}}
         >
             <Container maxWidth="lg">
                 <Stack
                     spacing={3}
                 >
-                    <Fade
+                    <Grow
                         in={True}
-                        timeout={600}
+                        timeout={800}
                     >
                         <Paper
-                            elevation={4}
+                            className="glass-card glow"
+                            elevation={0}
+                            sx={{"p": 4, "borderRadius": 4}}
+                        >
+                            <Stack
+                                direction="row"
+                                alignItems="center"
+                                spacing={2}
+                                justifyContent="center"
+                            >
+                                <Avatar
+                                    sx={{
+                                        "width": 64,
+                                        "height": 64,
+                                        "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)",
+                                        "boxShadow": "0 8px 32px rgba(167, 139, 250, 0.4)"
+                                    }}
+                                >
+                                    <School
+                                        sx={{"fontSize": 36}}
+                                    />
+                                </Avatar>
+                                <Box>
+                                    <Typography
+                                        variant="h3"
+                                        sx={{
+                                            "background": "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)",
+                                            "WebkitBackgroundClip": "text",
+                                            "WebkitTextFillColor": "transparent",
+                                            "backgroundClip": "text",
+                                            "textShadow": "0 0 40px rgba(167, 139, 250, 0.3)"
+                                        }}
+                                    >
+                                        {"Smart Learning Companion"}
+                                    </Typography>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        alignItems="center"
+                                        sx={{"mt": 1}}
+                                    >
+                                        <Psychology
+                                            sx={{
+                                                "fontSize": 20,
+                                                "color": "secondary.main"
+                                            }}
+                                        />
+                                        <Typography
+                                            variant="subtitle1"
+                                            color="text.secondary"
+                                            sx={{"fontWeight": 500}}
+                                        >
+                                            {"Your AI-Powered Study Assistant"}
+                                        </Typography>
+                                    </Stack>
+                                </Box>
+                            </Stack>
+                        </Paper>
+                    </Grow>
+                    <Grow
+                        in={True}
+                        timeout={1000}
+                    >
+                        <Paper
+                            className="glass-card"
+                            elevation={0}
                             sx={{
-                                "p": 4,
-                                "background": "rgba(255, 255, 255, 0.98)",
-                                "backdropFilter": "blur(20px)",
+                                "height": "calc(100vh - 300px)",
+                                "minHeight": "600px",
+                                "display": "flex",
+                                "flexDirection": "column",
+                                "overflow": "hidden",
                                 "borderRadius": 4
                             }}
                         >
@@ -180,9 +265,9 @@ def app()  -> any {
                             <Box
                                 sx={{
                                     "p": 3,
-                                    "borderBottom": 1,
-                                    "borderColor": "divider",
-                                    "background": "linear-gradient(90deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)"
+                                    "borderBottom": "1px solid rgba(167, 139, 250, 0.2)",
+                                    "background": "linear-gradient(90deg, rgba(167, 139, 250, 0.1) 0%, rgba(244, 114, 182, 0.1) 100%)",
+                                    "backdropFilter": "blur(10px)"
                                 }}
                             >
                                 <Stack
@@ -223,7 +308,7 @@ def app()  -> any {
                                     "flex": 1,
                                     "overflowY": "auto",
                                     "p": 3,
-                                    "background": "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)"
+                                    "background": "transparent"
                                 }}
                             >
                                 {(
@@ -250,25 +335,36 @@ def app()  -> any {
                                                     timeout={300}
                                                 >
                                                     <Card
+                                                        className={(
+                                                            "message-slide-right"
+                                                            if isUser
+                                                            else "message-slide-left"
+                                                        )}
                                                         sx={{
                                                             "maxWidth": "75%",
                                                             "background": (
-                                                                "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+                                                                "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)"
                                                                 if isUser
-                                                                else "#ffffff"
+                                                                else "rgba(30, 41, 59, 0.8)"
                                                             ),
-                                                            "color": (
-                                                                "white"
+                                                            "color": "white",
+                                                            "backdropFilter": "blur(20px)",
+                                                            "border": (
+                                                                "1px solid rgba(167, 139, 250, 0.3)"
                                                                 if isUser
-                                                                else "text.primary"
+                                                                else "1px solid rgba(203, 213, 225, 0.2)"
                                                             ),
-                                                            "boxShadow": 3,
-                                                            "borderRadius": 3,
+                                                            "boxShadow": (
+                                                                "0 8px 32px rgba(167, 139, 250, 0.3)"
+                                                                if isUser
+                                                                else "0 8px 32px rgba(0, 0, 0, 0.2)"
+                                                            ),
+                                                            "borderRadius": 4,
                                                             "borderBottomRightRadius": (
-                                                                1 if isUser else 3
+                                                                1 if isUser else 4
                                                             ),
                                                             "borderBottomLeftRadius": (
-                                                                3 if isUser else 1
+                                                                4 if isUser else 1
                                                             )
                                                         }}
                                                     >
@@ -288,8 +384,9 @@ def app()  -> any {
                                                                             "bgcolor": (
                                                                                 "rgba(255,255,255,0.2)"
                                                                                 if isUser
-                                                                                else "primary.main"
-                                                                            )
+                                                                                else "rgba(167, 139, 250, 0.3)"
+                                                                            ),
+                                                                            "border": "2px solid rgba(255,255,255,0.3)"
                                                                         }}
                                                                     >
                                                                         {(
@@ -399,11 +496,13 @@ def app()  -> any {
                                         >
                                             <Box>
                                                 <Psychology
+                                                    className="pulse"
                                                     sx={{
                                                         "fontSize": 120,
                                                         "color": "primary.main",
-                                                        "opacity": 0.2,
-                                                        "mb": 3
+                                                        "opacity": 0.3,
+                                                        "mb": 3,
+                                                        "filter": "drop-shadow(0 0 30px rgba(167, 139, 250, 0.3))"
                                                     }}
                                                 />
                                                 <Typography
@@ -469,9 +568,15 @@ def app()  -> any {
                                     </Box>
                                 )}
                             </Box>
-                            <Divider />
+                            <Divider
+                                sx={{"borderColor": "rgba(167, 139, 250, 0.2)"}}
+                            />
                             <Box
-                                sx={{"p": 3, "background": "#ffffff"}}
+                                sx={{
+                                    "p": 3,
+                                    "background": "rgba(15, 23, 42, 0.5)",
+                                    "backdropFilter": "blur(10px)"
+                                }}
                             >
                                 <Stack
                                     spacing={2}
@@ -522,14 +627,15 @@ def app()  -> any {
                                             "fontWeight": 600,
                                             "borderRadius": 3,
                                             "textTransform": "none",
-                                            "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                            "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)",
+                                            "boxShadow": "0 8px 32px rgba(167, 139, 250, 0.4)",
                                             "&:hover": {
-                                                "background": "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                                                "background": "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)",
                                                 "transform": "translateY(-2px)",
-                                                "boxShadow": 4
+                                                "boxShadow": "0 12px 40px rgba(167, 139, 250, 0.5)"
                                             },
                                             "&:active": {"transform": "translateY(0)"},
-                                            "transition": "all 0.2s"
+                                            "transition": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                                         }}
                                     >
                                         {("Thinking..." if loading else "Ask Question")}
@@ -541,9 +647,13 @@ def app()  -> any {
                     <Typography
                         variant="body2"
                         align="center"
-                        sx={{"color": "rgba(255, 255, 255, 0.9)", "fontWeight": 500}}
+                        sx={{
+                            "color": "rgba(248, 250, 252, 0.7)",
+                            "fontWeight": 500,
+                            "textShadow": "0 0 20px rgba(167, 139, 250, 0.3)"
+                        }}
                     >
-                        {"Powered by GPT-4o • Built with Jaclang & Material-UI"}
+                        {"⚡ Powered by GPT-4o • Built with Jaclang & Material-UI"}
                     </Typography>
                 </Stack>
             </Container>
