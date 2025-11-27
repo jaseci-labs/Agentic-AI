@@ -5,6 +5,7 @@ venv/
 mydatabase
 .env
 *.json
+!**/package.json
 *.jsonl
 node_modules/
 dist/
