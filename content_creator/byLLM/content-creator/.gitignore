@@ -1,0 +1,9 @@
+*.session
+.env
+node_modules/
+src/
+dist/
+*.log
+build/
+
+!package.json
