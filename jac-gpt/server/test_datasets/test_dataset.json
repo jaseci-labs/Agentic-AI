@@ -1,0 +1,79 @@
+{
+  "test_cases": [
+    {
+      "id": "test_001",
+      "query": "How do I create a walker in Jac?",
+      "type": "coding"
+    },
+    {
+      "id": "test_002",
+      "query": "What is the difference between a walker and a node?",
+      "type": "QA"
+    },
+    {
+      "id": "test_003",
+      "query": "Show me an example of ability definition in Jac",
+      "type": "coding"
+    },
+    {
+      "id": "test_004",
+      "query": "What are the new features in the latest Jac release?",
+      "type": "QA"
+    },
+    {
+      "id": "test_005",
+      "query": "How does the by llm syntax work?",
+      "type": "coding"
+    },
+    {
+      "id": "test_006",
+      "query": "What is Jaseci?",
+      "type": "QA"
+    },
+    {
+      "id": "test_007",
+      "query": "Can you help me with Python?",
+      "type": "QA"
+    },
+    {
+      "id": "test_008",
+      "query": "What's the weather like today?",
+      "type": "QA"
+    },
+    {
+      "id": "test_009",
+      "query": "How do I use the visit keyword in Jac?",
+      "type": "coding"
+    },
+    {
+      "id": "test_010",
+      "query": "Explain the import syntax in Jac",
+      "type": "coding"
+    },
+    {
+      "id": "test_011",
+      "query": "What are the benefits of using Jac over Python?",
+      "type": "QA"
+    },
+    {
+      "id": "test_012",
+      "query": "How do I define an enum in Jac?",
+      "type": "coding"
+    },
+    {
+      "id": "test_013",
+      "query": "Tell me a joke",
+      "type": "QA"
+    },
+    {
+      "id": "test_014",
+      "query": "What is the purpose of the has keyword?",
+      "type": "QA"
+    },
+    {
+      "id": "test_015",
+      "query": "How do I install Jaseci?",
+      "type": "QA"
+    }
+  ]
+}
