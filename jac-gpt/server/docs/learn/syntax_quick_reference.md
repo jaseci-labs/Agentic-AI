@@ -16,6 +16,7 @@
 # Simple imports
 import os;
 import sys, json;
+import time;
 
 # Import with alias
 import datetime as dt;
@@ -23,37 +24,25 @@ import datetime as dt;
 # Import from with specific items
 import from math { sqrt, pi, log as logarithm }
 
-# all programs start from the entry node
-with entry {
-    # print function outputs a line to stdout
-    print("Hello world!");
 
-    # call some other function
-    nextFunction();
-}
-
-# Functions have parameters in parentheses.
-# If there are no parameters, empty parentheses are still required.
-def nextFunction() {
+# functions are defined with the def keyword and a control block
+def nextFunction {
 	x = 3;     # Variable assignment.
 	y = 4;
 	(add, mult) = learnMultiple(x, y);       # Function returns two values.
 	print(f"sum: {add} prod:{mult}"); 		 # values can be formatted with f-strings
-	learnFlowControl();                            # < y minutes, learn more!
+	learnFlowControl();
 }
 
-#*
-Functions can have parameters and (multiple!) return values.
-Types can be optionally provided after declaration
-Default parameter values can also be specified
-*#
+# same as Python, Jac supports default paremeters and multiple return values
 def learnMultiple(x: int, y: int = 5) -> (int, int) {
 	return (x + y, x * y); # Return two values.
 }
 
 def learnFlowControl() {
 	x = 9;
-	# If statements require brace brackets, and do not require parentheses.
+
+	# All control blocks require brackets, but not parentheses
 	if x < 5 {
 		print("Doesn't run");
 	} elif x < 10 {
@@ -115,7 +104,7 @@ def learnCollections() {
     print(point[0]);  # 10
     print(point[1]);  # 20
 
-	# can unpack into variables
+	# tuples can be unpacked with parentheses
 	(x, y) = point;
     print(f"x={x}, y={y}");
 
@@ -132,7 +121,25 @@ def learnCollections() {
 }
 
 def learnClasses() {
-	# class initialization with methods
+
+    # the class keyword follows default Python behavior
+    # all members are static
+    class Cat {
+        has name: str = "Unnamed";
+        def meow {
+			print(f"{self.name} says meow!");
+        }
+    }
+
+    your_cat = Cat();
+    my_cat = Cat();
+    my_cat.name = "Shrodinger";
+
+    my_cat.meow();   # Shrodinger says meow!
+    your_cat.meow(); # Shrodinger says meow!
+
+	# the obj keyword follows the behavior of Python dataclasses
+    # all members are per-instance
 	obj Dog {
 		has name: str = "Unnamed";
 		has age: int = 0;
@@ -141,14 +148,16 @@ def learnClasses() {
 			print(f"{self.name} says Woof!");
 		}
 	}
+    your_dog = Dog();
     my_dog = Dog();
     my_dog.name = "Buddy";
     my_dog.age = 3;
 
-	my_dog.bark();
+	your_dog.bark(); # Unnamed says Woof!
+	my_dog.bark();   # Buddy says Woof!
 
 	# inheritance
-	class Puppy(Dog){
+	obj Puppy(Dog){
 		has parent: str = 0;
 		def bark { # override
 			print(f"Child of {self.parent} says Woof!");
@@ -156,23 +165,21 @@ def learnClasses() {
 	}
 }
 
+# Jac also supports graph relationships within the type system
+# This is called Object Spatial Programming
+
+# nodes are objs with special properties
+node Person {
+    has name: str;
+    has age: int;
+}
+
 def learnOSP(){
-	# Jac also supports graph relationships within the type system
-	# This is called Object Spatial Programming
-
-	# nodes in the graph
-	node Person {
-		has name: str;
-		has age: int;
-	}
-	# every program starts at a node called entry
-
-	# connect nodes together
 	a = Person(name="Alice",age=25);
 	b = Person(name="Bob",age=30);
 	c = Person(name="Charlie",age=28);
 
-	# connection operators link nodes together
+	# connection operators create edges between nodes
 	a ++>  b; # forward a->b
 	b <++  c; # backward c->b
 	a <++> c; # bidirectional a <-> c
@@ -185,15 +192,22 @@ def learnOSP(){
 	a +>:Friend(since=2020):+> b;
 	a +>:Friend(since=1995):+> c;
 
-    # edges can be queried with filters
-    old_friends = [a ->:Friend:since < 2018:->];
+
+    # edges and nodes can be queried with filters
+
+    # returns all outgoing nodes with friend edges since 2018
+    old_friend_nodes = [node a ->:Friend:since > 2018:->];
+
+    # returns all outgoing friend edges since 2018
+    old_friend_edges = [edge a->:Friend:since > 2017:->];
 
 	# Walkers are objects that "walk" across nodes doing operations
 	# Walkers contain automatic methods that trigger on events
 	# These methods are called abilities
 	walker Visitor {
-		# abilities have can <name> with <type> <operation> syntax
+        has name: str;
 
+        # abilities follow can <name> with <type> <operation> syntax
 		# runs when walker spawns at root
 		can start with `root entry {
 			print(f"Starting!");
@@ -213,6 +227,8 @@ def learnOSP(){
 				disengage; # stop traversal immediately
 			}
 
+            # report returns a value without stopping exeuction
+            # all reported values are accessed as a list after traversal
 			report here.name;
 			visit [-->];
 		}
@@ -231,13 +247,13 @@ def learnOSP(){
 		}
 	}
 
-    f = FriendlyPerson(name="Joe");
+    f = FriendlyPerson(name="Joe",age=10);
 
     # root is a special named node in all graphs
     root ++> f ++> a;
 
     # walker can then be spawned at a node in the graph
-    root spawn Visitor();
+    root spawn Visitor("Jim");
 }
 
 def learnSpecial(){
@@ -249,29 +265,43 @@ def learnSpecial(){
     result = (y := 20) + 10;
     print(f"y = {y}, result = {result}");
 
-    # flow/wait allows for concurrent operations
+    # flow/wait is jac's equivalent to async/await for concurrency
+    # in jac, these are executed in a thread pool
     def compute(x: int, y: int) -> int {
         print(f"Computing {x} + {y}");
-        sleep(1);
         return x + y;
     }
 
     def slow_task(n: int) -> int {
         print(f"Task {n} started");
-        sleep(1);
+        time.sleep(1);
         print(f"Task {n} done");
         return n * 2;
     }
 
-    task1 = flow compute(5, 10);
-    task2 = flow compute(3, 7);
-    task3 = flow slow_task(42);
+    task1 = flow slow_task(42);
+    task2 = flow compute(5, 10);
+    task3 = flow compute(3, 7);
 
     result1 = wait task1;
     result2 = wait task2;
     result3 = wait task3;
     print(f"Results: {result1}, {result2}, {result3}");
+    #* Output:
+    Task 42 started
+    Computing 5 + 10
+    Computing 3 + 7
+    Task 42 done
+    Results: 84, 15, 10
+    *#
+}
 
-	# other things to look at: pipes, generators
+# all programs start from the entry node
+with entry {
+    # print function outputs a line to stdout
+    print("Hello world!");
+
+    # call some other function
+    nextFunction();
 }
 ```
