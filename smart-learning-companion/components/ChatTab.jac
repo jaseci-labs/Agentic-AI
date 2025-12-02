@@ -320,7 +320,7 @@ cl def ChatTab(props: any) -> any {
                 "textShadow": "0 0 20px rgba(167, 139, 250, 0.3)"
             }}
         >
-            {"⚡ Powered by GPT-4o • Built with Jaclang & Material-UI"}
+            {"⚡ Built with Jaseci Stack"}
         </Typography>
     </>;
 }
