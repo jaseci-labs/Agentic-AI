@@ -9,11 +9,11 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 ## 📸 Screenshots
 
 ### AI Tutor Chat Interface
-![AI Tutor Chat](./media/chat-interface.png)
+![AI Tutor Chat](assets/image.png)
 *Interactive chat interface where you can ask questions and get intelligent responses from your AI tutor*
 
 ### Practice Quiz
-![Practice Quiz](./media/quiz-interface.png)
+![Practice Quiz](assets/image2.png)
 *Generate and take AI-powered quizzes on any topic with multiple difficulty levels*
 
 ## ✨ Features
