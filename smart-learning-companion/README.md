@@ -194,15 +194,15 @@ This project is part of the Jaseci Agentic-AI repository and follows its licensi
 
 ## 🙏 Acknowledgments
 
-- Built with [Jaclang](https://www.jac-lang.org/)
-- Powered by [ByLLM](https://github.com/jaseci-labs/jaclang)
+- Built with [Jaclang](https://docs.jaseci.org/)
+- Powered by [ByLLM](https://github.com/jaseci-labs/jaseci)
 - AI by [OpenAI GPT-4o](https://openai.com/)
 
 ## 📧 Support
 
 For questions or issues:
 - Open an issue in the repository
-- Check the [Jaclang documentation](https://www.jac-lang.org/docs)
+- Check the [Jaclang documentation](https://docs.jaseci.org)
 - Join the Jaseci community
 
 ---
