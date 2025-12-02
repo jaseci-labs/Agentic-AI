@@ -8,7 +8,7 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 
 ## ✨ Features
 
-### �� AI Chat Tutor
+### 💬 AI Chat Tutor
 - **Interactive Conversations**: Ask questions about any topic and get clear, detailed explanations
 - **Context-Aware**: Maintains conversation history for coherent, continuous learning
 - **Friendly & Patient**: Designed to encourage learning with supportive responses
@@ -41,6 +41,7 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 - **Python 3.12+** installed
 - **Node.js 16+** and npm
 - **Jaclang** framework
+- **Jac-Client** library
 - **ByLLM** library
 - **OpenAI API key** (for GPT-4o)
 
@@ -145,7 +146,7 @@ Designs personalized learning roadmaps with structured steps, tips, and resource
 - **Curious Minds**: Explore any topic that interests you
 - **Self-Learners**: Follow structured paths for systematic learning
 
-## �� Key Highlights
+## 🌟 Key Highlights
 
 - ✅ **Beautiful Modern UI** with gradient backgrounds and smooth animations
 - ✅ **Fully Responsive** design works on desktop, tablet, and mobile
@@ -196,6 +197,6 @@ For questions or issues:
 
 ---
 
-**Made with ❤️ using Jaclang and ByLLM**
+**Made with ❤️ using Jaclang, Jac-client and ByLLM**
 
 *Start your learning journey today!* 🚀
