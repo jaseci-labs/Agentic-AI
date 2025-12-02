@@ -2,6 +2,13 @@ import from byllm.lib { Model }
 
 glob llm = Model(model_name="gpt-4o");
 
+# Quiz Question Type
+obj QuizQuestion {
+    has question: str;
+    has options: list[str];
+    has correct: int;
+}
+
 # Backend Walkers
 walker learn_topic {
     has topic: str;
@@ -26,8 +33,8 @@ walker generate_quiz {
     has difficulty: str = "medium";
     has num_questions: int = 5;
 
-    def create_quiz(topic: str, difficulty: str, num_questions: int) -> list by llm(
-        method="Chain of Thought",
+    def create_quiz(topic: str, difficulty: str, num_questions: int) -> list[QuizQuestion] by llm(
+        method="Reason",
         temperature=0.8,
         incl_info=(
             "You are a quiz generator. Create multiple choice questions about the topic. ""Return ONLY a JSON array of questions with question, options (4 choices), and correct (index 0-3). ""Create exactly 5 questions at the given difficulty level."
