@@ -1,6 +1,6 @@
-cl import from react { useState, useEffect, useRef }
-cl import ".modern-styles.css";
-cl import from '@mui/material' {
+import from react { useState, useEffect, useRef }
+import ".modern-styles.css";
+import from '@mui/material' {
     Box,
     Stack,
     ThemeProvider,
@@ -9,18 +9,18 @@ cl import from '@mui/material' {
     Typography,
     createTheme
 }
-cl import from '@mui/icons-material' {
+import from '@mui/icons-material' {
     Chat,
     Quiz,
     MenuBook,
     TrendingUp
 }
 
-cl import from .components.Sidebar { Sidebar }
-cl import from .components.ChatTab { ChatTab }
-cl import from .components.QuizTab { QuizTab }
+import from .components.Sidebar { Sidebar }
+import from .components.ChatTab { ChatTab }
+import from .components.QuizTab { QuizTab }
 
-cl let theme = createTheme(
+let theme = createTheme(
     {
         "palette": {
             "mode": "dark",
@@ -70,7 +70,7 @@ cl let theme = createTheme(
     }
 );
 
-cl def app() -> any {
+def app() -> any {
     let [message, setMessage] = useState("");
     let [conversationHistory, setConversationHistory] = useState([]);
     let [loading, setLoading] = useState(false);
