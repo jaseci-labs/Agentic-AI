@@ -10,3 +10,6 @@ mydatabase
 node_modules/
 dist/
 build/
+*.bak
+*.dat
+*.dir
