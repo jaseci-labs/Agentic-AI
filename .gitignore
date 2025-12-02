@@ -13,3 +13,4 @@ build/
 *.bak
 *.dat
 *.dir
+.DS_Store

@@ -38,7 +38,7 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 
 ### Prerequisites
 
-- **Python 3.10+** installed
+- **Python 3.12+** installed
 - **Node.js 16+** and npm
 - **Jaclang** framework
 - **ByLLM** library
@@ -47,38 +47,38 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 ### Installation
 
 1. **Clone the repository**
-   \`\`\`bash
+   ```bash
    cd Agentic-AI/smart-learning-companion
-   \`\`\`
+   ```
 
 2. **Set up your API key**
    
    Create a .env file or set environment variable:
-   \`\`\`bash
+   ```bash
    export OPENAI_API_KEY='your-api-key-here'
-   \`\`\`
+   ```
 
 3. **Install dependencies**
    
    Install all required npm packages:
-   \`\`\`bash
+   ```bash
    npm install react@19.2.0 react-dom@19.2.0
    npm install @mui/material@7.3.5 @mui/icons-material@7.3.5 @mui/lab@7.0.1-beta.19
    npm install @emotion/react@11.14.0 @emotion/styled@11.14.1
    npm install react-router-dom@6.30.1
    npm install framer-motion@12.23.24
    npm install -D vite@6.4.1 @babel/cli@7.28.3 @babel/core@7.28.5 @babel/preset-env@7.28.5 @babel/preset-react@7.28.5
-   \`\`\`
+   ```
    
    Or simply run (if package.json already exists):
-   \`\`\`bash
+   ```bash
    npm install
-   \`\`\`
+   ```
 
 4. **Start the application**
-   \`\`\`bash
+   ```bash
    jac serve app.jac
-   \`\`\`
+   ```
 
 5. **Open your browser**
    
@@ -157,7 +157,7 @@ Designs personalized learning roadmaps with structured steps, tips, and resource
 
 ## 🛠️ Project Structure
 
-\`\`\`
+```
 smart-learning-companion/
 ├── app.jac              # Main application (backend walkers + frontend)
 ├── app.cl.jac          # Client-side imports (CSS)
@@ -167,7 +167,7 @@ smart-learning-companion/
 ├── README.md          # This file
 ├── build/             # Compiled production files
 └── src/               # Source files
-\`\`\`
+```
 
 ## 🤝 Contributing
 
