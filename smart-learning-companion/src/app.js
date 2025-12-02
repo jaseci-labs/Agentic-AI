@@ -2,7 +2,7 @@ import {__jacJsx, __jacSpawn} from "@jac-client/utils";
 import { useState, useEffect, useRef } from "react";
 import "./modern-styles.css";
 import { Container, Box, Paper, TextField, Button, Typography, IconButton, Chip, Stack, Avatar, Divider, Fade, CircularProgress, ThemeProvider, createTheme, CssBaseline, Card, CardContent, Grow, Slide, Tooltip, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Badge } from "@mui/material";
-import { Send, School, Psychology, AutoAwesome, Clear, Lightbulb, MenuBook, Science, Calculate, EmojiObjects, Quiz, Explore, Chat, TrendingUp } from "@mui/icons-material";
+import { Send, School, Psychology, AutoAwesome, Clear, Lightbulb, MenuBook, Science, Calculate, EmojiObjects, Quiz, Explore, Chat, TrendingUp, CheckCircle, Cancel, Refresh } from "@mui/icons-material";
 const theme = createTheme({"palette": {"mode": "dark", "primary": {"main": "#a78bfa", "light": "#c4b5fd", "dark": "#8b5cf6"}, "secondary": {"main": "#f472b6", "light": "#f9a8d4", "dark": "#ec4899"}, "background": {"default": "#0f172a", "paper": "rgba(30, 41, 59, 0.7)"}, "text": {"primary": "#f8fafc", "secondary": "#cbd5e1"}}, "typography": {"fontFamily": "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif", "h3": {"fontWeight": 800, "letterSpacing": "-0.02em"}, "h5": {"fontWeight": 700}, "h6": {"fontWeight": 600}}, "shape": {"borderRadius": 0}, "components": {"MuiButton": {"styleOverrides": {"root": {"textTransform": "none", "fontWeight": 600, "borderRadius": "0px"}}}, "MuiPaper": {"styleOverrides": {"root": {"borderRadius": 0}}}, "MuiAvatar": {"styleOverrides": {"root": {"borderRadius": 0}}}, "MuiOutlinedInput": {"styleOverrides": {"root": {"borderRadius": 0}}}, "MuiChip": {"styleOverrides": {"root": {"borderRadius": 0}}}}});
 function app() {
   let [message, setMessage] = useState("");
@@ -10,7 +10,18 @@ function app() {
   let [loading, setLoading] = useState(false);
   let messagesEndRef = useRef(null);
   let [activeTab, setActiveTab] = useState("chat");
+  let [quizTopic, setQuizTopic] = useState("");
+  let [quizDifficulty, setQuizDifficulty] = useState("medium");
+  let [quizData, setQuizData] = useState(null);
+  let [quizLoading, setQuizLoading] = useState(false);
+  let [currentQuestion, setCurrentQuestion] = useState(0);
+  let [selectedAnswers, setSelectedAnswers] = useState([]);
+  let [showResults, setShowResults] = useState(false);
   let navigationItems = [{"id": "chat", "label": "AI Tutor Chat", "icon": __jacJsx(Chat, {}, [])}, {"id": "quiz", "label": "Practice Quiz", "icon": __jacJsx(Quiz, {}, [])}, {"id": "learn", "label": "Learn Topic", "icon": __jacJsx(MenuBook, {}, [])}, {"id": "path", "label": "Learning Path", "icon": __jacJsx(TrendingUp, {}, [])}];
+  useEffect(() => {
+    console.log("Active Tab:", activeTab);
+    console.log("Quiz Data:", JSON.stringify(quizData));
+  }, [activeTab, quizData]);
   async function handleChat() {
     if (!message.trim()) {
       return;
@@ -38,6 +49,38 @@ function app() {
     setConversationHistory([]);
     setMessage("");
   }
+  async function handleGenerateQuiz() {
+    if (!quizTopic.trim()) {
+      return;
+    }
+    setQuizLoading(true);
+    setQuizData(null);
+    setCurrentQuestion(0);
+    setSelectedAnswers([]);
+    setShowResults(false);
+    let result = await __jacSpawn("generate_quiz", "", {"topic": quizTopic.trim(), "difficulty": quizDifficulty, "num_questions": 5});
+    if (result && result.reports && result.reports.length > 0) {
+      let quizResponse = result.reports[0];
+      console.log("Quiz Response:", JSON.stringify(quizResponse));
+      setQuizData(quizResponse);
+    }
+    setQuizLoading(false);
+  }
+  function handleAnswerSelect(questionIndex, answerIndex) {
+    let newAnswers = selectedAnswers.slice();
+    newAnswers[questionIndex] = answerIndex;
+    setSelectedAnswers(newAnswers);
+  }
+  function handleSubmitQuiz() {
+    setShowResults(true);
+  }
+  function handleResetQuiz() {
+    setQuizData(null);
+    setQuizTopic("");
+    setCurrentQuestion(0);
+    setSelectedAnswers([]);
+    setShowResults(false);
+  }
   let exampleQuestions = ["Explain photosynthesis in simple terms", "Help me understand quantum mechanics", "What's the difference between mitosis and meiosis?", "How do I solve quadratic equations?"];
   return __jacJsx(ThemeProvider, {"theme": theme}, [__jacJsx(CssBaseline, {}, []), __jacJsx("div", {"className": "animated-bg"}, [__jacJsx("div", {"className": "particle particle-1"}, []), __jacJsx("div", {"className": "particle particle-2"}, []), __jacJsx("div", {"className": "particle particle-3"}, []), __jacJsx("div", {"className": "particle particle-4"}, [])]), __jacJsx(Box, {"sx": {"minHeight": "100vh", "display": "flex", "position": "relative"}}, [__jacJsx(Drawer, {"variant": "permanent", "sx": {"width": 280, "flexShrink": 0, "& .MuiDrawer-paper": {"width": 280, "boxSizing": "border-box", "background": "rgba(15, 23, 42, 0.95)", "backdropFilter": "blur(20px)", "borderRight": "1px solid rgba(167, 139, 250, 0.2)", "pt": 3}}}, [__jacJsx(Box, {"sx": {"px": 3, "mb": 4}}, [__jacJsx(Stack, {"direction": "row", "spacing": 2, "alignItems": "center"}, [__jacJsx(Avatar, {"sx": {"width": 48, "height": 48, "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)"}}, [__jacJsx(School, {"sx": {"fontSize": 28}}, [])]), __jacJsx(Box, {}, [__jacJsx(Typography, {"variant": "h6", "sx": {"fontWeight": 700, "lineHeight": 1.2}}, ["Smart Learning"]), __jacJsx(Typography, {"variant": "caption", "color": "text.secondary"}, ["Companion"])])])]), __jacJsx(Divider, {"sx": {"borderColor": "rgba(167, 139, 250, 0.2)", "mb": 2}}, []), __jacJsx(List, {"sx": {"px": 2}}, [navigationItems.map(item => {
     let isActive = activeTab === item["id"];
@@ -53,6 +96,36 @@ function app() {
     }, "sx": {"py": 2.5, "px": 1, "fontSize": "0.95rem", "cursor": "pointer", "transition": "all 0.2s", "&:hover": {"transform": "translateX(8px)", "boxShadow": 2}}, "color": "primary", "variant": "outlined"}, []);
   })])])])])])]), __jacJsx(Divider, {"sx": {"borderColor": "rgba(167, 139, 250, 0.2)"}}, []), __jacJsx(Box, {"sx": {"p": 3, "background": "rgba(15, 23, 42, 0.5)", "backdropFilter": "blur(10px)"}}, [__jacJsx(Stack, {"spacing": 2}, [__jacJsx(TextField, {"fullWidth": true, "multiline": true, "rows": 3, "value": message, "onChange": e => {
     setMessage(e.target.value);
-  }, "onKeyPress": handleKeyPress, "placeholder": "Type your question here... (Shift+Enter for new line, Enter to send)", "disabled": loading, "variant": "outlined", "sx": {"& .MuiOutlinedInput-root": {"borderRadius": 0, "fontSize": "1rem", "&:hover fieldset": {"borderColor": "primary.main", "borderWidth": 2}, "&.Mui-focused fieldset": {"borderWidth": 2}}}}, []), __jacJsx(Button, {"fullWidth": true, "variant": "contained", "size": "large", "onClick": handleChat, "disabled": loading || !message.trim(), "startIcon": loading ? __jacJsx(CircularProgress, {"size": 20, "sx": {"color": "white"}}, []) : __jacJsx(Send, {}, []), "sx": {"py": 1.5, "fontSize": "1.1rem", "fontWeight": 600, "borderRadius": 0, "textTransform": "none", "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)", "boxShadow": "0 8px 32px rgba(167, 139, 250, 0.4)", "&:hover": {"background": "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)", "transform": "translateY(-2px)", "boxShadow": "0 12px 40px rgba(167, 139, 250, 0.5)"}, "&:active": {"transform": "translateY(0)"}, "transition": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"}}, [loading ? "Thinking..." : "Ask Question"])])])])]), __jacJsx(Typography, {"variant": "body2", "align": "center", "sx": {"color": "rgba(248, 250, 252, 0.7)", "fontWeight": 500, "textShadow": "0 0 20px rgba(167, 139, 250, 0.3)"}}, ["\u26a1 Powered by GPT-4o \u2022 Built with Jaclang & Material-UI"])]) : activeTab === "quiz" ? __jacJsx(Paper, {"sx": {"p": 4, "textAlign": "center"}}, [__jacJsx(Quiz, {"sx": {"fontSize": 80, "color": "primary.main", "mb": 2}}, []), __jacJsx(Typography, {"variant": "h4", "gutterBottom": true}, ["Practice Quiz"]), __jacJsx(Typography, {"color": "text.secondary"}, ["Quiz feature coming soon! Test your knowledge with AI-generated quizzes."])]) : activeTab === "learn" ? __jacJsx(Paper, {"sx": {"p": 4, "textAlign": "center"}}, [__jacJsx(MenuBook, {"sx": {"fontSize": 80, "color": "primary.main", "mb": 2}}, []), __jacJsx(Typography, {"variant": "h4", "gutterBottom": true}, ["Learn Topic"]), __jacJsx(Typography, {"color": "text.secondary"}, ["Deep dive into any topic with structured lessons and explanations."])]) : __jacJsx(Paper, {"sx": {"p": 4, "textAlign": "center"}}, [__jacJsx(TrendingUp, {"sx": {"fontSize": 80, "color": "primary.main", "mb": 2}}, []), __jacJsx(Typography, {"variant": "h4", "gutterBottom": true}, ["Learning Path"]), __jacJsx(Typography, {"color": "text.secondary"}, ["Get a personalized learning path tailored to your goals."])])])])])]);
+  }, "onKeyPress": handleKeyPress, "placeholder": "Type your question here... (Shift+Enter for new line, Enter to send)", "disabled": loading, "variant": "outlined", "sx": {"& .MuiOutlinedInput-root": {"borderRadius": 0, "fontSize": "1rem", "&:hover fieldset": {"borderColor": "primary.main", "borderWidth": 2}, "&.Mui-focused fieldset": {"borderWidth": 2}}}}, []), __jacJsx(Button, {"fullWidth": true, "variant": "contained", "size": "large", "onClick": handleChat, "disabled": loading || !message.trim(), "startIcon": loading ? __jacJsx(CircularProgress, {"size": 20, "sx": {"color": "white"}}, []) : __jacJsx(Send, {}, []), "sx": {"py": 1.5, "fontSize": "1.1rem", "fontWeight": 600, "borderRadius": 0, "textTransform": "none", "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)", "boxShadow": "0 8px 32px rgba(167, 139, 250, 0.4)", "&:hover": {"background": "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)", "transform": "translateY(-2px)", "boxShadow": "0 12px 40px rgba(167, 139, 250, 0.5)"}, "&:active": {"transform": "translateY(0)"}, "transition": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"}}, [loading ? "Thinking..." : "Ask Question"])])])])]), __jacJsx(Typography, {"variant": "body2", "align": "center", "sx": {"color": "rgba(248, 250, 252, 0.7)", "fontWeight": 500, "textShadow": "0 0 20px rgba(167, 139, 250, 0.3)"}}, ["\u26a1 Powered by GPT-4o \u2022 Built with Jaclang & Material-UI"])]) : activeTab === "quiz" ? __jacJsx(null, {}, [__jacJsx(Paper, {"sx": {"p": 4}}, [__jacJsx(Stack, {"direction": "row", "spacing": 2, "alignItems": "center", "sx": {"mb": 3}}, [__jacJsx(Quiz, {"sx": {"fontSize": 40, "color": "primary.main"}}, []), __jacJsx(Box, {}, [__jacJsx(Typography, {"variant": "h4", "sx": {"fontWeight": 700}}, ["Practice Quiz"]), __jacJsx(Typography, {"color": "text.secondary"}, ["Test your knowledge with AI-generated quizzes"])])])]), quizData === null ? __jacJsx(Paper, {"sx": {"p": 4}}, [__jacJsx(Stack, {"spacing": 3}, [__jacJsx(Typography, {"variant": "h6", "sx": {"fontWeight": 600}}, ["Generate a Quiz"]), __jacJsx(TextField, {"fullWidth": true, "label": "Quiz Topic", "placeholder": "e.g., Photosynthesis, World War II, Calculus...", "value": quizTopic, "onChange": e => {
+    setQuizTopic(e.target.value);
+  }, "disabled": quizLoading}, []), __jacJsx(Box, {}, [__jacJsx(Typography, {"variant": "subtitle2", "sx": {"mb": 1, "fontWeight": 600}}, ["Difficulty Level"]), __jacJsx(Stack, {"direction": "row", "spacing": 1}, [__jacJsx(Chip, {"label": "Easy", "onClick": () => {
+    setQuizDifficulty("easy");
+  }, "color": quizDifficulty === "easy" ? "primary" : "default", "variant": quizDifficulty === "easy" ? "filled" : "outlined"}, []), __jacJsx(Chip, {"label": "Medium", "onClick": () => {
+    setQuizDifficulty("medium");
+  }, "color": quizDifficulty === "medium" ? "primary" : "default", "variant": quizDifficulty === "medium" ? "filled" : "outlined"}, []), __jacJsx(Chip, {"label": "Hard", "onClick": () => {
+    setQuizDifficulty("hard");
+  }, "color": quizDifficulty === "hard" ? "primary" : "default", "variant": quizDifficulty === "hard" ? "filled" : "outlined"}, [])])]), __jacJsx(Button, {"fullWidth": true, "variant": "contained", "size": "large", "onClick": handleGenerateQuiz, "disabled": quizLoading || !quizTopic.trim(), "startIcon": quizLoading ? __jacJsx(CircularProgress, {"size": 20, "sx": {"color": "white"}}, []) : __jacJsx(AutoAwesome, {}, []), "sx": {"py": 1.5, "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)", "&:hover": {"background": "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)"}}}, [quizLoading ? "Generating Quiz..." : "Generate Quiz"]), __jacJsx(Box, {"sx": {"mt": 4}}, [__jacJsx(Typography, {"variant": "subtitle2", "sx": {"mb": 2, "fontWeight": 600}}, ["Popular Topics:"]), __jacJsx(Stack, {"direction": "row", "spacing": 1, "flexWrap": "wrap", "useFlexGap": true}, [["Python Programming", "World History", "Biology", "Mathematics", "Chemistry"].map(topic => {
+    return __jacJsx(Chip, {"key": topic, "label": topic, "onClick": () => {
+      setQuizTopic(topic);
+    }, "variant": "outlined", "sx": {"cursor": "pointer"}}, []);
+  })])])])]) : showResults === false ? __jacJsx(Paper, {"sx": {"p": 4}}, [__jacJsx(Stack, {"spacing": 3}, [__jacJsx(Box, {}, [__jacJsx(Stack, {"direction": "row", "justifyContent": "space-between", "alignItems": "center", "sx": {"mb": 2}}, [__jacJsx(Typography, {"variant": "h6", "sx": {"fontWeight": 600}}, [quizData["topic"]]), __jacJsx(Chip, {"label": "Quiz", "color": "primary", "size": "small"}, [])]), __jacJsx(Typography, {"variant": "body2", "color": "text.secondary"}, ["Question " + currentQuestion + 1 + " of " + quizData["questions"].length])]), __jacJsx(Divider, {}, []), quizData["questions"].map((q, idx) => {
+    return idx === currentQuestion ? __jacJsx(Box, {"key": idx}, [__jacJsx(Typography, {"variant": "h6", "sx": {"mb": 3}}, [q["question"]]), __jacJsx(Stack, {"spacing": 2}, [q["options"].map((option, optIdx) => {
+      let isSelected = selectedAnswers[idx] === optIdx;
+      return __jacJsx(Paper, {"key": optIdx, "onClick": () => {
+        handleAnswerSelect(idx, optIdx);
+      }, "sx": {"p": 2, "cursor": "pointer", "border": isSelected ? "2px solid" : "1px solid", "borderColor": isSelected ? "primary.main" : "divider", "background": isSelected ? "rgba(167, 139, 250, 0.1)" : "transparent", "&:hover": {"borderColor": "primary.main", "background": "rgba(167, 139, 250, 0.05)"}}}, [__jacJsx(Stack, {"direction": "row", "spacing": 2, "alignItems": "center"}, [__jacJsx(Avatar, {"sx": {"width": 32, "height": 32, "background": isSelected ? "primary.main" : "transparent", "border": "2px solid", "borderColor": isSelected ? "primary.main" : "text.secondary"}}, [__jacJsx(Typography, {"variant": "body2", "sx": {"fontWeight": 600}}, [["A", "B", "C", "D"][optIdx]])]), __jacJsx(Typography, {}, [option])])]);
+    })])]) : null;
+  }), __jacJsx(Stack, {"direction": "row", "spacing": 2, "justifyContent": "space-between"}, [__jacJsx(Button, {"variant": "outlined", "onClick": () => {
+    setCurrentQuestion(currentQuestion - 1);
+  }, "disabled": currentQuestion === 0}, ["Previous"]), currentQuestion < quizData["questions"].length - 1 ? __jacJsx(Button, {"variant": "contained", "onClick": () => {
+    setCurrentQuestion(currentQuestion + 1);
+  }, "disabled": selectedAnswers[currentQuestion] === undefined}, ["Next"]) : __jacJsx(Button, {"variant": "contained", "onClick": handleSubmitQuiz, "disabled": selectedAnswers.length !== quizData["questions"].length, "sx": {"background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)", "&:hover": {"background": "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)"}}}, ["Submit Quiz"])])])]) : __jacJsx(Paper, {"sx": {"p": 4}}, [__jacJsx(Stack, {"spacing": 3}, [__jacJsx(Box, {"sx": {"textAlign": "center", "py": 3}}, [__jacJsx(Typography, {"variant": "h4", "sx": {"fontWeight": 700, "mb": 2}}, ["Quiz Results"]), __jacJsx(Typography, {"variant": "h2", "color": "primary.main", "sx": {"fontWeight": 800}}, [selectedAnswers.filter((ans, idx) => {
+    return ans === quizData["questions"][idx]["correct"];
+  }).length + "/" + quizData["questions"].length]), __jacJsx(Typography, {"color": "text.secondary", "sx": {"mt": 1}}, [Math.round(selectedAnswers.filter((ans, idx) => {
+    return ans === quizData["questions"][idx]["correct"];
+  }).length / quizData["questions"].length * 100) + "% Correct"])]), __jacJsx(Divider, {}, []), __jacJsx(Stack, {"spacing": 2}, [quizData["questions"].map((q, idx) => {
+    let isCorrect = selectedAnswers[idx] === q["correct"];
+    return __jacJsx(Card, {"key": idx, "sx": {"border": "1px solid", "borderColor": "divider"}}, [__jacJsx(CardContent, {}, [__jacJsx(Stack, {"spacing": 2}, [__jacJsx(Stack, {"direction": "row", "spacing": 1, "alignItems": "flex-start"}, [isCorrect ? __jacJsx(CheckCircle, {"sx": {"color": "success.main", "fontSize": 24}}, []) : __jacJsx(Cancel, {"sx": {"color": "error.main", "fontSize": 24}}, []), __jacJsx(Box, {"sx": {"flex": 1}}, [__jacJsx(Typography, {"variant": "subtitle1", "sx": {"fontWeight": 600}}, ["Question " + idx + 1]), __jacJsx(Typography, {"variant": "body2"}, [q["question"]])])]), __jacJsx(Box, {"sx": {"pl": 4}}, [__jacJsx(Typography, {"variant": "body2", "color": "text.secondary"}, ["Your answer: " + q["options"][selectedAnswers[idx]]]), !isCorrect ? __jacJsx(Typography, {"variant": "body2", "color": "success.main", "sx": {"mt": 0.5}}, ["Correct answer: " + q["options"][q["correct"]]]) : null])])])]);
+  })]), __jacJsx(Button, {"fullWidth": true, "variant": "contained", "size": "large", "startIcon": __jacJsx(Refresh, {}, []), "onClick": handleResetQuiz, "sx": {"background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)", "&:hover": {"background": "linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 100%)"}}}, ["Create New Quiz"])])])]) : activeTab === "learn" ? __jacJsx(Paper, {"sx": {"p": 4, "textAlign": "center"}}, [__jacJsx(MenuBook, {"sx": {"fontSize": 80, "color": "primary.main", "mb": 2}}, []), __jacJsx(Typography, {"variant": "h4", "gutterBottom": true}, ["Learn Topic"]), __jacJsx(Typography, {"color": "text.secondary"}, ["Deep dive into any topic with structured lessons and explanations."])]) : __jacJsx(Paper, {"sx": {"p": 4, "textAlign": "center"}}, [__jacJsx(TrendingUp, {"sx": {"fontSize": 80, "color": "primary.main", "mb": 2}}, []), __jacJsx(Typography, {"variant": "h4", "gutterBottom": true}, ["Learning Path"]), __jacJsx(Typography, {"color": "text.secondary"}, ["Get a personalized learning path tailored to your goals."])])])])])]);
 }
 export { app };
