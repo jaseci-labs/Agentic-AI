@@ -52,7 +52,7 @@ async function __jacSpawn(left, right, fields) {
   if (right !== "") {
     url = `/walker/${left}/${right}`;
   }
-  let response = await fetch(url, {"method": "POST", "accept": "application/json", "headers": {"Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : ""}, "body": JSON.stringify({"fields": fields})});
+  let response = await fetch(url, {"method": "POST", "accept": "application/json", "headers": {"Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : ""}, "body": JSON.stringify(fields)});
   if (!response.ok) {
     let error_text = await response.json();
     throw new Error(`Walker ${walker} failed: ${error_text}`);

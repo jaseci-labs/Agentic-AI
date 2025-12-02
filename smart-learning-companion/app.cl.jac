@@ -51,15 +51,35 @@ cl let theme = createTheme(
             "h5": {"fontWeight": 700},
             "h6": {"fontWeight": 600}
         },
-        "shape": {"borderRadius": 20},
+        "shape": {"borderRadius": 0},
         "components": {
             "MuiButton": {
                 "styleOverrides": {
                     "root": {
                         "textTransform": "none",
                         "fontWeight": 600,
-                        "borderRadius": "16px"
+                        "borderRadius": "0px"
                     }
+                }
+            },
+            "MuiPaper": {
+                "styleOverrides": {
+                    "root": {"borderRadius": 0}
+                }
+            },
+            "MuiAvatar": {
+                "styleOverrides": {
+                    "root": {"borderRadius": 0}
+                }
+            },
+            "MuiOutlinedInput": {
+                "styleOverrides": {
+                    "root": {"borderRadius": 0}
+                }
+            },
+            "MuiChip": {
+                "styleOverrides": {
+                    "root": {"borderRadius": 0}
                 }
             }
         }
@@ -140,7 +160,7 @@ def app()  -> any {
                         <Paper
                             className="glass-card glow"
                             elevation={0}
-                            sx={{"p": 4, "borderRadius": 4}}
+                            sx={{"p": 4, "borderRadius": 0}}
                         >
                             <Stack
                                 direction="row"
@@ -210,7 +230,7 @@ def app()  -> any {
                                 "display": "flex",
                                 "flexDirection": "column",
                                 "overflow": "hidden",
-                                "borderRadius": 4
+                                "borderRadius": 0
                             }}
                         >
                             <Box
@@ -245,7 +265,7 @@ def app()  -> any {
                                             color="error"
                                             startIcon={<Clear />}
                                             onClick={clearChat}
-                                            sx={{"borderRadius": 2}}
+                                            sx={{"borderRadius": 0}}
                                         >
                                             {"Clear Chat"}
                                         </Button>
@@ -310,16 +330,16 @@ def app()  -> any {
                                                                 if isUser
                                                                 else "0 8px 32px rgba(0, 0, 0, 0.2)"
                                                             ),
-                                                            "borderRadius": 4,
+                                                            "borderRadius": "20px",
                                                             "borderBottomRightRadius": (
-                                                                1 if isUser else 4
+                                                                "4px" if isUser else "20px"
                                                             ),
                                                             "borderBottomLeftRadius": (
-                                                                4 if isUser else 1
+                                                                "20px" if isUser else "4px"
                                                             )
                                                         }}
                                                     >
-                                                        <CardContent>
+                                                        <CardContent sx={{"p": 2, "&:last-child": {"pb": 2}}}>
                                                             <Stack
                                                                 spacing={1}
                                                             >
@@ -398,10 +418,10 @@ def app()  -> any {
                                                             "maxWidth": "75%",
                                                             "background": "#ffffff",
                                                             "boxShadow": 3,
-                                                            "borderRadius": 3
+                                                            "borderRadius": "20px"
                                                         }}
                                                     >
-                                                        <CardContent>
+                                                        <CardContent sx={{"p": 2, "&:last-child": {"pb": 2}}}>
                                                             <Stack
                                                                 direction="row"
                                                                 spacing={2}
@@ -546,7 +566,7 @@ def app()  -> any {
                                         variant="outlined"
                                         sx={{
                                             "& .MuiOutlinedInput-root": {
-                                                "borderRadius": 3,
+                                                "borderRadius": 0,
                                                 "fontSize": "1rem",
                                                 "&:hover fieldset": {
                                                     "borderColor": "primary.main",
@@ -576,7 +596,7 @@ def app()  -> any {
                                             "py": 1.5,
                                             "fontSize": "1.1rem",
                                             "fontWeight": 600,
-                                            "borderRadius": 3,
+                                            "borderRadius": 0,
                                             "textTransform": "none",
                                             "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)",
                                             "boxShadow": "0 8px 32px rgba(167, 139, 250, 0.4)",
