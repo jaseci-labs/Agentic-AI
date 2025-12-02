@@ -6,6 +6,16 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 ![ByLLM](https://img.shields.io/badge/AI-ByLLM-purple)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+## 📸 Screenshots
+
+### AI Tutor Chat Interface
+![AI Tutor Chat](./media/chat-interface.png)
+*Interactive chat interface where you can ask questions and get intelligent responses from your AI tutor*
+
+### Practice Quiz
+![Practice Quiz](./media/quiz-interface.png)
+*Generate and take AI-powered quizzes on any topic with multiple difficulty levels*
+
 ## ✨ Features
 
 ### 💬 AI Chat Tutor
