@@ -64,7 +64,7 @@ impl SupervisorAgent.supervise {
     }
 
     report {
-        "message": "SupervisorAgent started supervising the content generation process.",
+        "message": "SupervisorAgent started content generation process.",
     };
     
     self.call_next_agent(
