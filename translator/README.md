@@ -40,15 +40,21 @@ Before starting, ensure you have:
 
 1. **Clone or navigate to the translator directory**:
    ```bash
-   cd translator
+   git clone https://github.com/jaseci-labs/Agentic-AI.git
+   cd Agentic-AI/translator
    ```
 
-2. **Start the development server**:
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**:
    ```bash
    jac serve app.jac
    ```
 
-3. **Open your browser**:
+4. **Open your browser**:
    Navigate to [http://localhost:8000](http://localhost:8000)
 
 That's it! 🎉 Your AI translator is now running.

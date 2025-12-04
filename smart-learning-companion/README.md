@@ -72,7 +72,13 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 
 3. **Install dependencies**
    
-   Install all required npm packages:
+   simply run:
+   ```bash
+   npm install
+   ```
+   or else,
+   
+   If you want to Install all required npm packages manually:
    ```bash
    npm install react@19.2.0 react-dom@19.2.0
    npm install @mui/material@7.3.5 @mui/icons-material@7.3.5 @mui/lab@7.0.1-beta.19
@@ -82,10 +88,6 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
    npm install -D vite@6.4.1 @babel/cli@7.28.3 @babel/core@7.28.5 @babel/preset-env@7.28.5 @babel/preset-react@7.28.5
    ```
    
-   Or simply run (if package.json already exists):
-   ```bash
-   npm install
-   ```
 
 4. **Start the application**
    ```bash
