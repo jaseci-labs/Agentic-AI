@@ -132,8 +132,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (response.ok) {
           data = await response.json();
           
-          // Handle different response formats
-          token = data.token || data.access_token;
+          // Handle local deployment response format: [201, {username, token, root_id}]
+          if (Array.isArray(data) && data.length === 2 && data[1].token) {
+            token = data[1].token;
+          } else {
+            // Handle production/object response format
+            token = data.token || data.access_token;
+          }
           
           // If no token in response but login was successful, generate a temporary token
           if (!token && data.message && data.message.includes('success')) {
@@ -148,7 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: data.user?.email || email }),
+                body: JSON.stringify({ email }),
               });
               
               if (profileResponse.ok) {
@@ -156,37 +161,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 if (profileData.reports && profileData.reports[0] && profileData.reports[0].user) {
                   const userProfile = profileData.reports[0].user;
                   userData = {
-                    id: data.user?.id || email,
+                    id: userProfile.id || email,
                     email: userProfile.email,
-                    name: userProfile.name || data.user?.name || '',
+                    name: userProfile.name || '',
                     role: userProfile.role || 'user',
                   };
                 } else {
-                  // Fallback to JAC Cloud data if profile fetch fails
+                  // Fallback if no user profile found
                   userData = {
-                    id: data.user?.id || email,
-                    email: data.user?.email || email,
-                    name: data.user?.name || '',
-                    role: data.user?.is_admin ? 'admin' : 'user',
+                    id: email,
+                    email: email,
+                    name: '',
+                    role: 'user',
                   };
                 }
               } else {
-                // Fallback to JAC Cloud data if profile fetch fails
+                // Fallback if profile fetch fails
                 userData = {
-                  id: data.user?.id || email,
-                  email: data.user?.email || email,
-                  name: data.user?.name || '',
-                  role: data.user?.is_admin ? 'admin' : 'user',
+                  id: email,
+                  email: email,
+                  name: '',
+                  role: 'user',
                 };
               }
             } catch (profileError) {
               console.error('Error fetching user profile:', profileError);
-              // Fallback to JAC Cloud data if profile fetch fails
+              // Use basic user data if profile fetch fails
               userData = {
-                id: data.user?.id || email,
-                email: data.user?.email || email,
-                name: data.user?.name || '',
-                role: data.user?.is_admin ? 'admin' : 'user',
+                id: email,
+                email: email,
+                name: '',
+                role: 'user',
               };
             }
 
@@ -248,8 +253,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json();
       
-      // JAC Cloud handles user creation automatically
-      // After successful registration, login to get the token and user data
+      // Handle production response format: {"message":"Successfully Registered!"}
       if (data.message && data.message.includes('Successfully Registered')) {
         // Save location data if available
         if (location) {
@@ -279,8 +283,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      // Handle case where registration returns user data and token directly
+      // Handle local deployment response format: [201, {username, token, root_id}]
+      if (Array.isArray(data) && data.length === 2 && data[1].token) {
+        // Save location data if available
+        if (location) {
+          try {
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/save_user_location`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                email, 
+                location: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  city: location.city || '',
+                  country: location.country || '',
+                  ip: location.ip || ''
+                }
+              }),
+            });
+          } catch (locationError) {
+            console.warn('Failed to save location data:', locationError);
+          }
+        }
+        
+        await login(email, password);
+        return;
+      }
+
+      // Handle case where registration returns user data and token directly (object format)
       if (data.user && data.token) {
+        // Save location data if available
+        if (location) {
+          try {
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/walker/save_user_location`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                email, 
+                location: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  city: location.city || '',
+                  country: location.country || '',
+                  ip: location.ip || ''
+                }
+              }),
+            });
+          } catch (locationError) {
+            console.warn('Failed to save location data:', locationError);
+          }
+        }
+
         const userData: User = {
           id: data.user.id,
           email: data.user.email,
