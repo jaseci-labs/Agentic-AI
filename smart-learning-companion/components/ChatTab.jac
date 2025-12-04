@@ -193,11 +193,22 @@ cl def ChatTab(props: any) -> any {
                             {(
                                 <Fade in={true} timeout={300}>
                                     <Box sx={{"display": "flex", "justifyContent": "flex-start"}}>
-                                        <Card sx={{"maxWidth": "75%", "background": "#ffffff", "borderRadius": "20px"}}>
+                                        <Card
+                                            sx={{
+                                                "maxWidth": "75%",
+                                                "background": "rgba(30, 41, 59, 0.8)",
+                                                "color": "white",
+                                                "backdropFilter": "blur(20px)",
+                                                "border": "1px solid rgba(203, 213, 225, 0.2)",
+                                                "boxShadow": "0 8px 32px rgba(0, 0, 0, 0.2)",
+                                                "borderRadius": "20px",
+                                                "borderBottomLeftRadius": "4px"
+                                            }}
+                                        >
                                             <CardContent sx={{"p": 2, "&:last-child": {"pb": 2}}}>
                                                 <Stack direction="row" spacing={1} alignItems="center">
-                                                    <CircularProgress size={20} />
-                                                    <Typography color="text.primary">
+                                                    <CircularProgress size={20} sx={{"color": "primary.main"}} />
+                                                    <Typography sx={{"color": "white", "fontWeight": 500}}>
                                                         {"AI is thinking..."}
                                                     </Typography>
                                                 </Stack>
