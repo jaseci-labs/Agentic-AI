@@ -1,26 +1,28 @@
-cl import from react { useRef }
-cl import from '@mui/material' {
-    Box,
-    Paper,
-    TextField,
-    Button,
-    Typography,
-    Stack,
-    Avatar,
-    Divider,
-    Fade,
-    CircularProgress,
-    Card,
-    CardContent,
-    Grow
-}
-cl import from '@mui/icons-material' {
-    Send,
-    School,
-    Psychology,
-    AutoAwesome,
-    Clear,
-    Person
+cl {
+    import from react { useRef }
+    import from '@mui/material' {
+        Box,
+        Paper,
+        TextField,
+        Button,
+        Typography,
+        Stack,
+        Avatar,
+        Divider,
+        Fade,
+        CircularProgress,
+        Card,
+        CardContent,
+        Grow
+    }
+    import from '@mui/icons-material' {
+        Send,
+        School,
+        Psychology,
+        AutoAwesome,
+        Clear,
+        Person
+    }
 }
 
 cl def ChatTab(props: any) -> any {

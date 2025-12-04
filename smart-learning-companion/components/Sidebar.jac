@@ -1,20 +1,22 @@
-cl import from '@mui/material' {
-    Box,
-    Paper,
-    Typography,
-    Stack,
-    Avatar,
-    Divider,
-    Drawer,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText
-}
-cl import from '@mui/icons-material' {
-    School,
-    Lightbulb
+cl {
+    import from '@mui/material' {
+        Box,
+        Paper,
+        Typography,
+        Stack,
+        Avatar,
+        Divider,
+        Drawer,
+        List,
+        ListItem,
+        ListItemButton,
+        ListItemIcon,
+        ListItemText
+    }
+    import from '@mui/icons-material' {
+        School,
+        Lightbulb
+    }
 }
 
 cl def Sidebar(props: any) -> any {

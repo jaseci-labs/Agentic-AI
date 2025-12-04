@@ -1,24 +1,26 @@
-cl import from react { useState }
-cl import from '@mui/material' {
-    Box,
-    Paper,
-    TextField,
-    Button,
-    Typography,
-    Chip,
-    Stack,
-    Avatar,
-    Divider,
-    Card,
-    CardContent,
-    CircularProgress
-}
-cl import from '@mui/icons-material' {
-    Quiz,
-    AutoAwesome,
-    CheckCircle,
-    Cancel,
-    Refresh
+cl {
+    import from react { useState }
+    import from '@mui/material' {
+        Box,
+        Paper,
+        TextField,
+        Button,
+        Typography,
+        Chip,
+        Stack,
+        Avatar,
+        Divider,
+        Card,
+        CardContent,
+        CircularProgress
+    }
+    import from '@mui/icons-material' {
+        Quiz,
+        AutoAwesome,
+        CheckCircle,
+        Cancel,
+        Refresh
+    }
 }
 
 cl def QuizTab(props: any) -> any {
