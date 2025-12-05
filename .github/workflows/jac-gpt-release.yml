@@ -1,0 +1,104 @@
+name: Release on Docs Sync
+
+on:
+  workflow_run:
+    workflows: ["Sync Jaseci Docs"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git tag -l "jac-gpt-v*" | sort -V | tail -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="jac-gpt-v0.0.0"
+          fi
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Found latest tag: $LATEST_TAG"
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          LATEST_TAG=${{ steps.get_tag.outputs.latest_tag }}
+          # Extract version number: jac-gpt-v0.6.8 -> 0.6.8
+          VERSION=${LATEST_TAG#jac-gpt-v}
+          
+          IFS='.' read -ra PARTS <<< "$VERSION"
+          MAJOR=${PARTS[0]:-0}
+          MINOR=${PARTS[1]:-0}
+          PATCH=${PARTS[2]:-0}
+          
+          # Determine bump type
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BUMP_TYPE="${{ inputs.version_bump }}"
+          else
+            BUMP_TYPE="patch"
+          fi
+          
+          # Bump version based on type
+          case $BUMP_TYPE in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="jac-gpt-v$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Creating release: $NEW_VERSION (bumped $BUMP_TYPE from $LATEST_TAG)"
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.bump_version.outputs.new_version }}
+          release_name: Release ${{ steps.bump_version.outputs.new_version }}
+          body: |
+            ## JAC-GPT Release ${{ steps.bump_version.outputs.new_version }}
+            
+            ${{ github.event_name == 'workflow_dispatch' && '🔧 Manual release triggered' || '📚 Automated release triggered by documentation sync' }}
+            
+            ### Changes
+            - Updated documentation from Jaseci repository
+            
+            ### Deployment
+            This release will automatically trigger Docker image builds and deployment to:
+            - **Backend API**: https://jac-gpt-api.jaseci.org
+            - **Frontend**: https://jac-gpt.jaseci.org
+          draft: false
+          prerelease: false
