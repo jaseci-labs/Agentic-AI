@@ -9,7 +9,7 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 ## 📸 Screenshots
 
 ### AI Tutor Chat Interface
-![AI Tutor Chat](<img width="1939" height="1181" alt="Image" src="https://github.com/user-attachments/assets/19bb7cce-fcac-4482-a2b9-966dc8a1de6b" />)
+![AI Tutor Chat](assets/image.png)
 *Interactive chat interface where you can ask questions and get intelligent responses from your AI tutor*
 
 ### Practice Quiz
