@@ -1,3 +1,0 @@
-jaclang
-byllm
-jac-client
