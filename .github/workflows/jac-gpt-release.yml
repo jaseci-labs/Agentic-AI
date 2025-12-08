@@ -7,22 +7,11 @@ on:
       - completed
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      version_bump:
-        description: 'Version bump type'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
 
 jobs:
   create-release:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     
     steps:
       - name: Checkout code
@@ -54,32 +43,12 @@ jobs:
           MINOR=${PARTS[1]:-0}
           PATCH=${PARTS[2]:-0}
           
-          # Determine bump type
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            BUMP_TYPE="${{ inputs.version_bump }}"
-          else
-            BUMP_TYPE="patch"
-          fi
-          
-          # Bump version based on type
-          case $BUMP_TYPE in
-            major)
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-              ;;
-            minor)
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              ;;
-            patch)
-              PATCH=$((PATCH + 1))
-              ;;
-          esac
+          # Always bump patch version
+          PATCH=$((PATCH + 1))
           
           NEW_VERSION="jac-gpt-v$MAJOR.$MINOR.$PATCH"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Creating release: $NEW_VERSION (bumped $BUMP_TYPE from $LATEST_TAG)"
+          echo "Creating release: $NEW_VERSION (bumped patch from $LATEST_TAG)"
 
       - name: Create Release
         uses: actions/create-release@v1
@@ -91,7 +60,7 @@ jobs:
           body: |
             ## JAC-GPT Release ${{ steps.bump_version.outputs.new_version }}
             
-            ${{ github.event_name == 'workflow_dispatch' && '🔧 Manual release triggered' || '📚 Automated release triggered by documentation sync' }}
+            📚 Automated release triggered by documentation sync
             
             ### Changes
             - Updated documentation from Jaseci repository
