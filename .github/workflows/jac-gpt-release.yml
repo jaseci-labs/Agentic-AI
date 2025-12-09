@@ -69,3 +69,9 @@ jobs:
           - **Backend API**: https://jac-gpt-api.jaseci.org
           - **Frontend**: https://jac-gpt.jaseci.org" \
             --latest
+
+      - name: Trigger Deploy Workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run deploy.yml --ref ${{ steps.bump_version.outputs.new_version }}
