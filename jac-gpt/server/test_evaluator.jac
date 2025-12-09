@@ -84,7 +84,8 @@ def calculate_summary(results: list[dict]) -> dict {
 def evaluate_test_dataset(
     test_file: str = "test_dataset.json",
     output_dir: str = ".logs",
-    verbose: bool = True
+    verbose: bool = True,
+    notes: str = ""
 ) {
     
     
@@ -175,7 +176,8 @@ def evaluate_test_dataset(
             "timestamp": datetime.now().isoformat(),
             "test_file": test_file,
             "total_tests": len(test_cases),
-            "model": "gpt-4.1-mini"
+            "model": "gpt-4.1-mini",
+            "notes": notes if notes else "No notes provided"
         },
         "results": results,
         "summary": summary
@@ -204,8 +206,9 @@ with entry {
     choice = input("Choose option (1 or 2): ").strip();
     
     if choice == "1" {
+        notes = input("\nEnter notes for this test run (optional): ").strip();
         test_file_path = "test_datasets/test_dataset.json";
-        evaluate_test_dataset(test_file=test_file_path, verbose=False);
+        evaluate_test_dataset(test_file=test_file_path, verbose=False, notes=notes);
     } elif choice == "2" {
         import from server {infer};
         query = input("\nEnter your query: ").strip();
