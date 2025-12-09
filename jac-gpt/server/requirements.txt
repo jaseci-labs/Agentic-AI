@@ -6,3 +6,5 @@ langchain-openai
 langchain-community
 langchain-chroma
 pypdf
+jaclang
+jac-cloud
