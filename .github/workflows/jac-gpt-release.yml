@@ -6,7 +6,7 @@ on:
     types:
       - completed
     branches:
-      - jac-gpt_optimization
+      - main
 
 jobs:
   create-release:
