@@ -26,9 +26,9 @@ obj MongoDB {
     }
     def connect {
         try {
-            mongo_uri = os.getenv("DATABASE_HOST");
+            mongo_uri = os.getenv("MONGODB_URI");
             if not mongo_uri {
-                print("DATABASE_HOST not found! Falling back to localhost...");
+                print("MONGODB_URI not found! Falling back to localhost...");
                 mongo_uri = "mongodb://localhost:27017/";
             }
             db_name = os.getenv("DATABASE_NAME", "jaseci");
