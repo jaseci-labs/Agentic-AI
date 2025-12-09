@@ -50,13 +50,13 @@ jobs:
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Creating release: $NEW_VERSION (bumped patch from $LATEST_TAG)"
 
-      - name: Create Release
-        uses: actions/create-release@v1
+      - name: Create and Publish Release
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.bump_version.outputs.new_version }}
-          release_name: ${{ steps.bump_version.outputs.new_version }}
+          name: ${{ steps.bump_version.outputs.new_version }}
           body: |
             ## JAC-GPT Release ${{ steps.bump_version.outputs.new_version }}
             
@@ -71,3 +71,4 @@ jobs:
             - **Frontend**: https://jac-gpt.jaseci.org
           draft: false
           prerelease: false
+          make_latest: true
