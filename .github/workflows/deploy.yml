@@ -192,7 +192,7 @@ jobs:
           # Build and push AMD64-only image (following deployment template)
           docker buildx build \
             --platform linux/amd64 \
-            --build-arg VITE_API_URL=https://jac-gpt-api.jaseci.org \
+            --build-arg VITE_API_URL=http://a98e84fe984cd4509b06f1d83cca411c-b0dad6f9f7000a53.elb.us-east-2.amazonaws.com \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
             --push \
