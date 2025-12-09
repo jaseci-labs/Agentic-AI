@@ -56,7 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.bump_version.outputs.new_version }}
-          release_name: Release ${{ steps.bump_version.outputs.new_version }}
+          release_name: ${{ steps.bump_version.outputs.new_version }}
           body: |
             ## JAC-GPT Release ${{ steps.bump_version.outputs.new_version }}
             
