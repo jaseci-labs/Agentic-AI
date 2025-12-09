@@ -51,23 +51,21 @@ jobs:
           echo "Creating release: $NEW_VERSION (bumped patch from $LATEST_TAG)"
 
       - name: Create and Publish Release
-        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.bump_version.outputs.new_version }}
-          name: ${{ steps.bump_version.outputs.new_version }}
-          body: |
-            ## JAC-GPT Release ${{ steps.bump_version.outputs.new_version }}
-            
-            📚 Automated release triggered by documentation sync
-            
-            ### Changes
-            - Updated documentation from Jaseci repository
-            
-            ### Deployment
-            This release will automatically trigger Docker image builds and deployment to:
-            - **Backend API**: https://jac-gpt-api.jaseci.org
-            - **Frontend**: https://jac-gpt.jaseci.org
-          draft: false
-          prerelease: false
+          NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
+        run: |
+          gh release create "$NEW_VERSION" \
+            --title "$NEW_VERSION" \
+            --notes "## JAC-GPT Release $NEW_VERSION
+
+          📚 Automated release triggered by documentation sync
+
+          ### Changes
+          - Updated documentation from Jaseci repository
+
+          ### Deployment
+          This release will automatically trigger Docker image builds and deployment to:
+          - **Backend API**: https://jac-gpt-api.jaseci.org
+          - **Frontend**: https://jac-gpt.jaseci.org" \
+            --latest
