@@ -1,0 +1,73 @@
+name: Release on Docs Sync
+
+on:
+  workflow_run:
+    workflows: ["Sync Jaseci Docs"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git tag -l "jac-gpt-v*" | sort -V | tail -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="jac-gpt-v0.0.0"
+          fi
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Found latest tag: $LATEST_TAG"
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          LATEST_TAG=${{ steps.get_tag.outputs.latest_tag }}
+          # Extract version number: jac-gpt-v0.6.8 -> 0.6.8
+          VERSION=${LATEST_TAG#jac-gpt-v}
+          
+          IFS='.' read -ra PARTS <<< "$VERSION"
+          MAJOR=${PARTS[0]:-0}
+          MINOR=${PARTS[1]:-0}
+          PATCH=${PARTS[2]:-0}
+          
+          # Always bump patch version
+          PATCH=$((PATCH + 1))
+          
+          NEW_VERSION="jac-gpt-v$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Creating release: $NEW_VERSION (bumped patch from $LATEST_TAG)"
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.bump_version.outputs.new_version }}
+          release_name: Release ${{ steps.bump_version.outputs.new_version }}
+          body: |
+            ## JAC-GPT Release ${{ steps.bump_version.outputs.new_version }}
+            
+            📚 Automated release triggered by documentation sync
+            
+            ### Changes
+            - Updated documentation from Jaseci repository
+            
+            ### Deployment
+            This release will automatically trigger Docker image builds and deployment to:
+            - **Backend API**: https://jac-gpt-api.jaseci.org
+            - **Frontend**: https://jac-gpt.jaseci.org
+          draft: false
+          prerelease: false

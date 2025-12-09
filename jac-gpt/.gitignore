@@ -4,3 +4,4 @@ __pycache__/
 *.bin
 *.sqlite3
 *.pickle
+!test_dataset.json
