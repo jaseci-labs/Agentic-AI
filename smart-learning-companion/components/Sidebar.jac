@@ -20,9 +20,9 @@ cl {
 }
 
 cl def Sidebar(props: any) -> any {
-    let activeTab = props.activeTab;
-    let setActiveTab = props.setActiveTab;
-    let navigationItems = props.navigationItems;
+     activeTab = props.activeTab;
+     setActiveTab = props.setActiveTab;
+     navigationItems = props.navigationItems;
 
     return <Drawer
         variant="permanent"
@@ -64,7 +64,7 @@ cl def Sidebar(props: any) -> any {
         <List sx={{"px": 2}}>
             {navigationItems.map(
                 lambda item: any -> any {
-                    let isActive = activeTab == item["id"];
+                     isActive = activeTab == item["id"];
                     return <ListItem key={item["id"]} disablePadding sx={{"mb": 1}}>
                         <ListItemButton
                             onClick={lambda -> None { setActiveTab(item["id"]); }}
