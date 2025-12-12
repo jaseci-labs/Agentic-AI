@@ -24,22 +24,22 @@ cl {
 }
 
 cl def QuizTab(props: any) -> any {
-    let quizTopic = props.quizTopic;
-    let setQuizTopic = props.setQuizTopic;
-    let quizDifficulty = props.quizDifficulty;
-    let setQuizDifficulty = props.setQuizDifficulty;
-    let quizData = props.quizData;
-    let quizLoading = props.quizLoading;
-    let currentQuestion = props.currentQuestion;
-    let setCurrentQuestion = props.setCurrentQuestion;
-    let selectedAnswers = props.selectedAnswers;
-    let showResults = props.showResults;
-    let handleGenerateQuiz = props.handleGenerateQuiz;
-    let handleAnswerSelect = props.handleAnswerSelect;
-    let handleSubmitQuiz = props.handleSubmitQuiz;
-    let handleResetQuiz = props.handleResetQuiz;
+    quizTopic = props.quizTopic;
+    setQuizTopic = props.setQuizTopic;
+    quizDifficulty = props.quizDifficulty;
+    setQuizDifficulty = props.setQuizDifficulty;
+    quizData = props.quizData;
+    quizLoading = props.quizLoading;
+    currentQuestion = props.currentQuestion;
+    setCurrentQuestion = props.setCurrentQuestion;
+    selectedAnswers = props.selectedAnswers;
+    showResults = props.showResults;
+    handleGenerateQuiz = props.handleGenerateQuiz;
+    handleAnswerSelect = props.handleAnswerSelect;
+    handleSubmitQuiz = props.handleSubmitQuiz;
+    handleResetQuiz = props.handleResetQuiz;
 
-    let suggestedTopics = ["Photosynthesis", "World War II", "Calculus Basics", "Python Programming"];
+    suggestedTopics = ["Photosynthesis", "World War II", "Calculus Basics", "Python Programming"];
 
     return <>
         <Paper sx={{"p": 4}}>
@@ -169,7 +169,7 @@ cl def QuizTab(props: any) -> any {
                                     <Stack spacing={2}>
                                         {q["options"].map(
                                             lambda option: any, optIdx: int -> any {
-                                                let isSelected = selectedAnswers[idx] == optIdx;
+                                                 isSelected = selectedAnswers[idx] == optIdx;
                                                 return <Paper
                                                     key={optIdx}
                                                     onClick={lambda -> None { handleAnswerSelect(idx, optIdx); }}
@@ -273,7 +273,7 @@ cl def QuizTab(props: any) -> any {
                     <Stack spacing={2}>
                         {quizData["questions"].map(
                             lambda q: any, idx: int -> any {
-                                let isCorrect = selectedAnswers[idx] == q["correct"];
+                                 isCorrect = selectedAnswers[idx] == q["correct"];
                                 return <Card key={idx} sx={{"border": "1px solid", "borderColor": "divider"}}>
                                     <CardContent>
                                         <Stack spacing={2}>

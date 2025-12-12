@@ -26,15 +26,15 @@ cl {
 }
 
 cl def ChatTab(props: any) -> any {
-    let conversationHistory = props.conversationHistory;
-    let message = props.message;
-    let setMessage = props.setMessage;
-    let loading = props.loading;
-    let handleChat = props.handleChat;
-    let handleKeyPress = props.handleKeyPress;
-    let clearChat = props.clearChat;
-    let messagesEndRef = props.messagesEndRef;
-    let exampleQuestions = props.exampleQuestions;
+    conversationHistory = props.conversationHistory;
+    message = props.message;
+    setMessage = props.setMessage;
+    loading = props.loading;
+    handleChat = props.handleChat;
+    handleKeyPress = props.handleKeyPress;
+    clearChat = props.clearChat;
+    messagesEndRef = props.messagesEndRef;
+    exampleQuestions = props.exampleQuestions;
 
     return <>
         <Grow in={true} timeout={800}>
@@ -133,7 +133,7 @@ cl def ChatTab(props: any) -> any {
                         <Stack spacing={2}>
                             {conversationHistory.map(
                                 lambda msg: any -> any {
-                                    let isUser = msg["role"] == "user";
+                                     isUser = msg["role"] == "user";
                                     return <Box
                                         sx={{
                                             "display": "flex",
