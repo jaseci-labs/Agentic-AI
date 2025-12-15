@@ -2,7 +2,6 @@
 
 For each key feature in Jac/Jaseci, we will show simple code examples and explanation to highlight how the feature enables rapid development of scalable, AI-powered applications.
 
-
 ### Programming Abstractions for AI - `by llm`
 
 Jac provides novel constructs for integrating LLMs into code. A function body can simply be replaced with a call to an LLM, removing the need for prompt engineering. `by llm()` delegates execution to an LLM without any extra library code. For more information on `by llm`, check out more documentation [here](https://docs.jaseci.org/learn/jac-byllm/with_llm/).
@@ -37,11 +36,8 @@ with entry {
     4. Copy this code into `example.jac` file and run with `jac run example.jac`
 
 ??? example "Output"
-    `   Introvert personality detected for Albert Einstein
+    ` Introvert personality detected for Albert Einstein
     `
-
-
-
 
 ### Object Spatial Programming: Going Beyond OOP
 
@@ -54,8 +50,8 @@ Instances of these node and edge classes form a graph structure that expresses s
 
 Computation in OSP occurs by traversing these graphs using two key constructs:
 
- -  walker classes (`walker`), which encapsulate object interactions and specify how computation moves through the graph,
- -  abilities (`abilities`), special methods that walkers automatically execute when they visit specific node types.
+- walker classes (`walker`), which encapsulate object interactions and specify how computation moves through the graph,
+- abilities (`abilities`), special methods that walkers automatically execute when they visit specific node types.
 
 OSP can be used where needed and maps nicely to many categories of problems, espeically those that deal with connected data, such as social network,  knowledge graph, file system, dependency graph, etc. In particular, it is sepcially suitable for describing workflow in Agentic systems  ;-).
 
@@ -65,7 +61,6 @@ In the Examples section, you’ll see cases where OSP cuts code size dramaticall
 <!--  TODO: Say benefits of byllm + OSP in agentic AI and how it saves lines of code -->
 
 In this simple example, we aim to just illustrate the basic concepts. Here we have `Person` nodes, while walkers (`Greeter`) traverse the graph of `Person` objects and process them. For more OSP concepts, check out [Quick Start](https://docs.jaseci.org/learn/quickstart/#object-spatial-model), or [Syntax Quick Reference](https://docs.jaseci.org/learn/quick_reference/).
-
 
 ```jac
 node Person {
@@ -114,14 +109,12 @@ with entry {
     Copy this code into `example.jac` file and run with `jac run example.jac`
 
 ??? example "Output"
-    `   Starting journey!
+    ` Starting journey!
         Hello, Alice!
         Hello, Bob!
         Hello, Charlie!
         Total greetings: 3
     `
-
-
 
 To read more on how Jac/Jaseci enables rapid development of Agentic AI using combination of `by llm` and OSP, check out [Building Agentic AI Applications with byLLM and Object Spatial Programming](https://docs.jaseci.org/learn/jac-byllm/agentic_ai/)
 
@@ -151,7 +144,7 @@ walker create_post {
     2. Copy this code into `example.jac` file and run with `jac serve example.jac`
 
 ??? example "Output"
-    `   INFO:     Started server process [26286]
+    ` INFO:     Started server process [26286]
         INFO:     Waiting for application startup.
         INFO - DATABASE_HOST is not available! Using LocalDB...
         INFO - Scheduler started
@@ -171,7 +164,7 @@ import math;
 import from random { uniform }
 
 def calc_distance(x1: float, y1: float, x2: float, y2: float) -> float {
-return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+return math.sqrt((x2 - x1) **2 + (y2 - y1)** 2);
 }
 
 with entry { # Generate random points

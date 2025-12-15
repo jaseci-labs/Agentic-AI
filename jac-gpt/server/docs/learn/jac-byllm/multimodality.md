@@ -46,7 +46,6 @@ with entry {
 Input Image :
 [person.png](https://rarehistoricalphotos.com/wp-content/uploads/2022/06/albert-einstein-tongue-3.webp)
 
-
 ??? example "Output"
     Person(full_name='Albert Einstein', yod=1955, personality=Personality.INTROVERT)
 
@@ -111,7 +110,6 @@ with entry {
 
 Input Video:
 [SampleVideo_1280x720_2mb.mp4](https://github.com/Jaseci-Labs/jaseci/raw/refs/heads/main/jac-byllm/tests/fixtures/SampleVideo_1280x720_2mb.mp4)
-
 
 ??? example "Output"
     The video features a large rabbit emerging from a burrow in a lush, green environment. The rabbit stretches and yawns, seemingly enjoying the morning. The scene is set in a vibrant, natural setting with bright skies and trees, creating a peaceful and cheerful atmosphere.

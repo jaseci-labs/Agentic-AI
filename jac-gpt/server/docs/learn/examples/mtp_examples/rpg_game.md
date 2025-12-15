@@ -19,6 +19,7 @@ pip install byllm
 ```
 
 OpenAI API key configuration:
+
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 ```
@@ -112,14 +113,14 @@ obj LevelManager {
 - The key parts are **Lines 26 and 29**: the `by llm` keyword makes the AI responsible for generating `Level` and `Map` objects.
 
 - For `create_next_level()` (Line 26), we pass these arguments to retuen a complete level as the output:
-    - Historical Context: last_levels ensures variety
-    - Difficulty Guidance: difficulty scales challenge
-    - Spatial Constraints: level_width, level_height
+  - Historical Context: last_levels ensures variety
+  - Difficulty Guidance: difficulty scales challenge
+  - Spatial Constraints: level_width, level_height
 
 - For `create_next_map()` (Line 29) we return a detailed map as the output by:
-    - Taking a high-level `Level`
-    - Generating specific positions for walls, enemies, and player
-    - Producing a balanced, playable layout
+  - Taking a high-level `Level`
+  - Generating specific positions for walls, enemies, and player
+  - Producing a balanced, playable layout
 
 <!-- ### <span style="color: orange">AI Method Implementation
 
@@ -238,7 +239,6 @@ def get_map(map: Map) -> str {
 - player starts at `P`
 - border walls wrap around the map
 
-
 <!-- ### <span style="color: orange">Map Conversion Process
 
 The conversion function executes these operations:
@@ -289,11 +289,13 @@ with entry {
 ```
 
 Run this script:
+
 ```bash
 jac run test_generator.jac
 ```
 
 Expected output (AI may vary):
+
 ```
 === LEVEL 1 ===
 Difficulty: 1

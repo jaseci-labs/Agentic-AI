@@ -38,6 +38,7 @@ When writing Jac code, reference llmdocs-jaseci-mini_v3.txt for syntax
 ## Coverage
 
 ### Mini (Recommended)
+
 - Complete syntax reference
 - Objects, nodes, edges, walkers
 - Graph queries and traversal
@@ -48,6 +49,7 @@ When writing Jac code, reference llmdocs-jaseci-mini_v3.txt for syntax
 - Common design patterns
 
 ### Core
+
 Everything in Mini plus detailed examples and verbose explanations.
 
 ## Version Information

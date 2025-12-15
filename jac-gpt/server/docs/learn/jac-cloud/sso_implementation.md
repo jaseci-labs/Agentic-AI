@@ -27,21 +27,22 @@ Currently following SSO platforms are supported in Jac cloud for SSO
 | `GOOGLE_ANDROID` | Used for gmail SSO integration for android mobile apps|
 | `GOOGLE_IOS` | Used for gmail SSO integration for ios mobile apps|
 
-
-
 ## Steps to implement SSO in Jac cloud Setting Your Environment variables
 
 ### Step 1: Obtain relevant client credentials from supported platforms
+
 First choose the supported platform and register your application with the relevant platform to get credentials needed
 to setup SSO in jac cloud.You can read following documentations and tutorials to register your application.
 
 #### Google
 
 ##### General Implementation
+
 - [Step by step to integrate Google OAuth2/SSO](https://dev.to/idrisakintobi/a-step-by-step-guide-to-google-oauth2-authentication-with-javascript-and-bun-4he7) - Complete guide with JavaScript and Bun
 - [Easy Configure SSO with Google](https://developer.slashid.dev/docs/access/guides/SSO/oauth_creds_google) - Simplified configuration guide
 
 ##### Platform-Specific Guides
+
 - **Web**: [Implementation guide for Web](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) - Official Google documentation
 - **Android**: [Implementation guide for Android](https://developer.android.com/identity/sign-in/credential-manager-siwg) - Using Credential Manager
 - **iOS**: [Implementation guide for iOS](https://developers.google.com/identity/sign-in/ios/start-integrating) - Google Sign-In for iOS
@@ -53,6 +54,7 @@ to setup SSO in jac cloud.You can read following documentations and tutorials to
 ---
 
 ### Step 2: Setup relevant env variables
+
 ### Basic Pattern
 
 ```bash
@@ -94,7 +96,6 @@ Apple requires a special configuration for client secret generation:
 | `SSO_APPLE_CLIENT_CERTIFICATE_PATH` | Path to Apple client certificate |
 | `SSO_APPLE_CLIENT_CERTIFICATE` | Raw Apple client certificate content |
 
-
 ### Step 3: Call Register Callback Endpoint Provided by JAC Cloud
 
 #### 1. Start the Backend Server
@@ -120,11 +121,13 @@ In your frontend application (Web App, Android, or iOS), use the relevant librar
 Once the `id_token` is obtained, call the callback endpoint provided by JAC Cloud
 
 ##### Endpoint Format
+
 ```
 $GET {backendURL}/sso/${provider}/register/callback?id_token=${id_token}
 ```
 
 ##### Curl Example for apple with id_token
+
 ```bash
 curl -X 'GET' \
   'http://localhost:8000/sso/apple/register/callback?id_token=eyJraWQiOiJFNnE4M1JCMTVuIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoibGlmZS50b2J1IiwiZXhwIjoxNzU2NTYxOTg0LCJpYXQiOjE3NTY0NzU1ODQsInN1YiI6IjAwMDkwNC5hMTI5MDJmMzA1ZGE0ZWY1ODE5MGVmN2VjMGQ3ODE1OS4xMzU3IiwiY19oYXNoIjoiQksxdTdBYmlua2RsMUlBWUVISWp2dyIsImVtYWlsIjoicWM5N2s3Mm5mN0Bwcml2YXRlcmVsYXkuYXBwbGVpZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaXNfcHJpdmF0ZV9lbWFpbCI6dHJ1ZSwiYXV0aF90aW1lIjoxNzU2NDc1NTg0LCJub25jZV9zdXBwb3J0ZWQiOnRydWV9.iC_vnj2Ar268Z2IW0Ums1gr6OT0UFZocUFJaU_X1S9fudnd_pmIvgOgnlYO8Y7_P134xzjyrHV2-sB_APjZluaUNid7dUkLu7FaCEjU4GReuXlav9Ek9pZfV0FY0D2wqEJhMZ2EcQfgBJbthSewlbbwIeEF4OTHOPB3Pfw8jVJxEMseJ6glxOL0UHC7jRAJNsyYePG2ld1o66UMiFpOaIuuoTjJmigaPA4Mwe1Tiu_ZtGPONd9TEZo7xCXP_c2E68Rh9dLZcqULXAot58l71XEJJok63SQfGMfolR-ibCRAbWvqfe-ZFYYuxVIplva1MnLmiwuPCsb76nUxn0nNa5Q' \
@@ -143,6 +146,7 @@ The `${provider}` parameter can take the following values based on your frontend
 | Google iOS | `google_ios` |
 
 This will register your user with jac cloud and sso platform and returns you the required user informations like name,email etc
+
 #### Example Calls
 
 ```bash

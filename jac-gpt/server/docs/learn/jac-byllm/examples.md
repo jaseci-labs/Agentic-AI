@@ -1,11 +1,10 @@
 # byLLM Tutorials and Examples
 
-
 ## Tutorials
 
 <div class="grid cards" markdown>
 
--   **RPG Game Level Genaration**
+- **RPG Game Level Genaration**
 
     ---
 
@@ -13,7 +12,7 @@
 
     [Start](./../../examples/mtp_examples/rpg_game/){ .md-button }
 
--   **Fantacy Trading Game**
+- **Fantacy Trading Game**
 
     ---
 
@@ -21,7 +20,7 @@
 
     [Start](./../../examples/mtp_examples/fantasy_trading_game/){ .md-button }
 
--   **AI-Powered Multimodal MCP Chatbot**
+- **AI-Powered Multimodal MCP Chatbot**
 
     ---
 
@@ -31,12 +30,12 @@
 
 </div>
 
-
 ## Examples
 
 This section collects the example byllm programs bundled in `jac-byllm/examples/`. Examples are grouped by type. For each example the source is shown in a tab so you can quickly inspect the code.
 
 ### Core Examples
+
 Small, focused examples that show common byLLM patterns for integrating LLMs in Jac programs.
 
 Repository location: [jac-byllm/examples/core_examples](https://github.com/Jaseci-Labs/jaseci/tree/main/jac-byllm/examples/core_examples)

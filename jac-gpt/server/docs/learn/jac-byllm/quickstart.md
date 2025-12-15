@@ -74,7 +74,6 @@ jac run personality.jac
 
 For complete usage methodologies of the `by` abstraction, refer to the [Usage Guide](./usage.md) for documentation on object methods, object instantiation, and multi-agent workflows.
 
-
 ### byLLM Usage in Python
 
 As byLLM is a python package, it can be natively used in jac. The following code show the above example application built in native python with byLLM.

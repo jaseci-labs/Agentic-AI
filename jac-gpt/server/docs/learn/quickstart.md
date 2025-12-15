@@ -4,8 +4,8 @@ This document will give you a quick start on Object-Spatial Programming(OSP), th
 For a short overview of the language syntax, refer to the [Syntax Quick Reference](./quick_reference.md).
 If using byLLM in Python, refer to its [documentation](./jac-byllm/python_integration.md).
 
-
 ## Python Superset
+
 Jac is a drop-in replacement for Python and supersets Python, much like Typescript supersets Javascript or C++ supersets C. It extends Python's semantics while maintaining full interoperability with the Python ecosystem.
 Anything you can build with Python, you can build in Jac, and often more efficiently.
 
@@ -22,10 +22,12 @@ def example(){
 }
 
 # jac's equivalent of main
+
 with entry {
     print("Hello world!");
     example();
 }
+
 ```
 </div>
 
@@ -37,7 +39,7 @@ One of the core features of Jac is its ability to represent graphs natively in t
 
 If you've worked with graphs in traditional OOP, you've likely faced this pattern: create a `Node` class with a `List<Node> connections`, manually manage adjacency lists, and write recursive functions that risk stack overflow. OSP eliminates this boilerplate by making graph structures a first-class citizen.
 
-**The key difference is the shift from "bring data to computation" (calling methods) to "send computation to data" (traversing graphs).** When your problem domain involves relationships—social networks, dependency trees, knowledge graphs—OSP models these naturally rather than forcing them into nested collections.
+**The key difference is the shift from "bring data to computation" (calling methods) to "send computation to data" (traversing graphs).** When your problem domain involves relationships such as social networks, dependency trees, and knowledge graphs. OSP models these naturally rather than forcing them into nested collections.
 
 For example, finding all "friends of friends who aren't direct friends" in OOP requires nested loops and manual filtering. In OSP, you write `[alice ->:Friend:-> ->:Friend:->]` and the language handles the traversal.
 
@@ -45,11 +47,11 @@ For example, finding all "friends of friends who aren't direct friends" in OOP r
 
 ### Object Spatial Model
 
-In OSP, objects are not isolated—they exist in space with explicit relationships. Critically, **nodes and edges are full-featured classes** that inherit all OOP capabilities (methods, inheritance, polymorphism) and add spatial semantics.
+In OSP, objects are not isolated. They exist in space with explicit relationships. Critically, **nodes and edges are full-featured classes** that inherit all OOP capabilities (methods, inheritance, polymorphism) and add spatial semantics.
 
 **Nodes: Spatial Classes**
 
-Start by defining nodes as you would regular classes. At this stage, they behave exactly like OOP objects—no graph concepts needed yet:
+Start by defining nodes as you would regular classes. At this stage, they behave exactly like OOP objects, no graph concepts needed yet:
 
 <div class="code-block">
 ```jac
@@ -73,6 +75,7 @@ with entry {
     print(alice.greet());  # Standard method call
 }
 ```
+
 </div>
 
 The output behavior is standard for OOP: "Hello, I'm Alice! Alice is now 26!"
@@ -100,7 +103,9 @@ with entry {
 }
 
 # You now have a graph structure where relationships exist
+
 # independently of any object's internal state
+
 ```
 </div>
 
@@ -140,6 +145,7 @@ with entry {
     # The result is a list of Person nodes, not data structures you have to unpack
 }
 ```
+
 </div>
 
 This creates a graph edge that "knows" it's a friendship and can answer questions about itself. Visualizing `alice ->:Friend:->` returns the actual `bob` node, ready for method calls.
@@ -176,7 +182,7 @@ Think of `[alice ->:Friend:->]` as a declarative path specification: "From alice
 
 **Full OOP Support with Inheritance**
 
-Nodes and edges support all OOP features—inheritance, polymorphism, interfaces:
+Nodes and edges support all OOP features: inheritance, polymorphism, interfaces:
 
 ```jac
 node Entity {
@@ -199,7 +205,7 @@ node Person(Entity) {
 
 ### Walkers: Mechanism for Mobile Computation
 
-**Walkers are autonomous agents**—also classes with state—that travel through your graph. Instead of calling methods on objects and bringing data to your function, you spawn a walker that visits nodes where the data lives.
+**Walkers are autonomous agents** represented by classes that can travel through your graph. Instead of calling methods on objects and bringing data to your function, you spawn a walker that visits nodes where the data lives.
 
 **Basic Walker: Visiting Nodes**
 
@@ -232,6 +238,7 @@ with entry {
     root ++> alice ++> bob;
     root spawn Greeter();  # Launch walker, it navigates autonomously
 }
+
 ```
 </div>
 
@@ -264,7 +271,7 @@ Inside walker abilities, these references are always available:
 | `here` | Current node being visited | `print(here.name)` |
 | `root` | Global root node | `root spawn MyWalker()` |
 
-`here` is the game-changer: it gives you the actual node object, so you can call its methods and access its properties as if you were inside a method call—except you're inside a traversal.
+`here` is the game-changer: it gives you the actual node object, so you can call its methods and access its properties as if you were inside a method call, while being inside a traversal instead.
 
 **Navigation Patterns: Controlling the Journey**
 
@@ -328,7 +335,7 @@ walker Tourist {
 }
 ```
 
-When `Tourist` visits a `Person`, only `meet_person` executes. When it visits a `City`, only `visit_city` executes. This is **automatic type-based dispatch**—no if-statements checking types.
+When `Tourist` visits a `Person`, only `meet_person` executes. When it visits a `City`, only `visit_city` executes. This is **automatic type-based dispatch**, no if-statements checking types.
 
 **Node Abilities: When Nodes Receive Visitors**
 
@@ -366,6 +373,7 @@ walker Visitor {
 ```
 
 Execution order: **node ability first**, then walker ability. This bidirectional interaction contract means you can:
+
 - Nodes validate/prepare state before walker acts
 - Walkers implement generic algorithms that any node can customize
 - Achieve double-dispatch polymorphism without visitor pattern boilerplate
@@ -462,7 +470,7 @@ walker TaskAnalyzer {
 # Usage: spawn analyzer, then check analyzer.ready_tasks
 ```
 
-This walker traverses the entire task graph, identifies completed dependencies, and collects tasks ready to execute—all without explicit recursion or stack management.
+This walker traverses the entire task graph, identifies completed dependencies, and collects tasks ready to execute, without explicit recursion or stack management.
 
 **Traversal Control Summary**
 
@@ -476,6 +484,7 @@ This walker traverses the entire task graph, identifies completed dependencies, 
 ---
 
 ## Next Steps
+
 Jac contains many more features!
 
 **Want to start building?** We have a [Syntax Quick Reference](./quick_reference.md) to make it easier to write jac.

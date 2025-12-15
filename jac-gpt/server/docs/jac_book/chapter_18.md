@@ -419,7 +419,7 @@ Jac Cloud provides a Kubernetes-based deployment template to easily deploy your 
 !!! example "Jac Cloud Deployment"
     === "Directory Structure"
         ```
-        jac-cloud/
+jac-cloud/
         ├── scripts/
         │   ├── Dockerfile
         │   ├── init_jac_cloud.sh

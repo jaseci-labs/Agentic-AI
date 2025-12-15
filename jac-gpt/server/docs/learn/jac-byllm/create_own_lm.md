@@ -66,6 +66,6 @@ glob llm = MyLLM(model_name="gpt-4o");
 
 Thats it! You have successfully created your own Language Model to be used with byLLM.
 
->  **NOTICE**
+> **NOTICE**
 >
 > This feature is under development and if you face an incompatibility, please open an issue [here](https://github.com/Jaseci-Labs/Jaseci/issues).

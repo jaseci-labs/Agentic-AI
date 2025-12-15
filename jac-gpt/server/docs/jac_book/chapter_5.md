@@ -1,12 +1,12 @@
 # Chapter 5: Advanced AI Operations
+
 ---
 In this chapter, you will learn to integrate advanced AI capabilities directly into your Jac applications using the byLLM (Meaning-Typed LLM) framework. We will build a multi-modal image analysis tool to demonstrate how Jac simplifies complex AI operations, including model configuration, context enhancement, and multi-modal data handling.
 
-
 ## byLLM Overview
+
 ---
 byLLM (Meaning Typed LLM) is Jac's native AI integration framework. It transforms the way developers interact with Large Language Models by shifting from manual prompt engineering and complex API calls to a streamlined, function-based approach that is fully integrated with Jac's type system.
-
 
 !!! success "byLLM Benefits"
     - **Zero Prompt Engineering**: Define function signatures, let AI handle implementation
@@ -16,21 +16,25 @@ byLLM (Meaning Typed LLM) is Jac's native AI integration framework. It transform
     - **Built-in Optimization**: Automatic prompt optimization and caching
 
 ## Functions as Prompts
+
 ---
 Up until this point, we've used Jac's functions to define behavior. However, what if we wanted to incorperate AI capabilities directly into our Jac applications? For example, lets say we're writing a poetry application that can generate poems based on a user supplied topic.
 
 Since Jac is a super set of Python, we can create a function `write_poetry` that takes a topic as input and then make a call to an OpenAI model using its python or langchain library to generate the poem.
 
 First, install the OpenAI Python package:
+
 ```bash
 pip install openai
 ```
+
 <br />
 then set your OpenAI API key as an environment variable:
 
 ```bash
 export OPENAI_API_KEY="your-api-key"
 ```
+
 <br />
 Now we can write our Jac code to integrate with OpenAI's API:
 
@@ -53,9 +57,11 @@ with entry {
     print(poem);
 }
 ```
+
 <br />
 
 Finally, lets generate our poetic masterpiece by running the Jac code:
+
 ```console
 $ jac run poetry.jac
 Amidst the quiet, mountains rise,
@@ -68,6 +74,7 @@ Embrace the earth in pure delight.
 A serene world, where hearts find peace,
 In nature's hold, all worries cease.
 ```
+
 <br />
 
 Very nice! However, this approach requires manual API management (what if we want to switch to a different AI provider?), and we still have to write the prompt ourselves. Wouldn't it be great if we could just define the function signature and let the AI handle the rest? *Imagine a world where the function was the prompt?* Where we could simply declare a function and the AI would understand what to do? That's the power of byLLM.
@@ -75,9 +82,11 @@ Very nice! However, this approach requires manual API management (what if we wan
 Let's see how this works.
 
 First we'll need to install the byLLM package:
+
 ```bash
 pip install byllm
 ```
+
 <br />
 Next we replace the OpenAI import with that of the byLLM package
 
@@ -85,6 +94,7 @@ Next we replace the OpenAI import with that of the byLLM package
 import from byllm.lib { Model }
 glob llm = Model(model_name="gpt-4.1-mini");
 ```
+
 <br />
 Instead of writing the function ourselves, we simply declare the function signature and use the `by` keyword to indicate that this function should be handled by the AI model referenced by `llm()`. The byLLM framework will automatically generate the appropriate prompt based on the function signature.
 ```jac
@@ -92,6 +102,7 @@ def write_poetry(topic: str) -> str by llm();
 ```
 
 Finally, lets put it all together and run the Jac code:
+
 ```jac
 # mt_poem.jac - Simple AI integration
 import from byllm.lib { Model }
@@ -106,8 +117,8 @@ with entry {
     print(poem);
 }
 ```
-<br />
 
+<br />
 
 ```console
 $ jac run mt_poem.jac
@@ -121,9 +132,11 @@ Nature's brush with peaceful views,
 Rivers sing and breezes dance,
 In this quiet, soul’s expanse.
 ```
+
 <br />
 
 ### Simple Image Captioning Tool
+
 To further illustrate byLLM's capabilities, let's build a simple image captioning tool. This tool will analyze an image and generate a descriptive caption using an AI model.
 
 First lets grab an image from upsplash to work with. You can use any image you like, but for this example, we'll use a photo of a french bulldog. Download the image and save it as `photo.jpg` in the same directory as your Jac code.
@@ -144,6 +157,7 @@ with entry {
     print(caption);
 }
 ```
+
 <br />
 Now we can run our Jac code to generate a caption for the image:
 ```console
@@ -155,6 +169,7 @@ playful demeanor is accentuated by a shiny gold chain draped around its neck,
 adding a touch of flair to its outfit. With its adorable large ears perked up
 and tongue playfully sticking out, this fashion-forward canine is ready to steal
 the spotlight and capture hearts with its charm and personality.
+
 ```
 <br />
 
@@ -171,9 +186,11 @@ glob text_model = Model(model_name="gpt-4o");
 glob vision_model = Model(model_name="gpt-4-vision-preview");
 glob gemini_model = Model(model_name="gemini-2.0-flash");
 ```
+
 <br />
 
 ### Model Configuration Options
+
 The `Model` class allows you to configure various parameters for your AI model, such as temperature, max tokens, and more. Here's an example of how to set up a model with custom parameters:
 
 ```jac
@@ -187,6 +204,7 @@ glob creative_model = Model(
     verbose=True      # Show prompts for debugging
 );
 ```
+
 <br />
 Below is a breakdown of the parameters you can configure when creating a `Model` instance:
 
@@ -203,6 +221,7 @@ Below is a breakdown of the parameters you can configure when creating a `Model`
 | `top_p`           | Controls token selection by probability sum (nucleus sampling). (Commented out; can be enabled)            | 0.9 (if enabled and not set)                |
 
 Here we have a simple example of how to use the `Model` class to create a model instance with custom parameters:
+
 ```jac
 # model_config.jac
 import from byllm.lib { Model, Image }
@@ -237,11 +256,11 @@ with entry {
     print("Extracted Facts:", facts);
 }
 ```
+
 <br />
 
-
-
 ## Updating the Image Captioning Tool
+
 ---
 Let's progressively build an image captioning tool that demonstrates byLLM's capabilities.
 
@@ -281,6 +300,7 @@ with entry {
     print(f"Mood: {mood}");
 }
 ```
+
 <br />
 
 ```console
@@ -294,9 +314,11 @@ Objects found: ['dog', 'sweater', 'chain', 'yellow background']
 Mood: The mood of the image is playful and cheerful. The bright yellow background and
 the stylish outfit of the dog contribute to a fun and lighthearted atmosphere.
 ```
+
 <br />
 
 ## Semantic Strings and Context Enhancement
+
 ---
 **Semantic strings** provide additional context to AI functions via the `sem` keyword, allowing for more nuanced understanding without cluttering your code. They're particularly useful for domain-specific applications.
 
@@ -348,9 +370,11 @@ with entry {
     print(f"Suggestions: {suggestions}");
 }
 ```
+
 <br />
 
 ## Testing and Error Handling
+
 ---
 AI applications require robust error handling and testing strategies.
 
@@ -427,9 +451,11 @@ with entry {
     }
 }
 ```
+
 <br />
 
 ## Best Practices
+
 ---
 !!! tip "AI Development Guidelines"
     - **Start Simple**: Begin with basic AI functions, add complexity gradually
@@ -473,6 +499,6 @@ with entry {
 
 ---
 
-If you are interested in learning more about byLLM, check out [ Quickstart to byLLM ](../learn/jac-byllm/with_llm.md)
+If you are interested in learning more about byLLM, check out [Quickstart to byLLM](../learn/jac-byllm/with_llm.md)
 
 *Ready to learn about imports and modular programming? Continue to [Chapter 6: Imports System and File Operations](chapter_6.md)!*

@@ -44,6 +44,7 @@ Edge filtering in JacLang allows developers to control traversal by selecting ed
 ---
 
 ### Example:
+
 We can filter nodes based on specific edge attributes, such as filtering by edge values to retrieve a subset of connected nodes.
 === "Jac"
     <div class="code-block">

@@ -12,7 +12,6 @@ You'll create a chatbot that can:
 - Understand and discuss images and videos using AI vision
 - Route different types of questions to specialized AI handlers
 
-
 ## What You'll Learn
 
 - **Object Spatial Programming**: Use Jac's node-walker architecture to organize your application
@@ -125,16 +124,19 @@ The application consists of:
 Now let's see your creation in action! You'll need three terminal windows:
 
 **Terminal 1 - Start the tool server:**
+
 ```bash
 jac run mcp_server.jac
 ```
 
 **Terminal 2 - Start the main application:**
+
 ```bash
 jac serve server.jac
 ```
 
 **Terminal 3 - Launch the web interface:**
+
 ```bash
 jac streamlit client.jac
 ```
@@ -189,10 +191,10 @@ If you run into issues:
 
 Your application exposes these main endpoints:
 
-- `POST /user/register` — Create a new user account
-- `POST /user/login` — Login and get an access token
-- `POST /walker/upload_file` — Upload files (requires authentication)
-- `POST /walker/interact` — Chat with the AI (requires authentication)
+- `POST /user/register`: Create a new user account
+- `POST /user/login`: Login and get an access token
+- `POST /walker/upload_file`: Upload files (requires authentication)
+- `POST /walker/interact`: Chat with the AI (requires authentication)
 
 Visit `http://localhost:8000/docs` to see the full API documentation.
 

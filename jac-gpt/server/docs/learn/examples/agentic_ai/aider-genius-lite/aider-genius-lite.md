@@ -42,29 +42,35 @@ Here's what you'll build - a simple AI coding assistant in just **two files**:
 ### <span style="color: orange">Installation
 
 **Install dependencies:**
+
    ```bash
    pip install jac-streamlit requests jaclang jac-cloud byllm
    ```
 
-4. **Open your browser** to `http://localhost:8501`
+1. **Open your browser** to `http://localhost:8501`
 
 ## <span style="color: orange">Usage
 
 1. **Start the backend server:**
+
    ```bash
    jac serve genius_lite.jac
    ```
+
    The backend API will be available at `http://localhost:8000`
 
 2. **Launch the frontend (in a new terminal):**
+
    ```bash
    jac streamlit frontend.jac
    ```
+
    The web interface will be available at `http://localhost:8501`
 
 ## <span style="color: orange">Usage Examples
 
 ### <span style="color: orange">Basic Code Generation
+
 Try these example requests:
 
 - "Create a Python calculator with basic math operations"
@@ -75,27 +81,29 @@ Try these example requests:
 ## <span style="color: orange">Code Architecture Deep Dive
 
 ### <span style="color: orange">Task Planning System
+
 The core of Genius Lite's intelligence lies in its task planning system, which:
+
 - Analyzes the complexity and scope of user requests
 - Breaks down large problems into smaller, manageable components
 - Creates dependency graphs for complex multi-step tasks
 - Prioritizes execution order for optimal results
 
 ### <span style="color: orange">Code Generation Pipeline
+
 1. **Request Analysis**: Understanding the user's intent and requirements
 2. **Context Gathering**: Identifying relevant libraries, frameworks, and patterns
 3. **Code Synthesis**: Generating code that meets the specified requirements
 4. **Quality Assurance**: Validating syntax, logic, and best practices
 
 ### <span style="color: orange">Validation Framework
+
 The validation system ensures code quality through:
 
 - **Syntax Checking**: Validates generated code for syntactic correctness
 - **Logic Analysis**: Reviews code flow and potential edge cases
 - **Best Practice Compliance**: Ensures adherence to coding standards
 - **Security Assessment**: Identifies potential security vulnerabilities
-
-
 
 ### <span style="color: orange">Integration Options
 

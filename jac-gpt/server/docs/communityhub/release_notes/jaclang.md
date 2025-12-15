@@ -7,7 +7,10 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **`let` Keyword Removed**: The `let` keyword has been removed from Jaclang. Variable declarations now use direct assignment syntax (e.g., `x = 10` instead of `let x = 10`), aligning with Python's approach to variable binding.
 - **Py2Jac Robustness Improvements**: Improved reliability of Python-to-Jac conversion with better handling of f-strings (smart quote switching, no keyword escaping in interpolations), match pattern class names, attribute access formatting (no extra spaces around dots), and nested docstrings in classes and functions.
 - **Format Command Enhancements**: The `jac format` command now tracks and reports which files were actually changed during formatting. The summary output shows both total files processed and the count of files that were modified (e.g., `Formatted 10/12 '.jac' files (3 changed).`). Additionally, syntax errors encountered during formatting are now printed with full error details.
+- **Py2Jac Stability**: Fixed conversion of Python code with augmented assignments and nested docstrings so generated Jac no longer redeclares targets or merges docstrings into following defs.
+- **Support JS Switch Statement**: Javascript transpilation for switch statement is supported.
 - **F-String Escape Sequence Fix**: Fixed a bug where escape sequences like `\n`, `\t`, etc. inside f-strings were not being properly decoded, causing literal backslash-n to appear in output instead of actual newlines. The fix correctly decodes escape sequences for f-string literal fragments in `unitree.py`.
+- **Python `-m` Module Execution Support**: Added ability for Jac modules to be executed directly via `python -m module_name`. When jaclang is auto-imported at Python startup (via a `.pth` file like `jaclang_hook.pth`), both single-file Jac modules and Jac packages (with `__main__.jac`) can be run using Python's standard `-m` flag.
 
 ## jaclang 0.9.3 (Latest Release)
 
@@ -20,6 +23,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jaclang 0.9.1
 
 -**Side effect imports supported**: side effect imports supported which will help to inject css.
+
 - **Plugin for sending static files**: Added extensible plugin system for sending static files, enabling custom static file serving strategies and integration with various storage backends.
 - **Type Checking Enhancements**:
   - Added type checking support for object spatial codes including the connect operator
@@ -139,9 +143,9 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jaclang 0.8.3
 
-- **JacMachine Interface Reorganization**: The machine and interface have been refactored to maintain a shared global state—similar to Python's `sys.modules`—removing the need to explicitly pass execution context and dramatically improving performance.
+- **JacMachine Interface Reorganization**: The machine and interface have been refactored to maintain a shared global state(similar to Python's `sys.modules`) removing the need to explicitly pass execution context and dramatically improving performance.
 - **Native Jac Imports**: Native import statements can now be used to import Jac modules seamlessly into python code, eliminating the need to use `_.jac_import()`.
-- **Unicode String Literal Support**: Fixed unicode character handling in string literals. Unicode characters like "✓", "○", emojis, and other international characters are now properly preserved during compilation instead of being corrupted into byte sequences.
+- **Unicode String Literal Support**: Fixed unicode character handling in string literals. Unicode characters like "", "○", emojis, and other international characters are now properly preserved during compilation instead of being corrupted into byte sequences.
 - **Removed Ignore Statements**: The `ignore` keyword and ignore statements have been removed as this functionality can be achieved more elegantly by modifying path collection expressions directly in visit statements.
 
 ## jaclang 0.8.1
