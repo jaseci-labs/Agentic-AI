@@ -6,11 +6,7 @@ The **Jac programming language** and **Jaseci runtime** build on Python (fully c
 
 Although relatively new, Jac is already used in production environments across a range of real-world systems.
 
-
-
 <!--The **Jac programming language** and **Jaseci runtime** build on Python, introducing **AI-first constructs**, **object-spatial programming (OSP)**, and **scale-native capabilities**. -->
-
-
 
 ## Key Features
 
@@ -20,23 +16,20 @@ Jac introduces a new programming model that lets developers articulate **relatio
 
 <!--  TODO: Insert illustrative graph diagram here -->
 
-
 <figure id="fig-features" style="text-align: center;">
     <img src="../assets/Features.svg" alt="Features illustration" style="width:65%; height:auto;">
     <figcaption><strong>Figure 1:</strong> Overview of Jac's key features and capabilities.</figcaption>
 </figure>
 
-
 ---
 
 ### 2. Programming Abstractions for AI
 
-
 Jac is designed from the ground up to integrate AI directly into the programming model to simplify development of AI-powered applications.
 
--  **`by llm`**   - Jac introduces language-level constructs such as the `by()` keyword that automatically generate optimized prompts. This **removes the need for manual prompt engineering** and enables seamless model integration.  In production systems, this feature has reduced hundreds of lines of prompt code to a single line. This feature can be used alone as Python library, or natively in Jac. [Read more about byllm](https://docs.jaseci.org/learn/jac-byllm/with_llm/).
+- **`by llm`**   - Jac introduces language-level constructs such as the `by()` keyword that automatically generate optimized prompts. This **removes the need for manual prompt engineering** and enables seamless model integration.  In production systems, this feature has reduced hundreds of lines of prompt code to a single line. This feature can be used alone as Python library, or natively in Jac. [Read more about byllm](https://docs.jaseci.org/learn/jac-byllm/with_llm/).
 
--  **Native Agentic AI Workflows (enabled by OSP)** - By leveraging OSP’s graph-based semantics, Jac naturally supports the creation and articulation of **agentic workflows**, allowing developers to create flows of interacting agents that collaborate, share memory, and act on dynamic context.
+- **Native Agentic AI Workflows (enabled by OSP)** - By leveraging OSP’s graph-based semantics, Jac naturally supports the creation and articulation of **agentic workflows**, allowing developers to create flows of interacting agents that collaborate, share memory, and act on dynamic context.
 
 As shown in shown in <a href="#fig-features">Figure 1</a>, ***together, OSP and `by llm` form a powerful foundation for rapid agentic AI development***.
 
@@ -64,23 +57,20 @@ This tight interoperability enables teams to adopt Jac incrementally and integra
 
 Jac/Jaseci is designed for anyone who wants to build applications quickly and cleanly.
 
-
 - **Startups**
 Jac is perfect for rapid prototyping and iteration. One or two engineers can build features that normally require separate frontend, backend, ML, and infrastructure roles. Jac scales from prototype to production with the same code.
-
 
 - **AI/ML Engineers**
 Jac is AI-first: language-level constructs and runtime that use machine learning models seamlessly, reducing prompt engineering and making agent workflows natural. Ideal for building LLM agents, multimodal systems, and graph-based reasoning pipelines.
 
 - **Experienced Developers and Large Teams**
-For developers who want modern language features—optional type checking, cleaner syntax, structural modeling via OSP, and strong tooling—while keeping full access to Python’s ecosystem.
+For developers who want modern language features, such as optional type checking, cleaner syntax, structural modeling via OSP, and strong tooling, while keeping full access to Python’s ecosystem.
 
 - **Frontend Engineers who want to expand to full-stack**
 A great fit if you want to move into full-stack development without heavy backend or DevOps work. Jac lets developers build backend logic, manage state, integrate AI, and deploy, using a Python-like syntax.
 
 - **Students**
 Jac’s high-level abstractions hide much of the typical systems complexity, making it accessible for students while still exposing them to modern concepts like AI integration and scalable application design. It provides an approachable on-ramp to both Python and full-stack AI development.
-
 
 ## When to Use Jac
 

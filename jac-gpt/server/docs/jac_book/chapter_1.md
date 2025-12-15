@@ -1,11 +1,12 @@
 # **1. Introduction to Jac**
+
 ---
 This chapter gets you started with the Jac programming language. We will begin by explaining what Jac is and how it works, then walk you through how to model relationships in your code. Along the way, you'll learn about Jac's core concepts through practical examples.
-
 
 > Jac introduces Object-Spatial Programming (OSP), a new way of thinking about software where computation can move to your data. This allows you to build applications that can be easily scaled and distributed.
 
 ## **What is Jac and Why It Exists**
+
 ---
 Jac was created to better handle the interconnected, graph-like data structures found in many modern applications, such as social networks, knowledge graphs, and AI workflows. While traditional programming languages treat relationships as secondary concerns, Jac makes them first-class citizens.
 
@@ -15,7 +16,6 @@ Jac was created to better handle the interconnected, graph-like data structures 
 In many programming languages, you can model relationships using structures like functions, classes, or pointers.
 
 Let's look at how you might build a simple social network in Python. First, you would define a `Person` class. This class might include a list of other `Person` objects to represent friendships.
-
 
 ```python
 class Person:
@@ -27,6 +27,7 @@ class Person:
         self.friends.append(friend)
         friend.friends.append(self)
 ```
+
 <br/>
 
 Since a friendship is a two-way connection, you need to make sure that when one person adds a friend, the new friend is also updated. This requires extra logic in your code.
@@ -43,6 +44,7 @@ bob.add_friend(alice)  # This is redundant but necessary in Python
 bob.add_friend(charlie)
 charlie.add_friend(bob)  # Again, redundant but necessary
 ```
+
 <br/>
 
 ### **Modelling Relationships Naturally**
@@ -51,7 +53,6 @@ Now, let's see how you can define the same relationships in Jac.
 
 First, we will define a `Person` node and a `FriendsWith` edge. In Jac, nodes are like objects that hold data. The edge defines the type of relationship between two nodes.
 
-
 ```jac
 node Person {
     has name: str;
@@ -59,10 +60,10 @@ node Person {
 
 edge FriendsWith;
 ```
+
 <br/>
 
 In the code above, we define a `Person` node with a `name` attribute and a `FriendsWith` edge. Now, you can create people and establish friendships between them in a much more natural way.
-
 
 ```jac
 # Create people
@@ -74,12 +75,13 @@ charlie = root ++> Person(name="Charlie");
 alice <+:FriendsWith:+> bob;
 bob <+:FriendsWith:+> charlie;
 ```
+
 <br/>
 
 The line alice `<+:FriendsWith:+> bob;` creates a `FriendsWith` relationship, which is a typed connection between the two nodes. This is one of Jac's core features.
 
-
 ## **Object-Spatial Programming Paradigm Overview**
+
 ---
 Object-Spatial Programming (OSP) is built on three fundamental concepts:
 
@@ -121,6 +123,7 @@ with entry {
     print(f"User {user[0].username} created post: {post[0].title}");
 }
 ```
+
 <br/>
 
 ### **Edges: First-Class Relationships**
@@ -158,8 +161,8 @@ with entry {
     }
 }
 ```
-<br/>
 
+<br/>
 
 ### **Walkers: Mobile Computation**
 
@@ -201,18 +204,20 @@ with entry {
     alice[0] spawn GreetFriends();
 }
 ```
+
 <br/>
 
 To make the walker visit a person's friends, we use the `visit` statement. It tells the walker to travel across any outgoing FriendsWith edges.
 
 ## Scale-Agnostic Programming Concept
+
 ---
 One of the key benefits of Jac is that you can write your code once and have it work for a single user or for millions of users. Your code can run on a single computer or on a large, distributed system without any changes.
-
 
 > The same Jac code works whether you have 1 user or 1 million users, running on a single machine or distributed across the globe.
 
 ### **Automatic Persistence**
+
 Jac automatically saves any data that is connected to the graph's root node. This means you don't have to worry about setting up or managing a database. You can focus on what your application does, not on how it stores data.
 
 Here is an example of a simple counter. When you run this on a Jac server, the count will be saved automatically.
@@ -241,6 +246,7 @@ with entry {
     counter[0].increment();
 }
 ```
+
 <br/>
 
 To see the automatic persistence for yourself, you can run the counter code on a Jac server. The server turns your Jac program into an API, and it handles saving the data in your graph between runs.
@@ -294,11 +300,13 @@ with entry {
     GetProfile() spawn root;
 }
 ```
+
 <br/>
 
 In a live application, one user might call `CreateProfile` to set up their information. When another user calls `GetProfile`, they will only see their own profile, not anyone else's.
 
 ## Comparison with Python and Traditional Languages
+
 ---
 
 If you have experience with Python, you'll find Jac's syntax easy to learn. Core programming concepts like variables, functions, and control flow work in a very similar way.
@@ -331,9 +339,9 @@ with entry {
     }
 }
 ```
+
 This familiar foundation makes it easier for you to get started and begin building with Jac's unique features like nodes, edges, and walkers.
 <br/>
-
 
 ### Key Differences
 
@@ -347,11 +355,13 @@ This familiar foundation makes it easier for you to get started and begin buildi
 | **Type System** | Optional hints | Mandatory annotations |
 
 ## Simple Friend Network Example
+
 ---
 
-Let's walk through building a complete friend network from scratch. This will show you how Jac's core concepts—nodes, edges, and walkers—work together in a practical example.
+Let's walk through building a complete friend network from scratch. This will show you how Jac's core concepts(nodes, edges, and walkers) work together in a practical example.
 
 ### Step 1: Define Your Nodes and Edges
+
 First, we need to define the structure of our data. We'll create a `Person` node to hold information about each individual and a `FriendsWith` edge to represent their relationships.
 
 ```jac
@@ -366,6 +376,7 @@ edge FriendsWith {
     has closeness: int;  # 1-10 scale
 }
 ```
+
 <br/>
 
 ### Step 2: Create the People and Their Connections
@@ -397,6 +408,7 @@ alice +>:FriendsWith(since="2020-01-15", closeness=8):+> bob;
 alice +>:FriendsWith(since="2021-06-10", closeness=9):+> charlie;
 bob +>:FriendsWith(since="2020-12-03", closeness=7):+> charlie;
 ```
+
 <br/>
 
 ### Step 3: Create a Walker to Find Common Interests
@@ -433,12 +445,13 @@ walker FindCommonInterests {
     }
 }
 ```
+
 <br/>
 
 To use this walker, we'll give it a `target_person` (like Alice) and then "spawn" it on her friends' nodes. As the walker visits each friend, its `find_common ability` will trigger, comparing interests and printing the results.
 
-
 ### Step 4: Bring It All Together
+
 Finally, let's update our `with entry` block to use the walker and analyze the network we created. We'll start by finding all of Alice's friends and then send our walker to visit them.
 
 <div class="code-block">
@@ -521,6 +534,7 @@ with entry {
     close_friendships = [root-->->:FriendsWith:closeness >= 8:->];
     print(f"Close friendships ({len(close_friendships)} found):");
 }
+
 ```
 </div>
 

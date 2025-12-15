@@ -5,6 +5,7 @@ The `jac serve` command turns your Jac programs into authenticated REST APIs aut
 ## Overview
 
 When you run `jac serve`, it:
+
 1. Executes your target Jac module
 2. Converts all functions into REST API endpoints with introspected signatures
 3. Converts all walkers into REST APIs where:
@@ -31,17 +32,21 @@ jac serve myprogram.jac --session myapp.session
 ### Public Endpoints (No Authentication Required)
 
 #### GET /
+
 Returns API information and available endpoints.
 
 **Example:**
+
 ```bash
 curl http://localhost:8000/
 ```
 
-#### POST /user/create
+#### POST /user/register
+
 Create a new user account. Each user gets their own persistent root node.
 
 **Request Body:**
+
 ```json
 {
   "username": "alice",
@@ -50,6 +55,7 @@ Create a new user account. Each user gets their own persistent root node.
 ```
 
 **Response:**
+
 ```json
 {
   "username": "alice",
@@ -59,16 +65,19 @@ Create a new user account. Each user gets their own persistent root node.
 ```
 
 **Example:**
+
 ```bash
-curl -X POST http://localhost:8000/user/create \
+curl -X POST http://localhost:8000/user/register \
   -H "Content-Type: application/json" \
   -d '{"username": "alice", "password": "secret123"}'
 ```
 
 #### POST /user/login
+
 Authenticate and receive a token.
 
 **Request Body:**
+
 ```json
 {
   "username": "alice",
@@ -77,6 +86,7 @@ Authenticate and receive a token.
 ```
 
 **Response:**
+
 ```json
 {
   "username": "alice",
@@ -86,6 +96,7 @@ Authenticate and receive a token.
 ```
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:8000/user/login \
   -H "Content-Type: application/json" \
@@ -101,15 +112,18 @@ Authorization: Bearer YOUR_TOKEN_HERE
 ```
 
 #### GET /functions
+
 List all available functions in the module.
 
 **Example:**
+
 ```bash
 curl http://localhost:8000/functions \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Response:**
+
 ```json
 {
   "functions": ["add_numbers", "greet", "calculate_stats"]
@@ -117,15 +131,18 @@ curl http://localhost:8000/functions \
 ```
 
 #### GET /function/<name>
+
 Get the signature and parameter information for a specific function.
 
 **Example:**
+
 ```bash
 curl http://localhost:8000/function/add_numbers \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Response:**
+
 ```json
 {
   "name": "add_numbers",
@@ -148,9 +165,11 @@ curl http://localhost:8000/function/add_numbers \
 ```
 
 #### POST /function/<name>
+
 Call a function with the provided arguments.
 
 **Request Body:**
+
 ```json
 {
   "args": {
@@ -161,6 +180,7 @@ Call a function with the provided arguments.
 ```
 
 **Response:**
+
 ```json
 {
   "result": 15,
@@ -169,6 +189,7 @@ Call a function with the provided arguments.
 ```
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:8000/function/add_numbers \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -177,15 +198,18 @@ curl -X POST http://localhost:8000/function/add_numbers \
 ```
 
 #### GET /walkers
+
 List all available walkers in the module.
 
 **Example:**
+
 ```bash
 curl http://localhost:8000/walkers \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Response:**
+
 ```json
 {
   "walkers": ["CreateTask", "ListTasks", "CompleteTask"]
@@ -193,15 +217,18 @@ curl http://localhost:8000/walkers \
 ```
 
 #### GET /walker/<name>
+
 Get the field information for a specific walker.
 
 **Example:**
+
 ```bash
 curl http://localhost:8000/walker/CreateTask \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Response:**
+
 ```json
 {
   "name": "CreateTask",
@@ -228,9 +255,11 @@ curl http://localhost:8000/walker/CreateTask \
 ```
 
 #### POST /walker/<name>
+
 Spawn a walker with the provided fields.
 
 **Request Body:**
+
 ```json
 {
   "fields": {
@@ -242,6 +271,7 @@ Spawn a walker with the provided fields.
 ```
 
 **Response:**
+
 ```json
 {
   "result": "Walker executed successfully",
@@ -250,6 +280,7 @@ Spawn a walker with the provided fields.
 ```
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:8000/walker/CreateTask \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -262,13 +293,15 @@ curl -X POST http://localhost:8000/walker/CreateTask \
 Here's a complete example using the `example_api.jac` file:
 
 ### 1. Start the server
+
 ```bash
 jac serve example_api.jac
 ```
 
 ### 2. Create a user
+
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:8000/user/create \
+TOKEN=$(curl -s -X POST http://localhost:8000/user/register \
   -H "Content-Type: application/json" \
   -d '{"username": "alice", "password": "secret123"}' \
   | jq -r '.token')
@@ -277,6 +310,7 @@ echo "Token: $TOKEN"
 ```
 
 ### 3. Call a function
+
 ```bash
 curl -X POST http://localhost:8000/function/add_numbers \
   -H "Authorization: Bearer $TOKEN" \
@@ -285,6 +319,7 @@ curl -X POST http://localhost:8000/function/add_numbers \
 ```
 
 ### 4. Create tasks using walkers
+
 ```bash
 # Create first task
 curl -X POST http://localhost:8000/walker/CreateTask \
@@ -300,6 +335,7 @@ curl -X POST http://localhost:8000/walker/CreateTask \
 ```
 
 ### 5. List all tasks
+
 ```bash
 curl -X POST http://localhost:8000/walker/ListTasks \
   -H "Authorization: Bearer $TOKEN" \
@@ -308,6 +344,7 @@ curl -X POST http://localhost:8000/walker/ListTasks \
 ```
 
 ### 6. Complete a task
+
 ```bash
 curl -X POST http://localhost:8000/walker/CompleteTask \
   -H "Authorization: Bearer $TOKEN" \

@@ -57,7 +57,6 @@ We may imagine a graph like the following below
 
 ![Diagram showing how people point to emails (sender) and emails point to people (recipients)](assets/EmailBuddy-osp_diagram.png)
 
-
 #### How EmailBuddy sets up the Object-Spatial graph
 
 Now that we have a high-level understanding how to represent these Email/People node interactions, how can we actually implement this?
@@ -85,7 +84,6 @@ EmailBuddy handles email uploads by allowing users to upload a json file in the 
 
 These json files are parsed in Jac and are used to create our nodes. We handle node creation by treating our 2 node types (Person & Email) as 3 (Sender, Recipients, & Email).
 
-
 For each email uploaded, EmailBuddy:
 
 - Extract sender and recipient addresses
@@ -93,7 +91,6 @@ For each email uploaded, EmailBuddy:
 - Create or skip Email node based on UUID matching
 - Connect all Person and Email nodes to the root
 - Create directed edges: person → email, and email → recipients
-
 
 We must connect ALL nodes (Email and Person) to the root node so we can access them later.
 
@@ -103,7 +100,6 @@ We must connect ALL nodes (Email and Person) to the root node so we can access t
     This design ensures that no nodes get "lost" since all nodes are directly or indirectly connected to the root node, making them accessible to the program. This persistent organization facilitates data traversal and manipulation across the graph.
 
     This is particularly useful for us since every node is connected to root, we can always find any email, even if we don't know who sent it or who received it.
-
 
 Now that we have all the nodes created (and connected to root) our graph will likely look something like this:
 
@@ -125,7 +121,6 @@ for node in recipientNodes{
 ```
 
 With these steps we will have a connected graph representation of our emails for us to traverse.
-
 
 #### How EmailBuddy uses the graph
 
@@ -160,7 +155,6 @@ Each helper walker starts at a node (usually the root node) and explores outward
  spawn walker here
 ```
 
-
 Here's an example: a walker that starts at root and searches the graph for a Person whose email matches the target.
 
 ```Jac
@@ -188,7 +182,6 @@ walker FindSenderNode {
     - `disengage`: Stops the walker immediately so it doesn't keep searching.
     - `visit [-->]`: Tells the walker to explore all nodes reachable from this one along outgoing edges.
 
-
 This walkers goal is to find a specific Person node and return the value. The walker will search through ALL people nodes connected to root until it finds its target or runs out of People to search. If the walker does not find a matching Person node, self.person stays None.
 
 When the FindSenderNode walker is initialized, the walker is passed a target email address as a member variable to find a Person node attached to it.
@@ -198,7 +191,6 @@ FindSend = FindSenderNode(target=sender_email);
 ```
 
 Once the walker is initialized, it behaves just like any other object in OOP: it has member variables and functions you can access. It doesn't actually do anything until we spawn it. Spawning a walker means placing it on a starting node in the graph and letting it run until it reaches its stopping condition. While the walker is active, it can move between nodes and perform actions, such as creating new nodes or modifying existing ones.
-
 
 We can spawn the walker on root by doing the following command.
 
@@ -211,9 +203,10 @@ Once the walker terminates, we can extract the node as follows.
 ```Jac
 sender: Person = FindSend.person;
 ```
+
 If no matching Person is found, the walker finishes naturally and FindSend.person will still be None.
 
-EmailBuddy has two other helper walkers (FindEmailNode and FindRecipientNodes) that follow a very similar pattern, however the main traversal/query walker (ask_email) works differently. To learn more read about this last walker continue reading about [AI Agents](#ai-agents).
+EmailBuddy has two other helper walkers (FindEmailNode and FindRecipientNodes) that follow a very similar pattern, however the main traversal/query walker (ask_email) works differently. To learn more read about this last walker continue reading about [AI Agents](#how-emailbuddy-uses-ai-agents).
 
 #### Common OSP pitfalls
 
@@ -306,6 +299,7 @@ To begin, we define a custom output type that the LLM will use when returning a 
 Next, we attach semantic strings ("semstrings") to the `Response` type and each of its fields. These short descriptors provide the LLM additional context about the meaning and expectations behind each variable. In other words, semstrings give the LLM 'developer hints' about your code. Instead of writing a giant, complex prompt trying to explain what Response.option is, we just add a 'semantic string'. For the above snippet `sem Response.option = "A control token defining action..."`, it is telling the LLM "Hey, this option variable isn't just text, but a command." This simple hint makes the LLM much more accurate and the code much cleaner.
 
 Finally, we declare the function itself. The signature includes:
+
 - A short docstring describing the function's purpose
 - Input and output type definitions
 - The by llm modifier, telling Jac that this function is backed by an LLM rather than a traditional implementation.
@@ -314,7 +308,6 @@ With these three pieces in place, Jac handles everything under the hood, from bu
 
 !!! note
     Unlike traditional prompt engineering, the docstring here does not need to carry the full cognitive load. Because byllm includes context from variable names, type signatures, and semstrings, the docstring should stay concise. Short guidance performs better than long paragraphs of instruction.
-
 
 **Runtime byllm**
 
@@ -371,7 +364,7 @@ Scaling happens in two natural steps:
 
 1. **Run locally with jac serve**: This turns your Jac program into a live HTTP API at localhost:8000.
 
-2. **Deploy to the cloud using the same code**: Because the app is already an API server, deploying it simply moves it from local mode to a scalable cloud environment—where load balancing and autoscaling can support thousands or millions of users.
+2. **Deploy to the cloud using the same code**: Because the app is already an API server, deploying it simply moves it from local mode to a scalable cloud environment, allowing load balancing and autoscaling to support thousands or millions of users.
 
 #### Calling EmailBuddy Walkers via API
 

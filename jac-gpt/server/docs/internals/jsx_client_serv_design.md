@@ -5,6 +5,7 @@
 This document describes how Jac's `cl` (client) keyword produces browser-ready web experiences. Client-marked declarations compile to JavaScript and ship through `jac serve` as static bundles that execute entirely in the browser. The current implementation is **CSR-only** (Client-Side Rendering): the server returns an empty HTML shell with bootstrapping metadata and a JavaScript bundle that handles all rendering in the browser.
 
 **Key Features:**
+
 - **JSX Support**: Full JSX syntax for declarative UI components
 - **Reactive State Management**: Signal-based reactivity with automatic dependency tracking (no virtual DOM)
 - **Client-Side Routing**: Hash-based routing with declarative route configuration
@@ -73,10 +74,12 @@ graph TD
 ### 1. The `cl` (Client) Keyword
 
 The `cl` keyword marks Jac declarations for **client-side compilation**. This enables a single `.jac` file to contain both:
+
 - **Server-side code** (compiled to Python via `pyast_gen_pass`)
 - **Client-side code** (compiled to JavaScript via `esast_gen_pass`)
 
 When `cl` is present:
+
 - Node is marked with `is_client_decl = True`
 - Python codegen is skipped for the declaration (via `_should_skip_client()` in [pyast_gen_pass.py:310-312](../jaclang/compiler/passes/main/pyast_gen_pass.py#L310-L312))
 - JavaScript codegen generates ECMAScript AST (in [esast_gen_pass.py](../jaclang/compiler/passes/ecmascript/esast_gen_pass.py))
@@ -168,6 +171,7 @@ When processing client imports ([esast_gen_pass.py:317-325](../jaclang/compiler/
    - The import is marked with `is_client_decl = True`
 
 2. **ESTree generation** creates JavaScript import declaration:
+
    ```javascript
    import { renderJsxTree, jacLogin } from "jac:client_runtime";
    ```
@@ -248,6 +252,7 @@ cl def render_example() {
 #### JSX Transpilation
 
 JSX elements compile to function calls:
+
 - `<div>Hello</div>` → `__jacJsx("div", {}, ["Hello"])`
 - `<Button {...props} />` → `__jacJsx(Button, Object.assign({}, props), [])`
 - Tag names starting with lowercase become string literals
@@ -263,6 +268,7 @@ Jac includes a built-in reactive state management system inspired by modern fram
 The reactive system is based on **signals** - reactive containers for values that automatically track their dependencies and notify subscribers when values change.
 
 **Global Reactive Context** ([client_runtime.jac:79-87](../jaclang/runtimelib/client_runtime.jac#L79-L87)):
+
 ```javascript
 __jacReactiveContext = {
     signals: [],              // Global signal storage
@@ -280,6 +286,7 @@ __jacReactiveContext = {
 Creates a reactive signal for primitive values. Returns a `[getter, setter]` tuple.
 
 **Syntax** ([client_runtime.jac:92-110](../jaclang/runtimelib/client_runtime.jac#L92-L110)):
+
 ```jac
 cl import from jac:client_runtime { createSignal }
 
@@ -298,6 +305,7 @@ cl def Counter() {
 ```
 
 **How it works:**
+
 1. Each signal stores its value and a list of subscribers
 2. When `count()` is called (getter), it automatically tracks which component/effect is reading it
 3. When `setCount(newValue)` is called, it notifies all subscribers
@@ -309,6 +317,7 @@ cl def Counter() {
 Creates a reactive state object with shallow merge semantics. Ideal for managing component state with multiple properties.
 
 **Syntax** ([client_runtime.jac:114-139](../jaclang/runtimelib/client_runtime.jac#L114-L139)):
+
 ```jac
 cl import from jac:client_runtime { createState }
 
@@ -333,6 +342,7 @@ cl def TodoList() {
 ```
 
 **Difference from createSignal:**
+
 - `setState(updates)` performs shallow merge: `newState = {...oldState, ...updates}`
 - Useful for managing multiple related properties
 - Still tracks dependencies automatically
@@ -342,6 +352,7 @@ cl def TodoList() {
 Runs a function whenever its reactive dependencies change. Automatically re-executes when any accessed signal/state updates.
 
 **Syntax** ([client_runtime.jac:143-174](../jaclang/runtimelib/client_runtime.jac#L143-L174)):
+
 ```jac
 cl import from jac:client_runtime { createSignal, createEffect }
 
@@ -364,6 +375,7 @@ cl def DataFetcher() {
 ```
 
 **How it works:**
+
 1. Effect function executes immediately on creation
 2. Any signals/state accessed during execution are automatically tracked
 3. When tracked dependencies change, effect re-runs
@@ -389,6 +401,7 @@ Jac includes a declarative routing system built on reactive signals. Routes are 
 Creates a router instance with reactive path tracking using URL hash.
 
 **Syntax** ([client_runtime.jac:283-345](../jaclang/runtimelib/client_runtime.jac#L283-L345)):
+
 ```jac
 cl import from jac:client_runtime { createRouter, Route }
 
@@ -413,6 +426,7 @@ cl def App() {
 ```
 
 **Router API:**
+
 - `router.path()` - Getter for current path (reactive)
 - `router.render()` - Renders component for current route
 - `router.navigate(path)` - Programmatically navigate to path
@@ -441,6 +455,7 @@ Renders navigation links that update the router without full page reload ([clien
 ```
 
 **Features:**
+
 - Automatically prefixes href with `#` for hash routing
 - Prevents default link behavior
 - Calls `navigate()` to update router state
@@ -515,6 +530,7 @@ The bundle generated by `ClientBundleBuilder` contains (in order):
 
 1. **Polyfills** - Browser compatibility shims (from [client_runtime.jac:227-253](../jaclang/runtimelib/client_runtime.jac#L227-L253)):
    The `__jacEnsureObjectGetPolyfill()` function adds a Python-style `.get()` method to `Object.prototype`:
+
    ```javascript
    Object.prototype.get = function(key, defaultValue) {
        if (this.hasOwnProperty(key)) {
@@ -523,6 +539,7 @@ The bundle generated by `ClientBundleBuilder` contains (in order):
        return defaultValue !== undefined ? defaultValue : null;
    };
    ```
+
    This polyfill is called automatically during module registration and hydration.
 
 2. **Client Runtime** - Compiled from [client_runtime.jac](../jaclang/runtimelib/client_runtime.jac):
@@ -536,6 +553,7 @@ The bundle generated by `ClientBundleBuilder` contains (in order):
 3. **Application Module** - Transpiled user code with `cl` declarations
 
 4. **Registration Code** - Generated by [client_bundle.py:245-251](../jaclang/runtimelib/client_bundle.py#L245-L251):
+
    ```javascript
    __jacRegisterClientModule("module_name", ["homepage", "other_func"], {"API_URL": "value"});
    ```
@@ -576,6 +594,7 @@ When `GET /page/homepage?arg1=value1` is requested:
 6. **Render HTML** - Return shell with embedded payload and script tag
 
 HTML template (from [server.py:491-504](../jaclang/runtimelib/server.py#L491-L504)):
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -649,6 +668,7 @@ The `renderJsxTree` function ([client_runtime.jac:8-10](../jaclang/runtimelib/cl
 5. **Return DOM node** → Attach to container via `container.replaceChildren(domNode)`
 
 Event handlers are bound in `__applyProp` ([client_runtime.jac:57-72](../jaclang/runtimelib/client_runtime.jac#L57-L72)):
+
 - Props starting with `on` (e.g., `onclick`, `onsubmit`) become `addEventListener(eventName, handler)`
   - Event name is extracted by removing `on` prefix and converting to lowercase
 - `class` and `className` both set `element.className`
@@ -797,6 +817,7 @@ cl def littlex_app() {
 ```
 
 **Key Features Demonstrated:**
+
 - Reactive signals (`createSignal`) for simple counters
 - Reactive state (`createState`) for complex component state
 - Client-side routing without page reloads

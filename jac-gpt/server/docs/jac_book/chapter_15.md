@@ -486,7 +486,7 @@ Webhooks enable your Jac applications to receive real-time notifications from ex
 
             # Send notification to chat
             for commit in commits {
-                message = f"🔨 New commit in {repo_name}: {commit.get('message', 'No message')}";
+                message = f" New commit in {repo_name}: {commit.get('message', 'No message')}";
                 self.send_to_chat("dev-updates", "GitBot", message);
             }
         }

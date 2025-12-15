@@ -19,11 +19,13 @@ A simple Jac-based Streamlit application for AI-powered code generation with tas
 ## Setup
 
 1. **Install dependencies:**
+
    ```bash
    pip install streamlit requests
    ```
 
 2. **Start the backend server:**
+
    ```bash
    # Navigate to the jac-byllm directory
    cd /home/udith/jaseci/jac-byllm
@@ -33,6 +35,7 @@ A simple Jac-based Streamlit application for AI-powered code generation with tas
    ```
 
 3. **Run the frontend:**
+
    ```bash
    # In a new terminal, navigate to the genius lite directory
    cd /home/udith/jaseci/jac-byllm/examples/agentic_ai/aider-genius-lite

@@ -1,16 +1,20 @@
 # Getting Started with Jac: Installation, Setup, and Your First Program
+
 ---
 The first step is setting up your development environment. We'll cover how to install Jac, configure your code editor, and write and run your first program.
-
 
 > To get started, you will need Python 3.12 or newer. While you can use any text editor, we recommend using VS Code with the official Jac extension for the best experience, as it provides helpful features like syntax highlighting and error checking.
 
 ## Installation and IDE Setup
+
 ---
+
 ### Requirements
+
 - Python 3.12 or higher
 
 ### Installing Jac
+
 We recommend installing Jac in a virtual environment to keep your project's dependencies separate from your system's Python packages.
 
 #### Via Virtual Environment (Recommended)
@@ -27,8 +31,8 @@ $ python -m venv jac-env
 $ source jac-env/bin/activate
 ```
 
-
 **Windows**
+
 ```powershell
 # Create virtual environment
 python -m venv jac-env
@@ -46,14 +50,14 @@ $ pip install jaclang
 # Verify installation
 $ jac --version
 ```
+
 <br />
 
-
 ### VS Code Extension
+
 For the best development experience, install the Jac VS Code extension:
 
 **For VS Code users:**
-
 
 1. Open VS Code
 2. Go to Extensions (Ctrl+Shift+X)
@@ -80,7 +84,9 @@ The extension provides:
 - Visualizations of your graph data structures.
 
 ### Basic CLI Commands
+
 Jac provides a simple command-line interface (CLI) for running scripts and managing projects. This cli provides developers the ability to either run scripts locally for testing or [even serve them as web applications](../chapter_12). Here are the most common commands:
+
 ```bash
 # Run a Jac file
 $ jac filename.jac
@@ -91,11 +97,14 @@ $ jac --help
 # Serve as web application (advanced)
 $ jac serve filename.jac
 ```
+
 <br />
 
 ## Hello World in Jac
+
 ---
 Let's write and run your first Jac program.
+
 1. Create a new file named hello.jac.
 2. Add the following code to the file:
 
@@ -105,12 +114,15 @@ with entry {
     print("Hello, Jac World!");
 }
 ```
+
 <br />
 
 Run the program from your terminal.
+
 ```bash
-$ jac hello.jac
+jac hello.jac
 ```
+
 <br />
 
 You will see the following output:
@@ -120,6 +132,7 @@ You will see the following output:
 ```bash
 Hello, Jac World!
 ```
+
 <br />
 
 If you see this information, you have installed Jac successfully! You're ready to write your first program.
