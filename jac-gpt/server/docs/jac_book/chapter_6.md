@@ -137,7 +137,9 @@ The interface is defined in a `.jac` file, while the implementation is placed in
                 result = a / b
                 return round(result, self.precision)
         ```
+
 ### Namespace Injection
+
 !!! topic "Namespace Injection"
     Jac provides several mechanisms to manage namespaces clearly and effectively:
 
@@ -170,6 +172,7 @@ The interface is defined in a `.jac` file, while the implementation is placed in
     ```
 
 ### Jac Import Internals
+
 !!! topic "Import Resolution Workflow"
     Jac resolves imports using a structured process:
 
@@ -663,7 +666,7 @@ The interface is defined in a `.jac` file, while the implementation is placed in
 !!! example "Recommended Project Structure"
     === "Jac Project Structure"
         ```
-        my_jac_project/
+my_jac_project/
         ├── main.jac                 # Main entry point
         ├── app.jac                  # Application logic
         ├── app.test.jac             # App tests
@@ -683,7 +686,7 @@ The interface is defined in a `.jac` file, while the implementation is placed in
         ```
     === "Python Project Structure"
         ```
-        my_python_project/
+my_python_project/
         ├── main.py                  # Main entry point
         ├── app.py                   # Application logic
         ├── config_reader.py         # Config management

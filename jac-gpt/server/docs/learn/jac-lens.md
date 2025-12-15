@@ -29,7 +29,6 @@
 }
 </style>
 
-
 Jac Lens is a powerful Progressive Web App (PWA) that provides an intuitive visual interface for exploring and managing your Jac graph data. It allows you to connect to your Jac server, navigate through node relationships, and modify node properties in real-time.
 
 ## Quick Start
@@ -42,7 +41,7 @@ Jac Lens is a powerful Progressive Web App (PWA) that provides an intuitive visu
 
 <div class="grid cards single-column" markdown>
 
--   __Install as PWA__
+- **Install as PWA**
 
     ---
 
@@ -50,7 +49,7 @@ Jac Lens is a powerful Progressive Web App (PWA) that provides an intuitive visu
 
     ![PWA Installation](./assets/jac-lens/jac-lens-download.gif)
 
--   __Connect to Server__
+- **Connect to Server**
 
     ---
 
@@ -58,7 +57,7 @@ Jac Lens is a powerful Progressive Web App (PWA) that provides an intuitive visu
 
     ![Server Connection](./assets/jac-lens/jac-lens-create-session.gif)
 
--   __Explore Graph__
+- **Explore Graph**
 
     ---
 
@@ -66,7 +65,7 @@ Jac Lens is a powerful Progressive Web App (PWA) that provides an intuitive visu
 
     ![Graph Exploration](./assets/jac-lens/jac-lens-explore-graphs.gif)
 
--   __Update Graph__
+- **Update Graph**
 
     ---
 
@@ -146,7 +145,7 @@ Connect to your Jac server by providing:
 
 ??? example "Example Connection"
     ```
-    Host URL: https://my-jac-server.com
+Host URL: https://my-jac-server.com
     Email: user@example.com
     Password: ********
     ```
@@ -181,7 +180,7 @@ Jac Lens automatically manages your sessions:
 
 <div class="grid cards" markdown>
 
--   __Real-time Updates__
+- **Real-time Updates**
 
     ---
 
@@ -189,7 +188,7 @@ Jac Lens automatically manages your sessions:
 
     Changes made in Jac Lens are immediately reflected in your Jac server
 
--   __Graph Visualization__
+- **Graph Visualization**
 
     ---
 
@@ -197,7 +196,7 @@ Jac Lens automatically manages your sessions:
 
     Interactive graph view with zoom, pan, and node selection
 
--   __Property Editing__
+- **Property Editing**
 
     ---
 
@@ -205,7 +204,7 @@ Jac Lens automatically manages your sessions:
 
     In-place editing of node properties and metadata
 
--   __Search & Filter__
+- **Search & Filter**
 
     ---
 
@@ -224,7 +223,6 @@ Jac Lens automatically manages your sessions:
     - Ensure your credentials are valid
     - Host url doesn't have trailing slash
     - Check that your server is running and accessible
-
 
 ??? failure "Graph Not Loading"
     - Confirm you have the required walkers installed

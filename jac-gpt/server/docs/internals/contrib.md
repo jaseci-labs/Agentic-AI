@@ -15,8 +15,8 @@ After forking, clone your fork and set up the upstream remote:
 ```bash
 # Clone your fork (replace YOUR_USERNAME with your GitHub username)
 git clone https://github.com/YOUR_USERNAME/jaseci.git
-git submodule update --init --recursive # Pulls in typeshed
 cd jaseci
+git submodule update --init --recursive # Pulls in typeshed
 
 # Add the original repository as upstream (may already exist)
 git remote add upstream https://github.com/jaseci-labs/jaseci.git
@@ -33,23 +33,27 @@ git remote -v
 **Pushing Your First PR**
 
 1. **Create a new branch** for your changes:
+
    ```bash
    git checkout -b your-feature-branch
    ```
 
 2. **Make your changes** and commit them:
+
    ```bash
    git add .
    git commit -m "Description of your changes"
    ```
 
 3. **Keep your fork synced** with upstream:
+
    ```bash
    git fetch upstream
    git merge upstream/main
    ```
 
 4. **Push to your fork**:
+
    ```bash
    git push origin your-feature-branch
    ```
@@ -66,10 +70,10 @@ git remote -v
     - Keep your PR focused on a single feature or fix
     - Write clear commit messages and PR descriptions
 
-
 ## General Setup and Information
 
 To get setup run
+
 ```bash
 # Install black
 python3 -m venv ~/.jacenv/
@@ -105,23 +109,21 @@ This is how we run the docs.
 --8<-- "scripts/run_docs.sh"
 ```
 
-
 ## Build VSCode Extention
 
 ```bash
 --8<-- "scripts/build_vsce.sh"
 ```
 
-
 ## Release Flow (for the empowered)
 
-* Version bump jac, jac-cloud, byllm
-  * Remember to version bump requirement of jaclang in jac-cloud and byllm
-* Update release notes (unreleased becomes released)
-* Push to main
-* Go to GitHub, run `Release jaclang to PYPI` action manually
-* After success
-  * Run `Release jac-cloud to PYPI` action manually
-  * Run `Release jac-byllm to PYPI` action manually
-  * Run `RElease jac-mtllm to PYPI` action manually, for deprecated library
-* If All success, W for you!!
+- Version bump jac, jac-cloud, byllm
+  - Remember to version bump requirement of jaclang in jac-cloud and byllm
+- Update release notes (unreleased becomes released)
+- Push to main
+- Go to GitHub, run `Release jaclang to PYPI` action manually
+- After success
+  - Run `Release jac-cloud to PYPI` action manually
+  - Run `Release jac-byllm to PYPI` action manually
+  - Run `RElease jac-mtllm to PYPI` action manually, for deprecated library
+- If All success, W for you!!

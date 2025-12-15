@@ -80,10 +80,10 @@ OSP provides a **declarative way to express agent interactions** without writing
 The following walkthrough shows how the Task Manager example is implemented (source: `jac-byllm/examples/agentic_ai/task-manager-lite/task_manager.jac`). The goal is to map Jac constructs to the Agentic AI architecture described above.
 
 Each agent node in this example demonstrates a key pattern:
+
 - **Local tools** as member methods that the LLM can invoke
 - **LLM-powered decision-making** via the `by llm()` annotation
 - **Entry points** (abilities with `can execute`) that trigger when a walker visits the node
-
 
 **Task Node** (`node Task`)
 
@@ -105,13 +105,13 @@ This is the first agent in our system. It demonstrates how to build a **speciali
 
 The node exposes the following tools (member methods) that the LLM can invoke:
 
-- `get_current_time()` — Returns a formatted timestamp (utility function for planning)
-- `add_task(task, date, time)` — Creates a Task node and links it to the handler (state modification)
-- `summarize_tasks()` — Queries linked task nodes and returns a summary (knowledge retrieval)
+- `get_current_time()`: Returns a formatted timestamp (utility function for planning)
+- `add_task(task, date, time)`: Creates a Task node and links it to the handler (state modification)
+- `summarize_tasks()`: Queries linked task nodes and returns a summary (knowledge retrieval)
 
 The key LLM-powered method:
 
-- `route_and_run(utterance)` — Uses `by llm(method="ReAct", tools=(...))` to enable the LLM to reason and plan. Given a user utterance, the LLM can chain tool calls to accomplish the goal (e.g., get current time → add task → summarize tasks).
+- `route_and_run(utterance)`: Uses `by llm(method="ReAct", tools=(...))` to enable the LLM to reason and plan. Given a user utterance, the LLM can chain tool calls to accomplish the goal (e.g., get current time → add task → summarize tasks).
 
 The agent's entry point is the `can execute with task_manager entry` ability. This = ability triggers **automatically** when the `task_manager` walker visits this node, making it easy to define agent behavior without explicit callbacks.
 
@@ -198,7 +198,7 @@ node GeneralChat {
 
 ## Defining the Orchestrator as a Walker
 
-The `walker task_manager` is the orchestrator—the "brain" of the agentic system. Unlike agents (nodes) which are passive and reactive, the orchestrator is **active** and **proactive**. It:
+The `walker task_manager` is the orchestrator: the "brain" of the agentic system. Unlike agents (nodes) which are passive and reactive, the orchestrator is **active** and **proactive**. It:
 
 1. Receives the user's high-level goal (utterance)
 2. Plans decomposition into subtasks using the LLM
@@ -284,7 +284,7 @@ walker task_manager {
 5. Each agent processes its subtask using its own tools and LLM reasoning
 6. The walker reports results via `report` statements, creating a log of the entire execution
 
-This is **declarative multi-agent orchestration**—you define what you want to happen (agents, their tools, routing), and Jac + byLLM handle the execution flow.
+This is **declarative multi-agent orchestration**. You define what you want to happen (agents, their tools, routing), and Jac + byLLM handle the execution flow.
 
 ## Adding Context with Semstrings
 
@@ -293,6 +293,7 @@ To help the LLM make better decisions, especially during routing, you can annota
 **Why Semstrings Matter:**
 
 When the LLM calls `plan_tasks()` or needs to route tasks, it receives the enum definition. Without semstrings, it only sees:
+
 ```
 RoutingNodes.TASK_HANDLING
 RoutingNodes.EMAIL_HANDLING
@@ -312,7 +313,7 @@ Now when the LLM decomposes a request like "Schedule a meeting and send a follow
 **Best Practices:**
 
 - Write semstrings that clearly describe **what** the agent does and **when** to use it
-- Avoid generic descriptions—be specific about capabilities and use cases
+- Avoid generic descriptions, be specific about capabilities and use cases
 - Include examples if the purpose might be ambiguous
 - For objects, annotate key fields to help the LLM understand the data structure
 

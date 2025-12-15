@@ -48,7 +48,7 @@ Create the plugin implementation in `my_byllm_plugin/plugin.py`:
 
 from typing import Callable
 
-from jaclang.runtimelib.runtime import hookimpl
+from jaclang.pycore.runtime import hookimpl
 from byllm.llm import Model
 
 
@@ -102,11 +102,13 @@ build-backend = "setuptools.build_meta"
 ### Step 4: Install and Test Your Plugin
 
 1. Install the plugin in development mode:
+
    ```bash
    pip install -e .
    ```
 
 2. Create a test Jaclang file to verify plugin functionality:
+
    ```jaclang
    import:py from byllm, Model;
 
@@ -125,6 +127,7 @@ build-backend = "setuptools.build_meta"
    ```
 
 3. Run the test:
+
    ```bash
    jac run test.jac
    ```
@@ -140,7 +143,7 @@ import hashlib
 import json
 from typing import Callable, Any
 
-from jaclang.runtimelib.runtime import hookimpl
+from jaclang.pycore.runtime import hookimpl
 from byllm.llm import Model
 
 
@@ -187,7 +190,7 @@ class CachingbyllmRuntime:
 import time
 from typing import Callable
 
-from jaclang.runtimelib.runtime import hookimpl
+from jaclang.pycore.runtime import hookimpl
 from byllm.llm import Model
 
 
@@ -229,7 +232,7 @@ class LoggingbyllmRuntime:
 
 from typing import Callable
 
-from jaclang.runtimelib.runtime import hookimpl
+from jaclang.pycore.runtime import hookimpl
 from byllm.llm import Model
 
 
@@ -397,7 +400,7 @@ jac run your_script.jac
 Check if the plugin is loaded:
 
 ```python
-from jaclang.runtimelib.runtime import plugin_manager
+from jaclang.pycore.runtime import plugin_manager
 
 # List all registered plugins
 for plugin in plugin_manager.get_plugins():
@@ -416,6 +419,7 @@ for plugin in plugin_manager.get_plugins():
 byLLM plugins extend Jaclang's LLM capabilities through a clean, extensible plugin system. Plugins can add caching, logging, custom providers, and other functionality to enhance the LLM experience.
 
 Key considerations:
+
 - Follow the hook specification exactly
 - Test thoroughly with different scenarios
 - Document plugin functionality

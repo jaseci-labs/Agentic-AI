@@ -2,7 +2,6 @@
 
 In this chapter, we'll explore how Jac automatically transforms walkers into RESTful API endpoints with our **Jac Cloud** Plugin. Jac Cloud, is a revolutionary cloud platform that transforms your Jac programs into scalable web services without code changes. This means you can focus on building your application logic while Jac handles the HTTP details for you.
 
-
 We'll build a simple shared notebook system that demonstrates automatic API generation, request handling, and parameter validation through a practical example.
 
 !!! info "What You'll Learn"
@@ -24,8 +23,8 @@ Jac Cloud is a cloud-native execution environment designed specifically for Jac 
     - **Instant Scaling**: Scale by increasing service replicas
     - **Developer Focus**: No infrastructure management needed
 
-
 ## Quick Setup and Deployment
+
 Let's start with a minimal weather API example and gradually enhance it throughout this chapter.
 
 First, ensure you have the Jac Cloud plugin installed:
@@ -35,7 +34,6 @@ pip install jac-cloud
 ```
 
 Next, crate a simple Jac program that contains a single walker that produces weather information based on a city name. This program creates a REST API endpoint that accepts a city name and returns the weather information. The walker has a property `city` which is automatically mapped to an expected request parameter in the request body.
-
 
 !!! example "Basic Weather API"
     === "Jac Cloud"
@@ -72,8 +70,8 @@ Next, crate a simple Jac program that contains a single walker that produces wea
             app.run(debug=True)
         ```
 
-
 ### Deploying to Cloud
+
 To deploy your Jac program as a cloud service, use the `jac serve` command:
 
 ```bash
@@ -82,7 +80,7 @@ jac serve weather_service.jac
 
 !!! success "Instant Deployment"
     ```
-    INFO:     Started server process [26286]
+INFO:     Started server process [26286]
     INFO:     Waiting for application startup.
     INFO:     Application startup complete.
     INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
@@ -114,7 +112,6 @@ The response will be a JSON object containing the weather information.
     }
     ```
 
-
 !!! note "Authentication"
     - Jac Cloud provides built-in support for authentication and authorization.
     - You can define authentication requirements using the `auth` property in the `__specs__` object.
@@ -124,6 +121,7 @@ The response will be a JSON object containing the weather information.
 ---
 
 ## Going Beyond: Building a Shared Notebook API
+
 Now that we have a basic understanding of Jac Cloud and how it automatically generates APIs from walkers, let's build a more complex application: a shared notebook system.
 
 First lets develop a walker that allows users to create and retrieve notes in a notebook. This will demonstrate how Jac handles request/response mapping, parameter validation, and persistence automatically.
@@ -223,7 +221,6 @@ First lets develop a walker that allows users to create and retrieve notes in a 
             app.run(debug=True)
         ```
 
-
 Deploy your notebook API:
 
 ```bash
@@ -266,6 +263,7 @@ curl -X POST http://localhost:8000/walker/get_notes \
 ```
 
 ### Convert to GET request
+
 To convert the `get_notes` walker to a GET request, we can simply change the walker `___specs__` to indicate that it can be accessed via a GET request. This is done by setting the `methods` attribute in the `__specs__` object.
 
 ```jac

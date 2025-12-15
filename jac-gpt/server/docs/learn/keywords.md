@@ -86,7 +86,6 @@ These keywords are used exclusively to control the traversal behavior of `walker
 | [`report`](https://www.jac-lang.org/learn/jac_ref/#report-statements) | Sends a result from a walker back to its spawning context. |
 | [`with entry`](https://www.jac-lang.org/learn/jac_ref/#integration-with-entry-points) | Defines the main execution block for a module. |
 
-
 ---
 
 ## 6. Concurrency and Asynchronous Keywords
@@ -103,14 +102,11 @@ These keywords are used to manage concurrent and asynchronous operations for non
 
 ---
 
-
 ## 7. AI and Language Model Integration
 
 These keywords facilitate the integration of AI and Large Language Models (LLMs) directly into the language.
 
-
 **AI Integration**
-
 
 | Keyword | Description |
 | --- | --- |
@@ -123,7 +119,6 @@ These keywords facilitate the integration of AI and Large Language Models (LLMs)
 
 This section covers other essential keywords used for various operations.
 
-
 **Other Essential Keywords**
 
 | Keyword | Description |
@@ -132,7 +127,6 @@ This section covers other essential keywords used for various operations.
 | [`assert`](https://www.jac-lang.org/learn/jac_ref/#assert-statements) | Verifies if a condition is true, raising an error if not. |
 | [`<keyword>`](https://www.jac-lang.org/learn/jac_ref/#keyword-escaping) | Used to escape reserved keywords when you want to use them as variable or attribute names, e.g., `<>node= 90;`, `<>dict = 8;`|
 |[`test`](https://www.jac-lang.org/learn/jac_ref/#test-implementations)|Defines test cases for code validation and unit testing. |
-
 
 ---
 

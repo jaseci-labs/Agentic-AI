@@ -122,7 +122,6 @@ with entry {
 
 A more complex example using object schema for context and structured output generation is demonstrated in the [game level generation](../examples/mtp_examples/rpg_game.md) example.
 
-
 ## Context-Aware byLLM Methods
 
 Methods can be integrated with LLM capabilities to process object state and context:
@@ -262,7 +261,6 @@ obj Person {
 }
 ```
 
-
 ### When to Use Each Approach
 
 - **Docstrings**: Use for function-level context and behavior description
@@ -276,7 +274,6 @@ In this example:
 <!-- - `greet("Alice")` executes the normal function and returns `"Hello Alice"`
 - `greet("Alice") by llm()` overrides the function with LLM behavior
 - `format_data(user_data) by llm()` transforms data formatting into human-readable presentation -->
-
 
 ## Tool-Calling Agents with ReAct
 
@@ -308,7 +305,6 @@ with entry {
 ```
 
 A comprehensive tutorial on [building an agentic application is available here.](../examples/mtp_examples/fantasy_trading_game.md)
-
 
 ## Streaming Outputs
 

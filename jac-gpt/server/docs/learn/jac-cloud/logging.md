@@ -77,7 +77,7 @@ Now you can view your logs in Kibana with powerful filtering, visualization, and
 !!! warning "Port Configuration"
     If your Elastic instance is behind a load balancer with a URL that doesn't include a port, add either `:80` or `:443` to the hosts config:
     ```
-    hosts: ["https://my_elastic_instance.me.com:443"]
+hosts: ["https://my_elastic_instance.me.com:443"]
     ```
 
 ## Customizing Your Logging
@@ -160,26 +160,26 @@ grep '/walker/login' /tmp/jac_cloud_logs/jac-cloud.log |
 
 ### 1. **Use appropriate log levels**:
 
-   - `debug`: Detailed information for debugging
-   - `info`: Confirmation that things are working
-   - `warning`: Something unexpected but not critical
-   - `error`: Something failed but the application continues
-   - `critical`: Application cannot continue
+- `debug`: Detailed information for debugging
+- `info`: Confirmation that things are working
+- `warning`: Something unexpected but not critical
+- `error`: Something failed but the application continues
+- `critical`: Application cannot continue
 
 ### 2. **Be careful with sensitive data**:
 
-   - Passwords, tokens, and personal information should never be logged
-   - Jac Cloud automatically masks Authorization headers
+- Passwords, tokens, and personal information should never be logged
+- Jac Cloud automatically masks Authorization headers
 
 ### 3. **Establish log retention policies**:
 
-   - Configure `LOGGER_MAX_BACKUP` based on your needs
-   - Consider compliance requirements (GDPR, HIPAA, etc.)
+- Configure `LOGGER_MAX_BACKUP` based on your needs
+- Consider compliance requirements (GDPR, HIPAA, etc.)
 
 ### 4. **Set up alerts**:
 
-   - Configure alerts in Kibana for error spikes
-   - Monitor for unusual patterns or security issues
+- Configure alerts in Kibana for error spikes
+- Monitor for unusual patterns or security issues
 
 ## Troubleshooting Common Issues
 
@@ -188,12 +188,14 @@ grep '/walker/login' /tmp/jac_cloud_logs/jac-cloud.log |
 If logs aren't appearing:
 
 1. Check directory permissions:
+
    ```bash
    sudo mkdir -p /tmp/jac_cloud_logs
    sudo chmod 777 /tmp/jac_cloud_logs
    ```
 
 2. Verify the logger configuration:
+
    ```bash
    echo $LOGGER_FILE_PATH
    ```
@@ -203,11 +205,13 @@ If logs aren't appearing:
 If Filebeat isn't sending logs to Elasticsearch:
 
 1. Check connection:
+
    ```bash
    curl -k https://your-elastic-instance:9200
    ```
 
 2. Verify API key:
+
    ```bash
    filebeat test output
    ```
@@ -217,12 +221,14 @@ If Filebeat isn't sending logs to Elasticsearch:
 If logs are consuming too much space:
 
 1. Adjust rotation settings:
+
    ```bash
    export LOGGER_ROLLOVER_INTERVAL=D
    export LOGGER_MAX_BACKUP=7
    ```
 
 2. Manually clean old logs:
+
    ```bash
    find /tmp/jac_cloud_logs -name "*.log.*" -type f -mtime +7 -delete
    ```

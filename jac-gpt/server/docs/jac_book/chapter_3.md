@@ -1,8 +1,10 @@
 # 3. Functions, Control Flow, and Collections in Jac
+
 ---
 In this chapter, you will learn how to organize your code into reusable blocks called functions. We will also cover how to direct the flow of your program with control flow statements and how to work with groups of data using collections.
 
 ## Functions and Type Annotations
+
 ---
 
 As your programs become more complex, you'll often find yourself writing the same lines of code in multiple places. **Functions** help you solve this by letting you group a block of code together and give it a name. You can then "call" that function whenever you need to perform that specific task, making your code cleaner and easier to manage.
@@ -19,6 +21,7 @@ def add_numbers(a: int, b: int) -> int {
 ```
 
 ### Basic Calculator Program
+
 ---
 Let's put what you've learned about functions into practice by building a simple calculator. We will create four functions, one for each basic math operation: addition, subtraction, multiplication, and division.
 Each function will take two numbers (floats) as input and return the result.
@@ -54,6 +57,7 @@ with entry {
     print(f"{num1} / {num2} = {divide(num1, num2)}");
 }
 ```
+
 <br />
 
 You might have noticed that our `divide` function has a potential issue: it doesn't handle cases where the second number is zero. Trying to divide by zero will cause an error in our program.
@@ -62,6 +66,7 @@ Don't worry about this for now. We will cover how to handle potential errors gra
 <br />
 
 ## Basic Object Oriented Programming
+
 ---
 Jac is primarily an Object Spatial Language, but it also supports Object Oriented Programming (OOP) concepts. An object is a self-contained unit that combines data and behavior.
 In Jac, you can define a blueprint for an object using the `obj`  keyword. Inside this blueprint, you define the object's data (called attributes) using the `has` keyword, and its behavior (called methods) using the `def` keyword.
@@ -69,6 +74,7 @@ In Jac, you can define a blueprint for an object using the `obj`  keyword. Insid
 Let's create a Student object to see how this works. A student has data (like a name, age, and GPA) and can also perform actions (like providing their information).
 
 ### Defining an Object
+
 ```jac
 obj Student {
     has name: str;
@@ -86,16 +92,16 @@ with entry {
     print(student.get_info());
 }
 ```
+
 <br />
 
 You might be wondering, "Where is the constructor or `__init__` method?" That's a great question! Jac simplifies the process. Instead of needing a special method to initialize the object, you simply define the attributes with `has` and provide their values directly when you create a new instance of the object.
 
-
 !!! note
     If you have experience with Python, you might notice that Jac's `obj` works in a way that is similar to Python's dataclasses. They both provide a straightforward way to create objects that are primarily used to group and manage data.
 
-
 ### Enhanced Calculator with Object-Oriented Design
+
 Now, let's improve our calculator by turning it into an object. By using an `obj`, we can not only group the calculation methods together but also add a new feature: a history of all the calculations we perform. This makes our calculator more powerful and easier to use.
 We will create a Calculator object that has methods for adding and subtracting, as well as a history attribute to keep a record of each operation.
 
@@ -145,17 +151,19 @@ with entry {
     }
 }
 ```
+
 </div>
 <br />
 
 This example shows how you can use familiar Object-Oriented Programming (OOP) concepts right here in Jac. Jac is designed to work with both OOP and its own Object-Spatial features. This means you can start with what you know and then gradually incorporate Jac's unique graph-based tools, like nodes and walkers, when your project can benefit from them.
 
-
 ## Collections and Data Structures
+
 ---
 Since Jac is a super-set of Python, it supports the same collection types: lists, dictionaries, sets, and tuples. However, Jac enforces type annotations for all collections, ensuring type safety and clarity.
 
 ### Lists
+
 Lists are ordered collections of items that can be of mixed types. In Jac, lists are declared with the `list` type.
 
 Let's create a list to store a student's grades.
@@ -178,6 +186,7 @@ with entry {
     print(f"Alice's grades: {alice_grades}");
 }
 ```
+
 <br />
 
 ```text
@@ -186,8 +195,8 @@ Alice's first grade: 88
 Alice's grades: [88, 92, 85]
 ```
 
-
 ### Dictionaries
+
 Dictionaries are perfect for storing data as key-value pairs, which allows you to look up a value instantly if you know its key. You declare a dictionary with the `dict` type, specifying the type for the keys and the values.
 
 Here is how you could use a dictionary to create a gradebook where student names are the keys and their grades are the values.
@@ -207,6 +216,7 @@ with entry {
     print(f"Charlie's Math grade: {math_grades['Charlie']}");
 }
 ```
+
 <br />
 
 ```text
@@ -217,6 +227,7 @@ Charlie's Math grade: 78
 ```
 
 ### Sets
+
 A set is an unordered collection that does not allow duplicate items. This makes them very useful for tasks like tracking unique entries or comparing two groups of data. You declare a set with the `set` type.
 
 In this example, we'll use sets to find out which courses two students have in common.
@@ -236,10 +247,11 @@ with entry {
     print(f"All courses: {all_courses}");
 }
 ```
+
 The `intersection` method finds items that are present in both sets, while the `union` method combines both sets into one, automatically removing any duplicates. These are standard operations provided by Python’s built-in `set` type, and Jac supports them as well. For a more comprehensive overview of collection-related functions in Python, refer to the [official Python documentation](https:#docs.python.org/3/tutorial/datastructures.html).
 
-
 ## Collection Comprehensions
+
 ---
 Jac supports list and dictionary comprehensions, which are a concise and powerful way to create new collections by processing existing ones. Let's see how you can use them to work with a gradebook.
 
@@ -255,6 +267,7 @@ with entry {
     print(f"Passing scores: {passing_scores}");
 }
 ```
+
 <br />
 
 The list comprehension syntax in Jac is similar to Python:
@@ -280,14 +293,16 @@ with entry {
     print(f"Curved scores: {curved_scores}");
 }
 ```
+
 <br />
 
 ## Control Flow with Curly Braces
+
 ---
 Earlier, we built a simple calculator but left a problem in our `divide` function: it couldn't handle division by zero. To write robust programs, you need to control if and when certain blocks of code are executed. Jac uses control flow statements like `if`, `elif`, and `else` for this, using curly braces {} to group the code for each block.
 
-
 ### If Statements
+
 An `if` statement allows you to execute code conditionally based on whether a certain condition is true. In Jac, we use curly braces `{}` to define the block of code that should be executed if the condition is met.
 
 Let's now fix our `divide` function. With an `if` statement, we can check if the second number is zero before we try to do the division. This allows us to handle the problem gracefully instead of letting our program crash.
@@ -303,6 +318,7 @@ def divide(a: float, b: float) -> float | str {
     return a / b;
 }
 ```
+
 <br />
 In this updated function, we first check if b is equal to 0.0. If the condition is `True`, the code inside the curly braces {} is executed, and the function returns an error message. If the condition is `False`, the `if` block is skipped, and the function proceeds to the next line to perform the division.
 
@@ -311,7 +327,6 @@ In this updated function, we first check if b is equal to 0.0. If the condition 
 Often, you'll need to check for more than just one condition. For these situations, you can use a chain of `if`, `elif` (short for "else if"), and `else` statements. This lets you create a clear path for your program to follow based on different possibilities.
 
 Let's expand on our gradebook example by creating a function that assigns a letter grade based on a score. We'll use a list comprehension to apply this function to a whole list of scores.
-
 
 ```jac
 def classify_grade(score: int) -> str {
@@ -345,6 +360,7 @@ with entry {
     print(f"Grades: {grades}");
 }
 ```
+
 <br />
 
 When you run this code, you'll see how the `classify_grade` function was applied to each score in the list:
@@ -357,6 +373,7 @@ Grades: ['C', 'B', 'A', 'D', 'B', 'A', 'C']
 ```
 
 ## Working with Loops
+
 ---
 Loops allow you to run a block of code multiple times, which is essential for working with collections or performing repetitive tasks. Jac provides several ways to create loops, each suited for different situations including traditional `for` loops, Jac's unique `for-to-by` loops, and clear, structured `while` loops.
 
@@ -391,9 +408,11 @@ with entry {
 }
 
 ```
+
  <br />
 
 ### Jac's Unique For-to-by Loops
+
 Jac introduces a special `for-to-by` loop that gives you precise control over a sequence of numbers. This is useful when you need to iterate within a specific range with a defined step.
 
 ```jac
@@ -408,9 +427,11 @@ with entry {
     }
 }
 ```
+
 <br />
 
 ### While Loops
+
 A `while` loop continues to run as long as its condition remains True. This is useful when you don't know in advance how many times you need to loop.
 
 ```jac
@@ -427,10 +448,11 @@ with entry {
     print(f"Final total: {total}");
 }
 ```
+
 <br />
 
-
 ## Pattern Matching for Complex Logic
+
 ---
 When you have a variable that could be one of many different types or values, a long chain of if-elif-else statements can become hard to read. Pattern matching provides a cleaner and more powerful way to handle these complex situations.
 
@@ -463,10 +485,11 @@ with entry {
     print(process_grade_input([88, 92, 85])); # List of grades
 }
 ```
+
 <br />
 
-
 ## Exception Handling
+
 ---
 Sometimes, things go wrong in a program unexpectedly. A user might enter invalid data, or a file might be missing. Exception handling allows you to anticipate these potential errors and manage them without crashing your program.
 
@@ -510,9 +533,11 @@ with entry {
     }
 }
 ```
+
 <br />
 
 ## Comments in Jac
+
 ---
 Comments help document your Jac code clearly. Jac supports both single-line and multiline comments.
 
@@ -532,11 +557,13 @@ with entry {
     print(grades);
 }
 ```
+
 <br />
 
 ## Project Structure Conventions
+
 ---
-As your Jac programs grow, keeping your code organized is key to making it easy to manage and update. Jac encourages a project structure that separates the what from the how—that is, separating the definition of your objects from the code that makes them work.
+As your Jac programs grow, keeping your code organized is key to making it easy to manage and update. Jac encourages a project structure that separates the what from the how, separating the definition of your objects from the code that makes them work.
 
 A good way to structure your project is to create different folders for your main program logic, your data models, and any utility functions you might need.
 
@@ -553,10 +580,12 @@ my_project/
     ├── helpers.jac       # Helper functions
     └── constants.jac     # Application constants
 ```
+
 <br />
 
 ### Interface and Implementation Separation
-You'll notice that for our User model, we have two files: `user.jac` and `user.impl.jac`. This is a recommended practice in Jac for keeping your code clean. `user.jac` and `user.impl.jac`. The interface file (.jac) is like a blueprint. It defines what an object looks like—its attributes and the methods it should have. The implementation file (.impl.jac) contains the actual code that makes the methods work.
+
+You'll notice that for our User model, we have two files: `user.jac` and `user.impl.jac`. This is a recommended practice in Jac for keeping your code clean. `user.jac` and `user.impl.jac`. The interface file (.jac) is like a blueprint. It defines what an object looks like, the attributes and the methods it should have. The implementation file (.impl.jac) contains the actual code that makes the methods work.
 
 Let's look at an example. We want to create a User object that has a `name` and an `email`. We also need methods to validate the user's information and to get a nicely formatted display name.
 
@@ -575,6 +604,7 @@ obj User {
     def get_display_name() -> str;
 }
 ```
+
 <br />
 Next, we provide the implementation in `user.impl.jac`. This is where we write the code for the methods we defined in the interface. Jac automatically links these implementation blocks to the interface.
 
@@ -592,11 +622,11 @@ impl User.get_display_name {
     return f"{self.name} <{self.email}>";
 }
 ```
+
 <br />
 
-
-
 ## Common Beginner Mistakes and Solutions
+
 ---
 Most beginner issues stem from Jac's stricter type requirements compared to Python. Here are the most common mistakes and their solutions.
 
@@ -608,6 +638,7 @@ Most beginner issues stem from Jac's stricter type requirements compared to Pyth
 | Python-style indentation | Use `{ }` braces instead of indentation |
 
 ### Example of Common Fixes
+
 Someone unfamiliar with Jac might write code like this:
 
 ```jac
@@ -619,9 +650,11 @@ def greet(name) {
 # Missing entry block
 print(greet("World"))
 ```
+
 <br />
 
 The corrected version of the code would be:
+
 ```jac
 # This works - proper types and syntax
 def greet(name: str) -> str {
@@ -632,12 +665,11 @@ with entry {
     print(greet("World"));
 }
 ```
+
 <br />
 
-
-
-
 ## Complete Example: Simple Grade Book System
+
 ---
 Let's bring everything you've learned in this chapter together to build a complete program. We will create a simple gradebook system using an object to manage students and their grades. This example will showcase how functions, collections, and control flow work together in a practical application.
 First, we will define the interface for our `GradeBook` object, outlining its attributes and methods.
@@ -717,15 +749,16 @@ with entry {
     }
 }
 ```
+
 </div>
 <br />
 
-
-
 ## Wrapping Up
+
 ---
 
 Congratulations! You've just covered the essential building blocks of the Jac programming language. In this chapter, you learned about:
+
 - Jac's strong type system and how to declare variables.
 - Creating reusable code with functions and objects.
 - Directing your program's logic with control flow statements like if, for, and while.

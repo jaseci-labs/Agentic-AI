@@ -39,9 +39,9 @@ img = Image("https://bricknellschool.co.uk/wp-content/uploads/2024/10/einstein3.
 person = get_person_info(img)
 print(f"Name: {person.full_name}, Description: {person.description}, Year of Birth: {person.year_of_birth}")
 ```
+
 ??? example "NOTE:"
     Here byLLM can only use primitive types and dataclasses as input and output types. We are working to resolve this limitation.
-
 
 ### Model Hyper-parameters
 

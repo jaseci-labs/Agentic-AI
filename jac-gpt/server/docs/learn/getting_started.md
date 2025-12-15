@@ -11,19 +11,25 @@ python -m pip install -U jaclang
 Once you've got Jaclang installed, just give the Jac CLI a try to make sure everything's up and running smoothly.
 
 - Start the Jac CLI:
+
     ```bash
     jac --version
     ```
+
 - Run a .jac file
+
     ```bash
     jac run <file_name>.jac
     ```
+
 - To test run a 'Hello World' Program
+
     ```bash
     echo "with entry { print('Hello world'); }" > test.jac;
     jac run test.jac;
     rm test.jac;
     ```
+
 > **Note**
 >
 > If these commands prints ```Hello world``` you are good to go.
@@ -33,9 +39,11 @@ Once you've got Jaclang installed, just give the Jac CLI a try to make sure ever
 In addition to setting up JacLang itself, you may also want to take advantage of the JacLang language extension for Visual Studio Code (VSCode) or Cursor. This will give you enhanced code highlighting, autocomplete, and other useful language features within your editor environment.
 
 **For VS Code users:**
+
 - Visit the VS Code marketplace and install the [Jac Extension](https://marketplace.visualstudio.com/items?itemName=jaseci-labs.jaclang-extension)
 
 **For Cursor users:**
+
 1. Go to the [latest Jaseci release page](https://github.com/Jaseci-Labs/jaseci/releases/latest)
 2. Download the latest `jaclang-extension-*.vsix` file from the release assets
 3. Open Cursor
