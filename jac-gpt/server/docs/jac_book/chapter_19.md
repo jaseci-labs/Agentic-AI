@@ -28,7 +28,7 @@ The foundation of Jac performance lies in how you structure your graph data. Eff
         ```python
         # inefficient_friends.py - Nested loops and redundant data
         class Person:
-            def __init__(self, name, age):
+            def **init**(self, name, age):
                 self.name = name
                 self.age = age
                 self.friends = []  # Direct list storage

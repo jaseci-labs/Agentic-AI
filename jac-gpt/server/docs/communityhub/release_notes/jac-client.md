@@ -2,8 +2,9 @@
 
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jac-Client**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking_changes.md) page.
 
-
 ## jac-client 0.2.4 (Unreleased)
+
+- **Authentication API Update**: Updated authentication functions (`jacLogin` and `jacSignup`) to use `email` instead of `username` for user identification. This change aligns with standard authentication practices and improves security. All authentication examples and documentation have been updated to reflect this change. The `/user/register` and `/user/login` endpoints now accept `email` in the request payload. End-to-end tests have been added to verify authentication endpoint functionality. [Breaking Change - See Migration Guide]
 
 - **JSON-Based Configuration System**: Introduced a flexible JSON-based configuration system that allows developers to customize Vite build settings, add plugins, and override build options through a simple `config.json` file in the project root. The system automatically generates `vite.config.js` in `.jac-client.configs/` directory, keeping the project root clean while preserving all essential defaults. Supports custom plugins (e.g., Tailwind CSS), build options, server configuration, and resolve options. [Documentation](https://docs.jaseci.org/jac-client/advance/custom-config/)
 
@@ -45,7 +46,6 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 - **PYPI Package Release**: First stable release (v0.1.0) now available on PyPI. Install via `pip install jac-client` to get started with Vite-powered client bundling for your Jac projects.
 
-
 ## jaclang 0.8.10 / jac-cloud 0.2.10 / byllm 0.4.5
 
 ## jaclang 0.8.9 / jac-cloud 0.2.9 / byllm 0.4.4
@@ -63,6 +63,5 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jaclang 0.8.3 / jac-cloud 0.2.3 / mtllm 0.3.8
 
 ## jaclang 0.8.1 / jac-cloud 0.2.1 / mtllm 0.3.6
-
 
 ## Version 0.8.0

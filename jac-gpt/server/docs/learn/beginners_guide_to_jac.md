@@ -33,6 +33,7 @@ Jac is special because it teaches you **two ways of thinking**:
 2. **Object-Spatial Programming (OSP)** - A new way to think about how data and computation work together
 
 Think of it this way:
+
 - **Traditional Programming**: You call a restaurant and order food to be delivered to you
 - **Object-Spatial Programming**: You send a robot to visit different restaurants and collect food
 
@@ -55,6 +56,7 @@ with entry {
 </div>
 
 **What's happening here?**
+
 - `with entry` - This is where your program starts
 - `print()` - This is a **function** that displays text on the screen
 - `"Hello, World!"` - This is text (called a **string**)
@@ -104,6 +106,7 @@ with entry {
 Just like in real life, data comes in different types:
 
 #### Text (Strings)
+
 <div class="code-block">
 
 ```jac
@@ -121,6 +124,7 @@ with entry {
 Strings go inside quotes: `"like this"` or `'like this'`
 
 #### Numbers (Integers)
+
 <div class="code-block">
 
 ```jac
@@ -138,6 +142,7 @@ with entry {
 Whole numbers with no decimal point.
 
 #### Numbers (Floats)
+
 <div class="code-block">
 
 ```jac
@@ -155,6 +160,7 @@ with entry {
 Numbers with decimal points.
 
 #### True or False (Booleans)
+
 <div class="code-block">
 
 ```jac
@@ -247,6 +253,7 @@ with entry {
 </div>
 
 **Common shortcuts:**
+
 - `x += 5` means `x = x + 5` (add 5)
 - `x -= 3` means `x = x - 3` (subtract 3)
 - `x *= 2` means `x = x * 2` (multiply by 2)
@@ -295,6 +302,7 @@ with entry {
 </div>
 
 **How it works:**
+
 - `if age >= 18` - Check if age is greater than or equal to 18
 - If the condition is `True`, run the code inside `{}`
 - If the condition is `False`, skip the code inside `{}`
@@ -361,6 +369,7 @@ with entry {
 </div>
 
 **How it works:**
+
 1. Check first `if` - if `True`, run its code and skip the rest
 2. If first is `False`, check first `elif`
 3. Keep checking until one is `True`
@@ -493,6 +502,7 @@ with entry {
 </div>
 
 **Breaking it down:**
+
 - `i = 0` - Start at 0
 - `to i < 5` - Continue while i is less than 5
 - `by i += 1` - Add 1 to i each time
@@ -636,6 +646,7 @@ with entry {
 </div>
 
 **Breaking it down:**
+
 - `name: str` - This is a **parameter** (input)
 - `: str` - Type annotation (optional but recommended)
 - When you call `greet("Alice")`, `"Alice"` becomes the value of `name`
@@ -684,6 +695,7 @@ with entry {
 </div>
 
 **Breaking it down:**
+
 - `-> int` - This function returns an integer
 - `return x + y;` - Send this value back to whoever called the function
 - The returned value can be stored in a variable or used directly
@@ -1131,6 +1143,7 @@ Classes let you create your own custom types that bundle data and functions toge
 Think of a class as a blueprint for creating objects.
 
 **Real-world analogy:**
+
 - **Class**: Blueprint for a car (defines what all cars have)
 - **Object**: An actual car (a specific instance)
 
@@ -1170,6 +1183,7 @@ with entry {
 </div>
 
 **Breaking it down:**
+
 - `class Dog` - Define a new type called Dog
 - `has name: str` - Every Dog has a name (property/attribute)
 - `def bark` - Every Dog can bark (method)
@@ -1337,6 +1351,7 @@ with entry {
 </div>
 
 **Inheritance lets you:**
+
 - Reuse code from parent classes
 - Create specialized versions
 - Override methods for custom behavior
@@ -1470,6 +1485,7 @@ Before we dive into Jac's special power (Object-Spatial Programming), we need to
 A graph is a way to represent things and their relationships.
 
 **Real-world examples:**
+
 - **Social network**: People (things) and friendships (relationships)
 - **Map**: Cities (things) and roads (relationships)
 - **Family tree**: People (things) and parent-child relationships (relationships)
@@ -1477,11 +1493,13 @@ A graph is a way to represent things and their relationships.
 ### 9.2 Graph Terminology
 
 **Nodes (Vertices):**
+
 - The "things" in the graph
 - Drawn as circles
 - Examples: people, cities, web pages
 
 **Edges (Links):**
+
 - The connections between nodes
 - Drawn as lines or arrows
 - Examples: friendships, roads, links
@@ -1582,6 +1600,7 @@ with entry {
 </div>
 
 **Problems with this approach:**
+
 1. **Verbose**: Lots of boilerplate code
 2. **Error-prone**: Easy to forget to update both sides
 3. **Rigid**: Hard to represent complex relationships
@@ -1598,18 +1617,21 @@ This is where Jac becomes truly special. Get ready for a new way of thinking!
 ### 10.1 The Big Idea
 
 **Traditional Programming (OOP):**
+
 ```
 Data sits still → You bring computation to the data
 (Call methods on objects)
 ```
 
 **Object-Spatial Programming (OSP):**
+
 ```
 Data is arranged in space → You send computation to travel through the data
 (Walkers visit nodes in a graph)
 ```
 
 **Analogy:**
+
 - **OOP**: You're at home, you call restaurants and have food delivered to you
 - **OSP**: You send a robot out to visit different restaurants and collect food
 
@@ -1797,6 +1819,7 @@ with entry {
 </div>
 
 **What just happened?**
+
 1. Walker spawns at `root`
 2. `start` ability runs, visits all nodes connected to root (Alice)
 3. Walker moves to Alice
@@ -1835,6 +1858,7 @@ walker MyWalker {
 </div>
 
 **Special references in walker abilities:**
+
 - `here` - The current node being visited
 - `self` - The walker itself
 - `visitor` - (In node abilities) The walker that's visiting
@@ -2211,6 +2235,7 @@ with entry {
 </div>
 
 **OSP advantages:**
+
 1. **Natural graph representation**: Nodes and edges are first-class
 2. **Automatic traversal**: `visit` handles navigation
 3. **Type-driven behavior**: Abilities dispatch on types
@@ -2222,12 +2247,14 @@ with entry {
 ### 10.16 When to Use OSP vs. OOP
 
 **Use OSP when:**
+
 - Data has complex relationships (social networks, knowledge graphs)
 - You need to traverse or query connections
 - Relationships themselves have properties
 - Different types of connections exist
 
 **Use traditional OOP when:**
+
 - Data is standalone (no complex relationships)
 - Simple hierarchies (inheritance is enough)
 - Performance-critical tight loops
@@ -2577,38 +2604,44 @@ with entry {
 Congratulations! You've learned programming from the ground up using Jac. Here's what you've mastered:
 
 ### Traditional Programming Concepts
-- ✓ Variables and data types
-- ✓ Operators and expressions
-- ✓ Control flow (if/elif/else)
-- ✓ Loops (while, for)
-- ✓ Functions
-- ✓ Collections (lists, dictionaries, tuples)
-- ✓ Classes and objects
-- ✓ Inheritance
+
+- Variables and data types
+- Operators and expressions
+- Control flow (if/elif/else)
+- Loops (while, for)
+- Functions
+- Collections (lists, dictionaries, tuples)
+- Classes and objects
+- Inheritance
 
 ### Object-Spatial Programming (Unique to Jac!)
-- ✓ Graphs (nodes and edges)
-- ✓ First-class relationships
-- ✓ Walkers (mobile computation)
-- ✓ Abilities (automatic event handling)
-- ✓ Graph traversal (visit statements)
-- ✓ Edge references (declarative queries)
-- ✓ Bidirectional polymorphism
+
+- Graphs (nodes and edges)
+- First-class relationships
+- Walkers (mobile computation)
+- Abilities (automatic event handling)
+- Graph traversal (visit statements)
+- Edge references (declarative queries)
+- Bidirectional polymorphism
 
 ### The Progression You Followed
 
 **Level 1: Data**
+
 - Variables hold single values
 
 **Level 2: Functions**
+
 - Functions organize and reuse code
 
 **Level 3: Objects (OOP)**
+
 - Objects bundle data with behavior
 - Classes create templates for objects
 - Inheritance builds hierarchies
 
 **Level 4: Relationships (OSP)**
+
 - Nodes are data locations in a graph
 - Edges are first-class relationships
 - Walkers move computation to data
@@ -2694,17 +2727,20 @@ Now that you have the foundation, here are advanced Jac features to explore:
 ### Practice Project Ideas
 
 **Beginner Projects:**
+
 1. Personal budget tracker (classes, functions)
 2. To-do list manager (lists, dictionaries)
 3. Simple quiz game (control flow, functions)
 
 **Intermediate Projects (Using OSP):**
+
 1. Family tree explorer (nodes, edges, walkers)
 2. Course planner with prerequisites (graph queries)
 3. Social network analyzer (bidirectional relationships)
 4. Recommendation engine (graph traversal)
 
 **Advanced Projects:**
+
 1. Knowledge graph for a specific domain
 2. Workflow automation system
 3. Route planner for transportation
@@ -2713,11 +2749,13 @@ Now that you have the foundation, here are advanced Jac features to explore:
 ### Learning Resources
 
 **Within this Repository:**
+
 - `/jac/examples/reference/` - All the detailed reference examples
 - Look for `*.md` files for explanations
 - Look for `*.jac` files for code examples
 
 **Key Files to Explore:**
+
 - `archetypes.md` - Deep dive into obj, node, edge, walker
 - `object_spatial_*.md` - Advanced OSP features
 - `match_statements.md` - Pattern matching
@@ -2726,10 +2764,12 @@ Now that you have the foundation, here are advanced Jac features to explore:
 ### Final Thoughts
 
 You've learned two paradigms:
+
 1. **Traditional programming** (variables → functions → classes)
 2. **Object-Spatial Programming** (nodes → edges → walkers)
 
 This makes you uniquely prepared to:
+
 - Build traditional applications (like Python, Java, JavaScript)
 - Build graph-based applications (social networks, knowledge graphs, recommendation systems)
 - Think about data and computation in revolutionary new ways
@@ -2739,7 +2779,7 @@ This makes you uniquely prepared to:
 
 This simple idea unlocks powerful new ways to solve problems, especially when data has complex relationships.
 
-Keep practicing, keep building, and welcome to the world of programming! 🚀
+Keep practicing, keep building, and welcome to the world of programming!
 
 ---
 
@@ -2972,4 +3012,4 @@ with entry {
 
 ---
 
-**Happy coding! May your graphs be well-connected and your walkers always find their way! 🎉**
+**Happy coding! May your graphs be well-connected and your walkers always find their way!**

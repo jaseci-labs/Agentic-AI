@@ -45,20 +45,20 @@ When a client connects to the WebSocket endpoint, it will immediately receive a 
 
 ```python
 {
-	"type": "connection",
-	"data": {
+ "type": "connection",
+ "data": {
         # your websocket client id
-		"client_id": "1730887348:f46d85203c704c099e9f44e948322a20",
+  "client_id": "1730887348:f46d85203c704c099e9f44e948322a20",
 
         # user's root_id
-		"root_id": "n::672b35cec309e5ef8469c372",
+  "root_id": "n::672b35cec309e5ef8469c372",
 
         # non authenticated
-		# "root_id": "n::000000000000000000000001",
+  # "root_id": "n::000000000000000000000001",
 
         # user's channel id, random if not specified
-		"channel_id": "1730887348:796ad2e9fa3e484ebe01f071c381b7e8"
-	}
+  "channel_id": "1730887348:796ad2e9fa3e484ebe01f071c381b7e8"
+ }
 }
 ```
 
@@ -84,16 +84,16 @@ Triggers a walker just like a REST API call:
 ```python
 {
     # event type
-	"type": "walker",
+ "type": "walker",
 
     # walker's name
-	"walker": "your_event_name",
+ "walker": "your_event_name",
 
     # if you want to receive a notification for response
-	"response": true,
+ "response": true,
 
     # walker's request context
-	"context": {
+ "context": {
         "val": 1
     }
 }
@@ -106,13 +106,13 @@ Sends a notification to specific users:
 ```python
 {
     # event type
-	"type": "user",
+ "type": "user",
 
     # target user/s via root_id
     "root_ids": ["n::672b35cec309e5ef8469c372"],
 
     # data you want to send
-	"data": {
+ "data": {
         "val": 1
     }
 }
@@ -125,13 +125,13 @@ Sends a notification to all clients subscribed to specific channels:
 ```python
 {
     # event type
-	"type": "channel",
+ "type": "channel",
 
     # target channel_id/s
     "channel_ids": ["anystring"],
 
     # data you want to send
-	"data": {
+ "data": {
         "val": 1
     }
 }
@@ -144,13 +144,13 @@ Sends a notification to specific clients:
 ```python
 {
     # event type
-	"type": "client",
+ "type": "client",
 
     # target client_ids
     "client_ids": ["1730887348:f46d85203c704c099e9f44e948322a20"],
 
     # data you want to send
-	"data": {
+ "data": {
         "val": 1
     }
 }
@@ -163,10 +163,10 @@ Switches between authenticated and public user:
 ```python
 {
     # event type
-	"type": "change_user",
+ "type": "change_user",
 
     # optional - defaults to public user
-	"token": "bearer {{user's token}}"
+ "token": "bearer {{user's token}}"
 }
 ```
 
@@ -327,51 +327,51 @@ client.onmessage = (event) => {
 ```js
 // TRIGGER WALKER EVENT
 client.send(JSON.stringify({
-	"type": "walker",
-	"walker": "your_walker_name",
-	"response": true,
-	"context": {}
+ "type": "walker",
+ "walker": "your_walker_name",
+ "response": true,
+ "context": {}
 }));
 
 // TRIGGER CLIENT EVENT (ex: direct chat)
 client.send(JSON.stringify({
-	"type": "client",
-	"client_ids": ["target client_id from connection event"],
-	"data": {
-		"type": "chat",
+ "type": "client",
+ "client_ids": ["target client_id from connection event"],
+ "data": {
+  "type": "chat",
     "data": {
       "any_field": "any_value"
     }
-	}
+ }
 }));
 
 // TRIGGER CHANNEL EVENT (ex: group chat or chat blast)
 client.send(JSON.stringify({
-	"type": "channel",
-	"channel_ids": ["target channel_id from connection event"],
-	"data": {
-		"type": "chat",
+ "type": "channel",
+ "channel_ids": ["target channel_id from connection event"],
+ "data": {
+  "type": "chat",
     "data": {
       "any_field": "any_value"
     }
-	}
+ }
 }));
 
 // TRIGGER USER EVENT (ex: chat but all target user's client)
 client.send(JSON.stringify({
-	"type": "user",
-	"root_ids": ["target root_id from connection event"],
-	"data": {
-		"type": "chat",
+ "type": "user",
+ "root_ids": ["target root_id from connection event"],
+ "data": {
+  "type": "chat",
     "data": {
       "any_field": "any_value"
     }
-	}
+ }
 }));
 
 // TRIGGER CONNECTION EVENT - to get connection info)
 client.send(JSON.stringify({
-	"type": "connection"
+ "type": "connection"
 }));
 ```
 
@@ -399,5 +399,7 @@ client.send(JSON.stringify({
 - **Performance Issues**: Consider using channels instead of individual client notifications for better performance
 
 ---
+
 ### Additional Resources
+
 For a complete working example, you may download this [API Request Collection](https://github.com/amadolid/jaseci/blob/websocket-backup-final/jac-cloud/jac_cloud/tests/jac-cloud-websocket.insomnia)

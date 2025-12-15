@@ -1,4 +1,5 @@
 # Tutorial
+
 # Build Your First Social Media App with Jaseci
 
 You'll build **LittleX**, a Twitter-like application, in just 200 lines of code. This tutorial guides you through each step, from installation to deployment.
@@ -125,6 +126,7 @@ pip install jac_cloud
 ```
 
 If the install is successful, you'll see:
+
 ```
 Successfully installed jac_cloud
 ```
@@ -165,6 +167,7 @@ Jaseci uses **three main components** to build applications. Let's see how they 
 Jaseci organizes code into three files that work together automatically:
 
 #### **littleX.jac** - What Your App Has
+
 ```jac
 # Define what exists
 node Profile {
@@ -174,6 +177,7 @@ node Profile {
 ```
 
 #### **littleX.impl.jac** - How Your App Works
+
 ```jac
 # Define how things work
 impl Profile.update {
@@ -183,6 +187,7 @@ impl Profile.update {
 ```
 
 #### **littleX.test.jac** - Proving It Works
+
 ```jac
 # Test functionality
 test create_tweet {
@@ -216,6 +221,7 @@ jac serve littleX.jac
 - **Comment nodes** store replies
 
 **Simple Example:**
+
 ```jac
 node User {
     has username: str;
@@ -233,6 +239,7 @@ This creates a user object with a username.
 - **Like edges** connect users to tweets they liked
 
 **Simple Example:**
+
 ```jac
 edge Follow {}
 ```
@@ -244,6 +251,7 @@ This creates a "Follow" connection between users.
 **Walkers** move through your graph and perform actions. They make your app interactive.
 
 **Simple Example:**
+
 ```jac
 walker create_tweet(visit_profile) {
     has content: str;
@@ -350,6 +358,7 @@ jac serve littleX_BE/littleX.jac
 ```
 
 You should see:
+
 ```
 INFO: Uvicorn running on http://127.0.0.1:8000
 ```
@@ -366,6 +375,7 @@ npm run dev
 ```
 
 You should see:
+
 ```
 Local: http://localhost:5173/
 ```
@@ -392,6 +402,7 @@ If everything works, you've successfully built a social media platform!
 Let's examine the main parts of your LittleX app:
 
 ### Profile Node
+
 ```jac
 node Profile {
     has username: str = "";
@@ -406,6 +417,7 @@ node Profile {
 This stores user information and defines what users can do.
 
 ### Tweet Node
+
 ```jac
 node Tweet {
     has content: str;
@@ -426,6 +438,7 @@ node Tweet {
 This stores tweet content and handles all tweet interactions.
 
 ### Follow Implementation
+
 ```jac
 impl Profile.follow {
     current_profile = [root-->(`?Profile)];
@@ -461,4 +474,4 @@ Jaseci's graph-based approach works well for social networks where relationships
 
 ---
 
-> **Happy coding with Jaseci!** 🚀
+> **Happy coding with Jaseci!**

@@ -1,6 +1,7 @@
 # <span style="color: orange">Nodes and Edges</span>
 
 ## Nodes
+
 Nodes are archetypes forming part of a graph, holding properties. They can be compared to custom classes in object-oriented programming (OOP).
 
 ```jac linenums="1"
@@ -13,15 +14,18 @@ node node_name{
 ```
 
 ### Custom Node Types
+
 - You can define custom node types to create specific instances within the graph.
 - Each node can have `attributes` (like fields in a class) and `abilities` (similar to methods in OOP).
 
 ### Abilities in Nodes
+
 - **Callable Abilities:** They are similar to standard methods in OOP. Inside any ability, the node can refer to itself using the `self` keyword, much like in OOP.
 
 - **Visit-dependent Abilities:** These abilities are only triggered when a specific type of "walker" (discussed later) interacts with the node. This ensures that certain actions are performed only in response to a walker's visit. In these abilities, a special keyword `here` is used to reference the visiting walker. This allows you to access the walker's attributes and abilities directly during its interaction with the node.
 
 - This is an example of defining a node.
+
 ```jac linenums="1"
 node test_node {
     has value: int;
@@ -46,6 +50,7 @@ node test_node {
 ```
 
 ### Connecting Nodes
+
 Nodes in JacLang can establish connections in various ways, offering flexibility for building complex graphs:
 
 - **One-to-One**: A single node connects to another single node.
@@ -159,6 +164,7 @@ This versatility allows for creating intricate and highly interconnected graph s
         ```
 
 ## Edges
+
 Nodes can be linked using either *default edges* (generic connections) or *custom edges*, which have specific properties as shown in the following examples.
 === "Generic Edges"
     ```jac linenums="1"

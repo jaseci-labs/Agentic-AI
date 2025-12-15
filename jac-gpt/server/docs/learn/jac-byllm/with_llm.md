@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="/assets/byLLM_name_logo.png" height="150" width="300" alt="byLLM logo">
+    <img src="https://byllm.jaseci.org/logo.png" height="150" width="300" alt="byLLM logo">
 
 </div>
 
@@ -11,9 +11,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/byllm.svg)](https://pypi.org/project/byllm/) [![tests](https://github.com/jaseci-labs/jaseci/actions/workflows/test-jaseci.yml/badge.svg?branch=main)](https://github.com/jaseci-labs/jaseci/actions/workflows/test-jaseci.yml) [![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?logo=discord)](https://discord.gg/6j3QNdtcN6)
 
-
 byLLM is an innovative AI integration framework built for the Jaseci ecosystem, implementing the cutting-edge Meaning Typed Programming (MTP) paradigm. MTP revolutionizes AI integration by embedding prompt engineering directly into code semantics, making AI interactions more natural and maintainable. While primarily designed to complement the Jac programming language, byLLM also provides a powerful Python library interface.
-
 
 <!-- ## What is MTP?
 
@@ -21,23 +19,12 @@ Meaning-Typed Programming (MTP) is a programming paradigm that automates LLM int
 
 The MTP concept is implemented in Jac-lang through the **byLLM** plugin, which is available as a PyPI package. -->
 
-
 <div align="left" style="margin-top: 1em;">
     <a href="https://arxiv.org/abs/2405.08965" class="md-button" style="display: inline-block; margin-right: 10px;">MTP Research</a>
     <a href="https://www.jac-lang.org/learn/jac-byllm/quickstart/" class="md-button" style="display: inline-block; margin-right: 10px;">Get Started with byLLM</a>
     <a href="https://github.com/jaseci-labs/jaseci/tree/main/jac-byllm" class="md-button" style="display: inline-block; margin-right: 10px;">GitHub</a>
     <a href="https://discord.gg/6j3QNdtcN6" class="md-button" style="display: inline-block; margin-right: 10px;">Discord</a>
 </div>
-
-<!-- ![](./assets/byLLM_name_logo.png) -->
-
-<!-- **Quick Links:**
-
-- [About byLLM](https://www.jac-lang.org/learn/jac-byllm/with_llm/)
-- [Get started](https://www.jac-lang.org/learn/jac-byllm/quickstart/)
-- [Usage docs](https://www.jac-lang.org/learn/jac-byllm/usage/)
-- [Research Paper](https://arxiv.org/abs/2405.08965) -->
-
 
 Installation is simple via PyPI:
 
@@ -169,15 +156,15 @@ Docstrings naturally enhance the semantics of their associated code constructs, 
 
 <hr />
 
-**📚 Full Documentation**: [Jac byLLM Documentation](https://www.jac-lang.org/learn/jac-byllm/with_llm/)
+**Full Documentation**: [Jac byLLM Documentation](https://www.jac-lang.org/learn/jac-byllm/with_llm/)
 
-**🎮 Code Examples**: [Jac byLLM Examples](https://www.jac-lang.org/learn/jac-byllm/examples/)
+**Code Examples**: [Jac byLLM Examples](https://www.jac-lang.org/learn/jac-byllm/examples/)
 
 <!-- - [Fantasy Trading Game](https://www.jac-lang.org/learn/examples/mtp_examples/fantasy_trading_game/) - Interactive RPG with AI-generated characters
 - [RPG Level Generator](https://www.jac-lang.org/learn/examples/mtp_examples/rpg_game/) - AI-powered game level creation
 - [RAG Chatbot Tutorial](https://www.jac-lang.org/learn/examples/rag_chatbot/Overview/) - Building chatbots with document retrieval -->
 
-**🔬 Research**: The research paper of byLLM is available on [Arxiv](https://arxiv.org/abs/2405.08965) and accepted for OOPSLA 2025.
+**Research**: The research paper of byLLM is available on [Arxiv](https://arxiv.org/abs/2405.08965) and accepted for OOPSLA 2025.
 
 <hr />
 
@@ -186,6 +173,7 @@ Docstrings naturally enhance the semantics of their associated code constructs, 
 - [Getting Started Guide](https://www.jac-lang.org/learn/jac-byllm/quickstart/)
 - [Jac Language Documentation](https://www.jac-lang.org/)
 - [GitHub Repository](https://github.com/jaseci-labs/jaseci)
+
 <hr />
 
 **Contributing**
@@ -194,10 +182,10 @@ We welcome contributions to byLLM! Whether you're fixing bugs, improving documen
 
 Areas we actively seek contributions:
 
-- 🐛 Bug fixes and improvements
-- 📚 Documentation enhancements
-- ✨ New examples and tutorials
-- 🧪 Test cases and benchmarks
+- Bug fixes and improvements
+- Documentation enhancements
+- New examples and tutorials
+- Test cases and benchmarks
 
 Please see our [Contributing Guide](https://www.jac-lang.org/internals/contrib/) for detailed instructions. If you find a bug or have a feature request, please [open an issue](https://github.com/jaseci-labs/jaseci/issues/new/choose).
 
@@ -223,6 +211,5 @@ byLLM integrates with various LLM providers (OpenAI, Anthropic, Google, etc.) th
 <hr />
 
 ### Cite our research
-
 
 > Jayanaka L. Dantanarayana, Yiping Kang, Kugesan Sivasothynathan, Christopher Clarke, Baichuan Li, Savini Kashmira, Krisztian Flautner, Lingjia Tang, and Jason Mars. 2025. MTP: A Meaning-Typed Language Abstraction for AI-Integrated Programming. Proc. ACM Program. Lang. 9, OOPSLA2, Article 314 (October 2025), 29 pages. https://doi.org/10.1145/3763092

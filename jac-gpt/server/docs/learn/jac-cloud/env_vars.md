@@ -381,18 +381,21 @@ export UV_SSL_CERTFILE="/etc/ssl/certs/cert.pem"
 ## Best Practices for Beginners
 
 1. **Use environment files**: Create `.env` files for different environments
+
    ```bash
    # Create different environment files
    touch .env.development .env.testing .env.production
    ```
 
 2. **Never commit secrets**: Add `.env` files to your `.gitignore`
+
    ```bash
    # Add to .gitignore
    echo ".env*" >> .gitignore
    ```
 
 3. **Use different values per environment**:
+
    ```bash
    # Development
    DATABASE_NAME=my_app_dev
@@ -402,12 +405,14 @@ export UV_SSL_CERTFILE="/etc/ssl/certs/cert.pem"
    ```
 
 4. **Document your variables**: Create a template file showing all options
+
    ```bash
    # Create a template with comments
    touch .env.template
    ```
 
 5. **Validate critical variables**: Check for required variables in your code
+
    ```jac
    walker check_config {
        can enter with `root entry {

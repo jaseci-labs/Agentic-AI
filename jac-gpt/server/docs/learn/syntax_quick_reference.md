@@ -27,68 +27,68 @@ import from math { sqrt, pi, log as logarithm }
 
 # functions are defined with the def keyword and a control block
 def nextFunction {
-	x = 3;     # Variable assignment.
-	y = 4;
-	(add, mult) = learnMultiple(x, y);       # Function returns two values.
-	print(f"sum: {add} prod:{mult}"); 		 # values can be formatted with f-strings
-	learnFlowControl();
+ x = 3;     # Variable assignment.
+ y = 4;
+ (add, mult) = learnMultiple(x, y);       # Function returns two values.
+ print(f"sum: {add} prod:{mult}");    # values can be formatted with f-strings
+ learnFlowControl();
 }
 
 # same as Python, Jac supports default paremeters and multiple return values
 def learnMultiple(x: int, y: int = 5) -> (int, int) {
-	return (x + y, x * y); # Return two values.
+ return (x + y, x * y); # Return two values.
 }
 
 def learnFlowControl() {
-	x = 9;
+ x = 9;
 
-	# All control blocks require brackets, but not parentheses
-	if x < 5 {
-		print("Doesn't run");
-	} elif x < 10 {
-		print("Run");
-	} else {
-		print("Also doesn't run");
-	}
+ # All control blocks require brackets, but not parentheses
+ if x < 5 {
+  print("Doesn't run");
+ } elif x < 10 {
+  print("Run");
+ } else {
+  print("Also doesn't run");
+ }
 
-	# chains of if-else can be replaced with match statements
-	match x {
-		case 1:
-			print("Exactly one");
-		case int() if 10 <= x < 15:
-			print("Within a range");
-		case _:
-			print("Everything else");
-	}
+ # chains of if-else can be replaced with match statements
+ match x {
+  case 1:
+   print("Exactly one");
+  case int() if 10 <= x < 15:
+   print("Within a range");
+  case _:
+   print("Everything else");
+ }
 
-	# Like if, for doesn't use parens either.
-	# jac provides both indexed and range-based for loops
-	for i = 10 to i <= 20 by i += 2 {
-		print(f"element: {i}");
-	}
+ # Like if, for doesn't use parens either.
+ # jac provides both indexed and range-based for loops
+ for i = 10 to i <= 20 by i += 2 {
+  print(f"element: {i}");
+ }
 
-	for x in ["a", "b", "c"] {
-		print(f"element: {x}");
-	}
+ for x in ["a", "b", "c"] {
+  print(f"element: {x}");
+ }
 
-	# while loops follow similar syntax
-	a = 4;
-	while a != 1{
-		a /= 2;
-	}
+ # while loops follow similar syntax
+ a = 4;
+ while a != 1{
+  a /= 2;
+ }
 
-	learnCollections();
-	learnSpecial();
+ learnCollections();
+ learnSpecial();
 }
 
 def learnCollections() {
-	# lists and slicing
-	fruits = ["apple", "banana", "cherry"];
-	print(fruits[1]); # banana
-	print(fruits[:1]); # [apple, banana]
-	print(fruits[-1]); # cherry
+ # lists and slicing
+ fruits = ["apple", "banana", "cherry"];
+ print(fruits[1]); # banana
+ print(fruits[:1]); # [apple, banana]
+ print(fruits[-1]); # cherry
 
-	# dictionary
+ # dictionary
     person = {
         "name": "Alice",
         "age": 25,
@@ -99,16 +99,16 @@ def learnCollections() {
     print(person["name"]);  # Alice
     print(person["age"]);   # 25
 
-	# tuples are immutable lists
-	point = (10,20);
+ # tuples are immutable lists
+ point = (10,20);
     print(point[0]);  # 10
     print(point[1]);  # 20
 
-	# tuples can be unpacked with parentheses
-	(x, y) = point;
+ # tuples can be unpacked with parentheses
+ (x, y) = point;
     print(f"x={x}, y={y}");
 
-	# list comprehensions
+ # list comprehensions
     squares = [i ** 2 for i in range(5)];
     print(squares);  # [0, 1, 4, 9, 16]
 
@@ -116,8 +116,8 @@ def learnCollections() {
     evens = [i for i in range(10) if i % 2 == 0];
     print(evens);  # [0, 2, 4, 6, 8]
 
-	learnClasses();
-	learnOSP();
+ learnClasses();
+ learnOSP();
 }
 
 def learnClasses() {
@@ -127,7 +127,7 @@ def learnClasses() {
     class Cat {
         has name: str = "Unnamed";
         def meow {
-			print(f"{self.name} says meow!");
+   print(f"{self.name} says meow!");
         }
     }
 
@@ -138,31 +138,31 @@ def learnClasses() {
     my_cat.meow();   # Shrodinger says meow!
     your_cat.meow(); # Shrodinger says meow!
 
-	# the obj keyword follows the behavior of Python dataclasses
+ # the obj keyword follows the behavior of Python dataclasses
     # all members are per-instance
-	obj Dog {
-		has name: str = "Unnamed";
-		has age: int = 0;
+ obj Dog {
+  has name: str = "Unnamed";
+  has age: int = 0;
 
-		def bark {
-			print(f"{self.name} says Woof!");
-		}
-	}
+  def bark {
+   print(f"{self.name} says Woof!");
+  }
+ }
     your_dog = Dog();
     my_dog = Dog();
     my_dog.name = "Buddy";
     my_dog.age = 3;
 
-	your_dog.bark(); # Unnamed says Woof!
-	my_dog.bark();   # Buddy says Woof!
+ your_dog.bark(); # Unnamed says Woof!
+ my_dog.bark();   # Buddy says Woof!
 
-	# inheritance
-	obj Puppy(Dog){
-		has parent: str = 0;
-		def bark { # override
-			print(f"Child of {self.parent} says Woof!");
-		}
-	}
+ # inheritance
+ obj Puppy(Dog){
+  has parent: str = 0;
+  def bark { # override
+   print(f"Child of {self.parent} says Woof!");
+  }
+ }
 }
 
 # Jac also supports graph relationships within the type system
@@ -175,22 +175,22 @@ node Person {
 }
 
 def learnOSP(){
-	a = Person(name="Alice",age=25);
-	b = Person(name="Bob",age=30);
-	c = Person(name="Charlie",age=28);
+ a = Person(name="Alice",age=25);
+ b = Person(name="Bob",age=30);
+ c = Person(name="Charlie",age=28);
 
-	# connection operators create edges between nodes
-	a ++>  b; # forward a->b
-	b <++  c; # backward c->b
-	a <++> c; # bidirectional a <-> c
+ # connection operators create edges between nodes
+ a ++>  b; # forward a->b
+ b <++  c; # backward c->b
+ a <++> c; # bidirectional a <-> c
 
-	# edges can be typed, providing additional meaning
-	edge Friend {
-		has since: int;
-	}
+ # edges can be typed, providing additional meaning
+ edge Friend {
+  has since: int;
+ }
 
-	a +>:Friend(since=2020):+> b;
-	a +>:Friend(since=1995):+> c;
+ a +>:Friend(since=2020):+> b;
+ a +>:Friend(since=1995):+> c;
 
 
     # edges and nodes can be queried with filters
@@ -201,51 +201,51 @@ def learnOSP(){
     # returns all outgoing friend edges since 2018
     old_friend_edges = [edge a->:Friend:since > 2017:->];
 
-	# Walkers are objects that "walk" across nodes doing operations
-	# Walkers contain automatic methods that trigger on events
-	# These methods are called abilities
-	walker Visitor {
+ # Walkers are objects that "walk" across nodes doing operations
+ # Walkers contain automatic methods that trigger on events
+ # These methods are called abilities
+ walker Visitor {
         has name: str;
 
         # abilities follow can <name> with <type> <operation> syntax
-		# runs when walker spawns at root
-		can start with `root entry {
-			print(f"Starting!");
-			# visit moves to an adjacent node
-			visit [-->]; # [-->] corresponds to outgoing connections
-			# visit [<--]; incoming connections
-			# visit [<-->]; all connections
-		}
+  # runs when walker spawns at root
+  can start with `root entry {
+   print(f"Starting!");
+   # visit moves to an adjacent node
+   visit [-->]; # [-->] corresponds to outgoing connections
+   # visit [<--]; incoming connections
+   # visit [<-->]; all connections
+  }
 
-		# runs when walker visits any person
-		can meet_person with Person entry {
-			# here refers to current node
-			# self refers to walker
-			print(f"Visiting {here.name} with walker {self.name}");
-			if here.name == "Joe" {
-				print("Found Joe");
-				disengage; # stop traversal immediately
-			}
+  # runs when walker visits any person
+  can meet_person with Person entry {
+   # here refers to current node
+   # self refers to walker
+   print(f"Visiting {here.name} with walker {self.name}");
+   if here.name == "Joe" {
+    print("Found Joe");
+    disengage; # stop traversal immediately
+   }
 
             # report returns a value without stopping exeuction
             # all reported values are accessed as a list after traversal
-			report here.name;
-			visit [-->];
-		}
+   report here.name;
+   visit [-->];
+  }
 
-		# runs when walker is done
-		can finish with exit {
-			print("Ending!");
-		}
-	}
+  # runs when walker is done
+  can finish with exit {
+   print("Ending!");
+  }
+ }
 
-	# nodes can also have abilities
-	node FriendlyPerson(Person) {
-		has name:str;
-		can greet with Visitor entry{
-			print(f"Welcome, visitor");
-		}
-	}
+ # nodes can also have abilities
+ node FriendlyPerson(Person) {
+  has name:str;
+  can greet with Visitor entry{
+   print(f"Welcome, visitor");
+  }
+ }
 
     f = FriendlyPerson(name="Joe",age=10);
 

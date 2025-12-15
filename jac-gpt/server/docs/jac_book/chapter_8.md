@@ -1,10 +1,12 @@
 # Chapter 8: OSP Introduction and Paradigm Shift
+
 ---
 So far, we have explored Jac's enhancements to familiar programming concepts. Now, we will introduce the paradigm that makes Jac truly unique, Object-Spatial Programming (OSP). This represents a fundamental shift in how we structure and execute our programs.
 
 In traditional programming, the application logic is stationary, and data is constantly fetched from databases and other services to be processed. OSP inverts this model, it allows your computation to travel to where your data lives. This approach is more natural, efficient, and scalable for the interconnected data that defines modern AI applications.
 
 ## Journey from OOP to OSP
+
 ---
 The transition from Object-Oriented Programming to Object-Spatial Programming begins with understanding how Jac perceives your program's structure.
 
@@ -17,7 +19,6 @@ Jac's `with entry` block serves a similar purpose but has a deeper, more powerfu
 ![With Entry](../assets/examples/jac_book/with_entry.png){ width=350px }
 
 `with entry` marks your entry point into the program's graph. This graph initially contains only the root node, which serves as the anchor for everything you will build.
-
 
 Everything you create and connect within this graph space can be persisted, traversed, and reasoned about spatially.
 
@@ -34,10 +35,10 @@ with entry {
     node_a = Node(name="A");
 }
 ```
+
 <br />
 
 ![With Entry](../assets/examples/jac_book/node1.png){ width=350px }
-
 
 Here, we define a node using the `node` keyword, which is similar to defining a class in traditional OOP. The `has` keyword declares properties for the node, and we create an instance of this node within the `with entry` block.
 
@@ -45,7 +46,7 @@ Here, we define a node using the `node` keyword, which is similar to defining a 
 
 When the entry point is executed, it creates a root node on the Jac graph, which can be accessed using the `root` variable. This root node serves as the starting point for the program's graph structure, enabling traversal and manipulation of connected nodes.
 
-In the example above, we create a new node `node_a` with the name "A". However, this node is not automatically part of the graph—it exists in isolation. To incorporate it into the graph, we need to connect it to an existing node using an `edge`.
+In the example above, we create a new node `node_a` with the name "A". However, this node is not automatically part of the graph, it exists in isolation. To incorporate it into the graph, we need to connect it to an existing node using an `edge`.
 
 This is where the `++>` operator comes in. It creates a directional edge from the root node to `node_a`, effectively linking the two and adding `node_a` into the graph.
 
@@ -59,10 +60,10 @@ with entry {
     root ++> node_a;  # Add node_a to the root graph
 }
 ```
+
 <br />
 
 ![With Entry](../assets/examples/jac_book/node2.png){ width=350px }
-
 
 ### Building out the rest of the Graph
 
@@ -81,6 +82,7 @@ with entry {
     node_a ++> node_b;  # Connect node_a to node_b
 }
 ```
+
 <br />
 
 Next let's define a terminal node that will represent the end of our graph traversal. This node will not have any outgoing edges, indicating that it is a leaf node in our graph structure:
@@ -89,9 +91,11 @@ Next let's define a terminal node that will represent the end of our graph trave
 node EndNode {}
 glob END = EndNode();  # Create a global end node
 ```
+
 <br />
 
 Now we can connect our nodes to this end node, creating a complete graph structure:
+
 ```jac
 node Node{
     has name: str;
@@ -108,12 +112,12 @@ with entry {
     node_b ++> END;  # Connect node_b to the end node
 }
 ```
+
 <br />
 
 ![With Entry](../assets/examples/jac_book/node3.png){ width=350px }
 
 ## From "Data to Computation" to "Computation to Data"
-
 
 ### Walking the Graph
 
@@ -123,15 +127,13 @@ One of the core innovations of Object-Spatial Programming (OSP) is the concept o
 
 Walkers operate **locally**, performing actions at each node or edge they encounter. This enables a more natural and efficient way to process distributed data, especially in systems modeled as networks, hierarchies, or flows.
 
-
 Walkers are more than simple graph crawlers. Because they are a subtype of the `object` archetype, they can,
 
 - Maintain State: A walker can have its own attributes (has fields) to store information it collects during its journey.
 - Execute Logic: A walker has methods (can abilities) that are automatically triggered when it "lands on" a specific type of node or edge.
 - Make Decisions: Based on the data it finds at its current location, a walker can decide where to go next.
 
-This paradigm shift—from centralized logic to distributed, mobile computation—is what makes OSP so powerful for modeling complex, real-world systems.
-
+This paradigm shift is what makes OSP so powerful for modeling complex, real-world systems.
 
 Getting back to our graph structure, lets define a simple walker that will traverse our graph and gather the names of the nodes it visits. When it reaches the terminal node, it will stop and return the collected names as a string:
 
@@ -156,6 +158,7 @@ with entry {
 ```
 
 Next we define our walker archetype, that has a `input` field to store the names of the nodes it visits:
+
 ```jac
 walker PathWalker {
     has input: str;
@@ -185,6 +188,7 @@ walker PathWalker {
     }
 }
 ```
+
 <br />
 
 ### The `visit` Statement and `-->` Syntax
@@ -193,7 +197,7 @@ To understand how walkers move through the graph, it's important to break down t
 
 In Jac, visit tells the walker to continue its traversal along the graph. What makes this powerful is the use of edge selectors inside the square brackets, like `[-->]`, which control how and where the walker moves.
 
-The `-->` symbol represents a forward edge in the graph—specifically, an edge from the current node (`here`) to any of its connected child nodes. So when you write visit `[-->];`, you're instructing the walker to follow all outgoing edges from the current node to the next set of reachable nodes.
+The `-->` symbol represents a forward edge in the graph. Specifically, an edge from the current node (`here`) to any of its connected child nodes. So when you write visit `[-->];`, you're instructing the walker to follow all outgoing edges from the current node to the next set of reachable nodes.
 
 Let's walk through what each part means:
 
@@ -202,7 +206,6 @@ Let's walk through what each part means:
 - `visit [-->-->];`: Move along two forward edges in succession, allowing for deeper traversal into the graph.
 
 Jac supports more complex edge selectors as well which we'll explore in subsequent chapters. For now, the key takeaway is that `visit` combined with edge selectors allows walkers to navigate the graph structure dynamically, processing nodes and edges as they go.
-
 
 ### Putting it All Together
 
@@ -244,22 +247,21 @@ with entry {
     print(my_walker.input);
 }
 ```
+
 <br />
 
 ```bash
 $ jac run path_walker.jac
 Start walking, visiting A, visiting B, reached the end
 ```
-<br />
 
+<br />
 
 ## Wrapping Up
 
 In this chapter, we've introduced the core concepts of Object-Spatial Programming (OSP) and how it differs from traditional object-oriented programming. We've seen how Jac allows us to define nodes and edges, create walkers, and traverse graphs in a way that naturally reflects the relationships between data.
 
-
 ## Key Takeaways
-
 
 - **Computation to data**: Move processing to where data naturally lives
 - **Spatial relationships**: Model connections as first-class graph structures
@@ -279,7 +281,6 @@ In this chapter, we've introduced the core concepts of Object-Spatial Programmin
 - **Efficient processing**: Computation happens exactly where it's needed
 - **Scalable architecture**: Naturally distributes across multiple nodes
 - **Maintainable code**: Clear separation of data, relationships, and processing logic
-
 
 !!! tip "Try It Yourself"
     Start thinking spatially by modeling:

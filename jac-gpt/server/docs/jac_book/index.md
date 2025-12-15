@@ -2,7 +2,6 @@
 
 This guide will help you get started with Jac, a programming language that introduces **Object-Spatial Programming (OSP)**  which is designed for building AI-powered applications. We will walk through practical examples to help you understand Jac's core features.
 
-
 !!! info "About This Book"
     This book teaches Jac through practical examples and real-world applications. Each chapter builds on the previous one, culminating in complete applications that demonstrate Jac's unique capabilities.
 
@@ -24,9 +23,11 @@ Jac offers a unique approach to programming by combining established concepts wi
 This book is organized into four progressive parts that build your expertise systematically:
 
 ### Part I: Jac Fundamentals
+
 *Master the language basics and unique features*
 
 #### Chapter 1: Introduction to Jac
+
 - What is Jac and why it matters
 - Installation and development environment setup
 - Your first Jac program
@@ -36,6 +37,7 @@ This book is organized into four progressive parts that build your expertise sys
     Hello World with explanation of Jac's unique features
 
 #### Chapter 2: Syntax and Development Environment
+
 - Setting up VS Code with Jac extension
 - Basic syntax differences from Python
 - Project structure and best practices
@@ -45,6 +47,7 @@ This book is organized into four progressive parts that build your expertise sys
     Development environment setup and basic project structure
 
 #### Chapter 3: Variables, Types, and Control Flow
+
 - Enhanced type system with mandatory typing
 - Variables, data structures, and type annotations
 - Control flow: if/else, loops, and pattern matching
@@ -54,6 +57,7 @@ This book is organized into four progressive parts that build your expertise sys
     Student record system demonstrating type safety and control flow
 
 #### Chapter 4: Functions, AI Functions, and Decorators
+
 - Function definitions with mandatory type annotations
 - Built-in AI function capabilities with `by llm()`
 - Decorators for enhanced functionality
@@ -64,6 +68,7 @@ This book is organized into four progressive parts that build your expertise sys
     Math functions library with AI integration and decorators
 
 #### Chapter 5: Advanced AI Operations
+
 - byLLM (Meaning Typed Programming) overview
 - Model configuration and selection
 - Semantic strings for enhanced AI context
@@ -74,6 +79,7 @@ This book is organized into four progressive parts that build your expertise sys
     Image captioning tool with multiple AI models
 
 #### Chapter 6: Imports System and File Operations
+
 - Import statements and module organization
 - Implementation separation with `.impl.jac` files
 - Python library integration
@@ -86,9 +92,11 @@ This book is organized into four progressive parts that build your expertise sys
 ---
 
 ### Part II: Enhanced Object-Oriented Programming
+
 *Build on familiar OOP concepts with modern enhancements*
 
 #### Chapter 7: Enhanced OOP - Objects and Classes
+
 - From Python `class` to Jac `obj`
 - Automatic constructors with `has` declarations
 - Access control with `:pub`, `:priv`, `:protect`
@@ -101,9 +109,11 @@ This book is organized into four progressive parts that build your expertise sys
 ---
 
 ### Part III: Object-Spatial Programming (OSP)
+
 *Master the revolutionary paradigm that makes Jac unique*
 
 #### Chapter 8: OSP Introduction and Paradigm Shift
+
 - From "data to computation" to "computation to data"
 - Spatial programming foundations
 - Graph thinking vs object thinking
@@ -114,6 +124,7 @@ This book is organized into four progressive parts that build your expertise sys
     Family tree comparison showing traditional vs spatial approaches
 
 #### Chapter 9: Nodes and Edges
+
 - Node creation and properties
 - Edge types and first-class relationships
 - Graph creation syntax and connection operators
@@ -124,6 +135,7 @@ This book is organized into four progressive parts that build your expertise sys
     Classroom management system with students, teachers, and connections
 
 #### Chapter 10: Walkers and Abilities
+
 - Walker creation and mobile computation
 - Ability definitions and event-driven triggers
 - Entry and exit behaviors
@@ -134,6 +146,7 @@ This book is organized into four progressive parts that build your expertise sys
     Message delivery system traversing classroom networks
 
 #### Chapter 11: Advanced Object Spatial Operations
+
 - Advanced filtering and multi-criteria queries
 - Visit patterns and traversal control
 - Breadth-first vs depth-first strategies
@@ -146,9 +159,11 @@ This book is organized into four progressive parts that build your expertise sys
 ---
 
 ### Part IV: Scale-Agnostic Cloud Applications
+
 *Build applications that scale from single-user to distributed systems*
 
 #### Chapter 12: Walkers as API Endpoints
+
 - Automatic API generation from walkers
 - Request/response handling and parameter validation
 - REST patterns using walker semantics
@@ -159,6 +174,7 @@ This book is organized into four progressive parts that build your expertise sys
     Shared notebook system with automatic REST API generation
 
 #### Chapter 13: Persistence and the Root Node
+
 - Automatic persistence with `jac serve`
 - Root node as persistence gateway
 - State consistency across requests and restarts
@@ -169,6 +185,7 @@ This book is organized into four progressive parts that build your expertise sys
     Counter application demonstrating automatic state persistence
 
 #### Chapter 14: Multi-User Architecture and Permissions
+
 - User isolation and data privacy patterns
 - Permission-based access control systems
 - Role-based and attribute-based security
@@ -179,6 +196,7 @@ This book is organized into four progressive parts that build your expertise sys
     Multi-user notebook with comprehensive permission system
 
 #### Chapter 15: Advanced Jac Cloud Features
+
 - Environment variables and configuration management
 - Logging and monitoring capabilities
 - Webhook integration for external services
@@ -191,9 +209,11 @@ This book is organized into four progressive parts that build your expertise sys
 ---
 
 ### Part V: Advanced Topics and Best Practices
+
 *Master sophisticated features and production deployment*
 
 #### Chapter 16: Type System Deep Dive
+
 - Advanced generics and type parameterization
 - Type constraints and bounded generics
 - Graph-aware type checking for OSP
@@ -204,6 +224,7 @@ This book is organized into four progressive parts that build your expertise sys
     Generic data processing system with type constraints
 
 #### Chapter 17: Testing and Debugging
+
 - Built-in testing framework and patterns
 - Testing walkers, nodes, and graph structures
 - Debugging spatial applications effectively
@@ -214,6 +235,7 @@ This book is organized into four progressive parts that build your expertise sys
     Comprehensive test suite for spatial applications
 
 #### Chapter 18: Deployment Strategies
+
 - Local vs cloud deployment comparison
 - Docker containerization for Jac applications
 - Kubernetes orchestration and scaling
@@ -224,6 +246,7 @@ This book is organized into four progressive parts that build your expertise sys
     Complete deployment pipeline from development to production
 
 #### Chapter 19: Performance Optimization
+
 - Graph structure optimization strategies
 - Algorithm optimization for spatial operations
 - Caching patterns and memory management
@@ -234,6 +257,7 @@ This book is organized into four progressive parts that build your expertise sys
     Performance optimization of large-scale graph applications
 
 #### Chapter 20: Python to Jac Migration
+
 - Migration strategies and planning
 - Converting Python classes to Jac objects
 - Transforming traditional data structures to spatial graphs

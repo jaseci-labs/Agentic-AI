@@ -13,32 +13,38 @@ With Jac Cloud, you can:
 ## Key Features at a Glance
 
 ### Instant API Generation
+
 - Automatically converts Jac walkers into REST endpoints
 - Supports all HTTP methods (GET, POST, PUT, DELETE, etc.)
 - Built-in OpenAPI/Swagger documentation at `/docs`
 
 ### Authentication & Authorization
+
 - Token-based authentication system
 - Role-based access control
 - Configurable endpoint security
 
 ### Real-time Communication
+
 - WebSocket support for real-time applications
 - Channel-based messaging
 - Client and user notification systems
 
 ### Task Scheduling
+
 - Cron-based scheduling
 - Interval-based tasks
 - One-time date triggers
 
 ### Production-Ready Features
+
 - Comprehensive logging with Elastic integration
 - Environment variable configuration
 - Health monitoring and metrics
 - File upload support
 
 ### Cloud Integration
+
 - Kubernetes deployment support
 - Docker containerization
 - ConfigMap-based configuration
