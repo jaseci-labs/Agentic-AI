@@ -1,5 +1,4 @@
-cl {
-    import from '@mui/material' {
+import from '@mui/material' {
         Box,
         Paper,
         Typography,
@@ -13,13 +12,13 @@ cl {
         ListItemIcon,
         ListItemText
     }
-    import from '@mui/icons-material' {
+import from '@mui/icons-material' {
         School,
         Lightbulb
     }
-}
 
-cl def Sidebar(props: any) -> any {
+
+def Sidebar(props: any) -> any {
      activeTab = props.activeTab;
      setActiveTab = props.setActiveTab;
      navigationItems = props.navigationItems;

@@ -1,6 +1,5 @@
-cl {
-    import from react { useState }
-    import from '@mui/material' {
+import from react { useState }
+import from '@mui/material' {
         Box,
         Paper,
         TextField,
@@ -14,16 +13,16 @@ cl {
         CardContent,
         CircularProgress
     }
-    import from '@mui/icons-material' {
+import from '@mui/icons-material' {
         Quiz,
         AutoAwesome,
         CheckCircle,
         Cancel,
         Refresh
-    }
 }
 
-cl def QuizTab(props: any) -> any {
+
+def QuizTab(props: any) -> any {
     quizTopic = props.quizTopic;
     setQuizTopic = props.setQuizTopic;
     quizDifficulty = props.quizDifficulty;

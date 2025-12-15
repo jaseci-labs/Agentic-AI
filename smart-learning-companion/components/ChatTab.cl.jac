@@ -1,6 +1,5 @@
-cl {
-    import from react { useRef }
-    import from '@mui/material' {
+import from react { useRef }
+import from '@mui/material' {
         Box,
         Paper,
         TextField,
@@ -15,7 +14,7 @@ cl {
         CardContent,
         Grow
     }
-    import from '@mui/icons-material' {
+import from '@mui/icons-material' {
         Send,
         School,
         Psychology,
@@ -23,9 +22,8 @@ cl {
         Clear,
         Person
     }
-}
 
-cl def ChatTab(props: any) -> any {
+def ChatTab(props: any) -> any {
     conversationHistory = props.conversationHistory;
     message = props.message;
     setMessage = props.setMessage;
