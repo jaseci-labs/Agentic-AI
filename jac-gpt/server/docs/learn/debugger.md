@@ -4,7 +4,6 @@
 !!! note
     This tutorial goes over the Jac Extension for locally debugging your Jac program. If you are interested in using an online debugger checkout [Jac Playground](https://www.jac-lang.org/playground/)
 
-
 !!! tldr
     If you already have some development experience, here's a quick guide to get the debugger running.
 
@@ -28,8 +27,8 @@ The Jac Debugger helps you find and fix issues in Jac programs. It supports:
 
 In this tutorial, we’ll walk through how to set up the debugger and demonstrate how to use its features.
 
-
 ## Setup (one time)
+
 ---
 
 !!! info
@@ -100,12 +99,12 @@ This ensures you have the minimum tools needed for debugging.
   <img src="https://img.youtube.com/vi/5zaR_HQzNU4/maxresdefault.jpg" alt="YouTube Tutorial: Create launch.json for Jac Debugging">
 </a>
 
-
 ## Debugger Tutorial
 
 Below are some examples of how to use the Jac Debugger
 
 ### Breakpoints
+
 !!! note
     If you already know how debuggers work, skip to [Graph Visualizer](#graph-visualizer)
 
@@ -140,7 +139,6 @@ When the program reaches the breakpoint, it will pause. You’ll see:
 | **Restart**     | Restarts the program from the beginning.                |
 | **Stop**        | Halts execution and exits the debugger.                 |
 
-
 *Variable Viewer* (in red):
 
 | Type                 | Meaning                                                                                  | Where They Can Be Used                                                                                        |
@@ -160,6 +158,7 @@ Use this to understand program state and logic flow.
 Jac’s debugger includes a **visual graph tool** to show nodes and edges.
 
 Example graph program:
+
 ```jac
 node Person{
     has age: int;
@@ -182,7 +181,6 @@ with entry {
 }
 ```
 
-
 #### Open visualization panel:
 
 1. Open the VS Code Command Palette
@@ -199,7 +197,7 @@ You will see a side panel like this:
 #### Watch the Graph Build in Real Time
 
 1. Set a breakpoint in your code
-3. Click Run and Debug
+2. Click Run and Debug
 3. Step through the program each created node/edge appears in real time
 
 <a href="https://www.youtube.com/watch?v=9bdZn4Zvf9M" target="_blank" class="youtube-video-link">

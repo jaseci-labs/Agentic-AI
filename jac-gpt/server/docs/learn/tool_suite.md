@@ -19,7 +19,6 @@ To specifically learn how to setup the debugger or graph-visualizer check out th
 ??? tip "Developing a Jac Scale Native application?"
     The debugger and graph visualizer included in the Jac VS Code Extension support only local Jac programs. They are not currently compatible with Scale Native. To visualize graphs for Scale Native programs, refer to [Jac Lens](#jac-lens).
 
-
 ## Jac Playground
 
 The [Jac Playground](https://www.jac-lang.org/playground/) provides an interactive graph visualizer and online debugger. This tool is meant to be used to sample quick Jac scripts without needing to setup an entire project on your own machine.
@@ -34,7 +33,6 @@ The Jac playground includes an online editor with:
 It's a fast and beginner-friendly way to learn Jac, experiment with Object-Spatial Programming, or prototype ideas!
 
 To learn more, check out the [Jac Playground tutorial](https://www.jac-lang.org/learn/jac_playground/).
-
 
 ## Jac-GPT
 

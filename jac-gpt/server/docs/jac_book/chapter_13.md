@@ -166,7 +166,7 @@ To demonstrate persistence, we need to create a proper jac-cloud project structu
 
 !!! example "Project Structure"
     ```
-    counter-app/
+counter-app/
     ├── .env                 # Environment configuration
     ├── main.jac            # Main application logic
     ├── server.py           # Optional custom server setup

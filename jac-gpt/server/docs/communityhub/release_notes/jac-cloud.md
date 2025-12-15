@@ -2,9 +2,7 @@
 
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jac-Cloud**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking_changes.md) page.
 
-
 ## jac-cloud 0.2.11 (Unreleased)
-
 
 ## jac-cloud 0.2.10 (Latest Release)
 

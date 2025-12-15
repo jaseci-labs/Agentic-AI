@@ -1,4 +1,5 @@
 # Chapter 4: A Deeper Look at Functions
+
 ---
 
 In this chapter, we will explore the more advanced capabilities of functions in Jac. You will learn how Jac supports functional programming patterns, how to use functions as first-class citizens, and how to integrate AI directly into your function definitions. We will build a small math library to demonstrate these features in a practical context.
@@ -6,11 +7,12 @@ In this chapter, we will explore the more advanced capabilities of functions in 
 > In Jac, functions are treated as first-class citizens, meaning they can be stored in variables, passed as arguments to other functions, and returned from them, just like any other data type such as an integer or a string.
 
 ## Functional Programming in Jac
+
 ---
 Functional programming is a style of writing software that treats computation as the evaluation of mathematical functions. While Jac is not a strict functional programming language, it provides strong support for functional programming concepts, enabling you to write more modular and expressive code.
 
-
 ### Function as First-Class Citizens
+
 The core principle of functional programming is treating functions as first-class citizens. This means you can handle functions with the same flexibility as any other variable.
 
 Let's revisit the calculator we built in Chapter 3. This time, we will redesign it using functional programming principles to make it more flexible and easier to extend.
@@ -24,6 +26,7 @@ def calculator(a: float, b: float, operation: callable) -> float {
     return operation(a, b);
 }
 ```
+
 <br />
 
 Next, we can define our basic arithmetic operations as standalone functions.
@@ -51,7 +54,6 @@ def divide(a: float, b: float) -> float {
 
 Now, we can create a dictionary using `dict` keyword that maps a string (like "add") to the actual function object (like add). This allows us to select an operation dynamically using its name.
 
-
 ```jac
 # A global dictionary to map operation names to their corresponding functions.
 glob operations: dict[str, callable] = {
@@ -61,6 +63,7 @@ glob operations: dict[str, callable] = {
     "divide": divide
 };
 ```
+
 <br />
 
 Finally, let's put it all together. Our main execution block can now use the calculator function and the operations dictionary to perform calculations dynamically.
@@ -87,12 +90,13 @@ with entry {
 }
 
 ```
+
 This design is highly flexible. To add a new operation, like exponentiation, you would simply define a new `power` function and add it to the operations dictionary. You wouldn't need to change the core calculator logic at all. This demonstrates the power of treating functions as first-class data.
 
 <br />
 
-
 ### Lambda Functions
+
 In Jac, a lambda function is a concise, single-line, anonymous function. These are useful for short, specific operations where defining a full function with def would be unnecessarily verbose.
 
 Lambda functions use the syntax lambda `lambda parameters: return_type: expression`. They can be assigned to a variable or used directly as an argument to another function.They are also useful for functional programming patterns like map, filter, and reduce.
@@ -103,8 +107,8 @@ For example, a simple add function can be defined as a lambda:
 # This lambda takes two `float` parameters, `a` and `b`, and returns their sum as a `float`. It can be called just like a regular function.
 add = lambda x: float, y: float: x + y;
 ```
-<br />
 
+<br />
 
 ```jac
 with entry {
@@ -118,9 +122,11 @@ with entry {
     print(f"Result of add({a}, {b}) = {result}");
 }
 ```
+
 <br />
 
 ### Higher-Order Functions
+
 A higher-order function is a function that either takes another function as an argument, returns a function, or both. This is a powerful concept that enables functional programming patterns, promoting code that is abstract, reusable, and composable.
 
 The `callable` type hint is used to specify that a parameter or return value is expected to be a function.
@@ -159,9 +165,11 @@ with entry {
     print(f"Quadrupled: {quadrupled}");
 }
 ```
+
 <br />
 
 ### Built-in Higher-Order Functions `map`, `filter`, and `sorted`
+
 Jac supports Python's essential built-in higher-order functions, which are powerful tools for working with lists and other collections without writing explicit loops.
 
 ### *filter*
@@ -171,7 +179,6 @@ The `filter` function constructs a new iterable from elements of an existing one
 Its signature is `filter(function, iterable)`.
 
 Let's revisit our grade-filtering example from Chapter 3. Instead of a list comprehension, we can use filter with a lambda function to define our condition.
-
 
 ```jac
 with entry {
@@ -183,6 +190,7 @@ with entry {
     print(f"Passing scores: {passing_scores}");
 }
 ```
+
 <br />
 
 The same result can be achieved using the `filter` function along with a lambda function to define the filtering condition.
@@ -200,10 +208,11 @@ with entry {
     print(f"Passing scores: {passing_scores}");
 }
 ```
+
 <br />
 
-
 ### *map*
+
 The `map` function applies a given function to every item of an iterable and returns an iterator of the results.
 Its signature is `map(function, iterable)`. This is ideal for transforming data without writing explicit loops.
 
@@ -235,9 +244,11 @@ with entry {
     print(f"Grades: {grades}");
 }
 ```
+
 <br />
 
 ### *sorted*
+
 The `sorted` function returns a new sorted list from the items in an iterable. You can customize the sorting logic by providing a function to the `key` parameter.
 
 ```jac
@@ -254,16 +265,15 @@ with entry {
     print(f"Sorted by score (desc): {sorted_by_score}");
 }
 ```
+
 <br />
 
-
-
 ## Decorators for Enhanced Functionality
+
 ---
-As your programs grow, you'll often need to add cross-cutting functionality—like logging, timing, or caching—to multiple functions. Modifying each function directly would be repetitive and error-prone. Decorators solve this problem by providing a clean way to wrap a function with extra behavior.
+As your programs grow, you'll often need to add cross-cutting functionality, such as logging, timing, or caching, to multiple functions. Modifying each function directly would be repetitive and error-prone. Decorators solve this problem by providing a clean way to wrap a function with extra behavior.
 
 A decorator is a function that takes another function as an argument, adds some functionality, and returns a new function.
-
 
 Consider the following example of a simple decorator that adds pre- and post-processing logic to a function.
 
@@ -284,7 +294,6 @@ def decorator_name(func: callable) -> callable {
 !!! note
     `*args` is a python contruct that allows a function to accept a variable number of positional arguments, while `**kwargs` allows it to accept a variable number of keyword arguments.
 
-
 Decorators provide a clean way to add functionality to functions without modifying their core logic. The general syntax for using decorators in Jac is:
 
 ```jac
@@ -293,10 +302,11 @@ def function_name(parameters) -> return_type {
     # function body
 }
 ```
+
 <br />
 
-
 ### Decorator Stacking Order
+
 You can apply multiple decorators to a single function. They are applied from the bottom up the decorator closest to the function definition is applied first.
 
 ```jac
@@ -333,11 +343,13 @@ with entry {
     greet("Alice");
 }
 ```
+
 <br />
 
 The output will show that decorator B's "start" and "end" messages are nested inside decorator A's messages.
 
 ### Parameterized Decorators
+
 For more flexibility, decorators can accept their own parameters. This requires an extra layer of nesting in the decorator function.
 
 ```jac
@@ -368,6 +380,7 @@ with entry {
     say_hello("Bob");
 }
 ```
+
 <br />
 
 This will print "Hello, Bob!" three times, as specified by the `@repeat(times=3)` parameter.
@@ -412,9 +425,11 @@ with entry {
     risky_operation();
 }
 ```
+
 <br />
 
 ### Timing Decorator
+
 A timing decorator is a simple way to measure the performance of your functions.
 
 ```jac
@@ -459,9 +474,11 @@ with entry {
     print(f"Factorial(3) = {result2}");
 }
 ```
+
 <br />
 
 ### Caching (Memoization) Decorator
+
 For functions that perform expensive calculations, a caching decorator can store results and return them instantly on subsequent calls with the same arguments. This technique is known as memoization.
 
 ```jac
@@ -542,16 +559,17 @@ with entry {
     print(f"Expensive calculation again: {result4}");
 }
 ```
+
 <br />
 
-
 ## Async Functions
+
 ---
 Some tasks, like network requests or reading large files, are I/O-bound. This means your program spends most of its time waiting for an external resource. During this waiting time, a standard program sits idle.
 
 Jac's support for async functions allows your program to perform other work while it waits, leading to significant performance improvements for I/O-bound applications. This is known as concurrency.
 
-- `async def`: Marks a function as a "coroutine"—a special function that can be paused and resumed.
+- `async def`: Marks a function as a "coroutine", a special function that can be paused and resumed.
 - `await`: Pauses the execution of the current coroutine, allowing the program to work on other tasks until the awaited operation (e.g., a network call) is complete.
 
 ### Basic Async Functions
@@ -602,10 +620,13 @@ with entry {
     run_async_example();
 }
 ```
+
 <br />
 
 ## Best Practices
+
 ---
+
 - **Use descriptive names**: Function names should clearly indicate their purpose
 - **Keep functions focused**: Each function should have a single, well-defined responsibility
 - **Handle errors gracefully**: Use appropriate return types and exception handling
@@ -614,9 +635,9 @@ with entry {
 - **Consider async**: Use async functions for I/O-bound operations
 
 ## Wrapping Up
+
 ---
 
 In this chapter, we looked at higher order functions, decorators, and async functions in Jac. We explored how to use these features to create flexible, reusable code that can handle complex operations efficiently.
-
 
 *Ready to explore advanced AI operations? Continue to [Chapter 5: Advanced AI Operations](chapter_5.md)!*

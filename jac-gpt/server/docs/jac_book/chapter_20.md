@@ -195,7 +195,7 @@ The first migration step involves converting Python classes to Jac objects while
         ```python
         # book.py - Python class
         class Book:
-            def __init__(self, title: str, author: str, isbn: str):
+            def **init**(self, title: str, author: str, isbn: str):
                 self.title = title
                 self.author = author
                 self.isbn = isbn
@@ -282,7 +282,7 @@ The next step leverages Jac's Object-Spatial Programming by converting relations
         ```python
         # library_python.py - List-based relationships
         class Library:
-            def __init__(self, name: str):
+            def **init**(self, name: str):
                 self.name = name
                 self.books = []  # List of books
                 self.members = []  # List of members

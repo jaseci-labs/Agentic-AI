@@ -18,7 +18,7 @@ Jac provides a powerful and flexible import system to organize code across multi
 | From-import alias | `import from module { X as Y }` | Rename symbol |
 
 !!! note "File Extensions"
-    Jac resolves both `.jac` and `.py` files—you don't need to include the extension in import paths. This makes Jac fully interoperable with Python modules.
+    Jac resolves both `.jac` and `.py` files, you don't need to include the extension in import paths. This makes Jac fully interoperable with Python modules.
 
 ---
 
@@ -26,19 +26,19 @@ Jac provides a powerful and flexible import system to organize code across multi
 
 Import an entire module and access its members using dot notation.
 
-> 📂 [**absolute_import/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import)
+> [**absolute_import/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import)
 
 === "main.jac"
     ```jac title="absolute_import/main.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import/main.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import/main.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import/main.jac)
 
 === "module_a.jac"
     ```jac title="absolute_import/module_a.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import/module_a.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import/module_a.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/absolute_import/module_a.jac)
 
 ```
 absolute_import/
@@ -48,7 +48,7 @@ absolute_import/
 
 ??? example "Output"
     ```
-    Absolute import - VALUE_A: Hello from module_a
+Absolute import - VALUE_A: Hello from module_a
     Absolute import - greet(): Greet from module_a
     ```
 
@@ -61,19 +61,19 @@ absolute_import/
 
 Import specific symbols directly into your namespace.
 
-> 📂 [**from_import/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import)
+> [**from_import/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import)
 
 === "main.jac"
     ```jac title="from_import/main.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import/main.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import/main.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import/main.jac)
 
 === "module_b.jac"
     ```jac title="from_import/module_b.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import/module_b.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import/module_b.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/from_import/module_b.jac)
 
 ```
 from_import/
@@ -83,7 +83,7 @@ from_import/
 
 ??? example "Output"
     ```
-    From-import - VALUE_B: Hello from module_b
+From-import - VALUE_B: Hello from module_b
     From-import - calculate(5): 10
     From-import - MyClass: MyClass instance
     ```
@@ -97,19 +97,19 @@ from_import/
 
 The `include` statement imports all public symbols from a module directly into your namespace.
 
-> 📂 [**include_statement/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement)
+> [**include_statement/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement)
 
 === "main.jac"
     ```jac title="include_statement/main.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement/main.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement/main.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement/main.jac)
 
 === "module_c.jac"
     ```jac title="include_statement/module_c.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement/module_c.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement/module_c.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/include_statement/module_c.jac)
 
 ```
 include_statement/
@@ -119,7 +119,7 @@ include_statement/
 
 ??? example "Output"
     ```
-    Star import - PUBLIC_VAR: I am public
+Star import - PUBLIC_VAR: I am public
     Star import - public_func(): Public function
     ```
 
@@ -135,19 +135,19 @@ include_statement/
 
 Rename modules or symbols during import to avoid conflicts or for convenience.
 
-> 📂 [**aliased_import/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import)
+> [**aliased_import/**](https://github.com/Jaseci-Labs/jaseci/tree/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import)
 
 === "main.jac"
     ```jac title="aliased_import/main.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import/main.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import/main.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import/main.jac)
 
 === "module_d.jac"
     ```jac title="aliased_import/module_d.jac"
     --8<-- "jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import/module_d.jac"
     ```
-    [🔗 View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import/module_d.jac)
+    [View on GitHub](https://github.com/Jaseci-Labs/jaseci/blob/main/jac/jaclang/compiler/tests/fixtures/imports_fixture/aliased_import/module_d.jac)
 
 ```
 aliased_import/
@@ -157,7 +157,7 @@ aliased_import/
 
 ??? example "Output"
     ```
-    Import as - md.LONG_MODULE_VALUE: Value from long named module
+Import as - md.LONG_MODULE_VALUE: Value from long named module
     From import as - lfn(): Result from long function
     ```
 

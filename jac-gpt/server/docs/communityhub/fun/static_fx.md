@@ -105,6 +105,7 @@ torch/_dynamo/
 ```
 
 **Key Functions to Study**:
+
 - `torch.fx.symbolic_trace()` - Main entry point
 - `torch.fx.Tracer.trace()` - Core tracing logic
 - `torch.fx.Proxy.__torch_function__()` - Operation interception
@@ -155,6 +156,7 @@ graph TB
 Located in `jac/jaclang/compiler/unitree.py`, UniIR is the AST representation used throughout the compiler.
 
 **Key Characteristics**:
+
 - **Universal**: Represents both Jac and Python code
 - **Hierarchical**: Tree structure with parent/child relationships
 - **Annotated**: Nodes carry symbol tables, type information, and source locations
@@ -287,12 +289,14 @@ def exit_if_stmt(self, node: uni.IfStmt) -> None:
 **Location**: `jac/jaclang/compiler/passes/main/sym_tab_build_pass.py`
 
 **Key Operations**:
+
 - Creates scope hierarchies
 - Registers symbols (variables, functions, classes)
 - Links parent-child scopes
 - Adds special symbols (`self`, `super`)
 
 **Example**:
+
 ```python
 def enter_archetype(self, node: uni.Archetype) -> None:
     self.push_scope_and_link(node)
@@ -312,6 +316,7 @@ def enter_ability(self, node: uni.Ability) -> None:
 **Location**: `jac/jaclang/compiler/passes/main/cfg_build_pass.py`
 
 **Key Operations**:
+
 - Identifies basic blocks (straight-line code sequences)
 - Links basic blocks with control flow edges
 - Tracks loop structures
@@ -335,6 +340,7 @@ graph TD
 ```
 
 **Basic Block Connections**:
+
 ```python
 class UniCFGNode(UniNode):
     """Node participating in control flow"""
@@ -414,11 +420,13 @@ class MyModel(nn.Module):
 ```
 
 **Without inlining**, we'd have:
+
 - Incomplete static analysis (can't see into `_helper`)
 - Missing optimization opportunities
 - Fragmented graph representation
 
 **With inlining**, we get:
+
 ```python
 def forward_inlined(self, x):
     # Inlined self.layer1(x)
@@ -890,6 +898,7 @@ __all__ = [
 **3. Study existing passes:**
 
 Read and understand these files thoroughly:
+
 - `unitree.py` (lines 44-650): UniNode class hierarchy
 - `uni_pass.py`: Pass infrastructure
 - `cfg_build_pass.py`: Example of complex pass with graph building
@@ -1853,6 +1862,7 @@ if __name__ == "__main__":
 ### Example 1: Simple Model
 
 **Input** (`simple_model.py`):
+
 ```python
 import torch
 import torch.nn as nn
@@ -1872,6 +1882,7 @@ class SimpleNet(nn.Module):
 ```
 
 **Static FX Graph Output**:
+
 ```
 Graph: SimpleNet.forward
 ==================================================
@@ -1889,6 +1900,7 @@ No graph breaks detected!
 ### Example 2: Model with Graph Breaks
 
 **Input** (`conditional_model.py`):
+
 ```python
 import torch
 import torch.nn as nn
@@ -1913,6 +1925,7 @@ class ConditionalNet(nn.Module):
 ```
 
 **Static FX Graph Output**:
+
 ```
 Graph: ConditionalNet.forward
 ==================================================

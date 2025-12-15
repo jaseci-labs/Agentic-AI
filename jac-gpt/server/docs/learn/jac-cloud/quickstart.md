@@ -15,10 +15,11 @@ jac serve main.jac --host 0.0.0.0 --port 8080 --reload
 ```
 
 ## Development Mode
+
 - `--reload`
-    - Enable auto-reload. Uvicorn supports two versions of auto-reloading behavior enabled by this option. Default: `False`.
+  - Enable auto-reload. Uvicorn supports two versions of auto-reloading behavior enabled by this option. Default: `False`.
 - `--watch path/to/dir1,path/to/dir2`
-    - Select which path/s (comma separated) to watch for changes for auto-reload. Requires `--reload` to work. Defaults to main jac directory
+  - Select which path/s (comma separated) to watch for changes for auto-reload. Requires `--reload` to work. Defaults to main jac directory
 
 ---
 
@@ -41,6 +42,7 @@ Jac Cloud automatically converts your walker declarations into REST API endpoint
 ### Want to Disable Auto-Generation?
 
 To disable automatic endpoint generation, set the environment variable:
+
 ```bash
 export DISABLE_AUTO_ENDPOINT=True
 ```
@@ -105,6 +107,7 @@ walker my_walker {
 ## Examples for Beginners
 
 ### Basic Endpoint Example - Time Service
+
 Let's create a simple endpoint that returns the current time. For this example, we create a walker named `public_info` which provides one rest method `get` at the url `http://localhost:8000/walker/public_info`. The ability `get_current_time` will return the current timestamp in ISO format via the use of the `report` statement.
 
 ```jac
@@ -125,8 +128,8 @@ walker public_info {
 }
 ```
 
-
 ### Parameterized Endpoint Example - User Search
+
 This example demonstrates how to create an endpoint from a walker that accepts query parameters for searching users. The walker `search_users` will allow users to search for a user by their username.
 
 ```jac
@@ -183,11 +186,13 @@ If the user is found, the response will look like this:
 ```
 
 ### File Upload Example
+
 In this example, we will create a walker that allows users to upload a file. The walker `single_file_upload` will accept a single file and return the filename in the response. This shows how the walker can handle post requests with file uploads.
 
 Since jac is a superset of Python, we can use the `UploadFile` type from FastAPI to handle file uploads.
 
 First, we create the upload_file.jac file with the following content:
+
 ```jac
 # upload_file.jac
 import from fastapi { UploadFile }
@@ -211,6 +216,7 @@ walker single_file_upload {
 ```
 
 Next we can create a test text file named `test.txt` with the content "Hello, Jac Cloud!".
+
 ```bash
 echo "Hello, Jac Cloud!" > test.txt
 ```
@@ -284,11 +290,13 @@ save(my_object_instance)
 ### **Commit**
 
 **Commit all in-memory data:**
+
 ```jac
 commit()  # Saves everything currently in memory to database
 ```
 
 **Commit specific archetype:**
+
 ```jac
 commit(archetype)  # Only commits this specific archetype
 ```

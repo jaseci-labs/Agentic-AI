@@ -79,6 +79,7 @@ A walker is defined with the walker archetype. Like an obj, it can have has attr
 ### Entry and Exit Abilities
 
 The most common abilities are entry and exit abilities.
+
 - An `entry` ability triggers when a walker arrives at a node or edge.
 - An `exit` ability triggers when a walker leaves a node or edge.
 

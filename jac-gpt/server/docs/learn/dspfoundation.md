@@ -1,7 +1,9 @@
 # Object-Spatial Programming: A Topological Approach to Computation
+
 #### By Jason Mars ([Original Paper on Arxiv](https://arxiv.org/abs/2503.15812))
 
 ## Introduction
+
 As modern software systems grow increasingly complex and interconnected, traditional programming paradigms often struggle to represent the rich spatial and topological relationships inherent in many problem domains. While Object-Oriented Programming (OOP) has served as a dominant paradigm for decades, it faces significant limitations when modeling systems with inherently graph-like structures, dynamic traversal patterns, or context-dependent behaviors. These limitations become particularly pronounced in domains such as social networks, agent-based systems, neural networks, and other topologically-oriented computational problems.
 
 Traditional programming models, including procedural, functional, and object-oriented paradigms, typically separate data structures from the algorithms that manipulate them. In this conventional model, data flows to computation through parameter passing and return values, with algorithms remaining stationary in functions and methods. This "data-to-compute" programming model is pervasive, being ubiquitous at the programming interface and can even be found as a fundamentally embedded presupposition in the von Neumann computer design itself, where data is moved from memory to the CPU for processing. Notably absent from the programming language landscape is a system of language constructs that naturally supports a complementary "compute-to-data" paradigm while maintaining compatibility with conventional popular programming languages. The lack of such a programming model creates friction when representing a wide range of computational problems where:
@@ -417,7 +419,7 @@ To maintain object-spatial graph consistency and support higher-order topologica
 
 4. **Walker Instantiation**: An instance $w$ of a walker class $\tau_{\text{walker}}$ can be instantiated as a standard object without an initial location. In this state, the walker functions as a regular object with all its properties and methods accessible, but it does not participate in object-spatial traversal until activated via the spawn operator.
 
-These instantiation rules ensure that all object-spatial elements—from individual nodes and edges to higher-order path collections—maintain topological consistency while providing flexible construction mechanisms. The rules for path collections are particularly important as they bridge between the static topological structure and the dynamic execution patterns of walkers, allowing for complex traversal strategies to be expressed concisely while preserving the integrity of the object-spatial model.
+These instantiation rules ensure that all object-spatial elements, from individual nodes and edges to higher-order path collections, maintain topological consistency while providing flexible construction mechanisms. The rules for path collections are particularly important as they bridge between the static topological structure and the dynamic execution patterns of walkers, allowing for complex traversal strategies to be expressed concisely while preserving the integrity of the object-spatial model.
 
 ### Lifecycle Management
 

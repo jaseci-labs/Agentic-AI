@@ -5,6 +5,7 @@ This tutorial demonstrates how to build AI agents with persistent state that can
 ## <span style="color: orange">Overview
 
 This tutorial covers building a trading game system with:
+
 - AI-powered character generation functions
 - AI agents that maintain conversation state
 - Trading transaction system
@@ -20,6 +21,7 @@ pip install byllm
 ```
 
 OpenAI API key configuration:
+
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 ```
@@ -50,6 +52,7 @@ obj Chat {
 ```
 
 **Structure definitions:**
+
 - **InventoryItem**: Tradeable objects with name and price
 - **Person**: Character data including stats, money, and items
 - **Chat**: Message history for conversation context
@@ -113,6 +116,7 @@ def make_transaction(buyer_name: str, seller_name: str, item_name: str, price: i
 ```
 
 **Transaction processing:**
+
 1. Locates the item in the seller's inventory
 2. Validates the buyer has sufficient funds
 3. Transfers money and items between characters
@@ -127,12 +131,14 @@ def chat_with_player(player: Person, npc: Person, chat_history: list[Chat]) -> C
 ```
 
 **AI agent characteristics:**
+
 - **Maintains State**: Uses `chat_history` to remember previous interactions
 - **Reasons**: Processes conversation context using ReAct method
 - **Acts**: Can use tools like `make_transaction` when appropriate
 - **Persists Context**: Builds understanding across multiple conversation turns
 
 **Agent capabilities:**
+
 - Remember previous conversations through persistent `chat_history`
 - Execute trades when agreements are reached
 - Negotiate prices within reasonable bounds
@@ -176,6 +182,7 @@ with entry {
 ```
 
 **Game loop execution:**
+
 1. Uses AI functions to generate characters (stateless)
 2. Registers characters for transaction system
 3. Uses the AI agent for NPC responses (stateful - maintains conversation history)
@@ -187,12 +194,14 @@ with entry {
 ### <span style="color: orange">AI Functions (Stateless)
 
 AI-integrated functions that operate without persistent state:
+
 - `make_player()` and `make_random_npc()` - Generate characters but don't retain memory
 - These are AI-powered utilities, not agents
 
 ### <span style="color: orange">AI Agents (Stateful)
 
 AI systems that maintain persistent state across interactions:
+
 - `chat_with_player()` with `chat_history` parameter - Retains conversation context
 - Builds understanding over multiple turns
 - Can reference previous interactions
@@ -202,6 +211,7 @@ AI systems that maintain persistent state across interactions:
 ### <span style="color: orange">Tool Integration
 
 The AI agent accesses application functions through tools:
+
 - The `chat_with_player` AI agent can call `make_transaction`
 - The AI extracts parameters from natural language
 - Tool results are incorporated into responses
@@ -209,6 +219,7 @@ The AI agent accesses application functions through tools:
 ### <span style="color: orange">State Management
 
 The AI agent maintains state through:
+
 - Structured data objects (`Person`, `InventoryItem`)
 - Conversation history (`Chat` objects)
 - Global registries (`person_record`)

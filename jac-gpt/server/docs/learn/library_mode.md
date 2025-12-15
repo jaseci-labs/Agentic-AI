@@ -166,6 +166,7 @@ print(result)
 ### **1. Nodes and Edges**
 
 **In Jac:**
+
 ```jac
 node Person {
     has name: str;
@@ -175,6 +176,7 @@ edge Friend {}
 ```
 
 **In Library Mode:**
+
 ```python
 from jaclang.lib import Node, Edge
 
@@ -192,6 +194,7 @@ Graph nodes are implemented by inheriting from the `Node` base class, while rela
 ### **2. Walkers**
 
 **In Jac:**
+
 ```jac
 walker FriendFinder {
     has started: bool = False;
@@ -199,6 +202,7 @@ walker FriendFinder {
 ```
 
 **In Library Mode:**
+
 ```python
 from jaclang.lib import Walker
 
@@ -212,6 +216,7 @@ Walkers are graph traversal agents implemented by inheriting from the `Walker` b
 ### **3. Abilities (Event Handlers)**
 
 **In Jac:**
+
 ```jac
 can report_friend with Person entry {
     print(f"{here.name} is a friend");
@@ -219,6 +224,7 @@ can report_friend with Person entry {
 ```
 
 **In Library Mode:**
+
 ```python
 from jaclang.lib import on_entry
 
@@ -233,6 +239,7 @@ Abilities define event handlers that execute when a walker interacts with nodes 
 ### **4. Connecting Nodes**
 
 **In Jac:**
+
 ```jac
 root ++> p1;                      # Connect root to p1
 p1 +>: Friend :+> p2;             # Connect p1 to p2 with Friend edge
@@ -240,6 +247,7 @@ p2 +>: Family :+> [p1, p3];       # Connect p2 to multiple nodes
 ```
 
 **In Library Mode:**
+
 ```python
 from jaclang.lib import connect, root
 
@@ -253,11 +261,13 @@ The `connect()` function creates directed edges between nodes. The `edge` parame
 ### **5. Spawning Walkers**
 
 **In Jac:**
+
 ```jac
 result = FriendFinder() spawn root;
 ```
 
 **In Library Mode:**
+
 ```python
 from jaclang.lib import spawn, root
 
@@ -269,12 +279,14 @@ The `spawn()` function initiates a walker at a specified node and begins travers
 ### **6. Visiting Nodes**
 
 **In Jac:**
+
 ```jac
 visit [-->];                      # Visit all outgoing edges
 visit [edge ->:Family :->];       # Visit only Family edges
 ```
 
 **In Library Mode:**
+
 ```python
 from jaclang.lib import visit, refs, OPath
 
