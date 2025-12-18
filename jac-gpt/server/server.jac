@@ -19,7 +19,13 @@ glob llm = Model(
     model_name=app_config.get("llm", {}).get("model_name", "gpt-4.1-mini"),
     verbose=True
 );
-glob rag_engine: RagEngine = RagEngine();
+glob rag_engine: RagEngine = RagEngine(
+    file_path=app_config.get("paths", {}).get("file_path", "docs"),
+    faiss_path=app_config.get("paths", {}).get("faiss_path", "faiss_index"),
+    chunk_size=app_config.get("rag_engine", {}).get("chunk_size", 800),
+    chunk_overlap=app_config.get("rag_engine", {}).get("chunk_overlap", 80),
+    default_k=app_config.get("rag_engine", {}).get("similarity_search", {}).get("k", 5)
+);
 
 
 """ChatType enum defines the types of chat interactions. ChatType must be one of:
