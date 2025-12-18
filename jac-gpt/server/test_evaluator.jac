@@ -22,15 +22,16 @@ def load_test_dataset(file_path: str) -> dict {
 }
 
 """Save results to JSON file in logs folder"""
-def save_results(results: dict, output_dir: str = ".logs") -> str {
+def save_results(results: dict, output_dir: str = ".logs", config_name: str = "baseline") -> str {
     try {
-        # Create logs directory if it doesn't exist
-        os.makedirs(output_dir, exist_ok=True);
+        # Create logs directory with config subdirectory
+        log_path = os.path.join(output_dir, config_name);
+        os.makedirs(log_path, exist_ok=True);
         
         # Generate timestamp for filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S");
         filename = f"eval_results_{timestamp}.json";
-        filepath = os.path.join(output_dir, filename);
+        filepath = os.path.join(log_path, filename);
         
         # Save results
         with open(filepath, "w", encoding="utf-8") as file {
@@ -189,7 +190,7 @@ def evaluate_test_dataset(
     };
     
     # Save to file
-    output_path = save_results(output, output_dir);
+    output_path = save_results(output, output_dir, config_name);
     
     # Print summary
     print(f"\n{'='*60}");
