@@ -5,6 +5,7 @@ import time;
 import from datetime {datetime}
 import from dotenv {load_dotenv}
 import from server {infer}
+import from rag_engine {load_config}
 
 
 """Load test dataset from JSON file"""
@@ -87,11 +88,14 @@ def evaluate_test_dataset(
     verbose: bool = True,
     notes: str = ""
 ) {
-    
+    # Get current configuration
+    config_name = os.getenv('RAG_CONFIG', 'baseline');
+    config = load_config(config_name);
     
     print(f"\n{'='*60}");
     print(f"Starting Test Evaluation");
     print(f"{'='*60}");
+    print(f"Configuration: {config_name}");
     print(f"Test file: {test_file}");
     print(f"Output directory: {output_dir}\n");
     
@@ -176,7 +180,8 @@ def evaluate_test_dataset(
             "timestamp": datetime.now().isoformat(),
             "test_file": test_file,
             "total_tests": len(test_cases),
-            "model": "gpt-4.1-mini",
+            "configuration_name": config_name,
+            "configuration": config,
             "notes": notes if notes else "No notes provided"
         },
         "results": results,

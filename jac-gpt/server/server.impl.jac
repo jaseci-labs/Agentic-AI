@@ -57,7 +57,6 @@ sem RagChat.respond = """JAC Code Example and Concept Explanation Expert. Provid
 
 APPROACH:
 - Use `search_docs` tool for concept explanations
-- Use `refer_full_language_examples` tool for official code examples  
 - Make sure to showcase meaningful examples not just A, W, a named archetypes examples.
 - Make sure to add comments using '#' wherever needed.
 - Cite source sections when possible

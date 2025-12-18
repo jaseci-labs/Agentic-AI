@@ -1,4 +1,5 @@
 import os;
+import json;
 import requests;
 import from langchain_community.document_loaders {PyPDFDirectoryLoader, PyPDFLoader, DirectoryLoader}
 import from langchain_community.document_loaders.text {TextLoader}
@@ -9,11 +10,53 @@ import from langchain_chroma {Chroma}
 
 glob SERPER_API_KEY: str = os.getenv('SERPER_API_KEY', '');
 
+"""Load configuration from JSON file"""
+def load_config(config_name: str = "baseline") -> dict {
+    try {
+        config_path = os.path.join(os.path.dirname(__file__), "config", f"{config_name}.json");
+        with open(config_path, 'r', encoding='utf-8') as f {
+            return json.load(f);
+        }
+    } except Exception as e {
+        print(f"Error loading config {config_name}: {e}");
+        # Return default baseline config
+        return {
+            "rag_engine": {
+                "chunk_size": 800,
+                "chunk_overlap": 80,
+                "similarity_search": {"k": 5}
+            },
+            "paths": {
+                "file_path": "docs",
+                "chroma_path": "chroma"
+            }
+        };
+    }
+}
+
 obj RagEngine {
     has file_path: str = "docs";
     has chroma_path: str = "chroma";
+    has chunk_size: int = 800;
+    has chunk_overlap: int = 80;
+    has default_k: int = 5;
+    has config: dict = {};
 
     def postinit {
+        # Load configuration
+        config_name = os.getenv('RAG_CONFIG', 'baseline');
+        self.config = load_config(config_name);
+        
+        # Set configuration values
+        self.file_path = self.config.get("paths", {}).get("file_path", "docs");
+        self.chroma_path = self.config.get("paths", {}).get("chroma_path", "chroma");
+        self.chunk_size = self.config.get("rag_engine", {}).get("chunk_size", 800);
+        self.chunk_overlap = self.config.get("rag_engine", {}).get("chunk_overlap", 80);
+        self.default_k = self.config.get("rag_engine", {}).get("similarity_search", {}).get("k", 5);
+        
+        print(f"RAG Engine initialized with config: {config_name}");
+        print(f"Chunk size: {self.chunk_size}, Overlap: {self.chunk_overlap}, Default K: {self.default_k}");
+        
         if not os.path.exists(self.file_path) {
             os.makedirs(self.file_path);
         }
@@ -72,10 +115,12 @@ obj RagEngine {
     }
 
     def split_documents(documents: list[Document]) {
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=800,
-        chunk_overlap=80,
-        length_function=len,
-        is_separator_regex=False);
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+            length_function=len,
+            is_separator_regex=False
+        );
         return text_splitter.split_documents(documents);
     }
 
@@ -137,7 +182,10 @@ obj RagEngine {
         }
     }
 
-    def get_from_chroma(query: str,chunck_nos: int=5) {
+    def get_from_chroma(query: str,chunck_nos: int=None) {
+        if chunck_nos is None {
+            chunck_nos = self.default_k;
+        }
         db = Chroma(
             persist_directory=self.chroma_path,
             embedding_function=self.get_embedding_function()
@@ -146,7 +194,10 @@ obj RagEngine {
         return results;
     }
 
-    def search(query: str, chunck_nos: int=5) {
+    def search(query: str, chunck_nos: int=None) {
+        if chunck_nos is None {
+            chunck_nos = self.default_k;
+        }
         results = self.get_from_chroma(query=query, chunck_nos=chunck_nos);
         summary = "";
         for (doc, score) in results {
