@@ -1,16 +1,24 @@
 import sys;
 import os;
+import json;
 import requests;
 import from byllm.lib {Model}
 import from dotenv {load_dotenv}
 import from database {get_database}
-import from rag_engine {RagEngine}
+import from rag_engine {RagEngine, load_config}
 
 with entry {
     load_dotenv(override=True);
 }
 
-glob llm = Model(model_name='gpt-4.1-mini', verbose=True);
+# Load configuration
+glob config_name: str = os.getenv('RAG_CONFIG', 'baseline');
+glob app_config: dict = load_config(config_name);
+
+glob llm = Model(
+    model_name=app_config.get("llm", {}).get("model_name", "gpt-4.1-mini"),
+    verbose=True
+);
 glob rag_engine: RagEngine = RagEngine();
 
 
@@ -59,12 +67,12 @@ walker infer {
     
     Args:
         query: The search query string
-        chunck_nos: Number of document chunks to retrieve (default: 5)
+        chunck_nos: Number of document chunks to retrieve (default: from config)
         
     Returns:
         String containing relevant document content
 """
-def search_docs(query: str, chunck_nos: int = 5) -> str {
+def search_docs(query: str, chunck_nos: int = None) -> str {
     results = rag_engine.search(query=query, chunck_nos=chunck_nos);
     return results;
 }
@@ -97,7 +105,7 @@ node RagChat(Chat) {
         method="ReAct",
         messages=chat_history,
         max_react_iterations=3,
-        tools = [refer_full_language_examples, search_docs]
+        tools = [search_docs]
     );
 
     can chat with infer entry;
