@@ -35,27 +35,15 @@ def load_config(config_name: str) -> dict {
 }
 
 obj RagEngine {
-    has file_path: str = "docs";
-    has faiss_path: str = "faiss_index";
-    has chunk_size: int = 800;
-    has chunk_overlap: int = 80;
-    has default_k: int = 5;
-    has config: dict = {};
+    has file_path: str;
+    has faiss_path: str;
+    has chunk_size: int;
+    has chunk_overlap: int;
+    has default_k: int;
     has vectorstore: FAISS = None;
 
     def postinit {
-        # Load configuration
-        config_name = os.getenv('RAG_CONFIG', 'baseline');
-        self.config = load_config(config_name);
-        
-        # Set configuration values
-        self.file_path = self.config.get("paths", {}).get("file_path", "docs");
-        self.faiss_path = self.config.get("paths", {}).get("faiss_path", "faiss_index");
-        self.chunk_size = self.config.get("rag_engine", {}).get("chunk_size", 800);
-        self.chunk_overlap = self.config.get("rag_engine", {}).get("chunk_overlap", 80);
-        self.default_k = self.config.get("rag_engine", {}).get("similarity_search", {}).get("k", 5);
-        
-        print(f"RAG Engine initialized with config: {config_name}");
+        print(f"RAG Engine initialized");
         print(f"Chunk size: {self.chunk_size}, Overlap: {self.chunk_overlap}, Default K: {self.default_k}");
         
         if not os.path.exists(self.file_path) {
