@@ -6,12 +6,12 @@ import from langchain_community.document_loaders.text {TextLoader}
 import from langchain_text_splitters {RecursiveCharacterTextSplitter}
 import from langchain_core.documents {Document}
 import from langchain_openai {OpenAIEmbeddings}
-import from langchain_chroma {Chroma}
+import from langchain_community.vectorstores {FAISS}
 
 glob SERPER_API_KEY: str = os.getenv('SERPER_API_KEY', '');
 
 """Load configuration from JSON file"""
-def load_config(config_name: str = "baseline") -> dict {
+def load_config(config_name: str) -> dict {
     try {
         config_path = os.path.join(os.path.dirname(__file__), "config", f"{config_name}.json");
         with open(config_path, 'r', encoding='utf-8') as f {
@@ -36,11 +36,12 @@ def load_config(config_name: str = "baseline") -> dict {
 
 obj RagEngine {
     has file_path: str = "docs";
-    has chroma_path: str = "chroma";
+    has faiss_path: str = "faiss_index";
     has chunk_size: int = 800;
     has chunk_overlap: int = 80;
     has default_k: int = 5;
     has config: dict = {};
+    has vectorstore: FAISS = None;
 
     def postinit {
         # Load configuration
@@ -49,7 +50,7 @@ obj RagEngine {
         
         # Set configuration values
         self.file_path = self.config.get("paths", {}).get("file_path", "docs");
-        self.chroma_path = self.config.get("paths", {}).get("chroma_path", "chroma");
+        self.faiss_path = self.config.get("paths", {}).get("faiss_path", "faiss_index");
         self.chunk_size = self.config.get("rag_engine", {}).get("chunk_size", 800);
         self.chunk_overlap = self.config.get("rag_engine", {}).get("chunk_overlap", 80);
         self.default_k = self.config.get("rag_engine", {}).get("similarity_search", {}).get("k", 5);
@@ -60,9 +61,21 @@ obj RagEngine {
         if not os.path.exists(self.file_path) {
             os.makedirs(self.file_path);
         }
-        documents: list = self.load_documents();
-        chunks: list = self.split_documents(documents);
-        self.add_to_chroma(chunks);
+        
+        # Load or create FAISS index
+        if os.path.exists(self.faiss_path) and os.path.isdir(self.faiss_path) {
+            print(f"Loading existing FAISS index from {self.faiss_path}");
+            self.vectorstore = FAISS.load_local(
+                self.faiss_path,
+                self.get_embedding_function(),
+                allow_dangerous_deserialization=True
+            );
+        } else {
+            print("Creating new FAISS index");
+            documents: list = self.load_documents();
+            chunks: list = self.split_documents(documents);
+            self.create_faiss_index(chunks);
+        }
     }
 
     def load_documents {
@@ -111,7 +124,7 @@ obj RagEngine {
     def add_file(file_path: str) {
         documents = self.load_document(file_path);
         chunks = self.split_documents(documents);
-        self.add_to_chroma(chunks);
+        self.add_to_faiss(chunks);
     }
 
     def split_documents(documents: list[Document]) {
@@ -129,68 +142,44 @@ obj RagEngine {
         return embeddings;
     }
 
-    def add_chunk_id(chunks: str) {
-        last_page_id = None;
-        current_chunk_index = 0;
-
-        for chunk in chunks {
-            source = chunk.metadata.get('source');
-            page = chunk.metadata.get('page');
-            
-            # Handle markdown files (no page numbers)
-            if page is None {
-                current_page_id = f'{source}:0';
-            } else {
-                current_page_id = f'{source}:{page}';
-            }
-
-            if current_page_id == last_page_id {
-                current_chunk_index +=1;
-            } else {
-                current_chunk_index = 0;
-            }
-
-            chunk_id = f'{current_page_id}:{current_chunk_index}';
-            last_page_id = current_page_id;
-
-            chunk.metadata['id'] = chunk_id;
-        }
-
-        return chunks;
-    }
-
-    def add_to_chroma(chunks: list[Document]) {
-        db = Chroma(persist_directory=self.chroma_path, embedding_function=self.get_embedding_function());
-        chunks_with_ids = self.add_chunk_id(chunks);
-
-        existing_items = db.get(include=[]);
-        existing_ids = set(existing_items['ids']);
-
-        new_chunks = [];
-        for chunk in chunks_with_ids {
-            if chunk.metadata['id'] not in existing_ids {
-                new_chunks.append(chunk);
-            }
-        }
-
-        if len(new_chunks) {
-            print('adding new documents');
-            new_chunk_ids = [chunk.metadata['id'] for chunk in new_chunks];
-            db.add_documents(new_chunks, ids=new_chunk_ids);
+    def create_faiss_index(chunks: list[Document]) {
+        if len(chunks) > 0 {
+            print(f"Creating FAISS index with {len(chunks)} chunks");
+            self.vectorstore = FAISS.from_documents(
+                chunks,
+                self.get_embedding_function()
+            );
+            self.vectorstore.save_local(self.faiss_path);
+            print(f"FAISS index saved to {self.faiss_path}");
         } else {
-            print('no new documents to add');
+            print("No documents to index");
         }
     }
 
-    def get_from_chroma(query: str,chunck_nos: int=None) {
+    def add_to_faiss(chunks: list[Document]) {
+        if self.vectorstore is None {
+            self.create_faiss_index(chunks);
+        } else {
+            if len(chunks) > 0 {
+                print(f"Adding {len(chunks)} new documents to FAISS index");
+                self.vectorstore.add_documents(chunks);
+                self.vectorstore.save_local(self.faiss_path);
+                print("FAISS index updated");
+            } else {
+                print("No new documents to add");
+            }
+        }
+    }
+
+    def get_from_faiss(query: str, chunck_nos: int=None) {
         if chunck_nos is None {
             chunck_nos = self.default_k;
         }
-        db = Chroma(
-            persist_directory=self.chroma_path,
-            embedding_function=self.get_embedding_function()
-        );
-        results = db.similarity_search_with_score(query,k=chunck_nos);
+        if self.vectorstore is None {
+            print("FAISS index not initialized");
+            return [];
+        }
+        results = self.vectorstore.similarity_search_with_score(query, k=chunck_nos);
         return results;
     }
 
@@ -198,7 +187,7 @@ obj RagEngine {
         if chunck_nos is None {
             chunck_nos = self.default_k;
         }
-        results = self.get_from_chroma(query=query, chunck_nos=chunck_nos);
+        results = self.get_from_faiss(query=query, chunck_nos=chunck_nos);
         summary = "";
         for (doc, score) in results {
             page = doc.metadata.get('page');

@@ -8,7 +8,6 @@ import from database {get_database}
 import from rag_engine {RagEngine, load_config}
 
 with entry {
-    
     load_dotenv(override=True);
 }
 
