@@ -5,3 +5,4 @@ app.session.dir
 app.session.users.json
 compiled/
 .jac-client.configs/
+.jaccache/

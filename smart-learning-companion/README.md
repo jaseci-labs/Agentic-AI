@@ -70,24 +70,16 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
    export OPENAI_API_KEY='your-api-key-here'
    ```
 
-3. **Install dependencies**
+3. **Install client-side dependencies**
    
-   simply run:
+   Install the required packages using Jac CLI:
    ```bash
-   npm install
-   ```
-   or else,
-   
-   If you want to Install all required npm packages manually:
-   ```bash
-   npm install react@19.2.0 react-dom@19.2.0
-   npm install @mui/material@7.3.5 @mui/icons-material@7.3.5 @mui/lab@7.0.1-beta.19
-   npm install @emotion/react@11.14.0 @emotion/styled@11.14.1
-   npm install react-router-dom@6.30.1
-   npm install framer-motion@12.23.24
-   npm install -D vite@6.4.1 @babel/cli@7.28.3 @babel/core@7.28.5 @babel/preset-env@7.28.5 @babel/preset-react@7.28.5
+   jac add --cl @mui/material@7.3.5 @mui/icons-material@7.3.5 @mui/lab@7.0.1-beta.19
+   jac add --cl @emotion/react@11.14.0 @emotion/styled@11.14.1
+   jac add --cl framer-motion@12.23.24
    ```
    
+   > **Note**: React, React-DOM, React Router, and core build tools (Vite, Babel, TypeScript) are automatically included with Jac-Client.
 
 4. **Start the application**
    ```bash
@@ -176,11 +168,9 @@ smart-learning-companion/
 ├── app.jac              # Main application (backend walkers + frontend)
 ├── app.cl.jac          # Client-side imports (CSS)
 ├── styles.css          # Modern CSS styling
-├── package.json        # Node dependencies
-├── vite.config.js     # Vite configuration
+├── config.json        # Node dependencies
 ├── README.md          # This file
 ├── build/             # Compiled production files
-└── src/               # Source files
 ```
 
 ## 🤝 Contributing
