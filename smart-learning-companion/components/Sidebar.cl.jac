@@ -18,11 +18,7 @@ import from '@mui/icons-material' {
     }
 
 
-def Sidebar(props: any) -> any {
-     activeTab = props.activeTab;
-     setActiveTab = props.setActiveTab;
-     navigationItems = props.navigationItems;
-
+def Sidebar(activeTab: str, setActiveTab: any, navigationItems: list) -> any {
     return <Drawer
         variant="permanent"
         sx={{
@@ -61,12 +57,12 @@ def Sidebar(props: any) -> any {
         </Box>
         <Divider sx={{"borderColor": "rgba(167, 139, 250, 0.2)", "mb": 2}} />
         <List sx={{"px": 2}}>
-            {navigationItems.map(
+            {props.navigationItems.map(
                 lambda item: any -> any {
-                     isActive = activeTab == item["id"];
+                     isActive = props.activeTab == item["id"];
                     return <ListItem key={item["id"]} disablePadding sx={{"mb": 1}}>
                         <ListItemButton
-                            onClick={lambda -> None { setActiveTab(item["id"]); }}
+                            onClick={lambda -> None { props.setActiveTab(item["id"]); }}
                             sx={{
                                 "borderRadius": 2,
                                 "py": 1.5,
