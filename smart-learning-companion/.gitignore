@@ -6,3 +6,4 @@ app.session.users.json
 compiled/
 .jac-client.configs/
 .jaccache/
+app.session

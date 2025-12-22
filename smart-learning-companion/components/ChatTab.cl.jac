@@ -23,17 +23,7 @@ import from '@mui/icons-material' {
         Person
     }
 
-def ChatTab(props: any) -> any {
-    conversationHistory = props.conversationHistory;
-    message = props.message;
-    setMessage = props.setMessage;
-    loading = props.loading;
-    handleChat = props.handleChat;
-    handleKeyPress = props.handleKeyPress;
-    clearChat = props.clearChat;
-    messagesEndRef = props.messagesEndRef;
-    exampleQuestions = props.exampleQuestions;
-
+def ChatTab(conversationHistory: list, message: str, setMessage: any, loading: bool, handleChat: any, handleKeyPress: any, clearChat: any, messagesEndRef: any, exampleQuestions: list) -> any {
     return <>
         <Grow in={true} timeout={800}>
             <Paper
@@ -118,18 +108,18 @@ def ChatTab(props: any) -> any {
                                 variant="outlined"
                                 color="error"
                                 startIcon={<Clear />}
-                                onClick={clearChat}
+                                onClick={props.clearChat}
                                 sx={{"borderRadius": 0}}
                             >
                                 {"Clear Chat"}
                             </Button>
-                        ) if (conversationHistory.length > 0) else null}
+                        ) if (props.conversationHistory.length > 0) else null}
                     </Stack>
                 </Box>
                 <Box sx={{"flex": 1, "overflowY": "auto", "p": 3, "background": "transparent"}}>
                     {(
                         <Stack spacing={2}>
-                            {conversationHistory.map(
+                            {props.conversationHistory.map(
                                 lambda msg: any -> any {
                                      isUser = msg["role"] == "user";
                                     return <Box
@@ -214,10 +204,10 @@ def ChatTab(props: any) -> any {
                                         </Card>
                                     </Box>
                                 </Fade>
-                            ) if loading else null}
-                            <div ref={messagesEndRef} />
+                            ) if props.loading else null}
+                            <div ref={props.messagesEndRef} />
                         </Stack>
-                    ) if (conversationHistory.length > 0) else (
+                    ) if (props.conversationHistory.length > 0) else (
                         <Box
                             sx={{
                                 "display": "flex",
@@ -250,11 +240,11 @@ def ChatTab(props: any) -> any {
                                             {"Try these examples:"}
                                         </Typography>
                                         <Stack spacing={1}>
-                                            {exampleQuestions.map(
+                                            {props.exampleQuestions.map(
                                                 lambda question: any -> any {
                                                     return <Paper
                                                         key={question}
-                                                        onClick={lambda -> None { setMessage(question); }}
+                                                        onClick={lambda -> None { props.setMessage(question); }}
                                                         sx={{
                                                             "p": 2,
                                                             "cursor": "pointer",
@@ -292,22 +282,22 @@ def ChatTab(props: any) -> any {
                             fullWidth
                             multiline
                             rows={3}
-                            value={message}
-                            onChange={lambda e: any -> None { setMessage(e.target.value); }}
-                            onKeyPress={handleKeyPress}
+                            value={props.message}
+                            onChange={lambda e: any -> None { props.setMessage(e.target.value); }}
+                            onKeyPress={props.handleKeyPress}
                             placeholder="Type your question here... (Shift+Enter for new line, Enter to send)"
-                            disabled={loading}
+                            disabled={props.loading}
                             variant="outlined"
                         />
                         <Button
                             fullWidth
                             variant="contained"
                             size="large"
-                            onClick={handleChat}
-                            disabled={loading or not message.trim()}
+                            onClick={props.handleChat}
+                            disabled={props.loading or not props.message.trim()}
                             startIcon={(
                                 <CircularProgress size={20} sx={{"color": "white"}} />
-                            ) if loading else <Send />}
+                            ) if props.loading else <Send />}
                             sx={{
                                 "py": 1.5,
                                 "background": "linear-gradient(135deg, #a78bfa 0%, #f472b6 100%)",
