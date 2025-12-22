@@ -12,7 +12,7 @@ with entry {
 }
 
 # Load configuration
-glob config_name: str = os.getenv('RAG_CONFIG', 'baseline');
+glob config_name: str = 'faiss_reranking';
 glob app_config: dict = load_config(config_name);
 
 glob llm = Model(
@@ -24,7 +24,8 @@ glob rag_engine: RagEngine = RagEngine(
     faiss_path=app_config.get("paths", {}).get("faiss_path", "faiss_index"),
     chunk_size=app_config.get("rag_engine", {}).get("chunk_size", 800),
     chunk_overlap=app_config.get("rag_engine", {}).get("chunk_overlap", 80),
-    default_k=app_config.get("rag_engine", {}).get("similarity_search", {}).get("k", 5)
+    chunk_nos=app_config.get("rag_engine", {}).get("similarity_search", {}).get("k", 5),
+    cross_encoder_model=app_config.get("rag_engine", {}).get("reranking", {}).get("model", "cross-encoder/ms-marco-MiniLM-L6-v2")
 );
 
 
@@ -73,13 +74,12 @@ walker infer {
     
     Args:
         query: The search query string
-        chunck_nos: Number of document chunks to retrieve (default: from config)
         
     Returns:
         String containing relevant document content
 """
-def search_docs(query: str, chunck_nos: int = None) -> str {
-    results = rag_engine.search(query=query, chunck_nos=chunck_nos);
+def search_docs(query: str) -> str {
+    results = rag_engine.search(query=query);
     return results;
 }
 
@@ -110,7 +110,7 @@ node RagChat(Chat) {
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        max_react_iterations=3,
+        max_react_iterations=1,
         tools = [search_docs]
     );
 

@@ -7,6 +7,7 @@ import from langchain_text_splitters {RecursiveCharacterTextSplitter}
 import from langchain_core.documents {Document}
 import from langchain_openai {OpenAIEmbeddings}
 import from langchain_community.vectorstores {FAISS}
+import from sentence_transformers {CrossEncoder}
 
 glob SERPER_API_KEY: str = os.getenv('SERPER_API_KEY', '');
 
@@ -39,12 +40,24 @@ obj RagEngine {
     has faiss_path: str;
     has chunk_size: int;
     has chunk_overlap: int;
-    has default_k: int;
+    has chunk_nos: int;
+    has cross_encoder_model: str;
     has vectorstore: FAISS = None;
+    has cross_encoder: CrossEncoder = None;
+    has use_reranking: bool = True;
 
     def postinit {
+        # Initialize CrossEncoder reranker
+        try {
+            self.cross_encoder = CrossEncoder(self.cross_encoder_model);
+            print(f"CrossEncoder reranking enabled with model: {self.cross_encoder_model}");
+        } except Exception as e {
+            print(f"Warning: Failed to load CrossEncoder model: {e}");
+            print("Reranking will be disabled.");
+            self.use_reranking = False;
+        }
         print(f"RAG Engine initialized");
-        print(f"Chunk size: {self.chunk_size}, Overlap: {self.chunk_overlap}, Default K: {self.default_k}");
+        print(f"Chunk size: {self.chunk_size}, Overlap: {self.chunk_overlap}, Chunk Nos: {self.chunk_nos}");
         
         if not os.path.exists(self.file_path) {
             os.makedirs(self.file_path);
@@ -159,37 +172,93 @@ obj RagEngine {
         }
     }
 
-    def get_from_faiss(query: str, chunck_nos: int=None) {
-        if chunck_nos is None {
-            chunck_nos = self.default_k;
+    def rerank_results(query: str, documents: list, top_n: int = None) {
+        
+        if not self.use_reranking or self.cross_encoder is None {
+            return documents;
         }
+        
+        try {
+            # Extract documents and prepare query-document pairs
+            docs_only = [doc for (doc, _) in documents];
+            
+            # Create query-document pairs for CrossEncoder
+            pairs = [(query, doc.page_content) for doc in docs_only];
+            
+            # Get reranking scores
+            scores = self.cross_encoder.predict(pairs);
+            
+            # Combine documents with their new scores
+            doc_score_pairs = list(zip(docs_only, scores));
+            
+            # Sort by score in descending order
+            doc_score_pairs = sorted(doc_score_pairs, key=lambda x: float: -x[1]);
+            
+            # Filter to only include documents with score > 0.5
+            results = [(doc, float(score)) for (doc, score) in doc_score_pairs if score > 0.5];
+            
+            # Limit to top 3 results
+            results = results[:3];
+            
+            print(f"Reranked {len(results)} documents using CrossEncoder (filtered to score > 0.5)");
+            return results;
+        } except Exception as e {
+            print(f"Error during reranking: {e}");
+            print("Falling back to original FAISS results");
+            return documents;
+        }
+    }
+
+    def get_from_faiss(query: str) {
+
         if self.vectorstore is None {
             print("FAISS index not initialized");
             return [];
         }
-        results = self.vectorstore.similarity_search_with_score(query, k=chunck_nos);
+        # Get more results from FAISS for reranking (2x the requested amount)
+        results = self.vectorstore.similarity_search_with_score(query, k=self.chunk_nos);
+        
+        # Apply CrossEncoder reranking if enabled
+        if self.use_reranking and len(results) > 0 {
+            results = self.rerank_results(query, results, top_n=self.chunk_nos);
+        }
+        
         return results;
     }
 
-    def search(query: str, chunck_nos: int=None) {
-        if chunck_nos is None {
-            chunck_nos = self.default_k;
-        }
-        results = self.get_from_faiss(query=query, chunck_nos=chunck_nos);
+    def search(query: str) {
+        print(f'Searching RAG Engine with query: {query}');
+        results = self.get_from_faiss(query=query);
+        
+        print(f"\n{'='*60}");
+        print(f"Retrieved {len(results)} chunks for query: {query}");
+        print(f"{'='*60}");
+        
         summary = "";
-        for (doc, score) in results {
+        for (idx, (doc, score)) in enumerate(results, 1) {
             page = doc.metadata.get('page');
             source = doc.metadata.get('source');
-            chunk_txt = doc.page_content[:400];
+            chunk_txt = doc.page_content;
+            
+            # Print chunk details with score
+            print(f"\nChunk {idx}:");
+            print(f"  Score: {score:.4f}");
+            print(f"  Source: {source}");
+            if page is not None {
+                print(f"  Page: {page}");
+            }
+            print(f"  Content preview: {chunk_txt[:100]}...");
             
             # Handle display for different file types
             if page is not None {
-                summary += f"{source} page {page}: {chunk_txt}\n";
+                summary += f"{source} page {page} (score: {score:.4f}): {chunk_txt}\n";
             } else {
                 # For markdown files without page numbers
-                summary += f"{source}: {chunk_txt}\n";
+                summary += f"{source} (score: {score:.4f}): {chunk_txt}\n";
             }
         }
+        
+        print(f"\n{'='*60}\n");
         return summary;
     }
 }

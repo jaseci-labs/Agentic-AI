@@ -90,7 +90,7 @@ def evaluate_test_dataset(
     notes: str = ""
 ) {
     # Get current configuration
-    config_name = os.getenv('RAG_CONFIG', 'baseline');
+    config_name = 'faiss_reranking';
     config = load_config(config_name);
     
     print(f"\n{'='*60}");
