@@ -15,3 +15,4 @@ build/
 *.dir
 .DS_Store
 *.jir
+.jaccache/
