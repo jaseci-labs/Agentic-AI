@@ -6,6 +6,7 @@ mydatabase
 .env
 *.json
 !**/package.json
+!**config.json
 *.jsonl
 node_modules/
 dist/
