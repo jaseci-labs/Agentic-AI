@@ -86,7 +86,7 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
 
 4. **Start the application**
    ```bash
-   jac serve app.jac
+   jac serve src/app.jac
    ```
 
 5. **Open your browser**
