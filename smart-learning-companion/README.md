@@ -71,8 +71,12 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
    ```
 
 3. **Install client-side dependencies**
-   
+
    Install the required packages using Jac CLI:
+   ```bash
+   jac add --cl
+   ```
+   Or if you want to install one at a time,
    ```bash
    jac add --cl @mui/material@7.3.5 
    jac add --cl @mui/icons-material@7.3.5 
@@ -84,12 +88,12 @@ An intelligent, AI-powered educational assistant built with **Jac-Client** and *
    
    > **Note**: React, React-DOM, React Router, and core build tools (Vite, Babel, TypeScript) are automatically included with Jac-Client.
 
-4. **Start the application**
+5. **Start the application**
    ```bash
    jac serve src/app.jac
    ```
 
-5. **Open your browser**
+6. **Open your browser**
    
    Navigate to http://localhost:8000 (or the port shown in terminal)
 
