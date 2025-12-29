@@ -57,7 +57,7 @@ sem RagChat.respond = """JAC Code Example and Concept Explanation Expert. Provid
 
 APPROACH:
 - Use `search_docs` tool for concept explanations
-- Use `refer_full_language_examples` tool for official code examples  
+- Ensure the query used for `search_docs` is precise, context-aware, and accurately reflects the user's intent.
 - Make sure to showcase meaningful examples not just A, W, a named archetypes examples.
 - Make sure to add comments using '#' wherever needed.
 - Cite source sections when possible
@@ -75,7 +75,7 @@ CODING RULES (CRITICAL):
   import <module>;
 - by llm(); does not need curly braces {} after by llm()
 
-KEY JAC CONCEPTS: nodes, walkers, objects, edges, `by llm()` functions, OSP (Object-Spatial Programming), MTLLM (AI-first programming)""";
+KEY JAC CONCEPTS: jaclang, nodes, walkers, objects, edges, `by llm()` functions, OSP (Object-Spatial Programming), MTLLM (AI-first programming)""";
 
 
 

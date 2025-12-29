@@ -5,6 +5,7 @@ import time;
 import from datetime {datetime}
 import from dotenv {load_dotenv}
 import from server {infer}
+import from rag_engine {load_config}
 
 
 """Load test dataset from JSON file"""
@@ -21,15 +22,16 @@ def load_test_dataset(file_path: str) -> dict {
 }
 
 """Save results to JSON file in logs folder"""
-def save_results(results: dict, output_dir: str = ".logs") -> str {
+def save_results(results: dict, output_dir: str = ".logs", config_name: str = "baseline") -> str {
     try {
-        # Create logs directory if it doesn't exist
-        os.makedirs(output_dir, exist_ok=True);
+        # Create logs directory with config subdirectory
+        log_path = os.path.join(output_dir, config_name);
+        os.makedirs(log_path, exist_ok=True);
         
         # Generate timestamp for filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S");
         filename = f"eval_results_{timestamp}.json";
-        filepath = os.path.join(output_dir, filename);
+        filepath = os.path.join(log_path, filename);
         
         # Save results
         with open(filepath, "w", encoding="utf-8") as file {
@@ -87,11 +89,14 @@ def evaluate_test_dataset(
     verbose: bool = True,
     notes: str = ""
 ) {
-    
+    # Get current configuration
+    config_name = 'faiss_reranking';
+    config = load_config(config_name);
     
     print(f"\n{'='*60}");
     print(f"Starting Test Evaluation");
     print(f"{'='*60}");
+    print(f"Configuration: {config_name}");
     print(f"Test file: {test_file}");
     print(f"Output directory: {output_dir}\n");
     
@@ -176,7 +181,8 @@ def evaluate_test_dataset(
             "timestamp": datetime.now().isoformat(),
             "test_file": test_file,
             "total_tests": len(test_cases),
-            "model": "gpt-4.1-mini",
+            "configuration_name": config_name,
+            "configuration": config,
             "notes": notes if notes else "No notes provided"
         },
         "results": results,
@@ -184,7 +190,7 @@ def evaluate_test_dataset(
     };
     
     # Save to file
-    output_path = save_results(output, output_dir);
+    output_path = save_results(output, output_dir, config_name);
     
     # Print summary
     print(f"\n{'='*60}");
