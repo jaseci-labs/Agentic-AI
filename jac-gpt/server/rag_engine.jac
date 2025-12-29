@@ -1,25 +1,83 @@
 import os;
+import json;
 import requests;
 import from langchain_community.document_loaders {PyPDFDirectoryLoader, PyPDFLoader, DirectoryLoader}
 import from langchain_community.document_loaders.text {TextLoader}
 import from langchain_text_splitters {RecursiveCharacterTextSplitter}
 import from langchain_core.documents {Document}
 import from langchain_openai {OpenAIEmbeddings}
-import from langchain_chroma {Chroma}
+import from langchain_community.vectorstores {FAISS}
+import from sentence_transformers {CrossEncoder}
 
 glob SERPER_API_KEY: str = os.getenv('SERPER_API_KEY', '');
 
+"""Load configuration from JSON file"""
+def load_config(config_name: str) -> dict {
+    try {
+        config_path = os.path.join(os.path.dirname(__file__), "config", f"{config_name}.json");
+        with open(config_path, 'r', encoding='utf-8') as f {
+            return json.load(f);
+        }
+    } except Exception as e {
+        print(f"Error loading config {config_name}: {e}");
+        # Return default baseline config
+        return {
+            "rag_engine": {
+                "chunk_size": 800,
+                "chunk_overlap": 80,
+                "similarity_search": {"k": 5}
+            },
+            "paths": {
+                "file_path": "docs",
+                "chroma_path": "chroma"
+            }
+        };
+    }
+}
+
 obj RagEngine {
-    has file_path: str = "docs";
-    has chroma_path: str = "chroma";
+    has file_path: str;
+    has faiss_path: str;
+    has chunk_size: int;
+    has chunk_overlap: int;
+    has chunk_nos: int;
+    has cross_encoder_model: str;
+    has top_n: int;
+    has vectorstore: FAISS = None;
+    has cross_encoder: CrossEncoder = None;
+    has use_reranking: bool = True;
 
     def postinit {
+        # Initialize CrossEncoder reranker
+        try {
+            self.cross_encoder = CrossEncoder(self.cross_encoder_model);
+            print(f"CrossEncoder reranking enabled with model: {self.cross_encoder_model}");
+        } except Exception as e {
+            print(f"Warning: Failed to load CrossEncoder model: {e}");
+            print("Reranking will be disabled.");
+            self.use_reranking = False;
+        }
+        print(f"RAG Engine initialized");
+        print(f"Chunk size: {self.chunk_size}, Overlap: {self.chunk_overlap}, Chunk Nos: {self.chunk_nos}");
+        
         if not os.path.exists(self.file_path) {
             os.makedirs(self.file_path);
         }
-        documents: list = self.load_documents();
-        chunks: list = self.split_documents(documents);
-        self.add_to_chroma(chunks);
+        
+        # Load or create FAISS index
+        if os.path.exists(self.faiss_path) and os.path.isdir(self.faiss_path) {
+            print(f"Loading existing FAISS index from {self.faiss_path}");
+            self.vectorstore = FAISS.load_local(
+                self.faiss_path,
+                self.get_embedding_function(),
+                allow_dangerous_deserialization=True
+            );
+        } else {
+            print("Creating new FAISS index");
+            documents: list = self.load_documents();
+            chunks: list = self.split_documents(documents);
+            self.create_faiss_index(chunks);
+        }
     }
 
     def load_documents {
@@ -68,14 +126,16 @@ obj RagEngine {
     def add_file(file_path: str) {
         documents = self.load_document(file_path);
         chunks = self.split_documents(documents);
-        self.add_to_chroma(chunks);
+        self.add_to_faiss(chunks);
     }
 
     def split_documents(documents: list[Document]) {
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=800,
-        chunk_overlap=80,
-        length_function=len,
-        is_separator_regex=False);
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+            length_function=len,
+            is_separator_regex=False
+        );
         return text_splitter.split_documents(documents);
     }
 
@@ -84,7 +144,7 @@ obj RagEngine {
         return embeddings;
     }
 
-    def add_chunk_id(chunks: str) {
+    def add_chunk_id(chunks: list[Document]) {
         last_page_id = None;
         current_chunk_index = 0;
 
@@ -114,54 +174,127 @@ obj RagEngine {
         return chunks;
     }
 
-    def add_to_chroma(chunks: list[Document]) {
-        db = Chroma(persist_directory=self.chroma_path, embedding_function=self.get_embedding_function());
-        chunks_with_ids = self.add_chunk_id(chunks);
-
-        existing_items = db.get(include=[]);
-        existing_ids = set(existing_items['ids']);
-
-        new_chunks = [];
-        for chunk in chunks_with_ids {
-            if chunk.metadata['id'] not in existing_ids {
-                new_chunks.append(chunk);
-            }
-        }
-
-        if len(new_chunks) {
-            print('adding new documents');
-            new_chunk_ids = [chunk.metadata['id'] for chunk in new_chunks];
-            db.add_documents(new_chunks, ids=new_chunk_ids);
+    def create_faiss_index(chunks: list[Document]) {
+        if len(chunks) > 0 {
+            print(f"Creating FAISS index with {len(chunks)} chunks");
+            chunks = self.add_chunk_id(chunks);
+            self.vectorstore = FAISS.from_documents(
+                chunks,
+                self.get_embedding_function()
+            );
+            self.vectorstore.save_local(self.faiss_path);
+            print(f"FAISS index saved to {self.faiss_path}");
         } else {
-            print('no new documents to add');
+            print("No documents to index");
         }
     }
 
-    def get_from_chroma(query: str,chunck_nos: int=5) {
-        db = Chroma(
-            persist_directory=self.chroma_path,
-            embedding_function=self.get_embedding_function()
-        );
-        results = db.similarity_search_with_score(query,k=chunck_nos);
+    def add_to_faiss(chunks: list[Document]) {
+        if self.vectorstore is None {
+            self.create_faiss_index(chunks);
+        } else {
+            if len(chunks) > 0 {
+                print(f"Adding {len(chunks)} new documents to FAISS index");
+                self.vectorstore.add_documents(chunks);
+                self.vectorstore.save_local(self.faiss_path);
+                print("FAISS index updated");
+            } else {
+                print("No new documents to add");
+            }
+        }
+    }
+
+    def rerank_results(query: str, documents: list, top_n: int = None) {
+        
+        if not self.use_reranking or self.cross_encoder is None {
+            return documents;
+        }
+        
+        try {
+            # Extract documents and prepare query-document pairs
+            docs_only = [doc for (doc, _) in documents];
+            
+            # Create query-document pairs for CrossEncoder
+            pairs = [(query, doc.page_content) for doc in docs_only];
+            
+            # Get reranking scores
+            scores = self.cross_encoder.predict(pairs);
+            
+            # Combine documents with their new scores
+            doc_score_pairs = list(zip(docs_only, scores));
+            
+            # Sort by score in descending order
+            doc_score_pairs = sorted(doc_score_pairs, key=lambda x: float: -x[1]);
+            
+            # Filter to only include documents with score > 0.5
+            results = [(doc, float(score)) for (doc, score) in doc_score_pairs if score > 0.5];
+            
+            # Limit to top_n results
+            if top_n is not None {
+                results = results[:top_n];
+            }
+            
+            print(f"Reranked {len(results)} documents using CrossEncoder (filtered to score > 0.5)");
+            return results;
+        } except Exception as e {
+            print(f"Error during reranking: {e}");
+            print("Falling back to original FAISS results");
+            return documents;
+        }
+    }
+
+    def get_from_faiss(query: str) {
+
+        if self.vectorstore is None {
+            print("FAISS index not initialized");
+            return [];
+        }
+        results = self.vectorstore.similarity_search_with_score(query, k=self.chunk_nos);
+        
+        # Apply CrossEncoder reranking if enabled
+        if self.use_reranking and len(results) > 0 {
+            results = self.rerank_results(query, results, top_n=self.top_n);
+        }
+        
         return results;
     }
 
-    def search(query: str, chunck_nos: int=5) {
-        results = self.get_from_chroma(query=query, chunck_nos=chunck_nos);
+    def search(query: str) {
+        print(f'Searching RAG Engine with query: {query}');
+        results = self.get_from_faiss(query=query);
+        
+        print(f"\n{'='*60}");
+        print(f"Retrieved {len(results)} chunks for query: {query}");
+        print(f"{'='*60}");
+        
         summary = "";
-        for (doc, score) in results {
+        for (idx, (doc, score)) in enumerate(results, 1) {
             page = doc.metadata.get('page');
             source = doc.metadata.get('source');
-            chunk_txt = doc.page_content[:400];
+            id = doc.metadata.get('id');
+            chunk_txt = doc.page_content;
+            
+            
+            # Print chunk details with score
+            print(f"\nChunk {idx}:");
+            print(f"  Score: {score:.4f}");
+            print(f"  Source: {source}");
+            print(f"  ID: {id}");
+            if page is not None {
+                print(f"  Page: {page}");
+            }
+            print(f"  Content preview: {chunk_txt[:100]}...");
             
             # Handle display for different file types
             if page is not None {
-                summary += f"{source} page {page}: {chunk_txt}\n";
+                summary += f"{source} page {page} (score: {score:.4f}): {chunk_txt}\n";
             } else {
                 # For markdown files without page numbers
-                summary += f"{source}: {chunk_txt}\n";
+                summary += f"{source} (score: {score:.4f}): {chunk_txt}\n";
             }
         }
+        
+        print(f"\n{'='*60}\n");
         return summary;
     }
 }
