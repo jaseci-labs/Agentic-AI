@@ -42,6 +42,7 @@ obj RagEngine {
     has chunk_overlap: int;
     has chunk_nos: int;
     has cross_encoder_model: str;
+    has top_n: int;
     has vectorstore: FAISS = None;
     has cross_encoder: CrossEncoder = None;
     has use_reranking: bool = True;
@@ -143,9 +144,40 @@ obj RagEngine {
         return embeddings;
     }
 
+    def add_chunk_id(chunks: list[Document]) {
+        last_page_id = None;
+        current_chunk_index = 0;
+
+        for chunk in chunks {
+            source = chunk.metadata.get('source');
+            page = chunk.metadata.get('page');
+            
+            # Handle markdown files (no page numbers)
+            if page is None {
+                current_page_id = f'{source}:0';
+            } else {
+                current_page_id = f'{source}:{page}';
+            }
+
+            if current_page_id == last_page_id {
+                current_chunk_index +=1;
+            } else {
+                current_chunk_index = 0;
+            }
+
+            chunk_id = f'{current_page_id}:{current_chunk_index}';
+            last_page_id = current_page_id;
+
+            chunk.metadata['id'] = chunk_id;
+        }
+
+        return chunks;
+    }
+
     def create_faiss_index(chunks: list[Document]) {
         if len(chunks) > 0 {
             print(f"Creating FAISS index with {len(chunks)} chunks");
+            chunks = self.add_chunk_id(chunks);
             self.vectorstore = FAISS.from_documents(
                 chunks,
                 self.get_embedding_function()
@@ -197,8 +229,10 @@ obj RagEngine {
             # Filter to only include documents with score > 0.5
             results = [(doc, float(score)) for (doc, score) in doc_score_pairs if score > 0.5];
             
-            # Limit to top 3 results
-            results = results[:3];
+            # Limit to top_n results
+            if top_n is not None {
+                results = results[:top_n];
+            }
             
             print(f"Reranked {len(results)} documents using CrossEncoder (filtered to score > 0.5)");
             return results;
@@ -215,12 +249,11 @@ obj RagEngine {
             print("FAISS index not initialized");
             return [];
         }
-        # Get more results from FAISS for reranking (2x the requested amount)
         results = self.vectorstore.similarity_search_with_score(query, k=self.chunk_nos);
         
         # Apply CrossEncoder reranking if enabled
         if self.use_reranking and len(results) > 0 {
-            results = self.rerank_results(query, results, top_n=self.chunk_nos);
+            results = self.rerank_results(query, results, top_n=self.top_n);
         }
         
         return results;
@@ -238,12 +271,15 @@ obj RagEngine {
         for (idx, (doc, score)) in enumerate(results, 1) {
             page = doc.metadata.get('page');
             source = doc.metadata.get('source');
+            id = doc.metadata.get('id');
             chunk_txt = doc.page_content;
+            
             
             # Print chunk details with score
             print(f"\nChunk {idx}:");
             print(f"  Score: {score:.4f}");
             print(f"  Source: {source}");
+            print(f"  ID: {id}");
             if page is not None {
                 print(f"  Page: {page}");
             }

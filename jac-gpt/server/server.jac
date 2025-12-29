@@ -25,6 +25,7 @@ glob rag_engine: RagEngine = RagEngine(
     chunk_size=app_config.get("rag_engine", {}).get("chunk_size", 800),
     chunk_overlap=app_config.get("rag_engine", {}).get("chunk_overlap", 80),
     chunk_nos=app_config.get("rag_engine", {}).get("similarity_search", {}).get("k", 5),
+    top_n=app_config.get("rag_engine", {}).get("reranking", {}).get("top_n", 5),
     cross_encoder_model=app_config.get("rag_engine", {}).get("reranking", {}).get("model", "cross-encoder/ms-marco-MiniLM-L6-v2")
 );
 
@@ -110,7 +111,7 @@ node RagChat(Chat) {
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        max_react_iterations=1,
+        # max_react_iterations=1,
         tools = [search_docs]
     );
 
