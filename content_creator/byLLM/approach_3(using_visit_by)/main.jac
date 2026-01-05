@@ -183,9 +183,10 @@ walker agent_executor {
         current_stage = self.session.current_state.get("stage", WorkflowStage.PLANNING);
         approved = self.session.current_state.get("approved", False);
         revision_count = self.session.current_state.get("revision_count", 0);
-
-        visit [-->] by llm(incl_info={"utterance": self.utterance,"current_state": self.session.current_state});
         
+        visit [-->] by llm(incl_info={"utterance": self.utterance, "current_stage": current_stage, "instruction": "Route to Specific node based on the stage.if Current stage: WorkflowStage.REVISING go to WriterAgent node"});
+        
+
     }
     can init_graph with `root entry {
         memory_list = [root --> (`?Memory)];
@@ -221,3 +222,4 @@ with entry {
     agent_executor(utterance=utterance) spawn root;
     
 }
+
