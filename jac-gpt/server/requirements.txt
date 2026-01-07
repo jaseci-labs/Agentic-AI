@@ -6,5 +6,7 @@ langchain-openai
 langchain-community
 langchain-chroma
 pypdf
-jaclang
-jac-cloud
+sentence-transformers
+faiss-cpu
+#jaclang
+#jac-cloud

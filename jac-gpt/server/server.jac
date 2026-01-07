@@ -16,8 +16,7 @@ glob config_name: str = 'faiss_reranking';
 glob app_config: dict = load_config(config_name);
 
 glob llm = Model(
-    model_name=app_config.get("llm", {}).get("model_name", "gpt-4.1-mini"),
-    verbose=True
+    model_name=app_config.get("llm", {}).get("model_name", "gpt-4.1-mini")
 );
 glob rag_engine: RagEngine = RagEngine(
     file_path=app_config.get("paths", {}).get("file_path", "docs"),
