@@ -7,6 +7,7 @@ mydatabase
 *.json
 !**/package.json
 !**config.json
+!**/config/*.json
 *.jsonl
 node_modules/
 dist/

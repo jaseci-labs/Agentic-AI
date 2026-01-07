@@ -5,5 +5,5 @@ __pycache__/
 *.sqlite3
 *.pickle
 !test_dataset.json
-!config/faiss_reranking.json
+
 faiss_index/
