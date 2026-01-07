@@ -1,0 +1,11 @@
+[project]
+name = "jac-gpt-"
+version = "1.0.0"
+description = "Jac application: jac-coding-assistant"
+entry-point = "server.jac"
+
+
+[plugins.scale]
+kubernetes.app_name = "jac-gpt-test"
+kubernetes.namespace = "jac-gpt-test"
+
