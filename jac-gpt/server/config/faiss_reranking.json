@@ -6,7 +6,7 @@
         "chunk_size": 800,
         "chunk_overlap": 80,
         "similarity_search": {
-            "k": 5
+            "k": 20
         },
         "reranking": {
             "top_n": 5,
