@@ -49,19 +49,19 @@ const VerifyEmail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-[#141414] px-4">
+        <Card className="w-full max-w-md bg-[#1e1e1e] border-gray-700">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
               <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
             </div>
-            <CardTitle className="text-2xl text-center">Verifying your email</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl text-center text-white">Verifying your email</CardTitle>
+            <CardDescription className="text-center text-gray-400">
               Please wait while we verify your email address
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
           </CardContent>
         </Card>
       </div>
@@ -70,17 +70,17 @@ const VerifyEmail = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-[#141414] px-4">
+        <Card className="w-full max-w-md bg-[#1e1e1e] border-gray-700">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
               <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
             </div>
-            <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
+            <CardTitle className="text-2xl text-center text-white flex items-center justify-center gap-2">
               <CheckCircle className="h-6 w-6 text-green-500" />
               Email verified!
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription className="text-center text-gray-400">
               Your email has been successfully verified
             </CardDescription>
           </CardHeader>
@@ -92,7 +92,7 @@ const VerifyEmail = () => {
             </Alert>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" asChild>
+            <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white" asChild>
               <Link to="/login">
                 Sign in to your account
               </Link>
@@ -104,17 +104,17 @@ const VerifyEmail = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#141414] px-4">
+      <Card className="w-full max-w-md bg-[#1e1e1e] border-gray-700">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
           </div>
-          <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
+          <CardTitle className="text-2xl text-center text-white flex items-center justify-center gap-2">
             <XCircle className="h-6 w-6 text-red-500" />
             Verification failed
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-gray-400">
             We couldn't verify your email address
           </CardDescription>
         </CardHeader>
@@ -124,12 +124,12 @@ const VerifyEmail = () => {
           </Alert>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <Button className="w-full" asChild>
+          <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white" asChild>
             <Link to="/register">
               Try signing up again
             </Link>
           </Button>
-          <Button variant="outline" className="w-full" asChild>
+          <Button variant="outline" className="w-full bg-[#2d2d2d] border-gray-600 text-white hover:bg-[#3d3d3d]" asChild>
             <Link to="/login">
               Back to login
             </Link>

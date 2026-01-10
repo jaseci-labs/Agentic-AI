@@ -7,49 +7,49 @@
 @layer base {
   :root {
     /* Core dark theme colors */
-    --background: 220 13% 6%;
-    --foreground: 220 13% 95%;
+    --background: 0 0% 14%;
+    --foreground: 0 0% 100%;
 
     --card: 220 13% 8%;
-    --card-foreground: 220 13% 95%;
+    --card-foreground: 0 0% 100%;
 
     --popover: 220 13% 8%;
-    --popover-foreground: 220 13% 95%;
+    --popover-foreground: 0 0% 100%;
 
     /* Jac orange/red brand colors */
-    --primary: 14 100% 60%;
-    --primary-foreground: 220 13% 95%;
-    --primary-glow: 14 100% 65%;
+    --primary: 14 85% 48%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 14 85% 52%;
 
     --secondary: 220 13% 12%;
-    --secondary-foreground: 220 13% 85%;
+    --secondary-foreground: 0 0% 95%;
 
     --muted: 220 13% 10%;
-    --muted-foreground: 220 13% 65%;
+    --muted-foreground: 0 0% 75%;
 
     --accent: 220 13% 14%;
-    --accent-foreground: 220 13% 85%;
+    --accent-foreground: 0 0% 95%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 220 13% 95%;
+    --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 18%;
     --input: 220 13% 12%;
-    --ring: 14 100% 60%;
+    --ring: 14 85% 48%;
 
     --radius: 0.75rem;
 
     /* Chat specific colors */
-    --chat-user-bg: 14 100% 60%;
+    --chat-user-bg: 14 85% 48%;
     --chat-assistant-bg: 220 13% 12%;
-    --chat-code-bg: 220 13% 4%;
+    --chat-code-bg: 0 0% 14%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(14 100% 60%), hsl(14 100% 55%));
+    --gradient-primary: linear-gradient(135deg, hsl(14 85% 48%), hsl(14 85% 44%));
     --gradient-subtle: linear-gradient(180deg, hsl(220 13% 8%), hsl(220 13% 6%));
     
     /* Shadows and effects */
-    --shadow-glow: 0 0 20px hsl(14 100% 60% / 0.3);
+    --shadow-glow: 0 0 20px hsl(14 85% 48% / 0.3);
     --shadow-card: 0 8px 32px hsl(220 13% 2% / 0.5);
     
     /* Animation variables */
@@ -61,10 +61,12 @@
 @layer base {
   * {
     @apply border-border;
+    font-family: 'Inter', sans-serif;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
@@ -80,7 +82,42 @@
     }
   }
 
+  @keyframes pulseBlur {
+    0%, 100% {
+      opacity: 1;
+      filter: blur(0px);
+    }
+    50% {
+      opacity: 0.5;
+      filter: blur(2px);
+    }
+  }
+
   .animate-fade-in {
     animation: fade-in 0.4s ease-out;
+  }
+
+  /* Custom scrollbar styles */
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #242424;
+    border-radius: 4px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: #2e2e2e;
+  }
+
+  /* Firefox scrollbar */
+  .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #242424 transparent;
   }
 }

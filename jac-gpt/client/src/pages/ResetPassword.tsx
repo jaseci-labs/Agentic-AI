@@ -78,8 +78,8 @@ const ResetPassword = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-        <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+      <div className="min-h-screen flex items-center justify-center bg-[#141414] px-4">
+        <Card className="w-full max-w-md bg-[#1e1e1e] border-gray-700">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
               <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
@@ -113,8 +113,8 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+    <div className="min-h-screen flex items-center justify-center bg-[#141414] px-4">
+      <Card className="w-full max-w-md bg-[#1e1e1e] border-gray-700">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />
@@ -142,7 +142,7 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                className="bg-[#2d2d2d] border-gray-600 text-white placeholder-gray-400"
               />
               <p className="text-xs text-gray-400">
                 Password must be at least 6 characters long
@@ -159,7 +159,7 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                className="bg-[#2d2d2d] border-gray-600 text-white placeholder-gray-400"
               />
             </div>
           </CardContent>
@@ -178,7 +178,7 @@ const ResetPassword = () => {
                 'Reset password'
               )}
             </Button>
-            <Button variant="outline" className="w-full bg-gray-700 border-gray-600 text-white hover:bg-gray-600" asChild>
+            <Button variant="outline" className="w-full bg-[#2d2d2d] border-gray-600 text-white hover:bg-[#3d3d3d]" asChild>
               <Link to="/login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to login

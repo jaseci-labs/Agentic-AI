@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from './Sidebar';
 import MobileMenuButton from './MobileMenuButton';
@@ -31,6 +31,26 @@ const JacChatbot = () => {
   const [docPanelOpen, setDocPanelOpen] = useState(false);
   const [docSuggestions, setDocSuggestions] = useState<DocumentationSuggestion[]>([]);
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const userMessageRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [lastUserMessageId, setLastUserMessageId] = useState<string>('');
+
+  // Auto-scroll to position user's query near the top of the viewport
+  useEffect(() => {
+    if (lastUserMessageId && isLoading && userMessageRef.current && scrollAreaRef.current) {
+      setTimeout(() => {
+        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollContainer && userMessageRef.current) {
+          const elementTop = userMessageRef.current.offsetTop;
+          // Scroll to position the query near the top with a small offset
+          scrollContainer.scrollTo({
+            top: elementTop - 20,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+  }, [lastUserMessageId, isLoading]);
 
   // Initialize session on component mount
   useEffect(() => {
@@ -85,14 +105,16 @@ const JacChatbot = () => {
     // Store the user message for documentation suggestions
     setLastUserMessage(message);
 
+    const userMessageId = Date.now().toString();
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: userMessageId,
       content: message,
       isUser: true,
       timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setLastUserMessageId(userMessageId);
     setIsLoading(true);
 
     // Get documentation suggestions based on the message
@@ -105,16 +127,9 @@ const JacChatbot = () => {
       console.log('Received suggestions:', suggestions);
       setDocSuggestions(suggestions);
       
-      // Auto-open documentation panel when user sends a message
-      if (!docPanelOpen) {
-        setDocPanelOpen(true);
-      }
+      // Documentation panel auto-open disabled - users can manually open with Show Docs button
     } catch (error) {
       console.warn('Failed to get documentation suggestions:', error);
-      // Still open the panel even if suggestions fail
-      if (!docPanelOpen) {
-        setDocPanelOpen(true);
-      }
     }
 
     try {
@@ -149,7 +164,7 @@ const JacChatbot = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-screen bg-[#141414]">
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
@@ -164,7 +179,7 @@ const JacChatbot = () => {
           <MobileMenuButton onClick={() => setSidebarOpen(true)} />
 
           {/* Header with Docs Toggle */}
-          <div className="hidden lg:flex items-center justify-between p-4 border-b border-gray-700">
+          <div className="hidden lg:flex items-center justify-between p-2 border-b border-gray-700 bg-[#141414]">
             <div className="flex items-center gap-3">
               <img src={jacLogo} alt="Jac Logo" className="w-8 h-8 object-contain" />
               <h1 className="text-xl font-semibold text-white">Jac GPT</h1>
@@ -190,60 +205,70 @@ const JacChatbot = () => {
           />
           
           {/* Chat Messages */}
-          <ScrollArea className="flex-1 p-4 lg:p-6">
-            <div className="max-w-4xl mx-auto space-y-1 lg:pt-0 pt-16 min-w-0 overflow-hidden">
-              {messages.length === 0 && !isLoading && (
-                <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
-                      <img src={jacLogo} alt="Jac Logo" className="w-10 h-10 object-contain opacity-60" />
-                    </div>
-                    <p className="text-xl text-gray-300 font-medium">Ask me anything about Jac</p>
-                    <p className="text-sm text-gray-500 mt-2">Start a conversation about Jac programming language</p>
-                    <p className="text-xs text-gray-600 mt-3">
-                      💡 Relevant documentation will appear when you ask a question
-                    </p>
-                  </div>
+          {messages.length === 0 && !isLoading ? (
+            // Empty state - centered like ChatGPT
+            <div className="flex-1 flex flex-col items-center justify-center px-4 lg:px-6 -mt-24">
+              <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center">
+                <p className="text-3xl text-gray-300 font-medium mb-10" style={{ fontFamily: 'Inter, sans-serif' }}>How can <span className="text-orange-500">Jaseci</span> help you today?</p>
+                
+                {/* Centered Chat Input */}
+                <div className="w-full">
+                  <ChatInput 
+                    onSendMessage={handleSendMessage} 
+                    disabled={isLoading || !canSendMessage} 
+                    placeholder={
+                      !canSendMessage 
+                        ? "Sign up to continue chatting..." 
+                        : "Type your message"
+                    }
+                  />
                 </div>
-              )}
-              
-              {messages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={message.content}
-                  isUser={message.isUser}
-                  timestamp={message.timestamp}
-                />
-              ))}
-              
-              {isLoading && (
-                <div className="flex gap-3 p-3 animate-fade-in">
-                  <div className="w-8 h-8 shrink-0 bg-gray-700 rounded-full animate-pulse flex items-center justify-center p-1.5">
-                    <img src={jacLogo} alt="Typing" className="w-full h-full object-contain opacity-60" />
-                  </div>
-                  <div className="bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3 shadow-sm">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">Jaseci is thinking...</div>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
-          </ScrollArea>
-          
-          {/* Chat Input */}
-          <ChatInput 
-            onSendMessage={handleSendMessage} 
-            disabled={isLoading || !canSendMessage} 
-            placeholder={
-              !canSendMessage 
-                ? "Sign up to continue chatting..." 
-                : "Type your message..."
-            }
-          />
+          ) : (
+            <>
+              <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 lg:px-6">
+                <div className="max-w-3xl mx-auto space-y-2 lg:pt-4 pt-16 min-w-0 overflow-hidden pb-4">
+                  {messages.map((message) => (
+                    <div 
+                      key={message.id}
+                      ref={message.id === lastUserMessageId ? userMessageRef : null}
+                    >
+                      <ChatMessage
+                        message={message.content}
+                        isUser={message.isUser}
+                        timestamp={message.timestamp}
+                      />
+                    </div>
+                  ))}
+                  
+                  {isLoading && (
+                    <div className="py-4 px-2 animate-fade-in">
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
+                        </div>
+                        <span className="text-sm text-gray-400 ml-2">Thinking...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+              
+              {/* Chat Input for active conversation */}
+              <ChatInput 
+                onSendMessage={handleSendMessage} 
+                disabled={isLoading || !canSendMessage} 
+                placeholder={
+                  !canSendMessage 
+                    ? "Sign up to continue chatting..." 
+                    : "Type your message"
+                }
+              />
+            </>
+          )}
         </div>
       </div>
 
