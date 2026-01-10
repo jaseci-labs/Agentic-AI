@@ -131,8 +131,8 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+    <div className="min-h-screen flex items-center justify-center bg-[#141414] px-4">
+      <Card className="w-full max-w-md bg-[#1e1e1e] border-gray-700">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="JAC GPT" className="h-12 w-12" />

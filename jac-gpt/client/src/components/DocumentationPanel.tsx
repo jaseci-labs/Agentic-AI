@@ -96,7 +96,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
   }
 
   return (
-    <div className="w-1/2 border-l border-gray-700 bg-gray-900 flex flex-col">
+    <div className="w-1/2 border-l border-gray-700 bg-[#141414] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ const DocumentationPanel = ({ message, suggestions = [], isVisible, onToggle }: 
                     return (
                       <Card 
                         key={index} 
-                        className="p-4 bg-gray-800 border-gray-700 cursor-pointer hover:bg-gray-750 transition-colors"
+                        className="p-4 bg-[#1e1e1e] border-gray-700 cursor-pointer hover:bg-[#2d2d2d] transition-colors"
                         onClick={() => handleSuggestionClick(suggestion)}
                         title={`Click to view ${suggestion.title}`}
                       >
