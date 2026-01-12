@@ -1,5 +1,6 @@
 import os;
 import json;
+import time;
 import requests;
 import from langchain_community.document_loaders {PyPDFDirectoryLoader, PyPDFLoader, DirectoryLoader}
 import from langchain_community.document_loaders.text {TextLoader}
@@ -144,6 +145,23 @@ obj RagEngine {
         return embeddings;
     }
 
+    """Create content string enriched with metadata for better semantic matching"""
+    def enrich_content_with_metadata(chunk: Document) -> str {
+        source = chunk.metadata.get('source', 'unknown');
+        page = chunk.metadata.get('page');
+        chunk_id = chunk.metadata.get('id', '');
+        
+        metadata_prefix = f"Source: {source}";
+        if page is not None {
+            metadata_prefix += f", Page: {page}";
+        }
+        if chunk_id {
+            metadata_prefix += f", ChunkID: {chunk_id}";
+        }
+        
+        return f"{metadata_prefix}\n\n{chunk.page_content}";
+    }
+
     def add_chunk_id(chunks: list[Document]) {
         last_page_id = None;
         current_chunk_index = 0;
@@ -169,6 +187,9 @@ obj RagEngine {
             last_page_id = current_page_id;
 
             chunk.metadata['id'] = chunk_id;
+            # Store original content and set enriched content for embedding
+            chunk.metadata['original_content'] = chunk.page_content;
+            chunk.page_content = self.enrich_content_with_metadata(chunk);
         }
 
         return chunks;
@@ -176,7 +197,7 @@ obj RagEngine {
 
     def create_faiss_index(chunks: list[Document]) {
         if len(chunks) > 0 {
-            print(f"Creating FAISS index with {len(chunks)} chunks");
+            print(f"Creating FAISS index with {len(chunks)} chunks (with metadata enrichment)");
             chunks = self.add_chunk_id(chunks);
             self.vectorstore = FAISS.from_documents(
                 chunks,
@@ -211,14 +232,20 @@ obj RagEngine {
         }
         
         try {
+            rerank_start = time.perf_counter();
             # Extract documents and prepare query-document pairs
             docs_only = [doc for (doc, _) in documents];
             
-            # Create query-document pairs for CrossEncoder
-            pairs = [(query, doc.page_content) for doc in docs_only];
+            # Create query-document pairs for CrossEncoder with metadata context
+            pairs = [];
+            for doc in docs_only {
+                # Use enriched content with metadata for reranking
+                enriched_content = self.enrich_content_with_metadata(doc);
+                pairs.append((query, enriched_content));
+            }
             
             # Get reranking scores
-            scores = self.cross_encoder.predict(pairs);
+            scores = self.cross_encoder.predict(pairs, show_progress_bar=False);
             
             # Combine documents with their new scores
             doc_score_pairs = list(zip(docs_only, scores));
@@ -234,6 +261,8 @@ obj RagEngine {
                 results = results[:top_n];
             }
             
+            rerank_elapsed = time.perf_counter() - rerank_start;
+            print(f"Reranking time: {rerank_elapsed:.4f}s");
             print(f"Reranked {len(results)} documents using CrossEncoder (filtered to score > 0.5)");
             return results;
         } except Exception as e {
@@ -249,7 +278,10 @@ obj RagEngine {
             print("FAISS index not initialized");
             return [];
         }
+        search_start = time.perf_counter();
         results = self.vectorstore.similarity_search_with_score(query, k=self.chunk_nos);
+        search_elapsed = time.perf_counter() - search_start;
+        print(f"Search time: {search_elapsed:.4f}s");
         
         # Apply CrossEncoder reranking if enabled
         if self.use_reranking and len(results) > 0 {
@@ -261,6 +293,7 @@ obj RagEngine {
 
     def search(query: str) {
         print(f'Searching RAG Engine with query: {query}');
+        rag_start = time.perf_counter();
         results = self.get_from_faiss(query=query);
         
         print(f"\n{'='*60}");
@@ -285,16 +318,21 @@ obj RagEngine {
             }
             print(f"  Content preview: {chunk_txt[:100]}...");
             
-            # Handle display for different file types
+            # Get original content if available (for enriched indexes)
+            original_content = doc.metadata.get('original_content', chunk_txt);
+            
+            # Handle display for different file types - include chunk id
             if page is not None {
-                summary += f"{source} page {page} (score: {score:.4f}): {chunk_txt}\n";
+                summary += f"[{id}] {source} page {page} (score: {score:.4f}): {original_content}\n";
             } else {
                 # For markdown files without page numbers
-                summary += f"{source} (score: {score:.4f}): {chunk_txt}\n";
+                summary += f"[{id}] {source} (score: {score:.4f}): {original_content}\n";
             }
         }
         
         print(f"\n{'='*60}\n");
+        rag_elapsed = time.perf_counter() - rag_start;
+        print(f"RAG time: {rag_elapsed:.4f}s");
         return summary;
     }
 }
