@@ -146,7 +146,7 @@ node CodingChat(Chat) {
     def code_jac(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        max_react_iterations=5,
+        # max_react_iterations=5,
         tools = [search_docs]
     );
 
@@ -159,7 +159,7 @@ node DebuggerChat(Chat) {
     def debug_code(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        max_react_iterations=5,
+        # max_react_iterations=5,
         tools = [search_docs]
     );
 
