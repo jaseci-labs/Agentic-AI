@@ -35,12 +35,14 @@ glob rag_engine: RagEngine = RagEngine(
 ChatType enum defines the types of chat interactions. ChatType must be one of:
 - RAG: For interactions that require conceptual explanation about Jac/Jaseci.
 - CODING: For interactions that require code generation or code modification.
+- CODE_DEBUGGER: For interactions that require code debugging or fixing code errors.
 - QA: For interactions that does not require more knowledge (syntaxes) about Jac/Jaseci.
 - OFF_TOPIC: For interactions that are not related to Jac programming language or Jaseci ecosystem.
 """
 enum ChatType {
     RAG = "RAG",
     CODING = "CODING",
+    CODE_DEBUGGER = "CODE_DEBUGGER",
     QA = "QA",
     OFF_TOPIC = "OFF_TOPIC"
 }
@@ -63,6 +65,7 @@ walker infer {
             router_node = here ++> Router();
             router_node ++> RagChat();
             router_node ++> CodingChat();
+            router_node ++> DebuggerChat();
             router_node ++> QAChat();
             router_node ++> OffTopicChat();
             visit router_node;
@@ -141,6 +144,19 @@ node CodingChat(Chat) {
     has chat_type: ChatType = ChatType.CODING;
 
     def code_jac(message: str, chat_history: list[dict]) -> str by llm(
+        method="ReAct",
+        messages=chat_history,
+        max_react_iterations=5,
+        tools = [search_docs]
+    );
+
+    can chat with infer entry;
+}
+
+node DebuggerChat(Chat) {
+    has chat_type: ChatType = ChatType.CODE_DEBUGGER;
+
+    def debug_code(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
         max_react_iterations=5,
