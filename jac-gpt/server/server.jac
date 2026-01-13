@@ -75,7 +75,7 @@ walker infer {
     can route with Router entry {
         print(self.chat_history[-3:]);
         print("Classifying history");
-        classification = here.classify(message = self.message, chat_history = self.chat_history[-10:]);
+        classification = here.classify(message = self.message, chat_history = self.chat_history[-5:]);
         print("Routing message:", self.message, "to chat type:", classification);
         visit [-->](`?Chat)(?chat_type==classification);
     }
