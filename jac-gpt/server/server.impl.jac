@@ -66,15 +66,30 @@ impl OffTopicChat.chat {
 }
 
 
-sem Router.classify = """Classify messages for optimal routing:
+sem Router.classify = """
+Classify messages for optimal routing using intent and recent context:
 
-QA: Basic greetings, thanks, casual conversation
-RAG: Any technical/programming questions, Jac language questions, documentation requests  
-CODING: Jac code generation, modificationKeywords: "code", "create", "update", "use", "add", "fix", "debug" etc)
-CODE_DEBUGGER: Jac code debugging, error fixing, troubleshooting (Keywords: "error", "bug", "issue", "fix", "debug", "troubleshoot" etc)
-OFF_TOPIC: Non-technical topics unrelated to programming
+QA:
+Basic greetings, thanks, casual conversation.
 
-Default: When in doubt, use RAG for technical content.""";
+RAG:
+Technical or programming questions that are explanatory or
+documentation-focused (e.g. how, what, explain).
+
+CODING:
+Jac code creation or modification, including follow-up changes.
+Keywords: "code", "create", "update", "use", "add", "remove",
+"change", "modify", "make it", "actually".
+If recent chat history involves coding, route short corrections
+(e.g. "actually use this attribute") here.
+
+CODE_DEBUGGER:
+Jac code debugging and troubleshooting.
+Keywords: "error", "bug", "issue", "fix", "debug".
+
+Default:
+Prefer CODING over RAG when already in a coding flow.
+""";
 
 # - Never generate new code - only curate existing examples.
 
