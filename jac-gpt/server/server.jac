@@ -15,6 +15,8 @@ with entry {
 glob config_name: str = 'faiss_reranking';
 glob app_config: dict = load_config(config_name);
 
+glob classifier_llm = Model(model_name="gpt-4.1-mini");
+
 glob llm = Model(
     model_name=app_config.get("llm", {}).get("model_name", "gpt-4.1-mini")
 );
@@ -29,19 +31,24 @@ glob rag_engine: RagEngine = RagEngine(
 );
 
 
-"""ChatType enum defines the types of chat interactions. ChatType must be one of:
-- RAG: For interactions that require more knowledge (syntaxes) about Jac/Jaseci.
-- QA: For interactions that does not require more knowledge (syntax updates) about Jac/Jaseci.
+"""
+ChatType enum defines the types of chat interactions. ChatType must be one of:
+- RAG: For interactions that require conceptual explanation about Jac/Jaseci.
+- CODING: For interactions that require code generation or code modification.
+- CODE_DEBUGGER: For interactions that require code debugging or fixing code errors.
+- QA: For interactions that does not require more knowledge (syntaxes) about Jac/Jaseci.
 - OFF_TOPIC: For interactions that are not related to Jac programming language or Jaseci ecosystem.
 """
 enum ChatType {
     RAG = "RAG",
+    CODING = "CODING",
+    CODE_DEBUGGER = "CODE_DEBUGGER",
     QA = "QA",
     OFF_TOPIC = "OFF_TOPIC"
 }
 
 node Router {
-    def classify(message: str) -> ChatType by llm(method="Reason", temperature=0.2);
+    def classify(message: str, chat_history: list[str]) -> ChatType by classifier_llm(method="Reason", temperature=0.2);
 }
 
 node Chat {
@@ -57,6 +64,8 @@ walker infer {
         visit [-->](`?Router) else {
             router_node = here ++> Router();
             router_node ++> RagChat();
+            router_node ++> CodingChat();
+            router_node ++> DebuggerChat();
             router_node ++> QAChat();
             router_node ++> OffTopicChat();
             visit router_node;
@@ -64,7 +73,9 @@ walker infer {
     }
 
     can route with Router entry {
-        classification = here.classify(message = self.message);
+        print(self.chat_history[-3:]);
+        print("Classifying history");
+        classification = here.classify(message = self.message, chat_history = self.chat_history[-5:]);
         print("Routing message:", self.message, "to chat type:", classification);
         visit [-->](`?Chat)(?chat_type==classification);
     }
@@ -110,7 +121,7 @@ node RagChat(Chat) {
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        # max_react_iterations=1,
+        max_react_iterations=5,
         tools = [search_docs]
     );
 
@@ -124,6 +135,32 @@ node QAChat(Chat) {
         method="ReAct",
         messages=chat_history,
         max_react_iterations=3
+    );
+
+    can chat with infer entry;
+}
+
+node CodingChat(Chat) {
+    has chat_type: ChatType = ChatType.CODING;
+
+    def code_jac(message: str, chat_history: list[dict]) -> str by llm(
+        method="ReAct",
+        messages=chat_history,
+        # max_react_iterations=5,
+        tools = [search_docs]
+    );
+
+    can chat with infer entry;
+}
+
+node DebuggerChat(Chat) {
+    has chat_type: ChatType = ChatType.CODE_DEBUGGER;
+
+    def debug_code(message: str, chat_history: list[dict]) -> str by llm(
+        method="ReAct",
+        messages=chat_history,
+        # max_react_iterations=5,
+        tools = [search_docs]
     );
 
     can chat with infer entry;

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Menu, X, Plus, MessageSquare, Settings, HelpCircle, ChevronLeft, ChevronRight, LogOut, User, UserPlus, LogIn } from 'lucide-react';
+import { Menu, X, Plus, MessageSquare, Settings, HelpCircle, ChevronLeft, ChevronRight, LogOut, User, UserPlus, LogIn, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from 'react-router-dom';
+import { ChatSession } from '@/services/chatHistory';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +20,14 @@ interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   onNewChat: () => void;
+  chatSessions?: ChatSession[];
+  currentSessionId?: string;
+  onLoadSession?: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
+  isLoading?: boolean;
 }
 
-const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
+const Sidebar = ({ isOpen, onToggle, onNewChat, chatSessions = [], currentSessionId, onLoadSession, onDeleteSession, isLoading = false }: SidebarProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const { user, logout, isAuthenticated, messageCount, maxFreeMessages } = useAuth();
 
@@ -55,13 +61,13 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
       
       {/* Sidebar */}
       <div className={`
-        fixed left-0 top-0 h-full bg-gray-900 border-r border-gray-700 z-50 transition-all duration-300
+        fixed left-0 top-0 h-full bg-[#141414] border-r border-gray-700 z-50 transition-all duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${isExpanded ? 'w-70' : 'w-16'} lg:translate-x-0 lg:static lg:z-auto
+        ${isExpanded ? 'w-64' : 'w-14'} lg:translate-x-0 lg:static lg:z-auto
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-2 border-b border-gray-700">
             <div className="flex items-center justify-between">
               <div className={`flex items-center gap-3 transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="relative group">
@@ -75,7 +81,7 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
                 {isExpanded && (
                   <div>
                     <h1 className="text-lg font-bold text-white">
-                      Jac GPT
+                      Jaseci
                     </h1>
                     <p className="text-xs text-gray-400">
                       Jac programming companion
@@ -123,9 +129,10 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
           <div className="p-4">
             <Button 
               onClick={onNewChat}
-              className={`w-full justify-start gap-3 bg-gray-800 hover:bg-gray-700 text-white border-gray-600 ${!isExpanded ? 'px-2' : ''}`}
+              className={`w-full justify-start gap-3 bg-gray-700/80 hover:bg-gray-700 text-white border-gray-600 ${!isExpanded ? 'px-2' : ''}`}
               variant="outline"
               title="New Chat"
+              disabled={isLoading}
             >
               <Plus className="w-4 h-4 shrink-0" />
               {isExpanded && "New Chat"}
@@ -134,17 +141,48 @@ const Sidebar = ({ isOpen, onToggle, onNewChat }: SidebarProps) => {
 
           {/* Chat History */}
           {isExpanded && (
-            <div className="flex-1 overflow-y-auto px-4">
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
+            <div className="flex-1 overflow-y-auto px-2 sidebar-scroll">
+              <div>
+                <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 px-2">
                   Recent Chats
                 </div>
                 
-                {/* Current chat - active */}
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-800 text-white cursor-pointer">
-                  <MessageSquare className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm truncate">Jac Code Generation</span>
-                </div>
+                {chatSessions.length === 0 ? (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    No chat history yet
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {chatSessions.map((session) => (
+                      <div 
+                        key={session.id}
+                        className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                          session.id === currentSessionId 
+                            ? 'bg-gray-700/80 text-white' 
+                            : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                        } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                        onClick={() => !isLoading && onLoadSession?.(session.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm truncate">{session.title}</div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isLoading) {
+                              onDeleteSession?.(session.id);
+                            }
+                          }}
+                          disabled={isLoading}
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-opacity disabled:cursor-not-allowed shrink-0"
+                          title="Delete chat"
+                        >
+                          <Trash2 className="w-3 h-3 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
