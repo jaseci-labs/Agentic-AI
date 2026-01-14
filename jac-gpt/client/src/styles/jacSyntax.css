@@ -90,8 +90,9 @@ pre[class*="jac"] {
 
 /* Dark theme adjustments */
 .dark .jac-code {
-  background: #0d1117;
+  background: #242424;
   border: 1px solid #30363d;
+  border-radius: 2rem;
 }
 
 /* Light theme adjustments */
@@ -99,6 +100,7 @@ pre[class*="jac"] {
   background: #f6f8fa;
   color: #24292f;
   border: 1px solid #d1d9e0;
+  border-radius: 2rem;
 }
 
 .light .jac-keyword {
@@ -140,4 +142,35 @@ pre[class*="jac"] {
 
 .light .jac-variable {
   color: #24292f;
+}
+
+/* Override highlight.js bash/shell syntax colors to be white/gray */
+.hljs.language-bash,
+.hljs.language-shell,
+.hljs.language-sh,
+.hljs.language-zsh,
+code.language-bash,
+code.language-shell,
+code.language-sh,
+code.language-zsh {
+  color: #e0e0e0 !important;
+}
+
+.hljs.language-bash *,
+.hljs.language-shell *,
+.hljs.language-sh *,
+.hljs.language-zsh *,
+code.language-bash *,
+code.language-shell *,
+code.language-sh *,
+code.language-zsh * {
+  color: #e0e0e0 !important;
+}
+
+/* Make bash command comments slightly dimmer */
+.hljs.language-bash .hljs-comment,
+.hljs.language-shell .hljs-comment,
+.hljs.language-sh .hljs-comment,
+.hljs.language-zsh .hljs-comment {
+  color: #808080 !important;
 }
