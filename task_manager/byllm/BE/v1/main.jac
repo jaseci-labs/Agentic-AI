@@ -18,7 +18,6 @@ node Memory {}
 node Session {
     has history: list = [];
     has created_at: str = get_current_datetime();
-
     def add_history(entry: str) {
         self.history = self.history + [entry];
     }
