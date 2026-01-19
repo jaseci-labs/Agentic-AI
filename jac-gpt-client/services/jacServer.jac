@@ -520,7 +520,7 @@ walker :pub suggest_docs {
         import json;
         import os;
         import numpy as np;
-        from sentence_transformers import SentenceTransformer;
+        import from sentence_transformers {SentenceTransformer}
         
         # Load section-level documentation links with embeddings
         section_links = [];
@@ -566,7 +566,7 @@ walker :pub suggest_docs {
         }
         
         # Sort by similarity (highest first)
-        similarities.sort(key=lambda x: x["similarity"], reverse=True);
+        similarities.sort(key=lambda x: float : x["similarity"], reverse=True);
         
         # Get top 5 suggestions
         top_suggestions = [];
