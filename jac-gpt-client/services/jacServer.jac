@@ -183,7 +183,7 @@ node OffTopicChat(Chat) {
     can chat with infer entry;
 }
 
-walker interact {
+walker :pub interact {
     has message: str;
     has session_id: str;
     has user_email: str = "";
@@ -191,7 +191,6 @@ walker interact {
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can init_session with `root entry {
@@ -212,12 +211,11 @@ node Session {
     can chat with interact entry ;
 }
 
-walker get_session {
+walker :pub get_session {
     has session_id: str;
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can get_chat_history with `root entry;
@@ -225,12 +223,11 @@ walker get_session {
     can return_history with Session entry;
 }
 
-walker new_session {
+walker :pub new_session {
     has session_id: str = "";
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can create_session with `root entry;
@@ -260,82 +257,75 @@ walker close_session {
 }
 
 # Admin walkers
-walker get_user_profile {
+walker :pub get_user_profile {
     has email: str;
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can fetch_profile with `root entry;
 }
 
-walker create_user_profile {
+walker :pub create_user_profile {
     has email: str;
     has name: str = "";
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can setup_profile with `root entry;
 }
 
-walker save_user_location {
+walker :pub save_user_location {
     has email: str;
     has location: dict = {};
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can save_location with `root entry;
 }
 
-walker get_all_users {
+walker :pub get_all_users {
     has requester_email: str = "";
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can list_users with `root entry;
 }
 
-walker get_all_sessions_admin {
+walker :pub get_all_sessions_admin {
     has requester_email: str = "";
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can list_all_sessions with `root entry;
 }
 
-walker get_session_messages_admin {
+walker :pub get_session_messages_admin {
     has session_id: str;
     has requester_email: str = "";
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can get_session_chat with `root entry;
 }
 
 # Documentation-related walkers
-walker get_documentation_urls {
+walker :pub get_documentation_urls {
     """Get all documentation URLs from sitemap.xml"""
 
     obj __specs__ {
         static has methods: list = ["get"];
-        static has auth: bool = False;
     }
 
     can extract_urls with `root entry {
@@ -389,13 +379,12 @@ walker get_documentation_urls {
     }
 }
 
-walker get_doc_content {
+walker :pub get_doc_content {
     """Fetch documentation content from URL or local files"""
     has url: str;
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can fetch_doc with `root entry {
@@ -517,14 +506,13 @@ walker get_doc_content {
     }
 }
 
-walker suggest_docs {
+walker :pub suggest_docs {
     """Enhanced suggest relevant documentation based on user message with section-level links"""
     has message: str;
     has chat_history: list[dict] = [];
 
     obj __specs__ {
         static has methods: list = ["post"];
-        static has auth: bool = False;
     }
 
     can get_suggestions with `root entry {
