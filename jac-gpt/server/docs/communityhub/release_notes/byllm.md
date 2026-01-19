@@ -2,9 +2,15 @@
 
 This document provides a summary of new features, improvements, and bug fixes in each version of **byLLM** (formerly MTLLM). For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking_changes.md) page.
 
-## byllm 0.4.10 (Unreleased)
+## byllm 0.4.14 (Unreleased)
 
-## byllm 0.4.9 (Latest Release)
+- **Max Iterations for ReAct (`max_react_iterations`)**: Added a configurable limit for ReAct tool-calling loops via `by llm(max_react_iterations=3)` to prevent overly long or endless reasoning cycles. When the limit is reached, the model stops calling tools and returns a final answer based on the information gathered so far.
+
+## byllm 0.4.13 (Latest Release)
+
+## byllm 0.4.12
+
+## byllm 0.4.9
 
 - **LLM-Powered Graph Traversal (`visit by`)**: Introduced `visit [-->] by llm()` syntax enabling walkers to make intelligent traversal decisions. The LLM analyzes the semantic context of available nodes and selects which ones to visit based on the walker's purpose, bringing AI-powered decision making to graph navigation.
 

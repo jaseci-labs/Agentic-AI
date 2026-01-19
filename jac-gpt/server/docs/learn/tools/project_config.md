@@ -44,6 +44,9 @@ entry-point = "main.jac"
 
 [dependencies]
 
+[dev-dependencies]
+watchdog = ">=3.0.0"  # Required for HMR (jac start --watch)
+
 [run]
 main = true
 cache = true
@@ -132,10 +135,13 @@ Development-only dependencies (not installed in production):
 
 ```toml
 [dev-dependencies]
+watchdog = ">=3.0.0"  # Required for HMR (jac start --watch)
 pytest = ">=8.2.1"
 mypy = ">=1.0.0"
 black = ">=23.0.0"
 ```
+
+The `watchdog` package is included by default in new projects to enable Hot Module Replacement during development.
 
 ### [dependencies.git] Section
 
@@ -182,7 +188,7 @@ max_failures = 0        # Max failures before stopping (0 = unlimited)
 
 ### [serve] Section
 
-Server configuration for `jac serve`:
+Server configuration for `jac start`:
 
 ```toml
 [serve]
@@ -395,7 +401,7 @@ jac run main.jac --no-cache --session my-session
 jac test --verbose --fail-fast --max-failures 5
 
 # Override serve settings
-jac serve --port 3000
+jac start --port 3000
 
 # Override build settings
 jac build main.jac --typecheck
@@ -430,6 +436,7 @@ requests = ">=2.28.0"
 pydantic = ">=2.0.0"
 
 [dev-dependencies]
+watchdog = ">=3.0.0"  # Required for HMR
 pytest = ">=8.2.1"
 pytest-asyncio = ">=0.21.0"
 
@@ -517,7 +524,7 @@ model = "gpt-4"
 dev = "jac run main.jac"
 build = "jac build main.jac --typecheck"
 test = "jac test"
-serve = "jac serve --port 8000"
+serve = "jac start --port 8000"
 format = "jac format . --fix"
 ```
 
