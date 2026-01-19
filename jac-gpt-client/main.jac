@@ -7,6 +7,15 @@ import from dotenv {load_dotenv}
 import from services.database {get_database}
 import from services.rag_engine {RagEngine, load_config}
 
+# Client-side code - must be explicitly imported after .cl.jac auto-annexing was removed
+cl {
+    import from .frontend { app as ClientApp }
+
+    def:pub app() -> any {
+        return <ClientApp />;
+    }
+}
+
 with entry {
     load_dotenv(override=True);
 }
@@ -758,3 +767,7 @@ walker :pub suggest_docs {
         };
     }
 }
+
+
+
+

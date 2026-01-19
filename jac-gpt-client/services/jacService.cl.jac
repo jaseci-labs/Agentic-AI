@@ -1,42 +1,10 @@
-"""Service layer for communicating with the Jac backend via HTTP."""
-
-cl import from react { useState }
+"""Service layer for communicating with the Jac backend using root spawn."""
 
 """Generate a unique session ID."""
 def:pub generateSessionId() -> str {
     timestamp = Date.now();
     randomStr = Math.random().toString(36).substring(2, 9);
     return "session_" + String(timestamp) + "_" + randomStr;
-}
-
-"""Helper function to call walker endpoints via HTTP."""
-async def callWalker(walkerName: str, payload: any = {}) -> any {
-    response = await fetch("/walker/" + walkerName, {
-        "method": "POST",
-        "headers": {
-            "Content-Type": "application/json"
-        },
-        "body": JSON.stringify(payload)
-    });
-
-    if not response.ok {
-        errorText = await response.text();
-        console.error("Walker " + walkerName + " failed:", errorText);
-        return {"error": errorText};
-    }
-
-    data = await response.json();
-    console.log("Walker " + walkerName + " response:", data);
-
-    # Extract result from jac-cloud response format {data: {reports: [...]}}
-    if data.data and data.data.reports and data.data.reports.length > 0 {
-        return data.data.reports[data.data.reports.length - 1];
-    }
-    # Fallback for direct reports array
-    if data.reports and data.reports.length > 0 {
-        return data.reports[data.reports.length - 1];
-    }
-    return data;
 }
 
 """Create a new chat session on the backend."""
@@ -46,7 +14,8 @@ async def:pub createSession(sessionId: str = "") -> any {
     }
 
     try {
-        result = await callWalker("new_session", {"session_id": sessionId});
+        response = root spawn new_session(session_id=sessionId);
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
 
         return {
             "success": True,
@@ -67,7 +36,8 @@ async def:pub createSession(sessionId: str = "") -> any {
 """Get an existing session's chat history."""
 async def:pub getSession(sessionId: str) -> any {
     try {
-        result = await callWalker("get_session", {"session_id": sessionId});
+        response = root spawn get_session(session_id=sessionId);
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
 
         return {
             "success": True,
@@ -89,11 +59,12 @@ async def:pub getSession(sessionId: str) -> any {
 """Send a message and get a response from the chatbot."""
 async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "") -> any {
     try {
-        result = await callWalker("interact", {
-            "message": message,
-            "session_id": sessionId,
-            "user_email": userEmail
-        });
+        response = root spawn interact(
+            message=message,
+            session_id=sessionId,
+            user_email=userEmail
+        );
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
 
         return {
             "success": True,
@@ -114,10 +85,11 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "") -> 
 """Get documentation suggestions based on message."""
 async def:pub getSuggestions(message: str, chatHistory: list = []) -> any {
     try {
-        result = await callWalker("suggest_docs", {
-            "message": message,
-            "chat_history": chatHistory
-        });
+        response = root spawn suggest_docs(
+            message=message,
+            chat_history=chatHistory
+        );
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
 
         return {
             "success": result.success or False,
@@ -137,7 +109,8 @@ async def:pub getSuggestions(message: str, chatHistory: list = []) -> any {
 """Get user profile."""
 async def:pub getUserProfile(email: str) -> any {
     try {
-        result = await callWalker("get_user_profile", {"email": email});
+        response = root spawn get_user_profile(email=email);
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
 
         return {
             "success": True,
@@ -156,7 +129,8 @@ async def:pub getUserProfile(email: str) -> any {
 """Get documentation content from URL."""
 async def:pub getDocContent(url: str) -> any {
     try {
-        result = await callWalker("get_doc_content", {"url": url});
+        response = root spawn get_doc_content(url=url);
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
 
         return {
             "success": result.success or False,

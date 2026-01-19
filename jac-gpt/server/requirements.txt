@@ -1,6 +1,6 @@
 python-dotenv
 requests
-byllm
+# byllm
 pymongo
 langchain-openai
 langchain-community
