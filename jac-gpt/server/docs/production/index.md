@@ -17,11 +17,11 @@ Deploy your Jac applications to production with jac-scale. Transform your local 
 ## Quick Start
 
 ```bash
-# Serve locally (development)
-jac serve main.jac
+# Start locally (development, uses main.jac by default)
+jac start
 
 # Deploy to Kubernetes (production)
-jac scale main.jac
+jac start --scale
 
 # Teardown deployment
 jac destroy main.jac
@@ -31,18 +31,24 @@ jac destroy main.jac
 
 ## CLI Commands
 
-### `jac serve` - Local API Server
+### `jac start` - Local API Server (and Kubernetes Deployment)
 
 ```bash
-jac serve <filename.jac> [options]
+jac start [filename.jac] [options]
 ```
 
+> **Note**:
+>
+> - If no filename is provided, `jac start` defaults to `main.jac` in the current directory
+> - If your project uses a different entry file (e.g., `app.jac`, `server.jac`), specify it explicitly: `jac start app.jac`
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--port` | 8000 | Server port |
 | `--session` | "" | Session name for persistence |
 | `--main` | true | Run as main module |
 | `--faux` | false | Print endpoints without starting |
+| `--scale` | false | Deploy to Kubernetes (requires jac-scale) |
+| `--build` | false | Build Docker image before deploying (with --scale) |
 
 **Access Points:**
 
@@ -50,28 +56,20 @@ jac serve <filename.jac> [options]
 - Docs: `http://localhost:8000/docs` (Swagger UI)
 - Client: `http://localhost:8000/cl/app` (if using jac-client)
 
-### `jac scale` - Kubernetes Deployment
-
-```bash
-jac scale <filename.jac> [options]
-```
-
-| Option | Description |
-|--------|-------------|
-| `-b, --build` | Build Docker image before deploying |
+### Kubernetes Deployment
 
 **Two Deployment Modes:**
 
 1. **Fast Mode (Default)**: Uses Python base image, syncs code via PVC
 
    ```bash
-   jac scale main.jac
+   jac start --scale
    ```
 
 2. **Production Mode**: Builds Docker image, pushes to registry
 
    ```bash
-   jac scale main.jac -b
+   jac start --scale --build
    ```
 
 ### `jac destroy` - Teardown
@@ -85,6 +83,36 @@ Removes all Kubernetes resources: deployments, services, StatefulSets, PVCs.
 ---
 
 ## REST API Generation
+
+### Access Control (Secure by Default)
+
+By default, all walkers and functions **require authentication** when exposed as API endpoints. Use the `: pub` modifier to make endpoints publicly accessible without authentication.
+
+| Access Modifier | Authentication Required | Use Case |
+|----------------|------------------------|----------|
+| None (default) | **Yes** | Secure by default |
+| `: pub` | No | Public APIs |
+| `: protect` | Yes | Protected APIs |
+| `: priv` | Yes | Private APIs |
+
+```jac
+# Requires authentication (default - secure by default)
+walker create_item {
+    has name: str;
+}
+
+# Public endpoint - no authentication needed
+walker : pub get_items {
+    can list with `root entry {
+        report [here -->];
+    }
+}
+
+# Explicitly protected - requires authentication
+def : protect admin_action() -> str {
+    return "admin only";
+}
+```
 
 ### Walker Endpoints
 
@@ -244,7 +272,7 @@ docker_password = "${DOCKER_PASSWORD}"
 
 ## Auto-Provisioned Resources
 
-When you run `jac scale`, these resources are created automatically:
+When you run `jac start --scale`, these resources are created automatically:
 
 ### MongoDB StatefulSet (if enabled)
 
@@ -352,11 +380,11 @@ host = "0.0.0.0"
 jac run main.jac
 
 # 2. Local API: Test as server
-jac serve main.jac
+jac start
 # → http://localhost:8000/docs
 
 # 3. Production: Deploy to K8s
-jac scale main.jac
+jac start --scale
 # → http://localhost:30001/docs (NodePort)
 # → or LoadBalancer URL (AWS)
 
@@ -372,7 +400,7 @@ export DOCKER_USERNAME="your-username"
 export DOCKER_PASSWORD="your-token"
 
 # Build, push, and deploy
-jac scale main.jac -b
+jac start --scale --build
 ```
 
 ---
