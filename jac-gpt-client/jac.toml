@@ -1,0 +1,40 @@
+[project]
+name = "jac-gpt-client"
+version = "1.0.0"
+description = "Jac client application: jac-gpt-client"
+entry-point = "main.jac"
+
+[dependencies]
+python-dotenv = ">=0.0.0"
+requests = ">=0.0.0"
+byllm = ">=0.0.0"
+pymongo = ">=0.0.0"
+langchain-openai = ">=0.0.0"
+langchain-community = ">=0.0.0"
+langchain-chroma = ">=0.0.0"
+pypdf = ">=0.0.0"
+sentence-transformers = ">=0.0.0"
+faiss-cpu = ">=0.0.0"
+
+[dependencies.npm]
+jac-client-node = "1.0.3"
+react-markdown = "^9.0.0"
+rehype-highlight = "^7.0.0"
+"highlight.js" = "^11.9.0"
+clsx = "^2.1.0"
+tailwind-merge = "^2.2.0"
+"@mantine/core" = "^7.15.0"
+"@mantine/hooks" = "^7.15.0"
+"@tabler/icons-react" = "^3.28.0"
+"@emotion/react" = "^11.14.0"
+
+[dependencies.npm.dev]
+"@jac-client/dev-deps" = "1.0.0"
+
+[dev-dependencies]
+watchdog = ">=3.0.0"
+
+[serve]
+base_route_app = "app"
+
+[plugins.client]
