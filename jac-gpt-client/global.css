@@ -1,0 +1,252 @@
+/* Global styles for Jac GPT Client with Mantine */
+
+:root {
+    /* Dark theme colors - matching violet/purple brand */
+    --background: #0a0a0f;
+    --surface: #0f0f15;
+    --surface-hover: #16161f;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.1);
+
+    /* Text colors */
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+
+    /* Brand colors - violet/purple theme */
+    --primary: #7c3aed;
+    --primary-light: #a855f7;
+    --primary-hover: #6d28d9;
+    --secondary: #8b5cf6;
+
+    /* Status colors */
+    --success: #22c55e;
+    --error: #ef4444;
+    --warning: #eab308;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    --gradient-secondary: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    height: 100%;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 5px var(--primary), 0 0 10px var(--primary);
+    }
+    50% {
+        box-shadow: 0 0 20px var(--primary), 0 0 30px var(--primary);
+    }
+}
+
+/* Mantine overrides for dark theme */
+.mantine-Paper-root {
+    background-color: var(--surface) !important;
+}
+
+.mantine-Textarea-input,
+.mantine-TextInput-input {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--border-light) !important;
+}
+
+.mantine-Textarea-input:focus,
+.mantine-TextInput-input:focus {
+    border-color: var(--primary) !important;
+}
+
+.mantine-Textarea-input::placeholder,
+.mantine-TextInput-input::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* Code block styling */
+pre {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875rem;
+}
+
+/* Inline code */
+:not(pre) > code {
+    background-color: rgba(124, 58, 237, 0.15);
+    color: #c084fc;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.875em;
+}
+
+/* Highlight.js theme overrides for dark mode */
+.hljs {
+    background: transparent !important;
+    color: #e4e4e7 !important;
+}
+
+.hljs-keyword { color: #c084fc; }
+.hljs-string { color: #86efac; }
+.hljs-number { color: #fbbf24; }
+.hljs-function { color: #60a5fa; }
+.hljs-comment { color: #6b7280; font-style: italic; }
+.hljs-variable { color: #f87171; }
+.hljs-attr { color: #fbbf24; }
+.hljs-built_in { color: #22d3ee; }
+.hljs-title { color: #60a5fa; }
+.hljs-params { color: #e4e4e7; }
+.hljs-literal { color: #f472b6; }
+
+/* Selection colors */
+::selection {
+    background-color: rgba(124, 58, 237, 0.3);
+    color: white;
+}
+
+/* Focus outline for accessibility */
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Link styling */
+a {
+    color: var(--primary-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--primary);
+}
+
+/* Remove Mantine's default focus ring in some cases */
+.mantine-ActionIcon-root:focus,
+.mantine-Button-root:focus {
+    outline: none;
+}
+
+/* Custom utility animations */
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slideUp {
+    animation: slideUp 0.3s ease-out;
+}
+
+.animate-slideIn {
+    animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+.animate-glow {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Responsive helpers */
+@media (max-width: 1024px) {
+    .lg\:hidden {
+        display: none;
+    }
+}
+
+@media (min-width: 1024px) {
+    .lg\:flex {
+        display: flex;
+    }
+    .lg\:block {
+        display: block;
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "llm": {
+        "model_name": "gpt-4.1-mini"
+    },
+    "rag_engine": {
+        "chunk_size": 800,
+        "chunk_overlap": 80,
+        "similarity_search": {
+            "k": 20
+        },
+        "reranking": {
+            "top_n": 5,
+            "model": "cross-encoder/ms-marco-MiniLM-L6-v2"
+        }
+    },
+    "paths": {
+        "file_path": "docs",
+        "faiss_path": "faiss_index"
+    }
+}
