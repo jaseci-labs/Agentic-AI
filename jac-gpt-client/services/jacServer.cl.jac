@@ -22,10 +22,20 @@ async def callWalker(walkerName: str, payload: any = {}) -> any {
     if not response.ok {
         errorText = await response.text();
         console.error("Walker " + walkerName + " failed:", errorText);
-        return {"error": errorText, "reports": []};
+        return {"error": errorText};
     }
 
     data = await response.json();
+    console.log("Walker " + walkerName + " response:", data);
+
+    # Extract result from jac-cloud response format {data: {reports: [...]}}
+    if data.data and data.data.reports and data.data.reports.length > 0 {
+        return data.data.reports[data.data.reports.length - 1];
+    }
+    # Fallback for direct reports array
+    if data.reports and data.reports.length > 0 {
+        return data.reports[data.reports.length - 1];
+    }
     return data;
 }
 
@@ -36,8 +46,7 @@ async def:pub createSession(sessionId: str = "") -> any {
     }
 
     try {
-        data = await callWalker("new_session", {"session_id": sessionId});
-        result = data.reports[0] if data.reports and data.reports.length > 0 else {};
+        result = await callWalker("new_session", {"session_id": sessionId});
 
         return {
             "success": True,
@@ -58,8 +67,7 @@ async def:pub createSession(sessionId: str = "") -> any {
 """Get an existing session's chat history."""
 async def:pub getSession(sessionId: str) -> any {
     try {
-        data = await callWalker("get_session", {"session_id": sessionId});
-        result = data.reports[0] if data.reports and data.reports.length > 0 else {};
+        result = await callWalker("get_session", {"session_id": sessionId});
 
         return {
             "success": True,
@@ -81,12 +89,11 @@ async def:pub getSession(sessionId: str) -> any {
 """Send a message and get a response from the chatbot."""
 async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "") -> any {
     try {
-        data = await callWalker("interact", {
+        result = await callWalker("interact", {
             "message": message,
             "session_id": sessionId,
             "user_email": userEmail
         });
-        result = data.reports[0] if data.reports and data.reports.length > 0 else {};
 
         return {
             "success": True,
@@ -107,11 +114,10 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "") -> 
 """Get documentation suggestions based on message."""
 async def:pub getSuggestions(message: str, chatHistory: list = []) -> any {
     try {
-        data = await callWalker("suggest_docs", {
+        result = await callWalker("suggest_docs", {
             "message": message,
             "chat_history": chatHistory
         });
-        result = data.reports[0] if data.reports and data.reports.length > 0 else {};
 
         return {
             "success": result.success or False,
@@ -131,8 +137,7 @@ async def:pub getSuggestions(message: str, chatHistory: list = []) -> any {
 """Get user profile."""
 async def:pub getUserProfile(email: str) -> any {
     try {
-        data = await callWalker("get_user_profile", {"email": email});
-        result = data.reports[0] if data.reports and data.reports.length > 0 else {};
+        result = await callWalker("get_user_profile", {"email": email});
 
         return {
             "success": True,
@@ -151,8 +156,7 @@ async def:pub getUserProfile(email: str) -> any {
 """Get documentation content from URL."""
 async def:pub getDocContent(url: str) -> any {
     try {
-        data = await callWalker("get_doc_content", {"url": url});
-        result = data.reports[0] if data.reports and data.reports.length > 0 else {};
+        result = await callWalker("get_doc_content", {"url": url});
 
         return {
             "success": result.success or False,
