@@ -2,9 +2,38 @@
 
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jaclang**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking_changes.md) page.
 
-## jaclang 0.9.5 (Unreleased)
+## jaclang 0.9.9 (Unreleased)
 
-- **Eager Client Bundle Loading**: The `jac serve` command now builds the client bundle at server startup instead of lazily on first request.
+- **Report Yield Support**: The `report` statement now supports yield expressions (e.g., `report yield "Hello, World!";`), laying the groundwork for streaming response support in walkers.
+
+- **User Management Endpoints**:  Added new user management endpoints to the `jac start` API server:
+  - `GET /user/info` - Retrieve authenticated user's information (username, token, root_id)
+  - `PUT /user/username` - Update the authenticated user's username
+  - `PUT /user/password` - Update the authenticated user's password
+  All endpoints require authentication via Bearer token and include proper validation to prevent unauthorized access.
+
+- **Unified User and Application Database**: The `jac start` basic user authentication system now stores users in the same SQLite database (`main.db`) as application data, instead of a separate `users.json` file. This provides ACID transactions for user data, better concurrency with WAL mode, and simplified backup/restore with a single database file as a reference (overridden for production jac-scale).
+
+- **Improved JSX Formatter**: The JSX formatter now uses soft line breaks with automatic line-length detection instead of forcing multiline formatting. Attributes stay on the same line when they fit within the line width limit (88 characters), producing more compact and readable output. For example, `<button id="submit" disabled />` now stays on one line instead of breaking each attribute onto separate lines.
+
+- **Secure by Default API Endpoints**: Walkers and functions exposed as API endpoints via `jac start` now **require authentication by default**. Previously, endpoints without an explicit access modifier were treated as public. Now, only endpoints explicitly marked with `: pub` are publicly accessible without authentication. This "secure by default" approach prevents accidental exposure of sensitive endpoints. Use `: pub` to make endpoints public (e.g., `walker : pub MyPublicWalker { ... }`).
+
+- **Default `main.jac` for `jac start`**: The `jac start` command now defaults to `main.jac` when no filename is provided, making it easier to start applications in standard project structures. You can still specify a different file explicitly (e.g., `jac start app.jac`), and the command provides helpful error messages if `main.jac` is not found.
+
+## jaclang 0.9.8 (Latest Release)
+
+- **Recursive DFS Walker Traversal with Deferred Exits**: Walker traversal semantics have been fundamentally changed to use recursive post-order exit execution. Entry abilities now execute when entering a node, while exit abilities are deferred until all descendants are visited. This means exits execute in LIFO order (last visited node exits first), similar to function call stack unwinding. The `walker.path` field is now actively populated during traversal, tracking visited nodes in order.
+- **Imported Functions and Walkers as API Endpoints**: The `jac start` command now automatically convert imported functions and walkers to API endpoints, in addition to locally defined ones. Previously, only functions and walkers defined directly in the target file were exposed as endpoints. Now, any function or walker explicitly imported into the file will also be available as an API endpoint.
+- **Hot Module Replacement (HMR)**: Added `--watch` flag to `jac start` for live development with automatic reload on `.jac` file changes. When enabled, the file watcher detects changes and automatically recompiles backend code while Vite handles frontend hot-reloading. New options include `-w/--watch` to enable HMR mode, `--api-port` to set a separate API port, and `--no-client` for API-only mode without frontend bundling. Example usage: `jac start --watch`.
+- **Default Watchdog Dependency**: The `jac create` command now includes `watchdog` in `[dev-dependencies]` by default, enabling HMR support out of the box. Install with `jac install --dev`.
+- **Simplified `.jac` Directory Gitignore**: The `jac create` command now creates a `.gitignore` file inside the `.jac/` directory containing `*` to ignore all build artifacts, instead of modifying the project root `.gitignore`. This keeps project roots cleaner and makes the `.jac` directory self-contained.
+- **Ignore Patterns for Type Checking**: Added `--ignore` flag to the `jac check` command, allowing users to exclude specific files or folders from type checking. The flag accepts a comma-separated list of patterns (e.g., `--ignore fixtures,tests,__pycache__`). Patterns are matched against path components, so `--ignore tests` will exclude any file or folder named `tests` at any depth in the directory tree.
+- **Project Clean Command**: Added `jac clean` command to remove build artifacts from the `.jac/` directory. By default, it cleans the data directory (`.jac/data`). Use `--all` to clean all artifacts (data, cache, packages, client), or specify individual directories with `--data`, `--cache`, or `--packages` flags. The `--force` flag skips the confirmation prompt.
+
+## jaclang 0.9.7
+
+- **Unified `jac start` Command**: The `jac serve` command has been renamed to `jac start`. The `jac scale` command (from jac-scale plugin) now uses `jac start --scale` instead of a separate command. This provides a unified interface for running Jac applications locally or deploying to Kubernetes.
+- **Eager Client Bundle Loading**: The `jac start` command now builds the client bundle at server startup instead of lazily on first request.
 - **Configuration Management CLI**: Added `jac config` command for viewing and modifying `jac.toml` project settings. Supports actions: `show` (display explicitly set values), `list` (display all settings including defaults), `get`/`set`/`unset` (manage individual settings), `path` (show config file location), and `groups` (list available configuration sections). Output formats include table, JSON, and TOML. Filter by configuration group with `-g` flag.
 - **Reactive State Variables in Client Context**: The `has` keyword now supports reactive state in client-side code. When used inside a `cl {}` block, `has count: int = 0;` automatically generates `const [count, setCount] = useState(0);`, and assignments like `count = count + 1;` are transformed to `setCount(count + 1);`. This provides a cleaner, more declarative syntax for React state management without explicit `useState` destructuring.
 - **Consolidated Build Artifacts Directory**: All Jac project build artifacts are now organized under a single `.jac/` directory instead of being scattered across the project root. This includes bytecode cache (`.jac/cache/`), Python packages (`.jac/packages/`), client build artifacts (`.jac/client/`), and runtime data like ShelfDB (`.jac/data/`). The base directory is configurable via `[build].dir` in `jac.toml`. This simplifies `.gitignore` to a single entry and provides cleaner project structures.
@@ -13,7 +42,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Enhanced Plugin Management CLI**: The `jac plugins` command now provides comprehensive plugin management with `list`, `disable`, `enable`, and `disabled` subcommands. Plugins are displayed organized by PyPI package with fully qualified names (`package:plugin`) for unambiguous identification. Plugin settings persist in `jac.toml` under `[plugins].disabled`, and the `JAC_DISABLED_PLUGINS` environment variable provides runtime override support. Use `*` to disable all external plugins, or `package:*` to disable all plugins from a specific package.
 - **Simplified NonGPT Implementation**: NonGPT is now a native default that activates automatically when no LLM plugin is installed. The implementation no longer fakes the `byllm` import, providing cleaner behavior out of the box.
 
-## jaclang 0.9.4 (Latest Release)
+## jaclang 0.9.4
 
 - **`let` Keyword Removed**: The `let` keyword has been removed from Jaclang. Variable declarations now use direct assignment syntax (e.g., `x = 10` instead of `let x = 10`), aligning with Python's approach to variable binding.
 - **Py2Jac Robustness Improvements**: Improved reliability of Python-to-Jac conversion with better handling of f-strings (smart quote switching, no keyword escaping in interpolations), match pattern class names, attribute access formatting (no extra spaces around dots), and nested docstrings in classes and functions.
@@ -63,7 +92,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Generics TypeChecking**: Type checking for generics in vscode extension has implemented, i.e. `dict[int, str]` can be now checked by the lsp.
 - **Plugin Architecture for Server Rendering**: Added extensible plugin system for server-side page rendering, allowing custom rendering engines and third-party templating integration with transform, cache, and customization capabilities.
 - **Improvements to Runtime Error reporting**: Made various improvements to runtime error CLI reporting.
-- **Node Spawn Walker supported**: Spawning walker on a node with `jac serve` is supported.
+- **Node Spawn Walker supported**: Spawning walker on a node with `jac start` (formerly `jac serve`) is supported.
 
 ## jaclang 0.8.10
 
@@ -99,7 +128,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Better Syntax Error Messages**: Initial improvements to syntax error diagnostics, providing clearer and more descriptive messages that highlight the location and cause of errors (e.g., `Missing semicolon`).
 - **Check Statements Removed**: The `check` keyword has been removed from Jaclang. All testing functionality previously provided by `check` statements is now handled by `assert` statements within test blocks. Assert statements now behave differently depending on context: in regular code they raise `AssertionError` exceptions, while within `test` blocks they integrate with Jac's testing framework to report test failures. This unification simplifies the language by using a single construct for both validation and testing purposes.
 - **Jac Import of Python Files**: This upgrade allows Python files in the current working directory to be imported using the Jac import system by running `export JAC_PYFILE_RAISE=true`. To extend Jac import functionality to all Python files, including those in site-packages, developers can enable it by running `export JAC_PYFILE_RAISE_ALL=true`.
-- **Consistent Jac Code Execution**: Fixed an issue allowing Jac code to be executed both as a standalone program and as an application. Running `jac run` now executes the `main()` function, while `jac serve` launches the application without invoking `main()`.
+- **Consistent Jac Code Execution**: Fixed an issue allowing Jac code to be executed both as a standalone program and as an application. Running `jac run` now executes the `main()` function, while `jac start` (formerly `jac serve`) launches the application without invoking `main()`.
 - **Run transformed pytorch codes**: With `export JAC_PREDYNAMO_PASS=true`, pytorch breaking if statements will be transformed into non breaking torch.where statements. It improves the efficiency of pytorch programs.
 - **Complete Python Function Parameter Syntax Support**: Added full support for advanced Python function parameter patterns including positional-only parameters (`/` separator), keyword-only parameters (`*` separator without type hints), and complex parameter combinations (e.g., `def foo(a, b, /, *, c, d=1, **kwargs): ...`). This enhancement enables seamless Python-to-Jac conversion (`py2jac`) by supporting the complete Python function signature syntax.
 - **Type Checking Enhancements**:
