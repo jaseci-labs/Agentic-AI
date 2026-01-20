@@ -18,20 +18,19 @@ def:pub DocumentationPanel(
     # Default documentation suggestions
     defaultSuggestions = [
         {
-            "url": "https://docs.jaseci.org/learn/tour/",
+            "url": "https://www.jac-lang.org/learn/introduction/",
             "title": "Introduction to Jac",
+            "reason": "Perfect starting point for learning Jac programming language"
         },
         {
-            "url": "http://docs.jaseci.org/learn/data_spatial/nodes_and_edges/",
+            "url": "https://www.jac-lang.org/learn/data_spatial/nodes_and_edges/",
             "title": "Nodes and Edges",
+            "reason": "Learn about Object-Spatial Programming with nodes and edges"
         },
         {
-            "url": "https://docs.jaseci.org/learn/data_spatial/walkers/",
-            "title": "Walkers",
-        },
-        {
-            "url": "https://docs.jaseci.org/learn/quickstart/",
+            "url": "https://www.jac-lang.org/learn/jac-mtllm/quickstart/",
             "title": "AI Integration",
+            "reason": "Discover how to integrate AI and LLM capabilities"
         }
     ];
 
