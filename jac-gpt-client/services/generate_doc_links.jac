@@ -154,12 +154,6 @@ with entry {
     # Parse and generate
     all_links = parse_mkdocs_nav(str(mkdocs_path), str(output_path));
     
-    # Print first 10 for testing
-    print(f"\nFirst 10 links generated:");
-    for (i, link) in enumerate(all_links[:10], 1) {
-        print(f"{i}. {link['title']}");
-        print(f"   {link['url']}\n");
-    }
-    
-    print(f"Successfully generated documentation links!");
+    print(f"\n✅ Successfully generated {len(all_links)} documentation links with embeddings!");
+    print(f"📄 File saved at: {output_path}");
 }
