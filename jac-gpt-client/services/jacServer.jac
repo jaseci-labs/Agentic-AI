@@ -15,8 +15,8 @@ with entry {
 glob config_name: str = 'faiss_reranking';
 glob app_config: dict = load_config(config_name);
 
-# Get the services directory path for absolute paths
-glob services_dir: str = os.path.dirname(__file__);
+# Get the services directory path for relative paths
+glob services_dir: str = "./services";
 glob docs_path: str = os.path.join(services_dir, app_config.get("paths", {}).get("file_path", "docs"));
 glob faiss_path: str = os.path.join(services_dir, app_config.get("paths", {}).get("faiss_path", "faiss_index"));
 
