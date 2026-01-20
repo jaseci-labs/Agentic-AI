@@ -30,7 +30,7 @@ def:pub DocumentationPanel(
             "title": "Walkers",
         },
         {
-            "url": "https://docs.jaseci.org/learn/quickstart/",
+            "url": "https://docs.jaseci.org/ai-integration/",
             "title": "AI Integration",
         }
     ];

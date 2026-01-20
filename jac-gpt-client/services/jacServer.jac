@@ -568,9 +568,9 @@ walker :pub suggest_docs {
         # Sort by similarity (highest first)
         similarities.sort(key=lambda x: float : x["similarity"], reverse=True);
         
-        # Get top 5 suggestions
+        # Get top 3 suggestions
         top_suggestions = [];
-        for i in range(min(5, len(similarities))) {
+        for i in range(min(3, len(similarities))) {
             suggestion = similarities[i];
             top_suggestions.append({
                 "url": suggestion["url"],
