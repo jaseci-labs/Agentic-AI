@@ -38,21 +38,26 @@ def getJacLanguageDefinition(hljs: any) -> any {
         contains: [
             hljs.HASH_COMMENT_MODE,
             hljs.C_NUMBER_MODE,
+            # Class/Walker names - Cyan (PascalCase identifiers, exclude literals)
+            {
+                className: "section",
+                begin: "(?!True|False|None|Null)[A-Z][a-zA-Z0-9_]*"
+            },
             # Triple-quoted strings
             {
-                className: "string",
+                scope: "string",
                 begin: '"""',
                 end: '"""'
             },
             # F-strings double quote
             {
-                className: "string",
+                scope: "string",
                 begin: 'f"',
                 end: '"'
             },
             # F-strings single quote
             {
-                className: "string",
+                scope: "string",
                 begin: "f'",
                 end: "'"
             },
@@ -61,12 +66,12 @@ def getJacLanguageDefinition(hljs: any) -> any {
             hljs.APOS_STRING_MODE,
             # Import keywords - Purple
             {
-                className: "symbol",
-                begin: "\\b(import|from|as|include|cl)\\b"
+                scope: "symbol",
+                match: "\\b(import|from|as|include|cl)\\b"
             },
             # Decorators - Purple
             {
-                className: "meta",
+                scope: "meta",
                 begin: "@",
                 end: "\\s",
                 excludeEnd: true
@@ -96,6 +101,7 @@ def:pub highlightJacCode(code: str) -> str {
 
     try {
         result = hljs.highlight(code, { language: "jac" });
+        console.log("Full highlighted HTML:", result.value);
         return result.value;
     } except Exception as e {
         console.error("Jac highlight error:", e);

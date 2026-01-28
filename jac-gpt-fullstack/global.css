@@ -206,9 +206,13 @@ code {
     font-weight: 600;
 }
 
-/* Jac Class/Function Names - Amber/Yellow */
+/* Jac Class Names (PascalCase) - Cyan/Teal */
+.jac-highlighted .hljs-section {
+    color: #4ec9b0;
+}
+
+/* Jac Function Names - Yellow */
 .jac-highlighted .hljs-title,
-.jac-highlighted .hljs-title.class_,
 .jac-highlighted .hljs-title.function_ {
     color: #fbbf24;
 }
