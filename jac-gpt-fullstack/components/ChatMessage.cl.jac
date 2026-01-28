@@ -1,6 +1,6 @@
 """Chat message component with markdown rendering using Mantine UI (Jaseci theme)."""
 
-import from react { useState, useEffect, useRef }
+import from react { useState, useEffect, useRef, useMemo }
 import from "react-markdown" { default as ReactMarkdown }
 import from "@mantine/core" {
     Box,
@@ -16,11 +16,8 @@ import from "@tabler/icons-react" {
     IconCheck
 }
 
-# Monaco Editor - React wrapper
-import from "@monaco-editor/react" { Editor }
-
-# Syntax highlighting utilities
-import from "..utils/syntax_highlighting" { loadSyntax, configureTheme }
+# Lightweight syntax highlighting (instant rendering)
+import from "..utils/jac_highlighter" { highlightCode }
 
 
 """Generic code block component with copy functionality (for non-Jac languages)."""
@@ -98,50 +95,17 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> any {
 }
 
 
-"""Monaco Jac code block with TextMate syntax highlighting."""
-def:pub JacMonacoBlock(code: str) -> any {
+"""Lightweight Jac code block with instant syntax highlighting."""
+def:pub JacCodeBlock(code: str) -> any {
     has copied: bool = false;
-    editorRef = useRef(null);
-    monacoRef = useRef(null);
-    has themeApplied: bool = false;
-    has contentHeight: any = 400;  # Default height
+
+    # Memoize highlighted HTML - only re-compute when code changes
+    highlightedHtml = useMemo(lambda -> str { return highlightCode(code, "jac"); }, [code]);
 
     def handleCopy() -> None {
         navigator.clipboard.writeText(code);
         copied = true;
         setTimeout(lambda { copied = false; }, 2000);
-    }
-
-    # Handle Monaco mount - load Jac syntax and calculate height
-    async def handleOnMount(editor: any, monaco: any) -> None {
-        editorRef.current = editor;
-        monacoRef.current = monaco;
-        
-        try {
-            # Load TextMate grammar
-            grammarConfig = await loadSyntax(monaco, editor);
-            
-            if not grammarConfig {
-                return;
-            }
-            
-            # Apply Jaseci Orange theme
-            await configureTheme(monaco, grammarConfig, true);
-            
-            # Wait a bit for theme to apply
-            await Reflect.construct(Promise, [lambda resolve: any { setTimeout(resolve, 200); }]);
-            
-            # Get Monaco's calculated content height
-            if editorRef.current {
-                height = editorRef.current.getContentHeight();
-                contentHeight = height;
-                editorRef.current.updateOptions({ readOnly: true });
-            }
-            
-            themeApplied = true;
-            
-        } except Exception as error {
-        }
     }
 
     copyLabel = "Copy code";
@@ -152,6 +116,10 @@ def:pub JacMonacoBlock(code: str) -> any {
         copyColor = "green";
         copyIcon = <IconCheck size={14} />;
     }
+
+    # Split code into lines for line numbers
+    lines = code.split("\n");
+    lineCount = lines.length;
 
     return <Box my="sm">
         <Paper
@@ -184,50 +152,43 @@ def:pub JacMonacoBlock(code: str) -> any {
                 </Tooltip>
             </Group>
 
-            <Box style={{"height": f"{contentHeight}px"}}>
-                <Editor
-                    height="100%"
-                    width="100%"
-                    language="jac"
-                    value={code}
-                    theme="vs-dark"
-                    onMount={handleOnMount}
-                    loading="Loading editor..."
-                    options={{
-                        "readOnly": true,
-                        "minimap": { "enabled": false },
-                        "scrollBeyondLastLine": false,
-                        "lineNumbers": "on",
-                        "fontSize": 13,
-                        "lineHeight": 20,
-                        "fontFamily": "JetBrains Mono, Consolas, Monaco, monospace",
-                        "automaticLayout": true,
-                        "wordWrap": "on",
-                        "renderLineHighlight": "none",
-                        "contextmenu": false,
-                        "folding": false,
-                        "glyphMargin": false,
-                        "lineDecorationsWidth": 0,
-                        "lineNumbersMinChars": 3,
-                        "overviewRulerBorder": false,
-                        "scrollbar": {
-                            "vertical": "hidden",
-                            "horizontal": "auto",
-                            "verticalScrollbarSize": 0,
-                            "horizontalScrollbarSize": 8
-                        },
-                        "padding": { "top": 8, "bottom": 8 }
+            <Box className="jac-code-container" style={{"display": "flex", "overflowX": "auto"}}>
+                <Box
+                    className="line-numbers"
+                    style={{
+                        "padding": "8px 12px",
+                        "textAlign": "right",
+                        "userSelect": "none",
+                        "borderRight": "1px solid rgba(255,255,255,0.06)",
+                        "background": "rgba(0,0,0,0.15)"
                     }}
-                />
-            </Box>
-            
-            {not themeApplied and (
-                <Box px="md" py="xs">
-                    <Text size="xs" c="dimmed" fs="italic">
-                        Loading syntax highlighting...
-                    </Text>
+                >
+                    {lines.map(lambda _: any, idx: int -> any {
+                        return <div key={idx} style={{
+                            "fontSize": "13px",
+                            "lineHeight": "1.6",
+                            "fontFamily": "JetBrains Mono, Consolas, Monaco, monospace",
+                            "color": "#6b7280"
+                        }}>{idx + 1}</div>;
+                    })}
                 </Box>
-            )}
+                <Box style={{"flex": "1", "overflow": "auto"}}>
+                    <pre
+                        className="hljs jac-highlighted"
+                        style={{
+                            "margin": "0",
+                            "padding": "8px 16px",
+                            "fontSize": "13px",
+                            "lineHeight": "1.6",
+                            "fontFamily": "JetBrains Mono, Consolas, Monaco, monospace",
+                            "whiteSpace": "pre",
+                            "background": "transparent",
+                            "color": "#e4e4e7"
+                        }}
+                        dangerouslySetInnerHTML={{ "__html": highlightedHtml }}
+                    />
+                </Box>
+            </Box>
         </Paper>
     </Box>;
 }
@@ -283,11 +244,11 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null) -> any {
 
             # Block code
             if not isInline and language {
-                # Use Monaco for Jac code
+                # Use lightweight highlighter for Jac code (instant rendering)
                 if language == "jac" {
-                    return <JacMonacoBlock code={codeContent} />;
+                    return <JacCodeBlock code={codeContent} />;
                 }
-                
+
                 # Use simple block for other languages
                 return <CodeBlock language={language} code={codeContent} />;
             }

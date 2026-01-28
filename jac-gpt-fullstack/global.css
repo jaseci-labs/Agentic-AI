@@ -175,6 +175,90 @@ code {
 .hljs-params { color: #e4e4e7; }
 .hljs-literal { color: #f472b6; }
 
+/* Jac-specific syntax highlighting - matching VSCode Jac theme */
+.jac-highlighted {
+    background: transparent !important;
+    color: #e4e4e7 !important;
+}
+
+/* Jac Import keywords - Purple (import, from, as, include) */
+.jac-highlighted .hljs-symbol {
+    color: #a855f7;
+    font-weight: 600;
+}
+
+/* Jac Keywords - Orange (def, can, with, entry, etc.) */
+.jac-highlighted .hljs-keyword {
+    color: #f97316;
+    font-weight: 600;
+}
+
+/* Jac Archetypes - Blue (node, edge, walker, graph, object, class) */
+.jac-highlighted .hljs-type,
+.jac-highlighted .hljs-key {
+    color: #60a5fa;
+    font-weight: 600;
+}
+
+/* Jac Property declaration (has) - Blue */
+.jac-highlighted .hljs-property {
+    color: #60a5fa;
+    font-weight: 600;
+}
+
+/* Jac Class/Function Names - Amber/Yellow */
+.jac-highlighted .hljs-title,
+.jac-highlighted .hljs-title.class_,
+.jac-highlighted .hljs-title.function_ {
+    color: #fbbf24;
+}
+
+/* Jac Strings - Brown/Tan */
+.jac-highlighted .hljs-string {
+    color: #d4a574;
+}
+
+/* Jac F-string substitutions - Light Orange */
+.jac-highlighted .hljs-subst {
+    color: #fb923c;
+}
+
+/* Jac Numbers - Purple */
+.jac-highlighted .hljs-number {
+    color: #c084fc;
+}
+
+/* Jac Comments - Gray italic */
+.jac-highlighted .hljs-comment {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Jac Built-in types (str, int, bool, etc.) - Blue */
+.jac-highlighted .hljs-built_in {
+    color: #60a5fa;
+}
+
+/* Jac Special variables (root, here, self, super) - Blue */
+.jac-highlighted .hljs-variable {
+    color: #60a5fa;
+}
+
+/* Jac Decorators/Meta - Purple */
+.jac-highlighted .hljs-meta {
+    color: #a855f7;
+}
+
+/* Jac Punctuation - Gray */
+.jac-highlighted .hljs-punctuation {
+    color: #a1a1aa;
+}
+
+/* Jac Literals (True, False, None) - Orange */
+.jac-highlighted .hljs-literal {
+    color: #f97316;
+}
+
 /* Selection colors */
 ::selection {
     background-color: rgba(124, 58, 237, 0.3);
