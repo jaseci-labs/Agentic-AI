@@ -19,8 +19,8 @@ import from "@tabler/icons-react" {
 # Monaco Editor - React wrapper
 import from "@monaco-editor/react" { Editor }
 
-# Syntax highlighting utilities
-import from "..utils/syntax_highlighting" { loadSyntax, configureTheme }
+# Monaco initialization utilities
+import from "..utils/monaco_initializer" { setupMonacoEditor, defineJacTheme }
 
 
 """Generic code block component with copy functionality (for non-Jac languages)."""
@@ -112,34 +112,50 @@ def:pub JacMonacoBlock(code: str) -> any {
         setTimeout(lambda { copied = false; }, 2000);
     }
 
-    # Handle Monaco mount - load Jac syntax and calculate height
+    # Handle before mount - define theme before editor is created
+    async def handleBeforeMount(monaco: any) -> None {
+        try {
+            # Define the centralized Jac theme before the editor mounts
+            defineJacTheme(monaco);
+
+            # Register Jac language if not already registered
+            languages = monaco.languages.getLanguages();
+            isJacRegistered = languages.some(lambda lang: any { return lang.id == "jac"; });
+
+            if not isJacRegistered {
+                monaco.languages.register({ id: "jac" });
+            }
+        } except Exception as error {
+        }
+    }
+
+    # Handle Monaco mount - setup editor instance with pre-loaded syntax
     async def handleOnMount(editor: any, monaco: any) -> None {
         editorRef.current = editor;
         monacoRef.current = monaco;
-        
+
         try {
-            # Load TextMate grammar
-            grammarConfig = await loadSyntax(monaco, editor);
-            
+            grammarConfig = await setupMonacoEditor(monaco, editor);
+
             if not grammarConfig {
                 return;
             }
-            
-            # Apply Jaseci Orange theme
-            await configureTheme(monaco, grammarConfig, true);
-            
-            # Wait a bit for theme to apply
-            await Reflect.construct(Promise, [lambda resolve: any { setTimeout(resolve, 200); }]);
-            
+
+            if grammarConfig {
+                monaco.languages.setLanguageConfiguration("jac", grammarConfig);
+            }
+
+            await Reflect.construct(Promise, [lambda resolve: any { setTimeout(resolve, 100); }]);
+
             # Get Monaco's calculated content height
             if editorRef.current {
                 height = editorRef.current.getContentHeight();
                 contentHeight = height;
                 editorRef.current.updateOptions({ readOnly: true });
             }
-            
+
             themeApplied = true;
-            
+
         } except Exception as error {
         }
     }
@@ -190,7 +206,8 @@ def:pub JacMonacoBlock(code: str) -> any {
                     width="100%"
                     language="jac"
                     value={code}
-                    theme="vs-dark"
+                    theme="jac-theme"
+                    beforeMount={handleBeforeMount}
                     onMount={handleOnMount}
                     loading="Loading editor..."
                     options={{
