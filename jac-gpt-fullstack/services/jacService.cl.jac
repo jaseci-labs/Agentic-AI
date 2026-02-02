@@ -56,28 +56,85 @@ async def:pub getSession(sessionId: str) -> any {
     }
 }
 
-"""Send a message and get a response from the chatbot."""
-async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "") -> any {
+"""Send a message and get a response from the chatbot (SSE streaming)."""
+async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onChunk: any = None) -> any {
     try {
-        response = root spawn interact(
-            message=message,
-            session_id=sessionId,
-            user_email=userEmail
+        # Get token for authentication
+        token = localStorage.getItem("jac_token");
+        
+        # Use fetch directly with streaming to handle SSE
+        response = await fetch(
+            "/walker/interact",
+            {
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Authorization": ("Bearer " + token if token else "")
+                },
+                "body": JSON.stringify({
+                    "message": message,
+                    "session_id": sessionId,
+                    "user_email": userEmail
+                })
+            }
         );
-        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
+        
+        if not response.body {
+            raise Exception("No response body") ;
+        }
+
+        reader = response.body.getReader();
+        decoder = Reflect.construct(TextDecoder, ["utf-8"]);
+
+        buffer = "";
+
+        while True {
+            read_result = await reader.read();
+            value = read_result.value;
+            done = read_result.done;
+            
+            if done {
+                break;
+            }
+
+            buffer += decoder.decode(value, {"stream": True});
+            
+            # SSE messages are separated by double newlines
+            # Split on actual newline characters (char code 10)
+            doubleNewline = String.fromCharCode(10) + String.fromCharCode(10);
+            
+            events = buffer.split(doubleNewline);
+            buffer = events.pop() or "";
+            
+            for event in events {
+                if not event.startsWith("data:") {
+                    continue;
+                }
+
+                data = event.replace("data:", "").trim();
+                
+                try {
+                    parsed = JSON.parse(data);
+
+                    if parsed.type == "chunk" {
+                        if onChunk {
+                            onChunk(parsed.content);
+                        }
+                    }
+                } except Exception as parseError {
+                    console.error("JSON parse error:", parseError, "Data:", data);
+                }
+            }
+        }
 
         return {
-            "success": True,
-            "response": result.response or "I couldn't generate a response.",
-            "chat_history": result.chat_history or [],
-            "session_id": result.session_id or sessionId
+            "success": True
         };
     } except Exception as e {
         console.error("sendMessage error:", e);
         return {
             "success": False,
-            "error": String(e),
-            "response": "Sorry, an error occurred while processing your message."
+            "error": String(e)
         };
     }
 }

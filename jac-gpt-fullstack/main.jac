@@ -11,7 +11,7 @@ import from services.jacServer {
         DebuggerChat,
         OffTopicChat,
         ChatType,
-        infer,
+        # infer,
         new_session,
         get_session,
         interact,
