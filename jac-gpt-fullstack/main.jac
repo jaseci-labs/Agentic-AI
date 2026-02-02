@@ -4,13 +4,11 @@
 import from services.jacServer {
         Session,
         Router,
-        Chat,
         RagChat,
         QAChat,
         CodingChat,
         DebuggerChat,
         OffTopicChat,
-        ChatType,
         infer,
         new_session,
         get_session,

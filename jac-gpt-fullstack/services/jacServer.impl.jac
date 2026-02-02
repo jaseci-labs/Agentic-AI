@@ -67,8 +67,8 @@ impl OffTopicChat.chat {
 }
 
 
-sem Router.classify = """
-Classify messages for optimal routing using intent and recent context:
+glob instruction = """
+Choose the most relevant node based on intent and recent context for optimal routing:
 
 QA:
 Basic greetings, thanks, casual conversation.
