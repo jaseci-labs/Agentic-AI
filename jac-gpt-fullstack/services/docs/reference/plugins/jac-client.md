@@ -283,9 +283,7 @@ cl {
         }
 
         return <ul>
-            {data.map(lambda task: any -> any {
-                return <li key={task["id"]}>{task["title"]}</li>;
-            })}
+            {[<li key={task["id"]}>{task["title"]}</li> for task in data]}
         </ul>;
     }
 }
@@ -541,14 +539,109 @@ content = ["./src/**/*.{jac,tsx,jsx}"]
 
 ## CLI Commands
 
+### Quick Reference
+
 | Command | Description |
 |---------|-------------|
-| `jac create myapp --use client` | Create new project |
+| `jac create myapp --use client` | Create new full-stack project |
 | `jac start` | Start dev server |
 | `jac start --dev` | Dev server with HMR |
-| `jac build` | Production build |
+| `jac build` | Build for production (web) |
+| `jac build --client desktop` | Build desktop app |
+| `jac setup desktop` | One-time desktop target setup (Tauri) |
 | `jac add --npm <pkg>` | Add npm package |
 | `jac remove --npm <pkg>` | Remove npm package |
+
+### jac build
+
+Build a Jac application for a specific target.
+
+```bash
+jac build [filename] [--client TARGET] [-p PLATFORM]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `filename` | Path to .jac file | `main.jac` |
+| `--client` | Build target (`web`, `desktop`) | `web` |
+| `-p, --platform` | Desktop platform (`windows`, `macos`, `linux`, `all`) | Current platform |
+
+**Examples:**
+
+```bash
+# Build web target (default)
+jac build
+
+# Build specific file
+jac build main.jac
+
+# Build desktop app for current platform
+jac build --client desktop
+
+# Build for a specific platform
+jac build --client desktop --platform windows
+
+# Build for all platforms
+jac build --client desktop --platform all
+```
+
+### jac setup
+
+One-time initialization for a build target.
+
+```bash
+jac setup <target>
+```
+
+| Option | Description |
+|--------|-------------|
+| `target` | Target to setup (e.g., `desktop`) |
+
+**Examples:**
+
+```bash
+# Setup desktop target (installs Tauri prerequisites)
+jac setup desktop
+```
+
+### Extended Core Commands
+
+jac-client extends several core commands:
+
+| Command | Added Option | Description |
+|---------|-------------|-------------|
+| `jac create` | `--use client` | Create full-stack project template |
+| `jac create` | `--skip` | Skip npm package installation |
+| `jac start` | `--client <target>` | Client build target for dev server |
+| `jac add` | `--npm` | Add npm (client-side) dependency |
+| `jac remove` | `--npm` | Remove npm (client-side) dependency |
+
+---
+
+## Multi-Target Architecture
+
+jac-client supports building for multiple deployment targets from a single codebase.
+
+### Web Target (Default)
+
+Standard browser deployment using Vite:
+
+```bash
+jac build                    # Build for web
+jac start --dev              # Dev server with HMR
+```
+
+### Desktop Target (Tauri)
+
+Native desktop applications using Tauri:
+
+```bash
+jac setup desktop            # One-time setup
+jac build --client desktop   # Build desktop app
+jac start --client desktop   # Dev mode for desktop
+```
+
+Desktop builds produce native executables for Windows, macOS, and Linux.
 
 ---
 
@@ -562,6 +655,12 @@ jac start main.jac
 
 # With hot module replacement
 jac start main.jac --dev
+
+# HMR without client bundling (API only)
+jac start main.jac --dev --no-client
+
+# Dev server for desktop target
+jac start main.jac --client desktop
 ```
 
 ### API Proxy
@@ -617,9 +716,7 @@ cl {
 
             {show and <p>Only when true</p>}
 
-            {items.map(lambda item: any -> any {
-                return <li key={item["id"]}>{item["name"]}</li>;
-            })}
+            {[<li key={item["id"]}>{item["name"]}</li> for item in items]}
         </div>;
     }
 }
