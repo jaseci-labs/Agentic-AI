@@ -2,49 +2,53 @@ import json;
 import os;
 import from datetime {datetime}
 
+# Shared helper function for streaming responses with SSE format
+def stream_chat_response(response_generator: any, visitor: any) -> any {
+   print("Starting stream_chat_response");
+   response = "";
+
+   for chunk in response_generator {
+      response += chunk;
+      print("printing word");
+      # SSE format: data: <json>\n\n
+      yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n";
+   }
+
+   session_node = ([root-->(`?Session)](?id==visitor.session_id))[0];
+   session_node.chat_history.append({"role": "assistant", "content": response});
+   session_node.updated_at = datetime.now().isoformat();
+   
+   print(response);
+   return;
+}
+
 impl RagChat.chat {
-    response = self.respond(
-        message=visitor.message,
-        chat_history=visitor.chat_history
-    );
-    visitor.chat_history.append({"role": "assistant", "content": response});
-    self.chat_history = visitor.chat_history;
-    visitor.response = response;
-    report {"response": response, "chat_history": visitor.chat_history};
+   print("Entering RagChat.chat");
+   report stream_chat_response(
+      self.respond(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
+   );
 }
 
 impl CodingChat.chat {
-    response = self.code_jac(
-        message=visitor.message,
-        chat_history=visitor.chat_history
-    );
-    visitor.chat_history.append({"role": "assistant", "content": response});
-    self.chat_history = visitor.chat_history;
-    visitor.response = response;
-    report {"response": response, "chat_history": visitor.chat_history};
+   report stream_chat_response(
+      self.code_jac(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
+   );
 }
 
 impl DebuggerChat.chat {
-   response = self.debug_code(
-      message=visitor.message,
-      chat_history=visitor.chat_history
+   report stream_chat_response(
+      self.debug_code(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
    );
-   visitor.chat_history.append({"role": "assistant", "content": response});
-   self.chat_history = visitor.chat_history;
-   visitor.response = response;
-   report {"response": response, "chat_history": visitor.chat_history};
-
 }
 
 impl QAChat.chat {
-   response = self.respond(
-      message=visitor.message,
-      chat_history=visitor.chat_history
+   report stream_chat_response(
+      self.respond(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
    );
-   visitor.chat_history.append({"role": "assistant", "content": response});
-   self.chat_history = visitor.chat_history;
-   visitor.response = response;
-   report {"response": response, "chat_history": visitor.chat_history};
 }
 
 impl OffTopicChat.chat {
@@ -61,9 +65,12 @@ impl OffTopicChat.chat {
       response = "Hello! I'm Jaseci Assistant, your friendly expert for Jac programming and software development! \n\nI'm here to help with:\n **Programming & Development**: Documentation references, algorithms, best practices\n **AI-First Programming**: How Jac revolutionizes development with native LLM integration\n **Object-Spatial Programming**: Jac's unique approach to data relationships\n **Cloud-Native Development**: Building scalable applications with zero DevOps\n **Learning & Concepts**: Programming concepts explained through Jac examples\n\nWhether you're curious about Jac specifically or have general programming questions, I'm happy to help and show you how Jac can make your development experience better!\n\nFor comprehensive learning resources, visit: https://www.jac-lang.org/\n\nWhat programming challenge can I help you solve today?";
    }
 
-   visitor.chat_history.append({"role": "assistant", "content": response});
-   visitor.response = response;
-   report {"response": response, "chat_history": visitor.chat_history};
+   # Create a generator that yields the complete response
+   def generate_response() {
+      yield response;
+   }
+
+   report stream_chat_response(generate_response(), visitor);
 }
 
 
@@ -116,7 +123,6 @@ HOW TO RESPOND:
 - When a task involves setup, installation, or execution, SHOW all the concrete commands exactly as documented.
 - Explain *why* something works, not just *what* it is.
 - Add `#` comments inside code only when they add clarity.
-- Always use bolded headings where appropriate to organize the response.
 
 Jac documentation RAG USAGE:
 - Do not use URLs in queries.
@@ -217,32 +223,48 @@ Goal: guide users back to Jac programming assistance""";
 
 
 impl Session.chat {
+   print("=== New chat message received in session:", self.id);
    if visitor.user_email and not self.user_email {
       self.user_email = visitor.user_email;
    }
 
    # Use chat history from the persisted session node
-   visitor.chat_history = self.chat_history;
+   visitor.chat_history = self.chat_history;  #chat history without user message
 
    # Add user message to chat history
-   visitor.chat_history.append({"role": "user", "content": visitor.message});
+   # visitor.chat_history.append({"role": "user", "content": visitor.message}); #chat history with user message
 
-   response_walker = infer(
-      message=visitor.message,
-      chat_history=self.chat_history
-   ) spawn root;
+   # response_walker = infer(
+   #    message=visitor.message,
+   #    chat_history=self.chat_history  # chat history send to the infer walker without message
+   # ) spawn root;
+
+   visit [-->](`?Router) else {
+         router_node = root ++> Router();
+         router_node ++> RagChat();
+         router_node ++> CodingChat();
+         router_node ++> DebuggerChat();
+         router_node ++> QAChat();
+         router_node ++> OffTopicChat();
+         visit router_node;
+   }
+   # print("=== Visiting router node for session:", self.id); 
+   # visit router_node;
 
    # The Chat node implementations already append the assistant response
    # to the chat_history, so we just need to update the session's updated_at
    # Note: self.chat_history is the same reference as passed to infer, so it's already updated
-   self.chat_history = response_walker.chat_history;
-   self.updated_at = datetime.now().isoformat();
 
-   report {
-      "response": response_walker.response,
-      "chat_history": self.chat_history,
-      "session_id": self.id
-   };
+   #Implement ater streaming the data
+   # self.chat_history = response_walker.chat_history;  #after adding the assinstant response to the chat history for the session node
+   # self.updated_at = datetime.now().isoformat();
+
+   # report {
+   #    "response": response_walker.response,
+   #    "chat_history": self.chat_history,  #no need the chat history.
+   #    "session_id": self.id
+   # };
+
 }
 
 impl get_session.get_chat_history {
