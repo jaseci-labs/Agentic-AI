@@ -20,11 +20,11 @@ glob services_dir: str = "./services";
 glob docs_path: str = os.path.join(services_dir, app_config.get("paths", {}).get("file_path", "docs"));
 glob faiss_path: str = os.path.join(services_dir, app_config.get("paths", {}).get("faiss_path", "faiss_index"));
 
-glob classifier_llm = Model(model_name="gpt-4.1-mini");
+glob llm = Model(model_name="gpt-4.1-mini");
 
-glob llm = Model(
-    model_name=app_config.get("llm", {}).get("model_name", "gpt-4.1-mini")
-);
+glob instruction ="Only return one index at once.Classify messages for optimal routing using intent and recent context: QA: Basic greetings, thanks, casual conversation. RAG: Technical or programming questions that are explanatory or documentation-focused (e.g., how, what, explain). CODING: Jac code creation or modification, including follow-up changes. Keywords: \"code\", \"create\", \"update\", \"use\", \"add\", \"remove\", \"change\", \"modify\", \"make it\", \"actually\". If recent chat history involves coding, route short corrections (e.g., \"actually use this attribute\") here. CODE_DEBUGGER: Jac code debugging and troubleshooting. Keywords: \"error\", \"bug\", \"issue\", \"fix\", \"debug\". Default: Prefer CODING over RAG when already in a coding flow.";
+
+
 glob rag_engine: RagEngine = RagEngine(
     file_path=docs_path,
     faiss_path=faiss_path,
@@ -35,29 +35,7 @@ glob rag_engine: RagEngine = RagEngine(
     cross_encoder_model=app_config.get("rag_engine", {}).get("reranking", {}).get("model", "cross-encoder/ms-marco-MiniLM-L6-v2")
 );
 
-
-"""
-ChatType enum defines the types of chat interactions. ChatType must be one of:
-- RAG: For interactions that require conceptual explanation about Jac/Jaseci.
-- CODING: For interactions that require code generation or code modification.
-- CODE_DEBUGGER: For interactions that require code debugging or fixing code errors.
-- QA: For interactions that does not require more knowledge (syntaxes) about Jac/Jaseci.
-- OFF_TOPIC: For interactions that are not related to Jac programming language or Jaseci ecosystem.
-"""
-enum ChatType {
-    RAG = "RAG",
-    CODING = "CODING",
-    CODE_DEBUGGER = "CODE_DEBUGGER",
-    QA = "QA",
-    OFF_TOPIC = "OFF_TOPIC"
-}
-
 node Router {
-    def classify(message: str, chat_history: list[str]) -> ChatType by classifier_llm(method="Reason", temperature=0.2);
-}
-
-node Chat {
-    has chat_type: ChatType;
 }
 
 walker infer {
@@ -80,9 +58,7 @@ walker infer {
     can route with Router entry {
         print(self.chat_history[-3:]);
         print("Classifying history");
-        classification = here.classify(message = self.message, chat_history = self.chat_history[-5:]);
-        print("Routing message:", self.message, "to chat type:", classification);
-        visit [-->](`?Chat)(?chat_type==classification);
+        visit [-->] by llm(incl_info={"message" : self.message, "chat_history" : self.chat_history[-5:], "instruction": instruction});
     }
 }
 
@@ -120,8 +96,7 @@ def refer_full_language_examples() -> str {
     }
 }
 
-node RagChat(Chat) {
-    has chat_type: ChatType = ChatType.RAG;
+node RagChat{
 
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
@@ -133,8 +108,7 @@ node RagChat(Chat) {
     can chat with infer entry;
 }
 
-node QAChat(Chat) {
-    has chat_type: ChatType = ChatType.QA;
+node QAChat{
 
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
@@ -145,8 +119,7 @@ node QAChat(Chat) {
     can chat with infer entry;
 }
 
-node CodingChat(Chat) {
-    has chat_type: ChatType = ChatType.CODING;
+node CodingChat {
 
     def code_jac(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
@@ -158,8 +131,7 @@ node CodingChat(Chat) {
     can chat with infer entry;
 }
 
-node DebuggerChat(Chat) {
-    has chat_type: ChatType = ChatType.CODE_DEBUGGER;
+node DebuggerChat {
 
     def debug_code(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
@@ -171,8 +143,7 @@ node DebuggerChat(Chat) {
     can chat with infer entry;
 }
 
-node OffTopicChat(Chat) {
-    has chat_type: ChatType = ChatType.OFF_TOPIC;
+node OffTopicChat{
 
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="Reason",
