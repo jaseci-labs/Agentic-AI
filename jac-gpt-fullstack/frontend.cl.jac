@@ -1,5 +1,5 @@
 """Main entry point for Jac GPT Client application."""
-
+import from react { useEffect }
 import from "@jac/runtime" { Router, Routes, Route }
 import from "@mantine/core" { MantineProvider, createTheme }
 
@@ -9,11 +9,23 @@ import from .pages.RegisterPage { RegisterPage }
 import from .pages.ForgotPasswordPage { ForgotPasswordPage }
 import from .pages.ResetPasswordPage { ResetPasswordPage }
 
+import from ".utils.monaco_initializer" { initializeMonacoGlobally }
+
 import "@mantine/core/styles.css";
 import ".global.css";
 
 """Main app component with routing."""
 def:pub app() -> any {
+    useEffect(lambda {
+        async def initMonaco() -> None {
+            try {
+                await initializeMonacoGlobally();
+            } except Exception {
+            }
+        }
+
+        initMonaco();
+    }, []);
     # Custom Mantine theme for dark mode
     theme = createTheme({
         "primaryColor": "violet",
