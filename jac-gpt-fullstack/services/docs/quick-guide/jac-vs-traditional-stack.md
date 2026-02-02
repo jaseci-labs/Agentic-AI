@@ -4,7 +4,7 @@ This document compares building the same Todo application using Jac versus a tra
 
 ---
 
-## Jac Implementation (1 file, 37 lines)
+## Jac Implementation
 
 ```jac
 # This single jac program is a fullstack application
@@ -14,6 +14,11 @@ node Todo {
 }
 
 def:pub get_todos -> list {
+    root ++> [
+        Todo("build startup", False),
+        Todo("raise funding", False),
+        Todo("change the world", False)
+    ];
     return [{"title": t.title, "done": t.done} for t in [root-->](`?Todo)];
 }
 
@@ -26,23 +31,11 @@ cl def:pub app() -> any {
 
     return
         <div>
-            {items.map(
-                lambda item: dict -> any { return
-                    <div key={item.title}>
-                        <input type="checkbox" checked={item.done} />
-                        {item.title}
-                    </div>;
-                }
-            )}
+            {[<div key={item.title}>
+                <input type="checkbox" checked={item.done} />
+                {item.title}
+            </div> for item in items]}
         </div>;
-}
-
-with entry {
-    root ++> [
-        Todo("build startup", False),
-        Todo("raise funding", False),
-        Todo("change the world", False)
-    ];
 }
 ```
 
@@ -58,7 +51,7 @@ with entry {
 
 ---
 
-## Traditional Stack Implementation (10 files, ~200 lines)
+## Traditional Stack Implementation
 
 The equivalent functionality using Python, FastAPI, SQLite, TypeScript, and React.
 

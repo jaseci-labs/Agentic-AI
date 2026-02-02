@@ -2,11 +2,62 @@
 
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jaclang**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking-changes.md) page.
 
-## jaclang 0.9.11 (Unreleased)
+## jaclang 0.9.14 (Unreleased)
+
+- **`jac lint` Command**: Added a dedicated `jac lint` command that reports all lint violations as errors with file, line, and column info. Use `jac lint --fix` to auto-fix violations. Lint rules are configured via `[check.lint]` in `jac.toml`. All enabled rules are treated as errors (not warnings). The `--fix` flag has been removed from `jac format`, which is now pure formatting only.
+- **CLI Autocompletion**: Added `jac completions` command for shell auto completion. Run `jac completions --install` to enable autocompletion for subcommands, options, and file paths. Supports bash, zsh, and fish (auto-install), plus PowerShell and tcsh (manual).
+- **Centralized project URLs**: Project URLs (docs, Discord, GitHub, issues) are now defined as constants in `banners.jac` and reused across the CLI banner, server error messages, and help epilog instead of being hardcoded in multiple places.
+- **Client bundle error help message**: When the client bundle build fails during `jac start`, the server now prints a troubleshooting suggestion to run `jac clean --all` and a link to the Discord community for support.
+- **Native Compiler Buildout**: Major expansion of the native binary compilation pipeline for `.na.jac` files. The native backend now supports enums, boolean short-circuit evaluation, break/continue, for loops, ternary expressions, string literals and f-strings, objects with fields/methods/postinit, GC-managed lists, single inheritance with vtable-based virtual dispatch, complex access chains, indexed field assignment, string methods (strip, split, indexing), builtins (ord, int, input), augmented assignment operators (`+=`, `-=`, `*=`, `//=`, `%=`), and `with entry { ... }` blocks. All heap allocations use Boehm GC. Validated end-to-end with a fully native chess game.
+- **`jac run` for `.na.jac` Files**: Running `jac run file.na.jac` now compiles the file to native machine code and executes the `jac_entry` function directly, bypassing the Python import machinery entirely. Native execution runs as pure machine code with zero Python interpreter overhead at runtime.
+
+## jaclang 0.9.13 (Latest Release)
+
+- **Configurable Lint Rules**: Auto-lint rules are now individually configurable via `jac.toml` `[check.lint]` section using a select/ignore model. A `LintRule` enum defines all 12 rules with kebab-case names. Use `select = ["default"]` for code-transforming rules only, `select = ["all"]` to enable every rule including warning-only rules, `ignore = ["rule-name"]` to disable specific ones, or `select = ["rule1", "rule2"]` to enable only listed rules.
+- **No-Print Lint Rule**: Added a `no-print` lint rule that errors on bare `print()` calls in `.jac` files, encouraging use of the console abstraction instead. Included in the `"all"` group; enable via `select = ["all"]` or `select = ["default", "no-print"]` in `[check.lint]`.
+- **Format Command Lint Errors**: `jac format --fix` now reports lint errors (e.g., `[no-print]`) with file, line, and column info, and returns exit code 1 when violations are found.
+- **ES Module Export Generation**: Exports now generated at compiler level via ESTree nodes instead of regex post-processing. Only `:pub` declarations are exported.
+- **Hot fix: call state**: Normal spawn calls inside API spawn calls supported.
+- **`--no_client` flag for `jac start`**: Added `--no_client` CLI flag that skips eager client bundling on server startup. Useful when we need to run server only.
+- **Enhanced Client Compilation for Development**: Improved the `jac start --dev` command to perform initial client compilation for HMR.
+
+## jaclang 0.9.12
+
+- **Native Binary Compilation via `na {}` Blocks and `.na.jac` Files**: Added a third compilation target to Jac using `na {}` context blocks and `.na.jac` file conventions. Code within the `na` context compiles to native LLVM IR via llvmlite and is JIT-compiled to machine code at runtime. Functions defined in `na {}` blocks are callable via ctypes function pointers. Supports integer, float, and boolean types, arithmetic and comparison operators, if/else and while control flow, recursive function calls, local variables with type inference, and `print()` mapped to native `printf`. Native code is fully isolated from Python (`sv`) and JavaScript (`cl`) codegen -- `na` functions are excluded from both `py_ast` and `es_ast` output, and vice versa. The `llvmlite` package is now a core dependency.
+- **SPA Catch-All for BrowserRouter Support**: The `jac start` HTTP server now serves SPA HTML for unmatched extensionless paths when `base_route_app` is configured in `jac.toml`. This enables BrowserRouter-style client-side routing where direct navigation to `/about` or page refresh on `/dashboard/settings` serves the app shell instead of returning 404. API paths (`/functions`, `/walkers`, `/walker/`, `/function/`, `/user/`), `/cl/` routes, and static file paths are excluded from the catch-all. The vanilla (non-React) client runtime (`createRouter`, `navigate`, `Link`) has also been updated to use `pushState` navigation and `window.location.pathname` instead of hash-based routing.
+- **Startup error handling improvements:** Aggregates initialization errors and displays concise, formatted Vite/Bun bundling failures after the API endpoint list.
+- **Venv-Based Dependency Management**: Migrated `jac add`/`jac remove`/`jac install` from `pip install --target` to stdlib `venv` at `.jac/venv/`. This eliminates manual RECORD-based uninstall logic and metadata cleanup workarounds, delegating all package management to the venv's own pip. No third-party dependencies added.
+- **GET Method Support**: Added full support for HTTP GET requests for both walkers and functions, including correct mapping of query parameters, support for both dynamic (HMR) and static endpoints, and customization via `@restspec(method=HTTPMethod.GET)`.
+- **Enhanced Hot Module Replacement**: Improved client code recompilation to handle exports comprehensively, ensuring all exported symbols are properly updated during hot reloads.
+- **Rest API Specifications Supported**: Rest api specifications supported from jaclang. Developers can utilize it using `@restspec()` decorator.
+- **Ensurepip Error Handling**: Added a clear error message when venv creation fails due to missing `ensurepip` (common on Debian/Ubuntu where `python3-venv` is a separate package), with platform-specific install instructions.
+- **Suppress Warnings in `jac check`**: Added `--nowarn` flag to `jac check` command to suppress warning output while still counting warnings in the summary.
+- **Rest API Specifications Supported**: The `@restspec` decorator now supports custom HTTP methods and custom endpoint paths for both walkers and functions.
+  - **Custom Methods**: Use `method=HTTPMethod.GET`, `method=HTTPMethod.PUT`, etc.
+  - **Custom Paths**: Use `path="/my/custom/path"` to override the default routing.
+- **Storage Abstraction**: Added pluggable `Storage` interface with `LocalStorage` default implementation. Use `store()` builtin to get a configured storage instance. Configure via `jac.toml [storage]` or environment variables.
+- **Static files support HMR**: Added infrastructure for Hot Module Replacement during development. The file watcher now supports static assets files such as `.css` and images (`.png`, `.jpg`, `.jpeg`) in addition to `.jac` files, enabling automatic reloading of client-side code changes.
+- **Internal**: Explicitly declared all postinit fields across the codebase.
+- **Build (jacpack)**: `.jac/.gitignore` now contains only a comment (not `*`), so compiled assets (e.g., `compiled/`) aren't ignored and Tailwind builds correctly.
+- **Support Go to Definition for Nested Unpacking Assignments**: Fixed symbol table generation to support recursive nested unpacking (e.g., `[a, [b, c]] = val`) ensuring all inner variables are registered.
+- **Fix: Module Name Truncation in MTIR Scope Resolution**: Fixed a bug where module names ending with 'j', 'a', or 'c' were incorrectly truncated due to using `.rstrip(".jac")` instead of `.removesuffix(".jac")`. This caused MTIR lookup failures and degraded functionality when the runtime tried to fetch metadata with the correct module name but found truncated keys (e.g., `test_schema` → `test_schem`).
+
+## jaclang 0.9.11
+
+- **MTIR Generation Pass**: Added `MTIRGenPass` compiler pass that extracts semantic type information from GenAI `by` call sites at compile time. The pass captures parameter types, return types, semstrings, tool schemas, and class structures into `Info` dataclasses (`FunctionInfo`, `MethodInfo`, `ClassInfo`, `ParamInfo`, `FieldInfo`). MTIR is stored in `JacProgram.mtir_map` keyed by scope path.
+
+- **MTIR Bytecode Caching**: Extended `DiskBytecodeCache` to cache MTIR maps alongside bytecode (`.mtir.pkl` files). MTIR is automatically saved after compilation and restored from cache on subsequent runs, avoiding redundant extraction.
 
 - **Reactive Effects with `can with entry/exit`**: The `can with entry` and `can with exit` syntax now automatically generates React `useEffect` hooks in client-side code. When used inside a `cl` codespace, `async can with entry { items = await fetch(); }` generates `useEffect(() => { (async () => { setItems(await fetch()); })(); }, []);`. Supports dependency arrays using list or tuple syntax: `can with (userId, count) entry { ... }` generates effects that re-run when dependencies change. The `can with exit` variant generates cleanup functions via `return () => { ... }` inside the effect. This provides a declarative, Jac-native way to handle component lifecycle without manual `useEffect` boilerplate.
 
-## jaclang 0.9.10 (Latest Release)
+- **`@jac/runtime` Import Syntax**: Client-side runtime imports now use the npm-style `@jac/runtime` scoped package syntax instead of the previous `jac:client_runtime` prefix notation. Write `cl import from "@jac/runtime" { useState, useEffect, createSignal, ... }` in place of the old `cl import from jac:client_runtime { ... }`. The grammar no longer supports the `NAME:` prefix on import paths. The core bundler inlines `@jac/runtime` into the client bundle automatically, so no external dependencies are needed for basic fullstack apps.
+- **JSX Comprehension Syntax**: List and set comprehensions containing JSX elements now compile to JavaScript `.map()` and `.filter().map()` chains. Instead of verbose `{items.map(lambda item: dict -> any { return <li>{item}</li>; })}`, you can now write `{[<li key={item.id}>{item.title}</li> for item in items]}` or use double-brace syntax `{{ <li>{item}</li> for item in items }}`. Filtered comprehensions like `{[<li>{item}</li> for item in items if item.active]}` generate `.filter(item => item.active).map(item => ...)`. This brings Python-style comprehension elegance to JSX rendering.
+
+- **Type Checking Improvements**:
+  - **Permissive Type Check for Node Collections in Connections**: The type checker now accepts collections (list, tuple, set, frozenset) on the right side of connection operators (`++>`, `<++>`, etc.). Previously, code like `root ++> [Node1(), Node2(), Node3()];` was incorrectly rejected. This is a temporary workaround until element type inference for list literals is fully implemented.
+  - **Exclude `by postinit` Fields from Required Constructor Parameters**: Fields declared with `by postinit` are now correctly excluded from required constructor parameters during type checking. Previously, instantiating an object like `SomeObj()` with `by postinit` fields would incorrectly report missing required arguments, even though these fields are initialized via the `postinit` method.
+
+## jaclang 0.9.10
 
 - **Formatter Spacing Fixes**: Fixed extra spaces before semicolons in `report` and `del` statements, and corrected semantic definition formatting to properly handle dot notation and `=` operator spacing.
 
@@ -19,8 +70,6 @@ This document provides a summary of new features, improvements, and bug fixes in
 ### Features and Improvements
 
 - **Console Plugin Architecture**: Refactored console system to use a plugin-based architecture, removing the `rich` dependency from core jaclang. The base `JacConsole` now uses pure Python `print()` for all output, keeping jaclang dependency-free. Plugins (like `jac-super`) can override the console implementation via the `get_console()` hook to provide Rich-enhanced output with themes, panels, tables, and spinners. This maintains backward compatibility while allowing optional aesthetic enhancements through plugins.
-
-- **Report Yield Support**: The `report` statement now supports yield expressions (e.g., `report yield "Hello, World!";`), laying the groundwork for streaming response support in walkers.
 
 - **User Management Endpoints**:  Added new user management endpoints to the `jac start` API server:
   - `GET /user/info` - Retrieve authenticated user's information (username, token, root_id)

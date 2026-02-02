@@ -41,8 +41,8 @@ import from .utils { helper_function }
 import from react { useState, useEffect }
 import from "@mui/material" { Button, TextField }
 
-# Named prefix imports (jac: for runtime modules)
-import from jac:client_runtime { renderJsxTree, jacLogin }
+# Scoped package imports (@jac/ for runtime modules)
+import from "@jac/runtime" { renderJsxTree, jacLogin }
 ```
 
 ### 2 Include Statements
@@ -266,7 +266,7 @@ cl {
 
 ```jac
 cl {
-    import from "@jac/runtime" { cn }
+    import from "@jac-client/utils" { cn }
 
     def:pub StylingExamples() -> any {
         has condition: bool = True;
@@ -347,7 +347,7 @@ Client-side walker invocation:
 
 ```jac
 cl {
-    import from "@jac/runtime" { jacSpawn }
+    import from "@jac-client/utils" { jacSpawn }
 
     async def fetch_users -> None {
         result = await jacSpawn("GetUsers", {});
@@ -373,7 +373,7 @@ jac start main.jac --port 8000
 ### 1 Built-in Auth Functions
 
 ```jac
-import from "@jac/runtime" {
+import from "@jac-client/utils" {
     jacLogin,
     jacSignup,
     jacLogout,
