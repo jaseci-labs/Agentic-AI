@@ -22,9 +22,6 @@ glob faiss_path: str = os.path.join(services_dir, app_config.get("paths", {}).ge
 
 glob llm = Model(model_name="gpt-4.1-mini");
 
-glob instruction ="Only return one index at once.Classify messages for optimal routing using intent and recent context: QA: Basic greetings, thanks, casual conversation. RAG: Technical or programming questions that are explanatory or documentation-focused (e.g., how, what, explain). CODING: Jac code creation or modification, including follow-up changes. Keywords: \"code\", \"create\", \"update\", \"use\", \"add\", \"remove\", \"change\", \"modify\", \"make it\", \"actually\". If recent chat history involves coding, route short corrections (e.g., \"actually use this attribute\") here. CODE_DEBUGGER: Jac code debugging and troubleshooting. Keywords: \"error\", \"bug\", \"issue\", \"fix\", \"debug\". Default: Prefer CODING over RAG when already in a coding flow.";
-
-
 glob rag_engine: RagEngine = RagEngine(
     file_path=docs_path,
     faiss_path=faiss_path,
