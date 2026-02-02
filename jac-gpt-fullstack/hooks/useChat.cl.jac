@@ -9,7 +9,7 @@ import from ..hooks.useAuth { getUsernameFromToken }
 def:pub useChat() -> any {
     has messages: list = [];
     has sessionId: str = "";
-    has isLoading: bool = False;
+    [isLoading, setIsLoading] = useState(False);
     has messageCount: int = 0;
     has maxFreeMessages: int = 30;
     has chatSessions: list = [];
@@ -83,6 +83,10 @@ def:pub useChat() -> any {
             return;
         }
 
+        # Set loading immediately at the start
+        setIsLoading(True);
+        console.log("isLoading set to True at the beginning");
+
         # Create user message
         userMessage = {
             "id": "msg_" + String(Date.now()),
@@ -93,7 +97,6 @@ def:pub useChat() -> any {
 
         messages = lambda prev: any -> any { return prev.concat([userMessage]); };
         lastUserMessage = content.trim();
-        isLoading = True;
 
         # Increment message count for guests
         if not isAuthenticated {
@@ -102,51 +105,96 @@ def:pub useChat() -> any {
 
         try {
             # Get response from backend
+            console.log("Sending message:", content.trim(), "in session:", sessionId);
             userEmail = "";
             if isAuthenticated {
                 userEmail = getUsernameFromToken();
             }
 
-            # Start both requests in parallel
-            messagePromise = sendMessage(content.trim(), sessionId, userEmail);
-            
-            # Handle suggestions independently (fire and forget - displays whenever ready)
-            async def handleSuggestions() -> None {
-                try {
-                    suggestResult = await getSuggestions(content.trim(), []);
-                    if suggestResult.success and suggestResult.suggestions {
-                        docSuggestions = suggestResult.suggestions;
-                    }
-                } except Exception as e {
-                    console.error("Error fetching suggestions:", e);
-                }
-            }
-            handleSuggestions();
+            # Create empty bot message for SSE streaming
+            botMessageId = "msg_" + String(Date.now()) + "_bot";
+            botMessage = {
+                "id": botMessageId,
+                "content": "",  # Explicitly empty - no user content
+                "isUser": False,
+                "timestamp": Date()
+            };
+            messages = lambda prev: any -> any { return prev.concat([botMessage]); };
 
-            # Wait for and display message response
-            result = await messagePromise;
+            # Handle suggestions independently (fire and forget)
+            # async def handleSuggestions() -> None {
+            #     try {
+            #         suggestResult = await getSuggestions(content.trim(), []);
+            #         if suggestResult.success and suggestResult.suggestions {
+            #             docSuggestions = suggestResult.suggestions;
+            #         }
+            #     } except Exception as e {
+            #         console.error("Error fetching suggestions:", e);
+            #     }
+            # }
+            # handleSuggestions();
+
+            # SSE chunk handler - updates message content for each chunk
+            userMessageContent = content.trim();  # Store user message for filtering
+            
+            def onChunk(chunk: str) -> None {
+                # Stop loading animation on first chunk
+                console.log("isLoading state before chunk:", isLoading);
+                if isLoading {
+                    setIsLoading(False);
+                    console.log("Received first chunk, stopping loading state.");
+                }
+                
+                console.log("onChunk called with:", chunk, "for bot message ID:", botMessageId);
+                
+                # Update message by finding and replacing with new content
+                messages = lambda prev: any -> any {
+                    console.log("State update - prev messages:", prev.map(lambda m: any -> any { return {"id": m.id, "isUser": m.isUser, "contentLength": m.content.length}; }));
+                    updatedMessages = [];
+                    for m in prev {
+                        if m.id == botMessageId {
+                            console.log("Found bot message! Current content:", m.content, "Adding chunk:", chunk);
+                            # Append chunk - backend should only send assistant response
+                            newContent = m.content + chunk;
+                            
+                            updatedMessage = {
+                                "id": m.id,
+                                "content": newContent,
+                                "isUser": m.isUser,
+                                "timestamp": m.timestamp
+                            };
+                            updatedMessages.push(updatedMessage);
+                        } else {
+                            updatedMessages.push(m);
+                        }
+                    }
+                    console.log("Updated messages:", updatedMessages.map(lambda m: any -> any { return {"id": m.id, "isUser": m.isUser, "contentLength": m.content.length}; }));
+                    return updatedMessages;
+                };
+            }
+
+            # Wait for SSE streaming to complete
+            result = await sendMessage(content.trim(), sessionId, userEmail, onChunk);
 
             if result.success {
-                # Create bot message
-                botMessage = {
-                    "id": "msg_" + String(Date.now()),
-                    "content": result.response,
-                    "isUser": False,
-                    "timestamp": Date()
-                };
-                messages = lambda prev: any -> any { return prev.concat([botMessage]); };
-
                 # Update session title if first message
                 updateSessionTitle(content.trim());
             } else {
-                # Error message
-                errorMessage = {
-                    "id": "msg_" + String(Date.now()),
-                    "content": "Sorry, I encountered an error. Please try again.",
-                    "isUser": False,
-                    "timestamp": Date()
+                # Update message with error
+                console.error("Error in sendMessage:", result.error);
+                messages = lambda prev: any -> any {
+                    return prev.map(lambda m: any -> any {
+                        if m.id == botMessageId {
+                            return {
+                                "id": m.id,
+                                "content": "Sorry, I encountered an error. Please try again.",
+                                "isUser": m.isUser,
+                                "timestamp": m.timestamp
+                            };
+                        }
+                        return m;
+                    });
                 };
-                messages = lambda prev: any -> any { return prev.concat([errorMessage]); };
             }
         } except Exception as e {
             console.error("Send message error:", e);
@@ -158,7 +206,8 @@ def:pub useChat() -> any {
             };
             messages = lambda prev: any -> any { return prev.concat([errorMessage]); };
         } finally {
-            isLoading = False;
+            console.log("Finalizing sendMessage, setting isLoading to false.");
+            setIsLoading(False);
         }
     }
 
@@ -217,7 +266,7 @@ def:pub useChat() -> any {
     }
 
     async def handleLoadSession(loadSessionId: str) -> None {
-        isLoading = True;
+        setIsLoading(True);
         try {
             result = await getSession(loadSessionId);
             if result.success and result.found {
@@ -238,7 +287,7 @@ def:pub useChat() -> any {
         } except Exception as e {
             console.error("Error loading session:", e);
         } finally {
-            isLoading = False;
+            setIsLoading(False);
         }
     }
 
@@ -253,8 +302,7 @@ def:pub useChat() -> any {
     }
 
     def handleStopGeneration() -> None {
-        isLoading = False;
-
+        setIsLoading(False);
     }
 
     return {
