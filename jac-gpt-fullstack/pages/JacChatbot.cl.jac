@@ -25,7 +25,6 @@ def:pub JacChatbot() -> any {
 
     chat = useChat();
     isAuthenticated = jacIsLoggedIn();
-    scrollAreaRef = useRef(None);
 
     # Add CSS animations on mount
     useEffect(lambda -> None {
@@ -63,7 +62,7 @@ def:pub JacChatbot() -> any {
     # Build message items
     messageItems = [];
     for msg in chat.messages {
-        messageItems.push(<div key={msg.id} style={{"animation": "fadeIn 0.3s ease"}}>
+        messageItems.push(<div key={msg.id} data-message-id={msg.id} style={{"animation": "fadeIn 0.3s ease"}}>
             <ChatMessage
                 message={msg.content}
                 isUser={msg.isUser}
@@ -128,7 +127,7 @@ def:pub JacChatbot() -> any {
     mainContent = None;
     if hasMessages {
         # Active conversation - messages area
-        mainContent = <ScrollArea ref={scrollAreaRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
+        mainContent = <ScrollArea ref={chat.scrollAreaRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
             <div style={{
                 "maxWidth": "768px",
                 "margin": "0 auto",

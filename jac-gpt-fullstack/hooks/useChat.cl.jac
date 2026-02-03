@@ -18,6 +18,9 @@ def:pub useChat() -> any {
 
     messagesEndRef = useRef(None);
     firstChunkRef = useRef(False);
+    prevMessageCountRef = useRef(0);
+    scrollAreaRef = useRef(None);
+    lastUserMessageId = useRef(None);
     isAuthenticated = jacIsLoggedIn();
 
     # Load message count from localStorage for guests
@@ -51,11 +54,31 @@ def:pub useChat() -> any {
         }
     }, [messageCount]);
 
-    # Scroll to bottom when messages change
+    # Scroll to show new user message near the top
     useEffect(lambda -> None {
-        if messagesEndRef.current {
-            messagesEndRef.current.scrollIntoView({"behavior": "smooth"});
+        currentCount = messages.length;
+        # Only scroll if message count increased (new message added)
+        if currentCount > prevMessageCountRef.current {
+            # Check if the last message is from user
+            if messages.length > 0 and messages[messages.length - 1].isUser {
+                lastUserMessageId.current = messages[messages.length - 1].id;
+                # Wait for DOM to update, then scroll to the user message
+                setTimeout(lambda {
+                    if scrollAreaRef.current {
+                        viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
+                        if viewport {
+                            # Find the user message element by ID
+                            msgElement = viewport.querySelector("[data-message-id='" + lastUserMessageId.current + "']");
+                            if msgElement {
+                                # Scroll so message appears near top (with some padding from header)
+                                msgElement.scrollIntoView({"behavior": "smooth", "block": "start"});
+                            }
+                        }
+                    }
+                }, 50);
+            }
         }
+        prevMessageCountRef.current = currentCount;
     }, [messages]);
 
     async def initSession() -> None {
@@ -106,7 +129,6 @@ def:pub useChat() -> any {
 
         try {
             # Get response from backend
-            console.log("Sending message:", content.trim(), "in session:", sessionId);
             userEmail = "";
             if isAuthenticated {
                 userEmail = getUsernameFromToken();
@@ -147,15 +169,11 @@ def:pub useChat() -> any {
                     console.log("Received first chunk, stopping loading state.");
                 }
                 
-                console.log("onChunk called with:", chunk, "for bot message ID:", botMessageId);
-                
                 # Update message by finding and replacing with new content
                 messages = lambda prev: any -> any {
-                    console.log("State update - prev messages:", prev.map(lambda m: any -> any { return {"id": m.id, "isUser": m.isUser, "contentLength": m.content.length}; }));
                     updatedMessages = [];
                     for m in prev {
                         if m.id == botMessageId {
-                            console.log("Found bot message! Current content:", m.content, "Adding chunk:", chunk);
                             # Append chunk - backend should only send assistant response
                             newContent = m.content + chunk;
                             
@@ -170,7 +188,6 @@ def:pub useChat() -> any {
                             updatedMessages.push(m);
                         }
                     }
-                    console.log("Updated messages:", updatedMessages.map(lambda m: any -> any { return {"id": m.id, "isUser": m.isUser, "contentLength": m.content.length}; }));
                     return updatedMessages;
                 };
             }
@@ -323,6 +340,8 @@ def:pub useChat() -> any {
         "docSuggestions": docSuggestions,
         "lastUserMessage": lastUserMessage,
         "messagesEndRef": messagesEndRef,
+        "scrollAreaRef": scrollAreaRef,
+        "lastUserMessageId": lastUserMessageId,
         "canSendMessage": canSendMessage,
         "handleSendMessage": handleSendMessage,
         "handleNewChat": handleNewChat,
