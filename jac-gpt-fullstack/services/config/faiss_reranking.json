@@ -4,12 +4,12 @@
     },
     "rag_engine": {
         "chunk_size": 800,
-        "chunk_overlap": 80,
+        "chunk_overlap": 100,
         "similarity_search": {
             "k": 30
         },
         "reranking": {
-            "top_n": 5,
+            "top_n": 7,
             "model": "cross-encoder/ms-marco-MiniLM-L6-v2"
         }
     },
