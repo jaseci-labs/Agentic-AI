@@ -27,12 +27,16 @@ tailwind-merge = "^2.2.0"
 "@emotion/react" = "^11.14.0"
 react-error-boundary = "latest"
 
-# Monaco Editor for Jac syntax highlighting
-"@monaco-editor/react" = "^4.6.0"
-monaco-editor = "^0.45.0"
-monaco-textmate = "^3.0.1"
-onigasm = "^2.2.5"
-monaco-editor-textmate = "^4.0.0"
+# CodeMirror for Jac syntax highlighting (lightweight & fast)
+"@codemirror/state" = "^6.4.0"
+"@codemirror/view" = "^6.23.0"
+"@codemirror/language" = "^6.10.0"
+"@codemirror/commands" = "^6.3.0"
+"@codemirror/lang-javascript" = "^6.2.1"
+"@codemirror/lang-python" = "^6.1.4"
+"@codemirror/theme-one-dark" = "^6.1.2"
+"@lezer/highlight" = "^1.2.0"
+"@codemirror/legacy-modes" = "^6.3.3"
 
 [dependencies.npm.dev]
 "@jac-client/dev-deps" = "1.0.0"
