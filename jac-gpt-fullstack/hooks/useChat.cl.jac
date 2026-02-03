@@ -9,7 +9,7 @@ import from ..hooks.useAuth { getUsernameFromToken }
 def:pub useChat() -> any {
     has messages: list = [];
     has sessionId: str = "";
-    [isLoading, setIsLoading] = useState(False);
+    has isLoading: bool = False;
     has messageCount: int = 0;
     has maxFreeMessages: int = 30;
     has chatSessions: list = [];
@@ -17,6 +17,7 @@ def:pub useChat() -> any {
     has lastUserMessage: str = "";
 
     messagesEndRef = useRef(None);
+    firstChunkRef = useRef(False);
     isAuthenticated = jacIsLoggedIn();
 
     # Load message count from localStorage for guests
@@ -84,7 +85,7 @@ def:pub useChat() -> any {
         }
 
         # Set loading immediately at the start
-        setIsLoading(True);
+        isLoading = True;
         console.log("isLoading set to True at the beginning");
 
         # Create user message
@@ -100,7 +101,7 @@ def:pub useChat() -> any {
 
         # Increment message count for guests
         if not isAuthenticated {
-            messageCount = messageCount + 1;
+            messageCount = lambda prev: int -> int { return prev + 1; };
         }
 
         try {
@@ -112,7 +113,7 @@ def:pub useChat() -> any {
             }
 
             # Create empty bot message for SSE streaming
-            botMessageId = "msg_" + String(Date.now()) + "_bot";
+            botMessageId = "msg_" + String(Date.now()) + "_" + String(Math.random()) + "_bot";
             botMessage = {
                 "id": botMessageId,
                 "content": "",  # Explicitly empty - no user content
@@ -136,12 +137,13 @@ def:pub useChat() -> any {
 
             # SSE chunk handler - updates message content for each chunk
             userMessageContent = content.trim();  # Store user message for filtering
+            firstChunkRef.current = False;  # Reset for this message
             
             def onChunk(chunk: str) -> None {
                 # Stop loading animation on first chunk
-                console.log("isLoading state before chunk:", isLoading);
-                if isLoading {
-                    setIsLoading(False);
+                if not firstChunkRef.current {
+                    firstChunkRef.current = True;
+                    isLoading = False;
                     console.log("Received first chunk, stopping loading state.");
                 }
                 
@@ -177,8 +179,9 @@ def:pub useChat() -> any {
             result = await sendMessage(content.trim(), sessionId, userEmail, onChunk);
 
             if result.success {
-                # Update session title if first message
-                updateSessionTitle(content.trim());
+                # Update session title if first message (check before we added the user message)
+                isFirstMessage = messages.filter(lambda m: any -> bool { return m.isUser; }).length == 1;
+                updateSessionTitle(content.trim(), isFirstMessage);
             } else {
                 # Update message with error
                 console.error("Error in sendMessage:", result.error);
@@ -205,9 +208,8 @@ def:pub useChat() -> any {
                 "timestamp": Date()
             };
             messages = lambda prev: any -> any { return prev.concat([errorMessage]); };
-        } finally {
-            console.log("Finalizing sendMessage, setting isLoading to false.");
-            setIsLoading(False);
+            # Stop loading on error
+            isLoading = False;
         }
     }
 
@@ -222,10 +224,9 @@ def:pub useChat() -> any {
         }
     }
 
-    def updateSessionTitle(firstMessage: str) -> None {
+    def updateSessionTitle(firstMessage: str, isFirstMessage: bool) -> None {
         # Only update if this is the first user message
-        userMessages = messages.filter(lambda m: any -> bool { return m.isUser; });
-        if userMessages.length == 1 {
+        if isFirstMessage {
             title = firstMessage.substring(0, 50);
             if firstMessage.length > 50 {
                 title = title + "...";
@@ -236,13 +237,16 @@ def:pub useChat() -> any {
 
             if existingIndex >= 0 {
                 # Update existing session
-                updatedSessions = chatSessions.map(lambda s: any, idx: int -> any {
-                    if idx == existingIndex {
-                        return {"id": s.id, "title": title, "createdAt": s.createdAt};
-                    }
-                    return s;
-                });
-                chatSessions = lambda prev: any -> any { return updatedSessions; };
+                chatSessions = lambda prev: any -> any {
+                    updatedSessions = prev.map(lambda s: any, idx: int -> any {
+                        if idx == existingIndex {
+                            return {"id": s.id, "title": title, "createdAt": s.createdAt};
+                        }
+                        return s;
+                    });
+                    localStorage.setItem("jac_gpt_sessions", JSON.stringify(updatedSessions));
+                    return updatedSessions;
+                };
             } else {
                 # Add new session
                 newSession = {
@@ -250,11 +254,12 @@ def:pub useChat() -> any {
                     "title": title,
                     "createdAt": String(Date.now())
                 };
-                chatSessions = lambda prev: any -> any { return [newSession].concat(prev); };
+                chatSessions = lambda prev: any -> any {
+                    updated = [newSession].concat(prev);
+                    localStorage.setItem("jac_gpt_sessions", JSON.stringify(updated));
+                    return updated;
+                };
             }
-
-            # Save to localStorage
-            localStorage.setItem("jac_gpt_sessions", JSON.stringify(chatSessions));
         }
     }
 
@@ -266,7 +271,7 @@ def:pub useChat() -> any {
     }
 
     async def handleLoadSession(loadSessionId: str) -> None {
-        setIsLoading(True);
+        isLoading = True;
         try {
             result = await getSession(loadSessionId);
             if result.success and result.found {
@@ -287,13 +292,16 @@ def:pub useChat() -> any {
         } except Exception as e {
             console.error("Error loading session:", e);
         } finally {
-            setIsLoading(False);
+            isLoading = False;
         }
     }
 
     def handleDeleteSession(deleteSessionId: str) -> None {
-        chatSessions = chatSessions.filter(lambda s: any -> bool { return s.id != deleteSessionId; });
-        localStorage.setItem("jac_gpt_sessions", JSON.stringify(chatSessions));
+        chatSessions = lambda prev: any -> any {
+            updated = prev.filter(lambda s: any -> bool { return s.id != deleteSessionId; });
+            localStorage.setItem("jac_gpt_sessions", JSON.stringify(updated));
+            return updated;
+        };
 
         # If deleting current session, start new one
         if deleteSessionId == sessionId {
@@ -302,7 +310,7 @@ def:pub useChat() -> any {
     }
 
     def handleStopGeneration() -> None {
-        setIsLoading(False);
+        isLoading = False;
     }
 
     return {
