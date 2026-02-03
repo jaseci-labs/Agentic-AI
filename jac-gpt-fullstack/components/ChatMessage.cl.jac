@@ -189,10 +189,6 @@ def:pub JacCodeBlock(code: str) -> any {
 
 """Chat message component."""
 def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null) -> any {
-    console.log("=== ChatMessage rendered ===");
-    console.log("isUser:", isUser);
-    console.log("Message content:", message);
-    console.log("Message length:", message.length);
 
     ORANGE = "#f97316";
     logoSrc = "/logo.png";

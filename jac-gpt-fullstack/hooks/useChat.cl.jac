@@ -19,8 +19,6 @@ def:pub useChat() -> any {
     messagesEndRef = useRef(None);
     firstChunkRef = useRef(False);
     prevMessageCountRef = useRef(0);
-    scrollAreaRef = useRef(None);
-    lastUserMessageId = useRef(None);
     isAuthenticated = jacIsLoggedIn();
 
     # Load message count from localStorage for guests
@@ -54,28 +52,13 @@ def:pub useChat() -> any {
         }
     }, [messageCount]);
 
-    # Scroll to show new user message near the top
+    # Scroll to bottom only when new messages are added (not during streaming updates)
     useEffect(lambda -> None {
         currentCount = messages.length;
         # Only scroll if message count increased (new message added)
         if currentCount > prevMessageCountRef.current {
-            # Check if the last message is from user
-            if messages.length > 0 and messages[messages.length - 1].isUser {
-                lastUserMessageId.current = messages[messages.length - 1].id;
-                # Wait for DOM to update, then scroll to the user message
-                setTimeout(lambda {
-                    if scrollAreaRef.current {
-                        viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
-                        if viewport {
-                            # Find the user message element by ID
-                            msgElement = viewport.querySelector("[data-message-id='" + lastUserMessageId.current + "']");
-                            if msgElement {
-                                # Scroll so message appears near top (with some padding from header)
-                                msgElement.scrollIntoView({"behavior": "smooth", "block": "start"});
-                            }
-                        }
-                    }
-                }, 50);
+            if messagesEndRef.current {
+                messagesEndRef.current.scrollIntoView({"behavior": "smooth"});
             }
         }
         prevMessageCountRef.current = currentCount;
@@ -340,8 +323,6 @@ def:pub useChat() -> any {
         "docSuggestions": docSuggestions,
         "lastUserMessage": lastUserMessage,
         "messagesEndRef": messagesEndRef,
-        "scrollAreaRef": scrollAreaRef,
-        "lastUserMessageId": lastUserMessageId,
         "canSendMessage": canSendMessage,
         "handleSendMessage": handleSendMessage,
         "handleNewChat": handleNewChat,
