@@ -241,12 +241,23 @@ obj RagEngine {
             for doc in docs_only {
                 # Use enriched content with metadata for reranking
                 enriched_content = self.enrich_content_with_metadata(doc);
-                reranked_query = f"Query: {query}\n\nDoes this document contain specific information, examples, or explanations that directly answer the query above? Prioritize documents with concrete details, code examples, and clear explanations over general mentions.";
+                reranked_query = """Query: ${query}
+                    Evaluate how well this document directly answers the query.
+                    Rank higher if it contains specific, relevant information that satisfies the query intent, such as clear explanations, correct syntax, concrete details, or code examples when appropriate.
+                    Rank lower if it only mentions related concepts, is overly general, or does not meaningfully address the query.
+                    Focus on semantic relevance and answer completeness rather than keyword overlap.""";
+                
                 pairs.append((reranked_query, enriched_content));
             }
 
             # Get reranking scores
-            scores = self.cross_encoder.predict(pairs, show_progress_bar=False);
+            scores = self.cross_encoder.predict(
+                pairs,
+                show_progress_bar=False,
+                batch_size=30,              
+                convert_to_numpy=True,      
+                convert_to_tensor=False    
+            );
 
             # Combine documents with their new scores
             doc_score_pairs = list(zip(docs_only, scores));
