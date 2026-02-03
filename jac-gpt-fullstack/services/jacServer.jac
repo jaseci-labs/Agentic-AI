@@ -35,7 +35,6 @@ glob rag_engine: RagEngine = RagEngine(
     cross_encoder_model=app_config.get("rag_engine", {}).get("reranking", {}).get("model", "cross-encoder/ms-marco-MiniLM-L6-v2")
 );
 
-
 """
 ChatType enum defines the types of chat interactions. ChatType must be one of:
 - RAG: For interactions that require conceptual explanation about Jac/Jaseci.
@@ -59,32 +58,6 @@ node Router {
 node Chat {
     has chat_type: ChatType;
 }
-
-# walker infer {
-#     has message: str;
-#     has chat_history: list[dict];
-#     has response: str = "";
-
-#     can init_router with `root entry {
-#         visit [-->](`?Router) else {
-#             router_node = here ++> Router();
-#             router_node ++> RagChat();
-#             router_node ++> CodingChat();
-#             router_node ++> DebuggerChat();
-#             router_node ++> QAChat();
-#             router_node ++> OffTopicChat();
-#             visit router_node;
-#         }
-#     }
-
-#     can route with Router entry {
-#         print(self.chat_history[-3:]);
-#         print("Classifying history");
-#         classification = here.classify(message = self.message, chat_history = self.chat_history[-5:]);
-#         print("Routing message:", self.message, "to chat type:", classification);
-#         visit [-->](`?Chat)(?chat_type==classification);
-#     }
-# }
 
 """Search for relevant documents using the RAG engine.
 
@@ -198,13 +171,9 @@ walker :pub interact {
     }
 
     can route with Router entry {
-        print("entering route");
-        print(self.chat_history[-3:]);
-        print("Classifying history");
         classification = here.classify(message = self.message, chat_history = self.chat_history[-5:]);
         print("Routing message:", self.message, "to chat type:", classification);
         vals = [-->](`?Chat)(?chat_type==classification);
-        print(vals);
         visit [-->](`?Chat)(?chat_type==classification);
     }
 

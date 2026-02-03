@@ -4,13 +4,11 @@ import from datetime {datetime}
 
 # Shared helper function for streaming responses with SSE format
 def stream_chat_response(response_generator: any, visitor: any) -> any {
-   print("Starting stream_chat_response");
-   response = "";
+   print("Starting response streaming...");
 
+   response = "";
    for chunk in response_generator {
       response += chunk;
-      print("printing word");
-      # SSE format: data: <json>\n\n
       yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n";
    }
 
@@ -18,12 +16,10 @@ def stream_chat_response(response_generator: any, visitor: any) -> any {
    session_node.chat_history.append({"role": "assistant", "content": response});
    session_node.updated_at = datetime.now().isoformat();
    
-   print(response);
    return;
 }
 
 impl RagChat.chat {
-   print("Entering RagChat.chat");
    report stream_chat_response(
       self.respond(message=visitor.message, chat_history=visitor.chat_history),
       visitor
@@ -75,14 +71,14 @@ impl OffTopicChat.chat {
 
 
 sem Router.classify = """
-Classify messages for optimal routing using intent and recent context:
+Classify messages for optimal routing using intent and previous context:
 
 QA:
 Basic greetings, thanks, casual conversation.
 
 RAG:
 Technical or programming questions that are explanatory or
-documentation-focused (e.g. how, what, explain).
+documentation-focused (e.g. how, what, explain, follow-up explanations).
 
 CODING:
 Jac code creation or modification, including follow-up changes.
@@ -105,7 +101,7 @@ sem RagChat.respond = """
 You are a Jac programming expert with access to OFFICIAL Jac/Jaseci documentation via the `search_docs` RAG tool.
 
 CORE RULES:
-- ALWAYS use `search_docs` to verify Jac syntax, features, behavior, and commands.
+- ALWAYS use `search_docs` to verify Jac concepts, syntax, features, behavior, and commands.
 - NEVER guess, invent, or rely on prior knowledge of Jac as it is outdated and will not work; USE ONLY WHAT IS EXPLICITLY GIVEN IN THE OFFICIAL DOCUMENTATION VIA `search_docs`, including commands, installation steps, and package names.
 - If the docs do not support or mention something, say so clearly and do not hallucinate and generate any code or concept explanation.
 - ALL Jac code MUST be inside ```jac``` blocks and be syntactically correct.
@@ -122,15 +118,17 @@ HOW TO RESPOND:
 - When explaining how something works (steps, flow, mechanics), prefer clear bullet points over long paragraphs.
 - When a task involves setup, installation, or execution, SHOW all the concrete commands exactly as documented.
 - Explain *why* something works, not just *what* it is.
+- Use Markdown headings appropriately to structure responses: `#` for main topics, `##` for major sections, `###` for subsections.
 - Add `#` comments inside code only when they add clarity.
 
 Jac documentation RAG USAGE:
 - Do not use URLs in queries.
-- BREAK DOWN the user's query into individual concepts/topics. Execute SEPARATE search_docs calls for EACH concept independently before attempting to answer. For example: if asked "What are nodes and edges", search for "nodes definition" first, then "edges definition" separately.
-- USE SPECIFIC, CONTEXTUAL search queries - NOT just single keywords. Frame queries as questions or descriptive phrases that include context (e.g., "byllm definition" NOT just "byllm", "enums definition" NOT just "enum").
+- BREAK DOWN the user's query into individual components AND aspects. Execute SEPARATE search_docs calls for EACH concept AND each aspect independently. For example: if asked "What are nodes and edges", execute separate searches: "nodes definition in Jac", "nodes usage in Jac", "nodes examples in Jac", then "edges definition in Jac", "edges usage in Jac", "edges examples in Jac". Do not combine multiple aspects (definition/usage/examples) into a single search query.
+- USE SPECIFIC, CONTEXTUAL search queries - NOT just single keywords. Frame queries as questions or descriptive phrases that include context (e.g., "byllm definition" NOT just "byllm", "enums definition" NOT just "enum", "nodes example").
 - Include relevant context in search queries to retrieve comprehensive documentation (e.g., "syntax", "usage", "examples", "definition", "how to").
 - If information cannot be found, retry searches progressively using different phrasing, synonyms, related terminology(eg: enum -> enumerations), and key terms from previously retrieved docs.
 - Interpret and apply the documentation rather than copying it verbatim; include comprehensive examples when they are necessary for clarity.
+- Never re-run previous searches.
 - ONlY run additional searches if any concept, syntax, command, or behavior is not explicitly confirmed/found in the retrieved documentation.
 
 SCOPE:
@@ -227,17 +225,7 @@ impl Session.chat {
    if visitor.user_email and not self.user_email {
       self.user_email = visitor.user_email;
    }
-
-   # Use chat history from the persisted session node
-   visitor.chat_history = self.chat_history;  #chat history without user message
-
-   # Add user message to chat history
-   # visitor.chat_history.append({"role": "user", "content": visitor.message}); #chat history with user message
-
-   # response_walker = infer(
-   #    message=visitor.message,
-   #    chat_history=self.chat_history  # chat history send to the infer walker without message
-   # ) spawn root;
+   visitor.chat_history = self.chat_history;  
 
    visit [-->](`?Router) else {
          router_node = root ++> Router();
@@ -248,23 +236,6 @@ impl Session.chat {
          router_node ++> OffTopicChat();
          visit router_node;
    }
-   # print("=== Visiting router node for session:", self.id); 
-   # visit router_node;
-
-   # The Chat node implementations already append the assistant response
-   # to the chat_history, so we just need to update the session's updated_at
-   # Note: self.chat_history is the same reference as passed to infer, so it's already updated
-
-   #Implement ater streaming the data
-   # self.chat_history = response_walker.chat_history;  #after adding the assinstant response to the chat history for the session node
-   # self.updated_at = datetime.now().isoformat();
-
-   # report {
-   #    "response": response_walker.response,
-   #    "chat_history": self.chat_history,  #no need the chat history.
-   #    "session_id": self.id
-   # };
-
 }
 
 impl get_session.get_chat_history {
