@@ -35,7 +35,6 @@ glob rag_engine: RagEngine = RagEngine(
     cross_encoder_model=app_config.get("rag_engine", {}).get("reranking", {}).get("model", "cross-encoder/ms-marco-MiniLM-L6-v2")
 );
 
-
 """
 ChatType enum defines the types of chat interactions. ChatType must be one of:
 - RAG: For interactions that require conceptual explanation about Jac/Jaseci.
@@ -58,32 +57,6 @@ node Router {
 
 node Chat {
     has chat_type: ChatType;
-}
-
-walker infer {
-    has message: str;
-    has chat_history: list[dict];
-    has response: str = "";
-
-    can init_router with `root entry {
-        visit [-->](`?Router) else {
-            router_node = here ++> Router();
-            router_node ++> RagChat();
-            router_node ++> CodingChat();
-            router_node ++> DebuggerChat();
-            router_node ++> QAChat();
-            router_node ++> OffTopicChat();
-            visit router_node;
-        }
-    }
-
-    can route with Router entry {
-        print(self.chat_history[-3:]);
-        print("Classifying history");
-        classification = here.classify(message = self.message, chat_history = self.chat_history[-5:]);
-        print("Routing message:", self.message, "to chat type:", classification);
-        visit [-->](`?Chat)(?chat_type==classification);
-    }
 }
 
 """Search for relevant documents using the RAG engine.
@@ -127,10 +100,11 @@ node RagChat(Chat) {
         method="ReAct",
         messages=chat_history,
         max_react_iterations=5,
+        stream = True,
         tools = [search_docs]
     );
 
-    can chat with infer entry;
+    can chat with interact entry;
 }
 
 node QAChat(Chat) {
@@ -139,10 +113,11 @@ node QAChat(Chat) {
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
+        stream = True,  
         max_react_iterations=3
     );
 
-    can chat with infer entry;
+    can chat with interact entry;
 }
 
 node CodingChat(Chat) {
@@ -151,11 +126,12 @@ node CodingChat(Chat) {
     def code_jac(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
+        stream = True,
         # max_react_iterations=5,
         tools = [search_docs]
     );
 
-    can chat with infer entry;
+    can chat with interact entry;
 }
 
 node DebuggerChat(Chat) {
@@ -164,11 +140,12 @@ node DebuggerChat(Chat) {
     def debug_code(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
+        stream = True,
         # max_react_iterations=5,
         tools = [search_docs]
     );
 
-    can chat with infer entry;
+    can chat with interact entry;
 }
 
 node OffTopicChat(Chat) {
@@ -180,7 +157,7 @@ node OffTopicChat(Chat) {
         temperature=0.3
     );
 
-    can chat with infer entry;
+    can chat with interact entry;
 }
 
 walker :pub interact {
@@ -193,7 +170,15 @@ walker :pub interact {
         static has methods: list = ["post"];
     }
 
+    can route with Router entry {
+        classification = here.classify(message = self.message, chat_history = self.chat_history[-5:]);
+        print("Routing message:", self.message, "to chat type:", classification);
+        vals = [-->](`?Chat)(?chat_type==classification);
+        visit [-->](`?Chat)(?chat_type==classification);
+    }
+
     can init_session with `root entry {
+        print("Initializing session for:", self.session_id, "User:", self.user_email);
         all_sessions = [-->(`?Session)];
         found_session = None;
         for session in all_sessions {
@@ -203,6 +188,7 @@ walker :pub interact {
             }
         }
         if found_session {
+            print("Session Node Found for:", self.session_id, "User:", found_session.user_email);
             visit found_session;
         } else {
             now = datetime.now().isoformat();

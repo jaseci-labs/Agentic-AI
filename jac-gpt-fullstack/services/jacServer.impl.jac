@@ -2,49 +2,49 @@ import json;
 import os;
 import from datetime {datetime}
 
+# Shared helper function for streaming responses with SSE format
+def stream_chat_response(response_generator: any, visitor: any) -> any {
+   print("Starting response streaming...");
+
+   response = "";
+   for chunk in response_generator {
+      response += chunk;
+      yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n";
+   }
+
+   session_node = ([root-->(`?Session)](?id==visitor.session_id))[0];
+   session_node.chat_history.append({"role": "assistant", "content": response});
+   session_node.updated_at = datetime.now().isoformat();
+   
+   return;
+}
+
 impl RagChat.chat {
-    response = self.respond(
-        message=visitor.message,
-        chat_history=visitor.chat_history
-    );
-    visitor.chat_history.append({"role": "assistant", "content": response});
-    self.chat_history = visitor.chat_history;
-    visitor.response = response;
-    report {"response": response, "chat_history": visitor.chat_history};
+   report stream_chat_response(
+      self.respond(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
+   );
 }
 
 impl CodingChat.chat {
-    response = self.code_jac(
-        message=visitor.message,
-        chat_history=visitor.chat_history
-    );
-    visitor.chat_history.append({"role": "assistant", "content": response});
-    self.chat_history = visitor.chat_history;
-    visitor.response = response;
-    report {"response": response, "chat_history": visitor.chat_history};
+   report stream_chat_response(
+      self.code_jac(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
+   );
 }
 
 impl DebuggerChat.chat {
-   response = self.debug_code(
-      message=visitor.message,
-      chat_history=visitor.chat_history
+   report stream_chat_response(
+      self.debug_code(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
    );
-   visitor.chat_history.append({"role": "assistant", "content": response});
-   self.chat_history = visitor.chat_history;
-   visitor.response = response;
-   report {"response": response, "chat_history": visitor.chat_history};
-
 }
 
 impl QAChat.chat {
-   response = self.respond(
-      message=visitor.message,
-      chat_history=visitor.chat_history
+   report stream_chat_response(
+      self.respond(message=visitor.message, chat_history=visitor.chat_history),
+      visitor
    );
-   visitor.chat_history.append({"role": "assistant", "content": response});
-   self.chat_history = visitor.chat_history;
-   visitor.response = response;
-   report {"response": response, "chat_history": visitor.chat_history};
 }
 
 impl OffTopicChat.chat {
@@ -61,21 +61,24 @@ impl OffTopicChat.chat {
       response = "Hello! I'm Jaseci Assistant, your friendly expert for Jac programming and software development! \n\nI'm here to help with:\n **Programming & Development**: Documentation references, algorithms, best practices\n **AI-First Programming**: How Jac revolutionizes development with native LLM integration\n **Object-Spatial Programming**: Jac's unique approach to data relationships\n **Cloud-Native Development**: Building scalable applications with zero DevOps\n **Learning & Concepts**: Programming concepts explained through Jac examples\n\nWhether you're curious about Jac specifically or have general programming questions, I'm happy to help and show you how Jac can make your development experience better!\n\nFor comprehensive learning resources, visit: https://www.jac-lang.org/\n\nWhat programming challenge can I help you solve today?";
    }
 
-   visitor.chat_history.append({"role": "assistant", "content": response});
-   visitor.response = response;
-   report {"response": response, "chat_history": visitor.chat_history};
+   # Create a generator that yields the complete response
+   def generate_response() {
+      yield response;
+   }
+
+   report stream_chat_response(generate_response(), visitor);
 }
 
 
 sem Router.classify = """
-Classify messages for optimal routing using intent and recent context:
+Classify messages for optimal routing using intent and previous context:
 
 QA:
 Basic greetings, thanks, casual conversation.
 
 RAG:
 Technical or programming questions that are explanatory or
-documentation-focused (e.g. how, what, explain).
+documentation-focused (e.g. how, what, explain, follow-up explanations).
 
 CODING:
 Jac code creation or modification, including follow-up changes.
@@ -98,7 +101,7 @@ sem RagChat.respond = """
 You are a Jac programming expert with access to OFFICIAL Jac/Jaseci documentation via the `search_docs` RAG tool.
 
 CORE RULES:
-- ALWAYS use `search_docs` to verify Jac syntax, features, behavior, and commands.
+- ALWAYS use `search_docs` to verify Jac concepts, syntax, features, behavior, and commands.
 - NEVER guess, invent, or rely on prior knowledge of Jac as it is outdated and will not work; USE ONLY WHAT IS EXPLICITLY GIVEN IN THE OFFICIAL DOCUMENTATION VIA `search_docs`, including commands, installation steps, and package names.
 - If the docs do not support or mention something, say so clearly and do not hallucinate and generate any code or concept explanation.
 - ALL Jac code MUST be inside ```jac``` blocks and be syntactically correct.
@@ -115,16 +118,17 @@ HOW TO RESPOND:
 - When explaining how something works (steps, flow, mechanics), prefer clear bullet points over long paragraphs.
 - When a task involves setup, installation, or execution, SHOW all the concrete commands exactly as documented.
 - Explain *why* something works, not just *what* it is.
+- Use Markdown headings appropriately to structure responses: `#` for main topics, `##` for major sections, `###` for subsections.
 - Add `#` comments inside code only when they add clarity.
-- Always use bolded headings where appropriate to organize the response.
 
 Jac documentation RAG USAGE:
 - Do not use URLs in queries.
-- BREAK DOWN the user's query into individual concepts/topics. Execute SEPARATE search_docs calls for EACH concept independently before attempting to answer. For example: if asked "What are nodes and edges", search for "nodes definition" first, then "edges definition" separately.
-- USE SPECIFIC, CONTEXTUAL search queries - NOT just single keywords. Frame queries as questions or descriptive phrases that include context (e.g., "byllm definition" NOT just "byllm", "enums definition" NOT just "enum").
-- Include relevant context in search queries to retrieve comprehensive documentation (e.g., "syntax", "usage", "examples", "definition", "how to").
+- BREAK DOWN the user's query into individual components AND aspects. Execute SEPARATE search_docs calls for EACH concept AND each aspect independently. For example: if asked "What are nodes and edges", execute separate searches: "nodes definition in Jac", "nodes in Jac", "nodes examples in Jac", then "edges definition in Jac", "edges in Jac", "edges examples in Jac". Do not combine multiple aspects (definition/examples) into a single search query.
+- USE SPECIFIC, CONTEXTUAL search queries - NOT just single keywords. Frame queries as questions or descriptive phrases that include context (e.g., "byllm definition" NOT just "byllm", "enums definition" NOT just "enum", "nodes example").
+- Include relevant context in search queries to retrieve comprehensive documentation (e.g., "syntax", "examples", "definition", "how to").
 - If information cannot be found, retry searches progressively using different phrasing, synonyms, related terminology(eg: enum -> enumerations), and key terms from previously retrieved docs.
-- Interpret and apply the documentation rather than copying it verbatim; include comprehensive examples when they are necessary for clarity.
+- VERY IMPORTANT: Interpret and apply the documentation rather than copying it verbatim; include comprehensive examples when they are necessary for clarity.
+- Never re-run previous searches.
 - ONlY run additional searches if any concept, syntax, command, or behavior is not explicitly confirmed/found in the retrieved documentation.
 
 SCOPE:
@@ -217,32 +221,21 @@ Goal: guide users back to Jac programming assistance""";
 
 
 impl Session.chat {
+   print("=== New chat message received in session:", self.id);
    if visitor.user_email and not self.user_email {
       self.user_email = visitor.user_email;
    }
+   visitor.chat_history = self.chat_history;  
 
-   # Use chat history from the persisted session node
-   visitor.chat_history = self.chat_history;
-
-   # Add user message to chat history
-   visitor.chat_history.append({"role": "user", "content": visitor.message});
-
-   response_walker = infer(
-      message=visitor.message,
-      chat_history=self.chat_history
-   ) spawn root;
-
-   # The Chat node implementations already append the assistant response
-   # to the chat_history, so we just need to update the session's updated_at
-   # Note: self.chat_history is the same reference as passed to infer, so it's already updated
-   self.chat_history = response_walker.chat_history;
-   self.updated_at = datetime.now().isoformat();
-
-   report {
-      "response": response_walker.response,
-      "chat_history": self.chat_history,
-      "session_id": self.id
-   };
+   visit [-->](`?Router) else {
+         router_node = root ++> Router();
+         router_node ++> RagChat();
+         router_node ++> CodingChat();
+         router_node ++> DebuggerChat();
+         router_node ++> QAChat();
+         router_node ++> OffTopicChat();
+         visit router_node;
+   }
 }
 
 impl get_session.get_chat_history {
