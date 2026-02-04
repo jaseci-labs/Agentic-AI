@@ -236,19 +236,16 @@ obj RagEngine {
             # Extract documents and prepare query-document pairs
             docs_only = [doc for (doc, _) in documents];
 
-            # Create query-document pairs for CrossEncoder with metadata context
-            pairs = [];
-            for doc in docs_only {
-                # Use enriched content with metadata for reranking
-                enriched_content = self.enrich_content_with_metadata(doc);
-                reranked_query = """Query: ${query}
+            reranked_query = """Query: ${query}
                     Evaluate how well this document directly answers the query.
                     Rank higher if it contains specific, relevant information that satisfies the query intent, such as clear explanations, correct syntax, concrete details, or code examples when appropriate.
                     Rank lower if it only mentions related concepts, is overly general, or does not meaningfully address the query.
                     Focus on semantic relevance and answer completeness rather than keyword overlap.""";
                 
-                pairs.append((reranked_query, enriched_content));
-            }
+            pairs = [
+                (reranked_query, doc.metadata.get('original_content', doc.page_content))
+                for doc in docs_only
+            ];
 
             # Get reranking scores
             scores = self.cross_encoder.predict(

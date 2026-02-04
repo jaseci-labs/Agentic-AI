@@ -123,11 +123,11 @@ HOW TO RESPOND:
 
 Jac documentation RAG USAGE:
 - Do not use URLs in queries.
-- BREAK DOWN the user's query into individual components AND aspects. Execute SEPARATE search_docs calls for EACH concept AND each aspect independently. For example: if asked "What are nodes and edges", execute separate searches: "nodes definition in Jac", "nodes usage in Jac", "nodes examples in Jac", then "edges definition in Jac", "edges usage in Jac", "edges examples in Jac". Do not combine multiple aspects (definition/usage/examples) into a single search query.
+- BREAK DOWN the user's query into individual components AND aspects. Execute SEPARATE search_docs calls for EACH concept AND each aspect independently. For example: if asked "What are nodes and edges", execute separate searches: "nodes definition in Jac", "nodes in Jac", "nodes examples in Jac", then "edges definition in Jac", "edges in Jac", "edges examples in Jac". Do not combine multiple aspects (definition/examples) into a single search query.
 - USE SPECIFIC, CONTEXTUAL search queries - NOT just single keywords. Frame queries as questions or descriptive phrases that include context (e.g., "byllm definition" NOT just "byllm", "enums definition" NOT just "enum", "nodes example").
-- Include relevant context in search queries to retrieve comprehensive documentation (e.g., "syntax", "usage", "examples", "definition", "how to").
+- Include relevant context in search queries to retrieve comprehensive documentation (e.g., "syntax", "examples", "definition", "how to").
 - If information cannot be found, retry searches progressively using different phrasing, synonyms, related terminology(eg: enum -> enumerations), and key terms from previously retrieved docs.
-- Interpret and apply the documentation rather than copying it verbatim; include comprehensive examples when they are necessary for clarity.
+- VERY IMPORTANT: Interpret and apply the documentation rather than copying it verbatim; include comprehensive examples when they are necessary for clarity.
 - Never re-run previous searches.
 - ONlY run additional searches if any concept, syntax, command, or behavior is not explicitly confirmed/found in the retrieved documentation.
 
