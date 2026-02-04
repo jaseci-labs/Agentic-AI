@@ -1,5 +1,8 @@
 # Build a Full-Stack Todo App with AI
 
+!!! tip "New Tutorial Available"
+    For a comprehensive, step-by-step guide to building a full-stack AI app, see the **[Build Your First App](../first-app/part1-todo-app.md)** tutorial series. It covers the same concepts in a more progressive format across three parts.
+
 This tutorial walks you through building a complete full-stack application with Jac, covering server-side graph operations, client-side React UI, and AI-powered features using `by llm()`.
 
 > **Prerequisites:** Complete [Project Setup](setup.md) first.
@@ -281,7 +284,7 @@ cl {
 """Todo App - Client-Side UI."""
 
 import from react { useEffect }
-import from "@jac/runtime" { jacSignup, jacLogin, jacLogout, jacIsLoggedIn }
+import from "@jac-client/utils" { jacSignup, jacLogin, jacLogout, jacIsLoggedIn }
 
 # Import server-side walkers for client use
 sv import from endpoints { AddTodo, ListTodos, ToggleTodo, DeleteTodo }
@@ -449,7 +452,7 @@ def generate_ingredients(meal_description: str) -> list[Ingredient] by llm();
 - `obj` - Structured data type (not persisted like `node`)
 - `sem Field.name = "description"` - Semantic hint for LLM guidance
 - `def func() -> Type by llm()` - LLM-powered function with structured output
-- The docstring provides context for the LLM
+- The function name, parameter names, and types provide context for the LLM; use `sem` for additional semantics
 
 ### 4.2 Walker That Uses AI
 

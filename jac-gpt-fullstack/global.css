@@ -175,9 +175,14 @@ code {
 .hljs-params { color: #e4e4e7; }
 .hljs-literal { color: #f472b6; }
 
-/* Selection colors */
+/* Selection colors - Orange theme */
 ::selection {
-    background-color: rgba(124, 58, 237, 0.3);
+    background-color: rgba(249, 115, 22, 0.3);
+    color: white;
+}
+
+::-moz-selection {
+    background-color: rgba(249, 115, 22, 0.3);
     color: white;
 }
 

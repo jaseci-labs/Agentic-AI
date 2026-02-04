@@ -1,10 +1,3 @@
-"""Sidebar component with chat history and user actions using Mantine UI.
-Updated: sidebar is ALWAYS visible on desktop (>=1024px) and toggled only on mobile.
-Updated: uses /logo.png to match React JacGPT logo + alignment.
-Fix: New Chat (+) centered properly.
-Fix: Remove extra empty gap between Sign buttons and Help & FAQ (better layout).
-"""
-
 import from react { useState }
 import from "@jac/runtime" { Link, jacIsLoggedIn, jacLogout, useNavigate }
 import from "@mantine/core" {
@@ -83,6 +76,14 @@ def:pub Sidebar(
         navigate("/login");
     }
 
+    def handleLogoClick() -> None {
+        # Reset chat state and navigate home
+        if onNewChat {
+            onNewChat();
+        }
+        navigate("/");
+    }
+
     def getUserInitials() -> str {
         if username and username != "Guest" {
             return username[0].toUpperCase();
@@ -131,16 +132,27 @@ def:pub Sidebar(
         <Group justify="space-between" align="center" wrap="nowrap">
             {(
                 <Group gap="sm" align="center" wrap="nowrap">
-                    <Box style={{
-                        "width": "44px",
-                        "height": "44px",
-                        "borderRadius": "12px",
-                        "background": "rgba(249,115,22,0.12)",
-                        "display": "flex",
-                        "alignItems": "center",
-                        "justifyContent": "center",
-                        "boxShadow": "0 0 14px rgba(249,115,22,0.25)"
-                    }}>
+                    <Box 
+                        onClick={handleLogoClick}
+                        style={{
+                            "width": "44px",
+                            "height": "44px",
+                            "borderRadius": "12px",
+                            "background": "rgba(249,115,22,0.12)",
+                            "display": "flex",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "boxShadow": "0 0 14px rgba(249,115,22,0.25)",
+                            "cursor": "pointer",
+                            "transition": "transform 0.2s ease"
+                        }}
+                        onMouseEnter={lambda e: any -> None {
+                            e.currentTarget.style.transform = "scale(1.05)";
+                        }}
+                        onMouseLeave={lambda e: any -> None {
+                            e.currentTarget.style.transform = "scale(1)";
+                        }}
+                    >
                         <img
                             src={LOGO_SRC}
                             alt="Jaseci"
@@ -164,16 +176,28 @@ def:pub Sidebar(
                 </Group>
                 if isExpanded
                 else
-                <Box mx="auto" style={{
-                    "width": "44px",
-                    "height": "44px",
-                    "borderRadius": "12px",
-                    "background": "rgba(249,115,22,0.12)",
-                    "display": "flex",
-                    "alignItems": "center",
-                    "justifyContent": "center",
-                    "boxShadow": "0 0 14px rgba(249,115,22,0.25)"
-                }}>
+                <Box 
+                    mx="auto" 
+                    onClick={handleLogoClick}
+                    style={{
+                        "width": "44px",
+                        "height": "44px",
+                        "borderRadius": "12px",
+                        "background": "rgba(249,115,22,0.12)",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "boxShadow": "0 0 14px rgba(249,115,22,0.25)",
+                        "cursor": "pointer",
+                        "transition": "transform 0.2s ease"
+                    }}
+                    onMouseEnter={lambda e: any -> None {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                    }}
+                    onMouseLeave={lambda e: any -> None {
+                        e.currentTarget.style.transform = "scale(1)";
+                    }}
+                >
                     <img
                         src={LOGO_SRC}
                         alt="Jaseci"
