@@ -32,6 +32,8 @@ react-error-boundary = "latest"
 "@codemirror/state" = "^6.0.0"
 "@codemirror/language" = "^6.0.0"
 "@lezer/highlight" = "^1.0.0"
+"monaco-textmate" = "^3.0.1"
+"monaco-editor-textmate" = "^4.0.0"
 
 [dependencies.npm.dev]
 "@jac-client/dev-deps" = "1.0.0"
