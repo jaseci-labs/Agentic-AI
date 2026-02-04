@@ -16,13 +16,12 @@ import from "@tabler/icons-react" {
     IconCheck
 }
 
-# Monaco Editor - React wrapper
-import from "@monaco-editor/react" { Editor }
+# CodeMirror syntax highlighting for Jac
+import from "..utils/syntax_highlighting" { getJacExtensions }
+import from "@codemirror/view" { EditorView }
+import from "@codemirror/state" { EditorState }
 
-# Syntax highlighting utilities
-import from "..utils/syntax_highlighting" { highlightJacCode }
-
-# Jac syntax highlighting CSS
+# Jac syntax highlighting CSS (kept for highlight.js bash/shell overrides)
 import "..styles/jacSyntax.css";
 
 
@@ -101,13 +100,11 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> any {
 }
 
 
-"""Lightweight Jac code block with tokenizer-based syntax highlighting."""
+"""Read-only Jac code block using CodeMirror 6."""
 def:pub JacCodeBlock(code: str) -> any {
-    console.log("=== JacCodeBlock rendered ===");
-    console.log("Code to highlight:", code);
-    
     has copied: bool = false;
-    has highlightedCode: str = code;
+    editorRef = useRef(None);
+    viewRef = useRef(None);
 
     def handleCopy() -> None {
         navigator.clipboard.writeText(code);
@@ -115,15 +112,23 @@ def:pub JacCodeBlock(code: str) -> any {
         setTimeout(lambda { copied = false; }, 2000);
     }
 
-    # Highlight code on mount and when code changes
+    # Create / destroy the CodeMirror EditorView when code changes
     useEffect(lambda {
-        console.log("=== useEffect triggered for highlighting ===");
-        console.log("Calling highlightJacCode with:", code);
-        highlightJacCode(code).then(lambda result: any {
-            console.log("=== Highlighting complete ===");
-            console.log("Result:", result);
-            highlightedCode = result;
-        });
+        if viewRef.current {
+            viewRef.current.destroy();
+            viewRef.current = None;
+        }
+        if editorRef.current {
+            state = EditorState.create({
+                "doc": code,
+                "extensions": getJacExtensions()
+            });
+            viewRef.current = Reflect.construct(EditorView, [{
+                "state": state,
+                "parent": editorRef.current
+            }]);
+        }
+        return lambda { if viewRef.current { viewRef.current.destroy(); viewRef.current = None; } };
     }, [code]);
 
     copyLabel = "Copy code";
@@ -167,21 +172,7 @@ def:pub JacCodeBlock(code: str) -> any {
             </Group>
 
             <Box px="md" py="sm" style={{"overflowX": "auto"}}>
-                <pre
-                    className="jac-code"
-                    style={{
-                        "margin": "0",
-                        "padding": "0",
-                        "fontSize": "13px",
-                        "lineHeight": "1.5",
-                        "fontFamily": "Monaco, Menlo, Ubuntu Mono, monospace",
-                        "whiteSpace": "pre-wrap",
-                        "wordBreak": "break-word",
-                        "color": "#d4d4d4",
-                        "background": "transparent"
-                    }}
-                    dangerouslySetInnerHTML={{ "__html": highlightedCode }}
-                />
+                <div ref={editorRef} className="jac-codemirror-wrapper" />
             </Box>
         </Paper>
     </Box>;
