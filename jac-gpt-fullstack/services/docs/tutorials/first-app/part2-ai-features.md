@@ -4,6 +4,9 @@ Your todo app works, but it's not very smart. Let's fix that -- you'll add AI-po
 
 **Prerequisites:** Complete [Part 1](part1-todo-app.md) first.
 
+!!! tip "Starting fresh"
+    If you have leftover data from Part 1, delete the `.jac/data/` directory before running Part 2. The schema changes in this part (adding `category`) may conflict with old Todo nodes.
+
 ---
 
 ## Set Up Your API Key
@@ -15,7 +18,7 @@ export ANTHROPIC_API_KEY="your-key-here"
 ```
 
 !!! warning "Common issue"
-    If you get "API key not found" errors, make sure the environment variable is set in the same terminal where you run `jac`. See [Troubleshooting: API key issues](../troubleshooting.md#openai-api-key-not-found).
+    If you get "API key not found" errors, make sure the environment variable is set in the same terminal where you run `jac`. If adding a todo silently fails (nothing happens), check the terminal running `jac start` for error messages -- a missing or invalid API key causes a server error. See [Troubleshooting: API key issues](../troubleshooting.md#api-key-not-found).
 
 ---
 
@@ -32,6 +35,25 @@ glob llm = Model(model_name="claude-sonnet-4-20250514");
 ```
 
 `import from byllm.lib { Model }` loads Jac's AI plugin. `glob llm = Model(...)` initializes the model at module level -- `glob` is Jac's way of declaring a global variable.
+
+!!! info "API Costs and Model Alternatives"
+    **Anthropic API keys are not free** -- if you use Claude models, you'll need to top up your API usage balance at [console.anthropic.com](https://console.anthropic.com).
+
+    **Free alternative:** Use Google's Gemini models with the [Gemini API](https://ai.google.dev/). To switch models, just change the `model_name` parameter:
+
+    ```jac
+    glob llm = Model(model_name="gemini/gemini-2.5-flash");
+    ```
+
+    **You can use any LLM provider** -- byLLM's `Model` wraps [LiteLLM](https://docs.litellm.ai/docs/providers), which supports OpenAI, Anthropic, Google, Azure, AWS Bedrock, and many others. Just ensure you have the appropriate API key set up and use the model name as specified in the [LiteLLM provider documentation](https://docs.litellm.ai/docs/providers).
+
+    **Self-hosted models:** You can also host your own models locally using [Ollama](https://ollama.ai/) or serve Hugging Face models directly. For example, with Ollama:
+
+    ```jac
+    glob llm = Model(model_name="ollama/llama3.2:1b");
+    ```
+
+    This keeps everything running on your machine at no cost -- no API keys needed.
 
 ---
 
@@ -105,13 +127,13 @@ Add `"category"` to the return values of `get_todos` and `toggle_todo`:
 def:pub get_todos -> list {
     return [
         {"id": t.id, "title": t.title, "done": t.done, "category": t.category}
-        for t in [root-->](`?Todo)
+        for t in [root-->](?:Todo)
     ];
 }
 
 """Toggle a todo's done status."""
 def:pub toggle_todo(id: str) -> dict {
-    for todo in [root-->](`?Todo) {
+    for todo in [root-->](?:Todo) {
         if todo.id == id {
             todo.done = not todo.done;
             return {
@@ -205,13 +227,13 @@ Add one line to `styles.css`:
     def:pub get_todos -> list {
         return [
             {"id": t.id, "title": t.title, "done": t.done, "category": t.category}
-            for t in [root-->](`?Todo)
+            for t in [root-->](?:Todo)
         ];
     }
 
     """Toggle a todo's done status."""
     def:pub toggle_todo(id: str) -> dict {
-        for todo in [root-->](`?Todo) {
+        for todo in [root-->](?:Todo) {
             if todo.id == id {
                 todo.done = not todo.done;
                 return {
@@ -225,7 +247,7 @@ Add one line to `styles.css`:
 
     """Delete a todo."""
     def:pub delete_todo(id: str) -> dict {
-        for todo in [root-->](`?Todo) {
+        for todo in [root-->](?:Todo) {
             if todo.id == id {
                 del todo;
                 return {"deleted": id};
@@ -313,6 +335,9 @@ Add one line to `styles.css`:
 export ANTHROPIC_API_KEY="your-key"
 jac start main.jac
 ```
+
+!!! warning "Common issue"
+    If you see "Address already in use", use `--port` to pick a different port: `jac start main.jac --port 3000`.
 
 Open [http://localhost:8000](http://localhost:8000). The app looks the same as before, but now when you add a todo it takes a moment longer -- the LLM is categorizing it behind the scenes. Try it:
 

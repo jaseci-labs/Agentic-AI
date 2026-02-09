@@ -45,12 +45,14 @@ The core keywords:
 
 Walkers live on the server, but the frontend needs to spawn them. Jac handles this with `sv import` -- server imports that the client uses to call walkers. This naturally leads to splitting your code into separate files.
 
-Create a new project:
+Create a new project (this gives you a clean slate with no leftover data from Parts 1-2):
 
 ```bash
 jac create my-todo-app --use client --skip
 cd my-todo-app
 ```
+
+You can delete the scaffolded `main.jac` and `components/Button.cl.jac` -- you'll replace them with the files below.
 
 You'll create these files:
 
@@ -98,7 +100,7 @@ The `cl { }` block is client-side code embedded in a server file. It imports the
 
 ### Data Models
 
-You already know `Todo` from Parts 1 and 2. Now add `MealIngredient` -- a node that persists generated ingredients to the graph (unlike Part 2 where they only existed in browser memory):
+You already know `Todo` from Parts 1 and 2. Note the field rename from `done` to `completed` -- this aligns with the walker convention used throughout Part 3. Now add `MealIngredient` -- a node that persists generated ingredients to the graph (unlike Part 2 where they only existed in browser memory):
 
 ```jac
 node Todo {
@@ -164,7 +166,7 @@ Now for the walkers. Here's `AddTodo` -- compare it to the `def:pub add_todo` fr
 walker:priv AddTodo {
     has title: str;
 
-    can create with `root entry {
+    can create with Root entry {
         category = str(categorize(self.title)).split(".")[-1].lower();
         new_todo = here ++> Todo(
             id=str(uuid4()),
@@ -185,7 +187,7 @@ Line by line:
 
 - **`walker:priv AddTodo`** -- a private walker. Only authenticated users can spawn it, and it runs on their personal root node.
 - **`has title: str`** -- a parameter you pass when spawning the walker.
-- **`` can create with `root entry ``** -- this ability fires when the walker enters the root node.
+- **`` can create with Root entry ``** -- this ability fires when the walker enters the root node.
 - **`here`** -- refers to the current node (root). This is what `root` was in `def:pub` functions.
 - **`self.title`** -- accesses the walker's own properties.
 - **`report { ... }`** -- sends data back to whoever spawned this walker.
@@ -196,7 +198,7 @@ The `ListTodos` walker shows the **accumulator pattern** -- a common walker idio
 walker:priv ListTodos {
     has todos: list = [];
 
-    can collect with `root entry {
+    can collect with Root entry {
         visit [-->];
     }
 
@@ -209,7 +211,7 @@ walker:priv ListTodos {
         });
     }
 
-    can report_all with `root exit {
+    can report_all with Root exit {
         report self.todos;
     }
 }
@@ -229,7 +231,7 @@ The walker's `has todos: list = []` state persists across the entire traversal -
 walker:priv ToggleTodo {
     has todo_id: str;
 
-    can search with `root entry { visit [-->]; }
+    can search with Root entry { visit [-->]; }
 
     can toggle with Todo entry {
         if here.id == self.todo_id {
@@ -242,7 +244,7 @@ walker:priv ToggleTodo {
 walker:priv DeleteTodo {
     has todo_id: str;
 
-    can search with `root entry { visit [-->]; }
+    can search with Root entry { visit [-->]; }
 
     can delete with Todo entry {
         if here.id == self.todo_id {
@@ -263,7 +265,7 @@ The `GenerateShoppingList` walker is interesting because it does two things in o
 walker:priv GenerateShoppingList {
     has meal_description: str;
 
-    can generate with `root entry {
+    can generate with Root entry {
         # First clear old ingredients
         visit [-->];
         # Then generate new ones
@@ -303,7 +305,7 @@ When `visit [-->]` runs, the walker visits all connected nodes. If any are `Meal
 walker:priv ListMealPlan {
     has ingredients: list = [];
 
-    can collect with `root entry { visit [-->]; }
+    can collect with Root entry { visit [-->]; }
 
     can gather with MealIngredient entry {
         self.ingredients.append({
@@ -312,11 +314,11 @@ walker:priv ListMealPlan {
         });
     }
 
-    can report_all with `root exit { report self.ingredients; }
+    can report_all with Root exit { report self.ingredients; }
 }
 
 walker:priv ClearMealPlan {
-    can collect with `root entry { visit [-->]; }
+    can collect with Root entry { visit [-->]; }
 
     can clear with MealIngredient entry {
         del here;
@@ -733,7 +735,7 @@ All the complete files are in the collapsible sections below. Create each file i
     walker:priv AddTodo {
         has title: str;
 
-        can create with `root entry {
+        can create with Root entry {
             category = str(categorize(self.title)).split(".")[-1].lower();
             new_todo = here ++> Todo(
                 id=str(uuid4()),
@@ -752,7 +754,7 @@ All the complete files are in the collapsible sections below. Create each file i
     walker:priv ListTodos {
         has todos: list = [];
 
-        can collect with `root entry {
+        can collect with Root entry {
             visit [-->];
         }
 
@@ -765,7 +767,7 @@ All the complete files are in the collapsible sections below. Create each file i
             });
         }
 
-        can report_all with `root exit {
+        can report_all with Root exit {
             report self.todos;
         }
     }
@@ -773,7 +775,7 @@ All the complete files are in the collapsible sections below. Create each file i
     walker:priv ToggleTodo {
         has todo_id: str;
 
-        can search with `root entry {
+        can search with Root entry {
             visit [-->];
         }
 
@@ -791,7 +793,7 @@ All the complete files are in the collapsible sections below. Create each file i
     walker:priv DeleteTodo {
         has todo_id: str;
 
-        can search with `root entry {
+        can search with Root entry {
             visit [-->];
         }
 
@@ -808,7 +810,7 @@ All the complete files are in the collapsible sections below. Create each file i
     walker:priv GenerateShoppingList {
         has meal_description: str;
 
-        can generate with `root entry {
+        can generate with Root entry {
             # First clear old ingredients
             visit [-->];
             # Then generate new ones
@@ -842,7 +844,7 @@ All the complete files are in the collapsible sections below. Create each file i
     walker:priv ListMealPlan {
         has ingredients: list = [];
 
-        can collect with `root entry {
+        can collect with Root entry {
             visit [-->];
         }
 
@@ -856,13 +858,13 @@ All the complete files are in the collapsible sections below. Create each file i
             });
         }
 
-        can report_all with `root exit {
+        can report_all with Root exit {
             report self.ingredients;
         }
     }
 
     walker:priv ClearMealPlan {
-        can collect with `root entry {
+        can collect with Root entry {
             visit [-->];
         }
 
@@ -1540,6 +1542,9 @@ export ANTHROPIC_API_KEY="your-key"
 jac start main.jac
 ```
 
+!!! warning "Common issue"
+    If you see "Address already in use", use `--port` to pick a different port: `jac start main.jac --port 3000`.
+
 Open [http://localhost:8000](http://localhost:8000). You should see a login screen -- that's the auth working.
 
 1. **Sign up** with any username and password
@@ -1562,7 +1567,7 @@ Over three parts, you built the same app three ways -- each time adding capabili
 The new concepts from this part:
 
 - **`walker:priv`** -- per-user walker that requires authentication
-- **`` can X with `root entry ``** -- ability that fires when the walker enters root
+- **`` can X with Root entry ``** -- ability that fires when the walker enters root
 - **`can X with Todo entry`** -- ability that fires when the walker enters a Todo node
 - **`visit [-->]`** -- move the walker to all connected nodes
 - **`here`** / **`self`** -- current node / walker state

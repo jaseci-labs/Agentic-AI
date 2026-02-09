@@ -13,7 +13,9 @@ jac create my-todo --use client --skip
 cd my-todo
 ```
 
-Create `styles.css` in your project root:
+`--skip` skips the interactive prompts after creation. You don't need to run `jac install` separately -- `jac start` handles dependency installation automatically.
+
+Now replace `main.jac` with the code below and create `styles.css` in your project root:
 
 ```css
 .container { max-width: 500px; margin: 40px auto; font-family: system-ui; padding: 20px; }
@@ -27,7 +29,7 @@ Create `styles.css` in your project root:
 .count { text-align: center; color: #888; margin-top: 16px; font-size: 0.9rem; }
 ```
 
-Now replace `main.jac` with the code below. We'll walk through each piece.
+We'll walk through each piece of `main.jac` below.
 
 ---
 
@@ -37,7 +39,7 @@ Now replace `main.jac` with the code below. We'll walk through each piece.
 import from uuid { uuid4 }
 cl import "./styles.css";
 
-# A node is a persistent data container in the graph
+# A node becomes a persistent data container in the graph when attached to a root node
 node Todo {
     has id: str,
         title: str,
@@ -45,7 +47,7 @@ node Todo {
 }
 ```
 
-A `node` is a data type that lives in Jac's built-in graph database. Unlike a regular class, nodes persist across server restarts -- no external database setup needed. `has` declares the node's properties with types and optional defaults.
+A `node` is a data type that can live in Jac's built-in graph database. Unlike a regular class, nodes can persist across server restarts (when attached to the global `root`) -- no external database setup needed. `has` declares the node's properties with types and optional defaults.
 
 Two imports: `uuid` is a standard Python library (Jac can import any Python package), and `cl import` is a client-side import that loads CSS in the browser.
 
@@ -62,12 +64,12 @@ def:pub add_todo(title: str) -> dict {
 
 """Get all todos."""
 def:pub get_todos -> list {
-    return [{"id": t.id, "title": t.title, "done": t.done} for t in [root-->](`?Todo)];
+    return [{"id": t.id, "title": t.title, "done": t.done} for t in [root-->](?:Todo)];
 }
 
 """Toggle a todo's done status."""
 def:pub toggle_todo(id: str) -> dict {
-    for todo in [root-->](`?Todo) {
+    for todo in [root-->](?:Todo) {
         if todo.id == id {
             todo.done = not todo.done;
             return {"id": todo.id, "title": todo.title, "done": todo.done};
@@ -78,7 +80,7 @@ def:pub toggle_todo(id: str) -> dict {
 
 """Delete a todo."""
 def:pub delete_todo(id: str) -> dict {
-    for todo in [root-->](`?Todo) {
+    for todo in [root-->](?:Todo) {
         if todo.id == id {
             del todo;
             return {"deleted": id};
@@ -94,7 +96,7 @@ There's a lot of new syntax here. Let's unpack it:
 
 **`root ++> Todo(...)`** creates a new Todo node and connects it to `root` with an edge. `root` is the graph's built-in entry point -- think of it as the top of your data tree. The `++>` operator returns a list, so `todo[0]` grabs the newly created node.
 
-**`[root-->](`?Todo)`** reads as "all nodes connected from root that are Todo nodes." It's a graph query -- the backtick-question-mark syntax filters by node type.
+**`[root-->](?:Todo)`** reads as "all nodes connected from root that are Todo nodes." It's a graph query -- the `(?:Type)` syntax filters by node type.
 
 Your data ends up looking like this:
 
@@ -214,12 +216,12 @@ The rest is JSX-like syntax: `{[... for t in items]}` renders a list, `lambda` h
 
     """Get all todos."""
     def:pub get_todos -> list {
-        return [{"id": t.id, "title": t.title, "done": t.done} for t in [root-->](`?Todo)];
+        return [{"id": t.id, "title": t.title, "done": t.done} for t in [root-->](?:Todo)];
     }
 
     """Toggle a todo's done status."""
     def:pub toggle_todo(id: str) -> dict {
-        for todo in [root-->](`?Todo) {
+        for todo in [root-->](?:Todo) {
             if todo.id == id {
                 todo.done = not todo.done;
                 return {"id": todo.id, "title": todo.title, "done": todo.done};
@@ -230,7 +232,7 @@ The rest is JSX-like syntax: `{[... for t in items]}` renders a list, `lambda` h
 
     """Delete a todo."""
     def:pub delete_todo(id: str) -> dict {
-        for todo in [root-->](`?Todo) {
+        for todo in [root-->](?:Todo) {
             if todo.id == id {
                 del todo;
                 return {"deleted": id};
@@ -314,8 +316,10 @@ The rest is JSX-like syntax: `{[... for t in items]}` renders a list, `lambda` h
 jac start main.jac
 ```
 
+This starts on port 8000 by default. Use `jac start main.jac --port 3000` to pick a different port.
+
 !!! warning "Common issue"
-    If you see "Address already in use", another process is on port 8000. See [Troubleshooting: Server won't start](../troubleshooting.md#server-wont-start-address-already-in-use).
+    If you see "Address already in use", another process is on port 8000. Use `--port` to pick a different port, or see [Troubleshooting: Server won't start](../troubleshooting.md#server-wont-start-address-already-in-use).
 
 Open [http://localhost:8000](http://localhost:8000). You should see a clean todo app with an input field and an "Add" button. Try it:
 
@@ -335,7 +339,7 @@ You built a full-stack app in a single file with no boilerplate. Here are the Ja
 - **`node`** -- persistent data types stored in the graph
 - **`def:pub`** -- functions that auto-become HTTP endpoints
 - **`root ++>`** -- create nodes and connect them to the graph
-- **`[root-->](\`?Todo)`** -- query nodes by type
+- **`[root-->](?:Todo)`** -- query nodes by type
 - **`cl def:pub app`** -- client-side component that runs in the browser
 - **`has`** -- reactive state that triggers re-renders
 - **`can with entry`** -- lifecycle hook (runs on mount)

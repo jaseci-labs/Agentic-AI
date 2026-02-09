@@ -1,12 +1,6 @@
-# Jac Library Mode
+# Jac Library Mode: Pure Python with Jac's Power
 
-> **Part of:** [Part IX: Deployment](deployment.md)
->
-> **Related:** [Python Integration](python-integration.md) | [Part III: OSP](osp.md)
-
----
-
-## **Introduction**
+## Introduction
 
 Jac provides a library mode that enables developers to express all Jac language features as standard Python code. This mode provides complete access to Jac's object-spatial programming capabilities through the `jaclang.lib` package, allowing developers to work entirely within Python syntax.
 
@@ -17,7 +11,7 @@ Library mode is designed for:
 - **Understanding Jac's architecture** by exploring how its transpilation to Python works under the hood
 - **Enterprise and corporate environments** where introducing standard Python libraries is more acceptable than adopting new language syntax
 
-### **Converting Jac Code to Pure Python**
+### Converting Jac Code to Pure Python
 
 The `jac jac2py` command transpiles Jac source files into equivalent Python code. The generated output:
 
@@ -27,11 +21,11 @@ The `jac jac2py` command transpiles Jac source files into equivalent Python code
 
 ---
 
-## **The Friends Network Example**
+## The Friends Network Example
 
 This section demonstrates Jac's object-spatial programming model through a complete example implementation in library mode.
 
-### **The Jac Code**
+### The Jac Code
 
 The following example implements a social network graph with person nodes connected by friendship and family relationship edges:
 
@@ -87,7 +81,7 @@ with entry {
 }
 ```
 
-### **The Library Mode Python Equivalent**
+### The Library Mode Python Equivalent
 
 Run `jac jac2py friends.jac` to generate:
 
@@ -167,9 +161,9 @@ print(result)
 
 ---
 
-## **Key Concepts Explained**
+## Key Concepts Explained
 
-### **1. Nodes and Edges**
+### 1. Nodes and Edges
 
 **In Jac:**
 
@@ -197,7 +191,7 @@ class Friend(Edge):
 
 Graph nodes are implemented by inheriting from the `Node` base class, while relationships between nodes inherit from the `Edge` base class. Data fields are defined using standard Python class attributes with type annotations.
 
-### **2. Walkers**
+### 2. Walkers
 
 **In Jac:**
 
@@ -219,7 +213,7 @@ class FriendFinder(Walker):
 
 Walkers are graph traversal agents implemented by inheriting from the `Walker` base class. Walkers navigate through the graph structure and execute logic at each visited node or edge.
 
-### **3. Abilities (Event Handlers)**
+### 3. Abilities (Event Handlers)
 
 **In Jac:**
 
@@ -242,22 +236,12 @@ def report_friend(self, here: Person) -> None:
 
 Abilities define event handlers that execute when a walker interacts with nodes or edges. The `@on_entry` decorator marks methods that execute when a walker enters a node or edge, while `@on_exit` marks exit handlers. The `here` parameter represents the current node or edge being visited, and the `visitor` parameter (in node/edge abilities) represents the traversing walker.
 
-### **4. Connecting Nodes**
+### 4. Connecting Nodes
 
 **In Jac:**
 
 ```jac
-node Person {
-    has name: str;
-}
-
-edge Friend {}
-edge Family {}
-
 with entry {
-    p1 = Person(name="John");
-    p2 = Person(name="Susan");
-    p3 = Person(name="Mike");
     root ++> p1;                      # Connect root to p1
     p1 +>: Friend :+> p2;             # Connect p1 to p2 with Friend edge
     p2 +>: Family :+> [p1, p3];       # Connect p2 to multiple nodes
@@ -276,17 +260,11 @@ connect(left=p2, right=[p1, p3], edge=Family)
 
 The `connect()` function creates directed edges between nodes. The `edge` parameter specifies the edge type class, defaulting to a generic edge if omitted. The function supports connecting a single source node to either a single target node or a list of target nodes.
 
-### **5. Spawning Walkers**
+### 5. Spawning Walkers
 
 **In Jac:**
 
 ```jac
-walker FriendFinder {
-    can find with Root entry {
-        visit [-->];
-    }
-}
-
 with entry {
     result = FriendFinder() spawn root;
 }
@@ -302,18 +280,14 @@ result = spawn(FriendFinder(), root())
 
 The `spawn()` function initiates a walker at a specified node and begins traversal. The `root()` function returns the root node of the current graph. The `spawn()` function returns the walker instance after traversal completion.
 
-### **6. Visiting Nodes**
+### 6. Visiting Nodes
 
 **In Jac:**
 
 ```jac
-edge Family {}
-
-walker Visitor {
-    can traverse with Root entry {
-        visit [-->];                      # Visit all outgoing edges
-        visit [->:Family:->];             # Visit only Family edges
-    }
+with entry {
+    visit [-->];                      # Visit all outgoing edges
+    visit [edge ->:Family :->];       # Visit only Family edges
 }
 ```
 
@@ -332,9 +306,9 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 
 ---
 
-## **Complete Library Interface Reference**
+## Complete Library Interface Reference
 
-### **Type Aliases & Constants**
+### Type Aliases & Constants
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -342,7 +316,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `EdgeDir` | Enum | Edge direction enum (IN, OUT, ANY) |
 | `DSFunc` | Type | Data spatial function type alias |
 
-### **Base Classes**
+### Base Classes
 
 | Class | Description | Usage |
 |-------|-------------|-------|
@@ -354,7 +328,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `GenericEdge` | Generic edge when no type specified | Default edge type |
 | `OPath` | Object-spatial path builder | `OPath(node).edge_out()` |
 
-### **Decorators**
+### Decorators
 
 | Decorator | Description | Usage |
 |-----------|-------------|-------|
@@ -362,7 +336,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `@on_exit` | Exit ability decorator | Executes when walker exits node/edge |
 | `@sem(doc, fields)` | Semantic string decorator | AI/LLM integration metadata |
 
-### **Graph Construction**
+### Graph Construction
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -371,7 +345,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `build_edge(is_undirected, conn_type, conn_assign)` | Create edge builder function | `is_undirected`: bidirectional flag<br>`conn_type`: edge class<br>`conn_assign`: initial attributes |
 | `assign_all(target, attr_val)` | Assign attributes to list of objects | `target`: list of objects<br>`attr_val`: tuple of (attrs, values) |
 
-### **Graph Traversal & Walker Operations**
+### Graph Traversal & Walker Operations
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -384,7 +358,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `arefs(path)` | Async path references (placeholder) | `path`: ObjectSpatialPath |
 | `filter_on(items, func)` | Filter archetype list by predicate | `items`: list of archetypes<br>`func`: filter function |
 
-### **Path Building (Methods on OPath class)**
+### Path Building (Methods on OPath class)
 
 | Method | Description | Returns |
 |--------|-------------|---------|
@@ -395,7 +369,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `.edge()` | Edges only (no nodes) | Self (chainable) |
 | `.visit()` | Mark for visit traversal | Self (chainable) |
 
-### **Node & Edge Operations**
+### Node & Edge Operations
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -405,7 +379,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `remove_edge(node, edge)` | Remove edge reference from node | `node`: NodeAnchor<br>`edge`: EdgeAnchor |
 | `detach(edge)` | Detach edge from both nodes | `edge`: EdgeAnchor |
 
-### **Data Access & Persistence**
+### Data Access & Persistence
 
 | Function | Description | Returns |
 |----------|-------------|---------|
@@ -418,7 +392,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `commit(anchor)` | Commit data to datasource | None |
 | `reset_graph(root)` | Purge graph from memory | Count of deleted items |
 
-### **Access Control & Permissions**
+### Access Control & Permissions
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -431,7 +405,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `check_connect_access(anchor)` | Check connect permission | `anchor`: Target anchor |
 | `check_access_level(anchor, no_custom)` | Get access level for anchor | `anchor`: Target<br>`no_custom`: skip custom check |
 
-### **Module Management & Archetypes**
+### Module Management & Archetypes
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -449,7 +423,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `update_walker(module_name, items)` | Reload walker from module | `module_name`: Module<br>`items`: Items to update |
 | `create_archetype_from_source(source_code, ...)` | Create archetype from Jac source | `source_code`: Jac code string<br>`module_name`, `base_path`, `cachable`, `keep_temporary_files`: options |
 
-### **Testing & Debugging**
+### Testing & Debugging
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -458,7 +432,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `report(expr, custom)` | Report value from walker | `expr`: Value to report<br>`custom`: custom report flag |
 | `printgraph(node, depth, traverse, edge_type, bfs, edge_limit, node_limit, file, format)` | Generate graph visualization | `node`: Start node<br>`depth`: Max depth<br>`traverse`: traversal flag<br>`edge_type`: filter edges<br>`bfs`: breadth-first flag<br>`edge_limit`, `node_limit`: limits<br>`file`: output path<br>`format`: 'dot' or 'mermaid' |
 
-### **LLM & AI Integration**
+### LLM & AI Integration
 
 | Function | Description | Use Case |
 |----------|-------------|----------|
@@ -467,7 +441,7 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 | `get_mtir(caller, args, call_params)` | Get method IR for LLM | LLM internal representation |
 | `sem(semstr, inner_semstr)` | Semantic metadata decorator | `@sem("doc", {"field": "desc"})` |
 
-### **Runtime & Threading**
+### Runtime & Threading
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -481,9 +455,9 @@ The `OPath()` class constructs traversal paths from a given node. The `edge_out(
 
 ---
 
-## **Best Practices**
+## Best Practices
 
-### **1. Type Hints**
+### 1. Type Hints
 
 Always use type hints for better IDE support:
 
@@ -496,7 +470,7 @@ class Person(Node):
     age: Optional[int] = None
 ```
 
-### **2. Walker State**
+### 2. Walker State
 
 Keep walker state minimal and immutable when possible:
 
@@ -509,7 +483,7 @@ class Counter(Walker):
         self.count += 1
 ```
 
-### **3. Path Filtering**
+### 3. Path Filtering
 
 Use lambda functions for flexible filtering:
 
@@ -527,7 +501,7 @@ visit(
 )
 ```
 
-### **4. Clean Imports**
+### 4. Clean Imports
 
 Import only what you need:
 
@@ -541,9 +515,9 @@ from jaclang.lib import *
 
 ---
 
-## **Migration Guide**
+## Migration Guide
 
-### **From Jac to Library Mode**
+### From Jac to Library Mode
 
 | Jac Syntax | Library Mode Python |
 |------------|---------------------|
@@ -561,7 +535,7 @@ from jaclang.lib import *
 
 ---
 
-## **Summary**
+## Summary
 
 Library mode provides a pure Python implementation of Jac's object-spatial programming model through the `jaclang.lib` package. This approach offers several advantages:
 

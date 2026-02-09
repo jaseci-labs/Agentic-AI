@@ -65,7 +65,7 @@ python -m jaclang run myfile.jac
 Walker did not execute any abilities
 ```
 
-**Cause:** Walker spawned at root but missing `with \`root entry` handler.
+**Cause:** Walker spawned at root but missing `with Root entry` handler.
 
 **Wrong:**
 
@@ -85,7 +85,7 @@ with entry {
 
 ```jac
 walker Greeter {
-    can start with `root entry {
+    can start with Root entry {
         visit [-->];  # Start visiting connected nodes
     }
 
@@ -222,7 +222,7 @@ with entry {
 
 ```jac
 walker Debug {
-    can start with `root entry {
+    can start with Root entry {
         print("At root");
         print(f"Connected: {[-->]}");
         visit [-->];
@@ -257,7 +257,7 @@ with entry {
     print(f"All connected: {len(all_nodes)}");
 
     # Check with filter
-    people = [-->](`?Person);
+    people = [-->](?:Person);
     print(f"People: {len(people)}");
 }
 ```
@@ -385,7 +385,7 @@ See [Walker Responses](../reference/language/walker-responses.md) for details on
 
 ## AI Integration Issues
 
-### OpenAI API key not found
+### API key not found
 
 **Error:**
 
@@ -395,13 +395,17 @@ AuthenticationError: No API key provided
 
 **Solution:**
 
+Set the environment variable for your LLM provider in the same terminal where you run `jac`:
+
 ```bash
-# Set environment variable
+# Anthropic (used in the tutorials)
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# OpenAI
 export OPENAI_API_KEY="sk-..."
 
-# Or in .env file
-echo "OPENAI_API_KEY=sk-..." > .env
-source .env
+# Google
+export GOOGLE_API_KEY="..."
 ```
 
 ### Rate limit exceeded
@@ -490,11 +494,11 @@ jac check myfile.jac
 
 | Error | Quick Fix |
 |-------|-----------|
-| Walker doesn't run | Add `can start with \`root entry { visit [-->]; }` |
+| Walker doesn't run | Add `can start with Root entry { visit [-->]; }` |
 | Missing glob keyword | Use `glob var = value;` in `cl {}` blocks |
 | Enumerate unpacking | Use `for (i, x) in enumerate(...)` |
 | Attribute order | Put required attributes before defaults |
 | Empty reports | Check node connections and `report` calls |
 | 401 Unauthorized | Add `:pub` modifier to walker or include auth token |
 | CORS error | Configure `[plugins.scale.cors]` in jac.toml |
-| API key missing | Set `OPENAI_API_KEY` environment variable |
+| API key missing | Set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GOOGLE_API_KEY` environment variable |

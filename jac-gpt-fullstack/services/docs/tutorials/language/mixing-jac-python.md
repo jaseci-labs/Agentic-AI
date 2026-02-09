@@ -1,16 +1,8 @@
-# Python Integration
+# Mixing Jac and Python
 
-> **Part of:** [Part VIII: Ecosystem](ecosystem.md)
->
-> **Related:** [Library Mode](library-mode.md) | [Build a Todo App](../../tutorials/fullstack/todo-app.md)
+Jac is designed as a superset of Python, extending the language with additional features for modern software architecture while maintaining full compatibility with the Python ecosystem. Python developers can leverage their existing knowledge while accessing new capabilities for graph-based and object-spatial programming.
 
----
-
-## **Jac's Native Superset of Python and TypeScript/JavaScript**
-
-Jac is designed as a superset of both Python and TypeScript/JavaScript, providing full compatibility with both the PyPI and npm ecosystems. Developers can leverage their existing knowledge while accessing new capabilities for graph-based and object-spatial programming.
-
-### **How it Works: Transpilation to Native Python**
+## How it Works: Transpilation to Native Python
 
 Jac programs execute on the standard Python runtime without requiring custom runtime environments, virtual machines, or interpreters. The Jac compiler transpiles Jac source code into standard Python through a multi-stage compilation pipeline that generates optimized Python bytecode. This approach provides several advantages:
 
@@ -77,7 +69,7 @@ The compiled output demonstrates how Jac's object-oriented features map to stand
 
 ---
 
-### **Seamless Interoperability: Import Jac Files Like Python Modules**
+## Seamless Interoperability: Import Jac Files Like Python Modules
 
 Jac integrates with Python through a simple import mechanism. By adding `import jaclang` to Python code, developers can import `.jac` files using standard Python import statements without requiring build steps, compilation commands, or configuration files.
 
@@ -126,11 +118,11 @@ import numpy as np;
 
 ---
 
-### **Five Adoption Patterns: Choose Your Integration Level**
+## Five Adoption Patterns: Choose Your Integration Level
 
 Jac provides five adoption strategies that accommodate different development requirements, ranging from pure Python implementations with Jac library support to fully Jac-based applications. The following patterns represent the primary integration approaches:
 
-#### **Pattern Comparison Table**
+### Pattern Comparison Table
 
 | Pattern | Use Case | Jac Content | Python Content | Key Benefits | Example Scenario |
 |---------|----------|-------------|----------------|--------------|------------------|
@@ -156,7 +148,7 @@ graph LR
 
 ---
 
-### **Pattern Details and Examples**
+## Pattern Details and Examples
 
 **Example Project:** The following examples demonstrate a task manager application that stores tasks and generates AI-powered task descriptions.
 
@@ -170,7 +162,7 @@ Each pattern demonstrates a different approach to implementing this application.
 
 ---
 
-#### **Pattern 1: Pure Jac**
+### Pattern 1: Pure Jac
 
 This pattern uses exclusively `.jac` files with no Python files required.
 
@@ -236,7 +228,7 @@ project/
 
 ---
 
-#### **Pattern 2: Jac + Inline Python**
+### Pattern 2: Jac + Inline Python
 
 This pattern embeds Python code directly within `.jac` files using `::py::` blocks, enabling the use of Python-specific libraries or preservation of existing Python code.
 
@@ -306,7 +298,7 @@ This approach preserves tested Python code while introducing Jac features, suppo
 
 ---
 
-#### **Pattern 3: Mostly Jac**
+### Pattern 3: Mostly Jac
 
 This pattern implements the primary application logic in Jac while importing Python utilities from separate `.py` files.
 
@@ -380,7 +372,7 @@ Jac imports Python modules using standard import mechanisms without requiring co
 
 ---
 
-#### **Pattern 4: Mostly Python**
+### Pattern 4: Mostly Python
 
 This pattern maintains a Python-first application structure while importing `.jac` modules for graph-based and AI features.
 
@@ -459,7 +451,7 @@ This approach maintains familiar Python syntax while providing access to Jac's g
 
 ---
 
-#### **Pattern 5: Pure Python + Jac Library**
+### Pattern 5: Pure Python + Jac Library
 
 This pattern uses pure Python with Jac's runtime as a library, without any `.jac` files.
 
@@ -524,7 +516,7 @@ This pattern provides graph-based capabilities in pure Python without introducin
 
 ---
 
-### **Key Takeaways**
+## Key Takeaways
 
 Jac's design as a Python superset enables complementary use of both languages rather than requiring a choice between them. Key characteristics include:
 
