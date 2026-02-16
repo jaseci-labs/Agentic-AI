@@ -2,8 +2,48 @@
 
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jaclang**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking-changes.md) page.
 
-## jaclang 0.9.16 (Unreleased)
+## jaclang 0.10.2 (Unreleased)
 
+- **Pytest Plugin for Native Jac Tests**: Added a `pytest11` entry-point plugin (`jaclang.pytest_plugin`) that discovers and runs `test` blocks in `.jac` files alongside Python tests with zero configuration. Migrated ~79 language integration tests and 8 compilation tests from Python to native Jac `test` keyword.
+- **Perf: Bootstrap Bytecode Cache**: Cache the jac0-transpiled bytecode for jac0core modules on disk, eliminating ~200ms of repeated transpilation on every invocation. `jac purge -f` clears both caches.
+- **Perf: Cache `len()` in Lexer/Parser Hot Paths**: Cached source and token list lengths in the jac0 bootstrap transpiler and the RD parser/lexer, eliminating ~1.8M redundant `len()` calls per startup.
+- 3 Minor refactors/changes.
+- **Fix: `jac grammar` Command Broken Path**: Fixed the `jac grammar` CLI command.
+- **Grammar Extraction Pass Improvements & Spec Snapshot Test**: Improved `jac grammar` extraction accuracy for negated-check loops, optional dispatch branches, `while True` parse-and-break patterns, and standalone `match_tok` calls. Added a golden-file snapshot test (`jac.spec`) that validates extracted grammar rules against a checked-in spec, catching unintended grammar drift on every CI run.
+- **Black-style Grammar Formatting**: Replaced alignment-based `jac grammar` formatting with Black-style fixed 4-space indentation, blank lines between rules, and 88-char line width. Uses a recursive tree-based formatter instead of the previous string-based wrapping.
+- 4 Minor refactors/changes.
+
+## jaclang 0.10.1 (Latest Release)
+
+- **`jac purge` Command**: Added `jac purge` to clear the bytecode cache. Works even when the cache is corrupted.
+- **`format_build_error` Plugin Hook**: Added `format_build_error(error_output, project_dir, config)` hook to `JacMachineInterface`, allowing plugins to provide custom error formatting for client bundle build failures. The default implementation returns raw error output; plugins like `jac-client` can override to display structured diagnostics.
+- **Fix: MTIR scope key uses file stem for portability**: Fixed MTIR scope key generation to use only the file stem (filename without extension) instead of path-relative module names. This ensures consistent scope keys across different execution environments (local vs Docker) and enables compiled bytecode to be portable across different directory structures.
+- **Fix: False Type Errors in Nested Functions**: Fixed incorrect type checking errors when using nested functions inside `impl` blocks. Nested functions now correctly validate their return statements against their own return type instead of the outer function's return type.
+- **Fix: `jac start` Output Ordering**: Server startup messages now appear after compilation completes instead of before, ensuring users see build progress first and "Server ready" only when the server is actually accepting connections. Added `on_ready` callback parameter to `JacAPIServer.start()` for consistent startup message handling across stdlib and jac-scale servers.
+- **`jac format --check` Mode**: Added a `--check` flag to validate formatting without modifying files. Exits with status 1 if files need formatting or have syntax errors.
+- **Fix: `jac start` Output Ordering**: Server startup messages now appear after compilation completes instead of before, ensuring users see build progress first and "Server ready" only when the server is actually accepting connections.
+- **PWA Build Detection**: The stdlib server now detects existing PWA builds and serves Vite-hashed client files (`client.*.js`) correctly.
+- **Fix: Serve JSON and JS files as static assets**: Added `.json` and `.js` to the list of recognized asset extensions, fixing PWA `manifest.json` and `sw.js` serving.
+- **Code refactors**: Backtick escape, TS cleanup, etc.
+- **Bootstrap Compiler (`jac0`)**: Added a single-file Python transpiler (`jac0.py`, ~1900 lines) that compiles the Jac subset produced by `py2jac` into equivalent Python source code. This closes the bootstrap loop.
+- **RD Parser: Broad Grammar Parity Fixes**: Fixed 16 grammar gaps in the recursive descent parser, raising walk-check match rate from 95.3% to 98.7%.
+- **`jac --version` Shows Installed Plugins**: The version banner now lists all installed Jac plugins with their versions, making it easy to see the full environment at a glance.
+- **Support Go to Definition for Inherited Members**: "Go to Definition" now works correctly for inherited methods and attributes on classes without an explicit parent class.
+- **Type Checker Improvements**:
+  - **Fix: Type Checker Crashes**: Fixed crashes when type-checking default/star imports (`import from mod { default as X }`) and walker entry/exit handlers.
+  - **Fix: LiteralString Type Support**: Added `LiteralString` class to the type checker, improving binary operator chain handling and ensuring type compatibility between `LiteralString` and `str` types.
+  - **Type Checking for `super.init()` Calls**: Added validation for `super.init()` calls, catching argument errors against parent class initializers with proper MRO resolution.
+- **Fix: Native Code Cache False Positive**: Fixed a bug where "Setting up Jac for first use" appeared on every run instead of only the first time.
+- **Fix: LiteralString String type Compatibility**: LiteralStrings and Strings are now type compatible with type checker.
+- **Lark Parser Removal**: Replaced the Lark-based parser with a hand-written recursive descent parser as the default. Deleted `jac_parser.py`, `jac.lark`, `lark_jac_parser.py`, and the vendored `lark/` directory. All 110 language tests, 438 format tests, and 15 LSP server tests pass with the new parser.
+- **1 Small Refactors**
+- Docs update: return type `any` -> `JsxElement`
+- **Fix:** Spurious Write Access Warning on System Root During Sync
+- **3 Small Refactors**
+
+## jaclang 0.10.0
+
+- **KWESC_NAME syntax changed from `<>` to backtick**: Keyword-escaped names now use a backtick prefix (`` `node ``) instead of the angle-bracket prefix (`<>node`). All `.jac` source files, the lexer, parser, unparse/DocIR passes, and auto-lint rules have been updated accordingly.
 - **Remove Backtick Type Operator**: Removed the backtick (`` ` ``) `TYPE_OP` token and `TypeRef` AST node from the language. The `Root` type is now referenced directly by name (e.g., `with Root entry` instead of `` with `root entry ``). Filter comprehension syntax changed from `` (`?Type:field==val) `` to `(?:Type, field==val)`. `Root` is automatically imported from `jaclib` when used in walker event signatures.
 - **`APIProtocol` Builtin Enum**: Added `APIProtocol` enum (`HTTP`, `WEBHOOK`, `WEBSOCKET`) as a builtin, replacing the boolean `webhook` flag in `RestSpecs` with a typed `protocol` field. Use `@restspec(protocol=APIProtocol.WEBSOCKET)` directly without imports.
 - **Native Compiler: Cross-Module Linking**: Native `.na.jac` modules can now import and call functions from other `.na.jac` modules. The compiler performs LLVM IR-level linking enabling modular native code organization with `import from module { func1, func2 }` syntax.
@@ -12,6 +52,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **`jac grammar` Command**: Added a `jac grammar` CLI command that extracts the Jac grammar directly from the recursive descent parser's AST and prints it in EBNF or Lark format. Use `jac grammar` for EBNF output, `jac grammar --lark` for Lark format, and `-o <file>` to write to a file. Powered by a new `GrammarExtractPass` compiler pass that analyzes `parse_*` method implementations to reconstruct grammar rules from token-consumption patterns and control-flow structures.
 - **Type Checker Improvements**: Fixed several systemic issues in the type checker: `UnionType` operands are now handled correctly in connection operations (`++>`, `-->`) and instance conversion; the `_get_enclosing_class` helper no longer silently crashes due to a variable name bug; unannotated functions no longer produce false return-type errors; and a new rule requires return type annotations on top-level functions that return a value (bare `return` and `return None` remain annotation-free).
 - **Support custom Vite Configurations to `dev` mode**: Added support for custom Vite configuration from `jac.toml`.
+- **Fix: HMR server-side `sys.modules` refresh**: Imported modules now correctly reload in `--dev` mode by clearing stale `sys.modules` entries across the project.
 - **Auto-install watchdog for `--dev` mode**: `jac start --dev` automatically installs `watchdog` if missing, eliminating the manual `jac install --dev` step.
 - **Trim Redundant Parser Test Fixtures**: Removed 46 redundant entries from the micro parser test suite by eliminating exact duplicates across directories, near-identical examples, and files that add no unique syntax coverage, reducing the fixture list from 481 to 435 files.
 - **RD Parser Grammar Gap Fixes**: Fixed 9 coverage gaps in the recursive descent parser to match the Lark grammar spec: `skip` statement, `@=` operator, `na` context blocks, typed context blocks (`-> Type { ... }`), `is` separator in `sem` definitions, `impl` inside archetype bodies, raw f-strings (`rf"..."`), parenthesized yield expressions, and `*args`/`**kwargs` in lambda parameters.
@@ -19,9 +60,12 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **RD Parser: Yield in Assignments & Grammar Extraction Improvements**: The RD parser now correctly handles `x = yield expr` in assignments. The `jac grammar` extraction pass was improved to accurately display binary operator rules (e.g., `logical_or` now shows `logical_and (KW_OR logical_and)*` instead of the incorrect `logical_and KW_OR*`).
 - **RD Parser: Async, Impl & F-String Gap Fixes**: Fixed 6 more coverage gaps in the recursive descent parser: `async with` statements, async comprehensions (list/set/gen), `async for` token in AST kid lists, `impl` with event clause missing `with` token, `impl` by-expression extra `by` token, and nested `{expr}` inside f-string format specs (e.g., `f"{value:{width}}"`).
 - **RD Parser: Enum & Match Pattern Gap Fixes**: Fixed 3 more coverage gaps: multistring (concatenated string literals) in match literal patterns, `py_code_block` (inline Python) in enum blocks, and `free_code` (`with entry` blocks) in enum blocks.
+- **Fix: `IsADirectoryError` on dotted imports**: Fixed a crash where the compiler attempted to read directory paths as files when resolving dotted module imports (e.g., `include impl.imps`).
+- **CLI Dependency Command Refactor**: Redesigned the `jac install`, `jac add`, `jac remove`, and new `jac update` commands for cleaner, more consistent behavior. `jac install` now syncs all dependency types including plugin-provided ones (npm, etc.). `jac add` requires package arguments (no longer silently falls through to install) and errors on missing `jac.toml`. When no version is specified, `jac add` queries the installed version and records a `~=X.Y` compatible-release spec instead of `>=0.0.0`. The new `jac update [pkg]` command updates all or specific dependencies to their latest compatible versions and writes `~=X.Y` specs back to `jac.toml`.
+- **Fix:** Fixed `config.save()` to correctly persist dependency removals and git dependencies to disk.
 - **RD Parser: Strictness Parity with Lark**: Tightened the RD parser to reject constructs that the Lark grammar also rejects, closing 7 permissiveness gaps.
 
-## jaclang 0.9.15 (Latest Release)
+## jaclang 0.9.15
 
 - **Fix: Type Errors in Impl Files Now Show Correct Location**: Type errors in `.impl.jac` files now point to the actual error location instead of the declaration in the main file.
 - **First-Run Progress Messages**: The first time `jac` is run after installation, it now prints clear progress messages to stderr showing each internal compiler module being compiled and cached, so users understand why the first launch is slower and don't think the process is hanging.
@@ -40,6 +84,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Native Compiler: Runtime Error Checks**: The native backend now generates runtime safety checks that raise structured exceptions: `ZeroDivisionError` for integer and float division/modulo by zero, `IndexError` for list index out of bounds, `KeyError` for missing dictionary keys, `OverflowError` for integer arithmetic overflow, `AttributeError` for null pointer dereference, `ValueError` for invalid `int()` parsing, and `AssertionError` for failed assertions.
 - **Native Compiler: Python↔Native Interop**: Added cross-boundary function call support between Python (`sv`) and native (`na`) codespaces within the same module. Native functions can now call Python functions via LLVM extern declarations backed by ctypes callbacks, and Python code can call native functions via auto-generated ctypes stubs.
 - **Fix:** `sv import` Lost During Unparse in `.cl.jac` Files
+- **Fix: ESM Script Loading in Legacy Runtime**: Added `type="module"` to the generated `<script>` tag in the legacy runtime HTML renderer, matching the same fix applied in jac-client.
 
 ## jaclang 0.9.14
 
@@ -51,6 +96,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Native Compiler Buildout**: Major expansion of the native binary compilation pipeline for `.na.jac` files. The native backend now supports enums, boolean short-circuit evaluation, break/continue, for loops, ternary expressions, string literals and f-strings, objects with fields/methods/postinit, GC-managed lists, single inheritance with vtable-based virtual dispatch, complex access chains, indexed field assignment, string methods (strip, split, indexing), builtins (ord, int, input), augmented assignment operators (`+=`, `-=`, `*=`, `//=`, `%=`), and `with entry { ... }` blocks. All heap allocations use Boehm GC. Validated end-to-end with a fully native chess game.
 - **`jac run` for `.na.jac` Files**: Running `jac run file.na.jac` now compiles the file to native machine code and executes the `jac_entry` function directly, bypassing the Python import machinery entirely. Native execution runs as pure machine code with zero Python interpreter overhead at runtime.
 - **LSP Semantic Token Manager Refactor**: Refactored the language server's `SemTokManager` for production robustness. Deduplicated ~170 lines of shared symbol resolution logic.
+- - **Automatic Version Pinning in `jac.toml`**: When running `jac add <package_name>` without specifying a version, the detected installed version is automatically added to `jac.toml`, falling back to `>=0.0.0` if detection fails.
 - **Configuration Profiles**: Added multi-file configuration support with profile-based overrides. Projects can now use `jac.<profile>.toml` files (e.g., `jac.prod.toml`, `jac.staging.toml`) for environment-specific settings and `jac.local.toml` for developer-specific overrides that are automatically gitignored. Files are merged in priority order: `jac.toml` (base) < `jac.<profile>.toml` < `[environments.<profile>]` in-file overrides < `jac.local.toml`. Activate a profile via `--profile` flag on execution commands (e.g., `jac run app.jac --profile prod`, `jac start --profile staging`), the `JAC_PROFILE` environment variable, or `[environment].default_profile` in `jac.toml`. The `jac config path` command now displays all loaded config files with their priority labels. The `JAC_ENV` environment variable is deprecated in favor of `JAC_PROFILE`.
 - **Configuration Profile Bug Fixes**: Fixed several issues in the multi-profile config implementation: `storage.type` key now correctly maps to the `storage_type` field during profile merges, nested plugin configs use deep merge instead of shallow overwrite (preserving nested keys), `apply_profile` now handles all config sections (build, format, dot, cache, storage, check, project, dependencies, scripts -- previously only run, serve, test, and plugins), circular profile inheritance is detected and short-circuited instead of causing `RecursionError`, mutable default `config_files` field replaced with `None` sentinel to prevent cross-instance sharing, and config-to-CLI-args bridging added so profile values (e.g., `serve.port`) correctly override argparse defaults at runtime.
 - **JsxElement Builtin Type**: Added `JsxElement` builtin type for strict type checking of JSX expressions for client-side UI components.

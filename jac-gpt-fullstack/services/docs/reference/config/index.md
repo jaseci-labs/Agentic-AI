@@ -72,6 +72,8 @@ my-lib = { git = "https://github.com/user/repo.git", branch = "main" }
 | Range | `">=1.0,<2.0"` | 1.x only |
 | Compatible | `"~=1.4.2"` | 1.4.x |
 
+> **Default behavior:** When you run `jac add requests` without a version, the package is installed unconstrained and then the actual installed version is queried. A compatible-release spec (`~=X.Y`) is recorded -- e.g., if pip installs `2.32.5`, `jac.toml` gets `requests = "~=2.32"`. The `jac update` command also uses this format when writing updated versions back.
+
 ---
 
 ### [run]
@@ -115,7 +117,7 @@ dir = ".jac"        # Build artifacts directory
 The `dir` setting controls where all build artifacts are stored:
 
 - `.jac/cache/` - Bytecode cache
-- `.jac/packages/` - Installed packages
+- `.jac/venv/` - Project virtual environment
 - `.jac/client/` - Client-side builds
 - `.jac/data/` - Runtime data
 
@@ -127,7 +129,7 @@ Defaults for `jac test`:
 
 ```toml
 [test]
-directory = "tests"     # Test directory
+directory = ""          # Test directory (empty = current directory)
 filter = ""             # Filter pattern
 verbose = false         # Verbose output
 fail_fast = false       # Stop on first failure
@@ -143,7 +145,6 @@ Defaults for `jac format`:
 ```toml
 [format]
 outfile = ""        # Output file (empty = in-place)
-fix = false         # Auto-fix issues
 ```
 
 ---
@@ -202,7 +203,7 @@ select = ["combine-has", "remove-empty-parens"]
 | `staticmethod-to-static` | Convert `@staticmethod` decorator to `static` keyword | default |
 | `init-to-can` | Convert `def __init__` / `def __post_init__` to `can init` / `can postinit` | default |
 | `remove-empty-parens` | Remove empty parentheses from declarations (`def foo()` → `def foo`) | default |
-| `remove-kwesc` | Remove unnecessary angle bracket escaping from non-keyword names | default |
+| `remove-kwesc` | Remove unnecessary backtick escaping from non-keyword names | default |
 | `hasattr-to-null-ok` | Convert `hasattr(obj, "attr")` to null-safe access (`obj?.attr`) | default |
 | `simplify-ternary` | Simplify `x if x else default` to `x or default` | default |
 | `remove-future-annotations` | Remove `import from __future__ { annotations }` (not needed in Jac) | default |
@@ -252,6 +253,7 @@ Bytecode cache settings:
 ```toml
 [cache]
 enabled = true      # Enable caching
+dir = ".jac_cache"  # Cache directory
 ```
 
 ---
@@ -318,7 +320,29 @@ jac_client = "latest"
 jac_byllm = "none"           # Use "none" to skip installation
 ```
 
-See [jac-scale Webhooks](../plugins/jac-scale.md#webhooks) and [Kubernetes Deployment](../plugins/jac-scale.md#kubernetes-deployment) for details.
+**Prometheus Metrics (jac-scale):**
+
+```toml
+[plugins.scale.metrics]
+enabled = true
+endpoint = "/metrics"
+namespace = "myapp"
+walker_metrics = true
+```
+
+See [Prometheus Metrics](../plugins/jac-scale.md#prometheus-metrics) for details.
+
+**Kubernetes Secrets (jac-scale):**
+
+```toml
+[plugins.scale.secrets]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+DATABASE_PASSWORD = "${DB_PASS}"
+```
+
+See [Kubernetes Secrets](../plugins/jac-scale.md#kubernetes-secrets) for details.
+
+See also [jac-scale Webhooks](../plugins/jac-scale.md#webhooks) and [Kubernetes Deployment](../plugins/jac-scale.md#kubernetes-deployment) for more options.
 
 ---
 
