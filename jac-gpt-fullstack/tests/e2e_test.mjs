@@ -198,10 +198,15 @@ async function main() {
     await waitFor({ textGone: "Thinking" }, 120000);
     // Check DOM for the exact error messages the frontend renders on failure
     const result = await call("browser_evaluate", {
-      expression: "document.body.innerText.includes('Sorry, I encountered an error') || document.body.innerText.includes('Sorry, something went wrong')"
+      function: `() => {
+        const text = document.body.innerText;
+        if (text.includes('Sorry, I encountered an error')) return 'ERROR_FOUND';
+        if (text.includes('Sorry, something went wrong')) return 'ERROR_FOUND';
+        return 'OK';
+      }`
     });
     assert(
-      result.includes("false"),
+      !result.includes("ERROR_FOUND"),
       "Bot returned an error instead of a valid response"
     );
   });
