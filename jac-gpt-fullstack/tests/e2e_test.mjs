@@ -196,11 +196,14 @@ async function main() {
 
   await runTest("Bot responds to message", async () => {
     await waitFor({ textGone: "Thinking" }, 120000);
-    const s = await snap();
-    const hasError =
-      s.includes("Sorry, I encountered an error") ||
-      s.includes("Sorry, something went wrong");
-    assert(!hasError, "Bot returned an error instead of a valid response");
+    // Check the actual DOM for error messages (accessibility snapshot may not expose them)
+    const result = await call("browser_evaluate", {
+      expression: "document.body.innerText.includes('Sorry')"
+    });
+    assert(
+      result.includes("false"),
+      "Bot returned an error instead of a valid response"
+    );
   });
 
   await runTest("Documentation panel toggle", async () => {
