@@ -196,9 +196,9 @@ async function main() {
 
   await runTest("Bot responds to message", async () => {
     await waitFor({ textGone: "Thinking" }, 120000);
-    // Check the actual DOM for error messages (accessibility snapshot may not expose them)
+    // Check DOM for the exact error messages the frontend renders on failure
     const result = await call("browser_evaluate", {
-      expression: "document.body.innerText.includes('Sorry')"
+      expression: "document.body.innerText.includes('Sorry, I encountered an error') || document.body.innerText.includes('Sorry, something went wrong')"
     });
     assert(
       result.includes("false"),
