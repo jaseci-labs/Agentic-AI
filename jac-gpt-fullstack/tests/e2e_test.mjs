@@ -200,13 +200,16 @@ async function main() {
     const result = await call("browser_evaluate", {
       function: `() => {
         const text = document.body.innerText;
-        if (text.includes('Sorry, I encountered an error')) return 'ERROR_FOUND';
-        if (text.includes('Sorry, something went wrong')) return 'ERROR_FOUND';
-        return 'OK';
+        const has1 = text.includes('Sorry, I encountered an error');
+        const has2 = text.includes('Sorry, something went wrong');
+        // Return debug info: first 500 chars of page text + check results
+        return JSON.stringify({ has1, has2, textPreview: text.substring(0, 500) });
       }`
     });
+    console.log("    [DEBUG] browser_evaluate result:", result);
+    const hasError = result.includes('"has1":true') || result.includes('"has2":true');
     assert(
-      !result.includes("ERROR_FOUND"),
+      !hasError,
       "Bot returned an error instead of a valid response"
     );
   });
