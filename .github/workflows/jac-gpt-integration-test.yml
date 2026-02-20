@@ -94,8 +94,8 @@ jobs:
         working-directory: jac-gpt-fullstack
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          MODEL: gemini/gemini-2.0-flash
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          MODEL: mistral/mistral-small-latest
         run: |
           timeout 600 jac start main.jac > /tmp/jac-server.log 2>&1 &
           SERVER_PID=$!
