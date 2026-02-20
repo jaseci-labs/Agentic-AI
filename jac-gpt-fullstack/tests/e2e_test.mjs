@@ -197,10 +197,10 @@ async function main() {
   await runTest("Bot responds to message", async () => {
     await waitFor({ textGone: "Thinking" }, 120000);
     const s = await snap();
-    assert(
-      !s.includes("Sorry, I encountered an error"),
-      "Bot returned an error instead of a valid response"
-    );
+    const hasError =
+      s.includes("Sorry, I encountered an error") ||
+      s.includes("Sorry, something went wrong");
+    assert(!hasError, "Bot returned an error instead of a valid response");
   });
 
   await runTest("Documentation panel toggle", async () => {
