@@ -194,20 +194,13 @@ async function main() {
     await waitFor({ text: "Thinking" }, 15000);
   });
 
-  // Bot response test - graceful degradation if no API key
   await runTest("Bot responds to message", async () => {
-    try {
-      await waitFor({ textGone: "Thinking" }, 120000);
-    } catch {
-      // If the bot errors out due to missing API key, that's acceptable
-      const s = await snap();
-      const hasError = s.includes("Sorry, I encountered an error");
-      const hasResponse = !s.includes("Thinking");
-      assert(
-        hasError || hasResponse,
-        "Bot did not respond and is still loading after 120s"
-      );
-    }
+    await waitFor({ textGone: "Thinking" }, 120000);
+    const s = await snap();
+    assert(
+      !s.includes("Sorry, I encountered an error"),
+      "Bot returned an error instead of a valid response"
+    );
   });
 
   await runTest("Documentation panel toggle", async () => {
