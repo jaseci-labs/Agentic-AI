@@ -28,10 +28,6 @@ sentiment = analyze(text)  # Sentiment.POSITIVE (guaranteed)
 Return one of a fixed set of values:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 enum Priority {
     LOW,
     MEDIUM,
@@ -39,7 +35,6 @@ enum Priority {
     CRITICAL
 }
 
-"""Determine the priority level of this support ticket."""
 def classify_priority(ticket: str) -> Priority by llm();
 
 with entry {
@@ -75,7 +70,6 @@ enum HttpStatus {
     SERVER_ERROR = 500
 }
 
-"""Determine the appropriate HTTP status for this API response."""
 def get_status(response_description: str) -> HttpStatus by llm();
 ```
 
@@ -86,17 +80,12 @@ def get_status(response_description: str) -> HttpStatus by llm();
 Return complex structured data:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 obj Person {
     has name: str;
     has age: int;
     has occupation: str;
 }
 
-"""Extract person details from this text."""
 def extract_person(text: str) -> Person by llm();
 
 with entry {
@@ -122,10 +111,6 @@ Occupation: software engineer
 ## Nested Objects
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 obj Address {
     has street: str;
     has city: str;
@@ -138,7 +123,6 @@ obj Company {
     has headquarters: Address;
 }
 
-"""Extract company information from this text."""
 def extract_company(text: str) -> Company by llm();
 
 with entry {
@@ -162,16 +146,11 @@ with entry {
 Return multiple items:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 obj Task {
     has title: str;
     has priority: str;
 }
 
-"""Extract all tasks mentioned in this text."""
 def extract_tasks(text: str) -> list[Task] by llm();
 
 with entry {
@@ -207,10 +186,7 @@ Found 4 tasks:
 ## Optional Fields
 
 ```jac
-import from byllm.lib { Model }
 import from typing { Optional }
-
-glob llm = Model(model_name="gpt-4o-mini");
 
 obj Contact {
     has name: str;
@@ -218,7 +194,6 @@ obj Contact {
     has phone: Optional[str] = None;  # May not be present
 }
 
-"""Extract contact information from this text."""
 def extract_contact(text: str) -> Contact by llm();
 
 with entry {
@@ -238,10 +213,7 @@ with entry {
 ## Complex Example: Resume Parser
 
 ```jac
-import from byllm.lib { Model }
 import from typing { Optional }
-
-glob llm = Model(model_name="gpt-4o-mini");
 
 obj Education {
     has degree: str;
@@ -265,7 +237,6 @@ obj Resume {
     has experience: list[Experience];
 }
 
-"""Parse this resume text into structured data."""
 def parse_resume(text: str) -> Resume by llm();
 
 with entry {
@@ -310,10 +281,6 @@ with entry {
 Add hints to help the LLM understand field meanings:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 obj Product {
     has name: str;
     has price: float;
@@ -325,7 +292,6 @@ sem Product.name = "The product's brand and model name";
 sem Product.price = "Price in USD";
 sem Product.category = "One of: Electronics, Clothing, Home, Food";
 
-"""Extract product information from this listing."""
 def extract_product(listing: str) -> Product by llm();
 ```
 
@@ -336,10 +302,6 @@ def extract_product(listing: str) -> Product by llm();
 Use structured outputs with walkers:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 enum Priority { LOW, MEDIUM, HIGH }
 
 node Ticket {
@@ -348,10 +310,16 @@ node Ticket {
     has priority: Priority = Priority.MEDIUM;
 }
 
-"""Analyze this support ticket and determine its priority."""
 def analyze_priority(title: str, description: str) -> Priority by llm();
+```
 
+!!! warning "Graph Persistence"
+    Walker examples use persistent graph state. Run `jac clean --all` before re-running to avoid `NodeAnchor` errors.
+
+```jac
 walker PrioritizeTickets {
+    can with Root entry { visit [-->]; }
+
     can prioritize with Ticket entry {
         here.priority = analyze_priority(here.title, here.description);
         report here;
@@ -385,7 +353,6 @@ obj StrictData {
     has active: bool;    # Must be boolean
 }
 
-"""Extract numerical data from this text."""
 def extract_data(text: str) -> StrictData by llm();
 ```
 
@@ -414,4 +381,3 @@ If the LLM returns invalid types, byLLM will:
 
 - [Agentic AI](agentic.md) - Add tools for the LLM to use
 - [byLLM Reference](../../reference/plugins/byllm.md) - Complete documentation
-- [Examples Gallery](../examples/index.md) - See structured outputs in action

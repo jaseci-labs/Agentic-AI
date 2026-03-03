@@ -33,10 +33,6 @@ Regular LLM:     Agentic LLM:
 Define functions the LLM can use:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 # Define a tool
 def get_current_time() -> str {
     import datetime;
@@ -44,7 +40,6 @@ def get_current_time() -> str {
 }
 
 # LLM function that can use the tool
-"""Answer questions, using available tools when needed."""
 def answer(question: str) -> str by llm(
     tools=[get_current_time]
 );
@@ -72,26 +67,18 @@ The LLM automatically:
 ## Multiple Tools
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
-"""Add two numbers together."""
 def add(a: int, b: int) -> int {
     return a + b;
 }
 
-"""Multiply two numbers."""
 def multiply(a: int, b: int) -> int {
     return a * b;
 }
 
-"""Get the value of pi."""
 def get_pi() -> float {
     return 3.14159;
 }
 
-"""Solve math problems using the available tools."""
 def solve_math(problem: str) -> str by llm(
     tools=[add, multiply, get_pi]
 );
@@ -110,10 +97,6 @@ with entry {
 Tools can have parameters that the LLM fills in:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 """Search the database for matching records."""
 def search_database(query: str, limit: int = 10) -> list[str] {
     # Simulated database search
@@ -130,7 +113,6 @@ def get_user_info(user_id: str) -> dict {
     };
 }
 
-"""Answer questions about users and data."""
 def query(question: str) -> str by llm(
     tools=[search_database, get_user_info]
 );
@@ -148,10 +130,6 @@ with entry {
 **ReAct** (Reason + Act) lets the LLM think step-by-step:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o");
-
 """Search the web for information."""
 def search_web(query: str) -> str {
     # Simulated web search
@@ -169,11 +147,10 @@ def get_date() -> str {
     return datetime.date.today().isoformat();
 }
 
-"""Answer complex questions using reasoning and tools."""
 def research(question: str) -> str by llm(
-    method="ReAct",
     tools=[search_web, calculate, get_date]
 );
+sem research = "Answer complex questions using reasoning and tools.";
 
 with entry {
     answer = research(
@@ -201,10 +178,6 @@ With ReAct, the LLM:
 Tools can be methods on objects:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 obj Calculator {
     has memory: float = 0;
 
@@ -231,11 +204,11 @@ obj Calculator {
         return self.memory;
     }
 
-    """Perform calculations step by step."""
     def calculate(instructions: str) -> str by llm(
         tools=[self.add, self.subtract, self.clear, self.get_memory]
     );
 }
+sem Calculator.calculate = "Perform calculations step by step.";
 
 with entry {
     calc = Calculator();
@@ -252,18 +225,15 @@ with entry {
 Combine tools with graph traversal:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 node Document {
     has title: str;
     has content: str;
     has summary: str = "";
 }
 
-"""Summarize this document in 2-3 sentences."""
 def summarize(content: str) -> str by llm();
+
+sem summarize = "Summarize this document in 2-3 sentences.";
 
 """Search documents for matching content."""
 def search_documents(query: str, docs: list) -> list {
@@ -275,7 +245,12 @@ def search_documents(query: str, docs: list) -> list {
     }
     return results;
 }
+```
 
+!!! warning "Graph Persistence"
+    Walker examples use persistent graph state. Run `jac clean --all` before re-running to avoid `NodeAnchor` errors.
+
+```jac
 walker DocumentAgent {
     has query: str;
 
@@ -326,10 +301,6 @@ with entry {
 Provide additional context to the LLM:
 
 ```jac
-import from byllm.lib { Model }
-
-glob llm = Model(model_name="gpt-4o-mini");
-
 glob company_info = """
 Company: TechCorp
 Products: CloudDB, SecureAuth, DataViz
@@ -337,10 +308,11 @@ Support Hours: 9 AM - 5 PM EST
 Support Email: support@techcorp.com
 """;
 
-"""Answer customer questions about our products and services."""
 def support_agent(question: str) -> str by llm(
     incl_info={"company_context": company_info}
 );
+
+sem support_agent = "Answer customer questions about our products and services.";
 
 with entry {
     print(support_agent("What products do you offer?"));
@@ -353,10 +325,7 @@ with entry {
 ## Building a Full Agent
 
 ```jac
-import from byllm.lib { Model }
 import json;
-
-glob llm = Model(model_name="gpt-4o");
 
 # Knowledge base
 glob kb: dict = {
@@ -402,12 +371,11 @@ def place_order(product: str, quantity: int) -> str {
     return f"Order placed: {quantity}x {product}";
 }
 
-"""You are a helpful sales assistant. Help customers browse products,
-check prices and availability, and place orders."""
 def sales_agent(request: str) -> str by llm(
-    method="ReAct",
     tools=[list_products, get_price, check_inventory, place_order]
 );
+
+sem sales_agent = "Browse products, check prices and availability, and place orders.";
 
 with entry {
     print("Customer: What products do you have?");
@@ -429,9 +397,8 @@ with entry {
 
 | Concept | Usage |
 |---------|-------|
-| Basic tools | `by llm(tools=[func1, func2])` |
-| ReAct reasoning | `by llm(method="ReAct", tools=[...])` |
-| Object methods | `by llm(tools=[self.method])` |
+| Tools (ReAct reasoning) | `by llm(tools=[func1, func2])` |
+| Object methods as tools | `by llm(tools=[self.method])` |
 | Context injection | `by llm(incl_info={"key": value})` |
 | `sem` on tools | Help LLM understand when to use tools |
 
@@ -450,5 +417,4 @@ with entry {
 ## Next Steps
 
 - [byLLM Reference](../../reference/plugins/byllm.md) - Complete tool documentation
-- [Examples: EmailBuddy](../examples/emailbuddy.md) - Agentic email assistant
 - [Full-Stack Tutorial](../fullstack/setup.md) - Add UI to your agent

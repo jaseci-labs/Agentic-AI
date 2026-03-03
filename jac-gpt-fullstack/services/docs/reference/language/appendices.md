@@ -15,7 +15,7 @@
 
 | Keyword | Category | Description |
 |---------|----------|-------------|
-| `abs` | Modifier | Abstract method/class (note: NOT `abstract`) |
+| `abs` | Modifier | Abstract ability declaration (postfix, e.g., `def area() -> float abs;`) |
 | `and` | Operator | Logical AND (also `&&`) |
 | `as` | Import | Alias |
 | `assert` | Statement | Assertion |
@@ -26,6 +26,7 @@
 | `can` | Declaration | Ability (method on archetypes) |
 | `case` | Control | Match/switch case |
 | `cl` | Block | Client-side code block |
+| `na` | Block | Native code block (compiles to LLVM IR) |
 | `class` | Archetype | Python-style class definition |
 | `continue` | Control | Next iteration |
 | `def` | Declaration | Function |
@@ -93,7 +94,7 @@
 
 - The abstract keyword is `abs`, not `abstract`
 - Logical operators have both word and symbol forms: `and`/`&&`, `or`/`||`
-- `cl` and `sv` are block keywords for client/server code separation
+- `cl`, `sv`, and `na` are block keywords for client/server/native code separation
 
 ---
 
@@ -161,8 +162,8 @@
 module        : STRING? element*              # Optional module docstring
 element       : STRING? toplevel_stmt         # Optional statement docstring
 toplevel_stmt : import | archetype | ability | impl | test | entry
-              | (cl | sv) toplevel_stmt       # Client/server prefix
-              | (cl | sv) "{" toplevel_stmt* "}"  # Client/server block
+              | (cl | sv | na) toplevel_stmt       # Client/server/native prefix
+              | (cl | sv | na) "{" toplevel_stmt* "}"  # Client/server/native block
 
 archetype     : async? (obj | node | edge | walker | enum) NAME inheritance? body
 inheritance   : "(" NAME ("," NAME)* ")"
@@ -174,6 +175,7 @@ ability       : async? "can" NAME params? ("->" type)? event_clause? (body | ";"
 event_clause  : "with" type_expr? (entry | exit)
 
 import        : "import" (module | "from" import_path "{" names "}")
+              | "import" "from" STRING "{" extern_decl* "}"  # C library import (na)
 import_path   : (NAME ":")? dotted_name       # Optional namespace prefix (e.g., jac:module)
 entry         : "with" "entry" (":" NAME)? body
 test          : "test" NAME body
@@ -269,9 +271,10 @@ walker Example {
 
 ### 6. `report` vs `return`
 
+<!-- jac-skip -->
 ```jac
 walker Example {
-    can collect with Node entry {
+    can collect with Node entry -> object {
         report here.value;  # Continues execution
         visit [-->];        # Still runs
 
@@ -294,6 +297,26 @@ def increment -> None {
 ---
 
 ## Appendix E: Migration from Python
+
+### Quick Reference Table
+
+| Concept | Python | Jac |
+|---------|--------|-----|
+| Code blocks | Indentation | `{ }` braces |
+| Statements | No semicolons | `;` required |
+| Classes | `class Foo:` | `obj Foo { }` |
+| Attributes | `self.x = val` in `__init__` | `has x: type = val;` |
+| Methods | `def method(self):` | `def method() { }` (self is implicit) |
+| Entry point | `if __name__ == "__main__":` | `with entry { }` |
+| Module variables | Global assignment | `glob` keyword |
+| Enums | `class Color(Enum):` | `enum Color { RED, GREEN, BLUE }` |
+| Error handling | `try: ... except:` | `try { } except Type as e { }` |
+| Imports | `from x import y` | `import from x { y }` |
+| Pattern matching | `match x: case 1:` | `match x { case 1:` (Python-style indentation inside braces) |
+| Inheritance | `class Dog(Animal):` | `obj Dog(Animal) { }` |
+
+!!! warning "Match Case Syntax"
+    Match case bodies use Python-style indentation (not braces), even though they appear inside a braces-delimited block. This is unique in Jac.
 
 ### Class to Object
 
@@ -371,15 +394,111 @@ with entry {
 }
 ```
 
+### Imports
+
+**Python:**
+
+```python
+import math
+from collections import Counter, defaultdict
+```
+
+**Jac:**
+
+```jac
+import math;
+import from collections { Counter, defaultdict }
+```
+
+### Enums
+
+**Python:**
+
+```python
+from enum import Enum
+
+class Status(Enum):
+    PENDING = "pending"
+    ACTIVE = "active"
+```
+
+**Jac:**
+
+```jac
+enum Status {
+    PENDING = "pending",
+    ACTIVE = "active"
+}
+```
+
+### Entry Point
+
+**Python:**
+
+```python
+if __name__ == "__main__":
+    main()
+```
+
+**Jac:**
+
+```jac
+with entry {
+    main();
+}
+```
+
+### Module-Level Variables
+
+**Python:**
+
+```python
+config = {"debug": True, "version": "1.0.0"}
+```
+
+**Jac:**
+
+```jac
+glob config: dict = {"debug": True, "version": "1.0.0"};
+```
+
+### Error Handling
+
+**Python:**
+
+```python
+try:
+    result = divide(10, 0)
+except ValueError as e:
+    print(f"Error: {e}")
+finally:
+    print("Done")
+```
+
+**Jac:**
+
+<!-- jac-skip -->
+```jac
+try {
+    result = divide(10, 0);
+} except ValueError as e {
+    print(f"Error: {e}");
+} finally {
+    print("Done");
+}
+```
+
+For a step-by-step transition guide, see [Jac Basics Tutorial](../../tutorials/language/basics.md).
+
 ---
 
 ## Appendix F: LLM Provider Reference
 
 | Provider | Model Names | Environment Variable |
 |----------|-------------|---------------------|
-| OpenAI | `gpt-4`, `gpt-4o`, `gpt-3.5-turbo` | `OPENAI_API_KEY` |
-| Anthropic | `claude-3-opus`, `claude-3-sonnet` | `ANTHROPIC_API_KEY` |
-| Google | `gemini-pro`, `gemini-ultra` | `GOOGLE_API_KEY` |
+| OpenAI | `gpt-4`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `o3-mini` | `OPENAI_API_KEY` |
+| Anthropic | `claude-3-opus`, `claude-3-sonnet`, `claude-sonnet-4-6`, `claude-opus-4`, `claude-haiku-4-5` | `ANTHROPIC_API_KEY` |
+| Google | `gemini-pro`, `gemini-ultra`, `gemini-1.5-pro`, `gemini-2.0-flash` | `GOOGLE_API_KEY` |
 | Azure | `azure/gpt-4` | Azure config |
 | Ollama | `ollama/llama2`, `ollama/mistral` | Local (no key) |
 
