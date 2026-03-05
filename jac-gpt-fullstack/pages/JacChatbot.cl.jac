@@ -26,6 +26,8 @@ def:pub JacChatbot() -> JsxElement {
     chat = useChat();
     isAuthenticated = jacIsLoggedIn();
     scrollAreaRef = useRef(None);
+    viewportRef = useRef(None);
+    has spacerHeight: int = 0;
 
     # Add CSS animations on mount
     useEffect(lambda -> None {
@@ -60,6 +62,28 @@ def:pub JacChatbot() -> JsxElement {
         }
     }, []);
 
+    # Dynamically calculate spacer height so the latest user message can scroll to top
+    useEffect(lambda -> None {
+        viewport = viewportRef.current;
+        msgEl = chat.messagesEndRef.current;
+        if not viewport or not msgEl {
+            if spacerHeight != 0 {
+                spacerHeight = 0;
+            }
+            return;
+        }
+        vpHeight = viewport.clientHeight;
+        # Get message's absolute position within the scroll content
+        msgTop = msgEl.getBoundingClientRect().top - viewport.getBoundingClientRect().top + viewport.scrollTop;
+        # Content height without the current spacer
+        contentHeight = viewport.scrollHeight - spacerHeight;
+        # Only enough spacer to allow scrollIntoView to bring the message to the top
+        needed = Math.max(0, Math.ceil(msgTop + vpHeight - contentHeight));
+        if needed != spacerHeight {
+            spacerHeight = needed;
+        }
+    }, [chat.messages, spacerHeight]);
+
     def toggleSidebar() -> None {
         sidebarOpen = not sidebarOpen;
     }
@@ -68,10 +92,22 @@ def:pub JacChatbot() -> JsxElement {
         docPanelOpen = not docPanelOpen;
     }
 
+    # Find last user message id for scroll targeting
+    lastUserMsgId = None;
+    for msg in chat.messages {
+        if msg.isUser {
+            lastUserMsgId = msg.id;
+        }
+    }
+
     # Build message items
     messageItems = [];
     for msg in chat.messages {
-        messageItems.push(<div key={msg.id} style={{"animation": "fadeIn 0.3s ease"}}>
+        msgRef = None;
+        if msg.id == lastUserMsgId {
+            msgRef = chat.messagesEndRef;
+        }
+        messageItems.push(<div key={msg.id} ref={msgRef} style={{"animation": "fadeIn 0.3s ease"}}>
             <ChatMessage
                 message={msg.content}
                 isUser={msg.isUser}
@@ -136,7 +172,7 @@ def:pub JacChatbot() -> JsxElement {
     mainContent = None;
     if hasMessages {
         # Active conversation - messages area
-        mainContent = <ScrollArea ref={scrollAreaRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
+        mainContent = <ScrollArea ref={scrollAreaRef} viewportRef={viewportRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
             <div style={{
                 "maxWidth": "768px",
                 "margin": "0 auto",
@@ -152,8 +188,8 @@ def:pub JacChatbot() -> JsxElement {
                 }}>
                     {messageItems}
                     {loadingContent}
+                    <div style={{"height": String(spacerHeight) + "px"}} />
                 </div>
-                <div ref={chat.messagesEndRef} />
             </div>
         </ScrollArea>;
     } else {

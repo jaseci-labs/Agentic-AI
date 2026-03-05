@@ -54,13 +54,18 @@ def:pub useChat() -> any {
         }
     }, [messageCount]);
 
-    # Scroll to bottom only when new messages are added (not during streaming updates)
+    # Scroll latest user message to top when new messages are added (not during streaming updates)
     useEffect(lambda -> None {
         currentCount = messages.length;
         # Only scroll if message count increased (new message added)
         if currentCount > prevMessageCountRef.current {
             if messagesEndRef.current {
-                messagesEndRef.current.scrollIntoView({"behavior": "smooth"});
+                # Delay scroll slightly to ensure DOM has settled after rapid state updates
+                setTimeout(lambda -> None {
+                    if messagesEndRef.current {
+                        messagesEndRef.current.scrollIntoView({"behavior": "smooth", "block": "start"});
+                    }
+                }, 50);
             }
         }
         prevMessageCountRef.current = currentCount;
