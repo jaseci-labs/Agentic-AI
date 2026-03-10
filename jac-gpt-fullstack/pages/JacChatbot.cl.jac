@@ -9,6 +9,7 @@ import from ..components.ChatMessage { ChatMessage }
 import from ..components.ChatInput { ChatInput }
 import from ..components.Sidebar { Sidebar }
 import from ..components.DocumentationPanel { DocumentationPanel }
+import from ..components.AgentReasoning { AgentReasoning }
 
 # Main Jac GPT Chatbot component (Complete Specification)
 def:pub JacChatbot() -> JsxElement {
@@ -68,16 +69,25 @@ def:pub JacChatbot() -> JsxElement {
         docPanelOpen = not docPanelOpen;
     }
 
-    # Build message items
-    messageItems = [];
+    # Build message items - split to insert reasoning before the streaming message
+    allMessageItems = [];
     for msg in chat.messages {
-        messageItems.push(<div key={msg.id} style={{"animation": "fadeIn 0.3s ease"}}>
+        allMessageItems.push(<div key={msg.id} style={{"animation": "fadeIn 0.3s ease"}}>
             <ChatMessage
                 message={msg.content}
                 isUser={msg.isUser}
                 timestamp={msg.timestamp}
             />
         </div>);
+    }
+
+    # When reasoning is active, insert it above the last (streaming bot) message
+    hasReasoningToShow = chat.reasoningSteps.length > 0 or chat.isReasoning;
+    messageItems = allMessageItems;
+    lastMessageItem = None;
+    if hasReasoningToShow and allMessageItems.length > 0 {
+        messageItems = allMessageItems.slice(0, -1);
+        lastMessageItem = allMessageItems[allMessageItems.length - 1];
     }
 
     # Loading indicator with bouncing dots (sequential bounce)
@@ -128,8 +138,17 @@ def:pub JacChatbot() -> JsxElement {
     hasMessages = chat.messages.length > 0;
 
     loadingContent = None;
-    if chat.isLoading {
+    showThinking = chat.isLoading and not chat.isReasoning and chat.reasoningSteps.length == 0;
+    if showThinking {
         loadingContent = loadingIndicator;
+    }
+
+    reasoningContent = None;
+    if chat.reasoningSteps.length > 0 or chat.isReasoning {
+        reasoningContent = <AgentReasoning
+            steps={chat.reasoningSteps}
+            isActive={chat.isReasoning}
+        />;
     }
 
     # Messages content or empty state
@@ -151,6 +170,8 @@ def:pub JacChatbot() -> JsxElement {
                     "gap": "8px"
                 }}>
                     {messageItems}
+                    {reasoningContent}
+                    {lastMessageItem}
                     {loadingContent}
                 </div>
                 <div ref={chat.messagesEndRef} />

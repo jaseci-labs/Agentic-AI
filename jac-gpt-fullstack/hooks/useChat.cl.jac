@@ -16,6 +16,8 @@ def:pub useChat() -> any {
     has docSuggestions: list = [];
     has lastUserMessage: str = "";
     has isSearchingDocs: bool = False;
+    has reasoningSteps: list = [];
+    has isReasoning: bool = False;
 
     messagesEndRef = useRef(None);
     firstChunkRef = useRef(False);
@@ -156,6 +158,10 @@ def:pub useChat() -> any {
             # SSE chunk handler - updates message content for each chunk
             userMessageContent = content.trim();  # Store user message for filtering
             firstChunkRef.current = False;  # Reset for this message
+
+            # Reset reasoning state for new message
+            reasoningSteps = [];
+            isReasoning = True;
             
             def onChunk(chunk: str) -> None {
                 # Stop loading animation on first chunk
@@ -188,6 +194,27 @@ def:pub useChat() -> any {
                 };
             }
 
+            # SSE event handler - captures reasoning steps for display
+            def onEvent(event: any) -> None {
+                eventType = event.type or "";
+                eventData = event.data or {};
+
+                if eventType == "thought" or eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
+                    reasoningSteps = lambda prev: any -> any {
+                        return prev.concat([{"type": eventType, "data": eventData}]);
+                    };
+                }
+
+                if eventType == "steps_done" {
+                    isReasoning = False;
+                }
+
+                if eventType == "chunk" {
+                    # First chunk means reasoning is done, streaming begins
+                    isReasoning = False;
+                }
+            }
+
             # Handle suggestions independently (fire and forget)
             async def handleSuggestions() -> None {
                 isSearchingDocs = True;
@@ -208,7 +235,7 @@ def:pub useChat() -> any {
             handleSuggestions();
             
             # Wait for SSE streaming to complete
-            result = await sendMessage(content.trim(), sessionId, userEmail, onChunk, abortControllerRef.current.signal);
+            result = await sendMessage(content.trim(), sessionId, userEmail, onChunk, onEvent, abortControllerRef.current.signal);
 
             if not result.success {
                 # Check if request was aborted
@@ -372,6 +399,8 @@ def:pub useChat() -> any {
         "docSuggestions": docSuggestions,
         "lastUserMessage": lastUserMessage,
         "isSearchingDocs": isSearchingDocs,
+        "reasoningSteps": reasoningSteps,
+        "isReasoning": isReasoning,
         "messagesEndRef": messagesEndRef,
         "canSendMessage": canSendMessage,
         "handleSendMessage": handleSendMessage,

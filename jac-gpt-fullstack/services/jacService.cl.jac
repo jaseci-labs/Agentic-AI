@@ -57,7 +57,7 @@ async def:pub getSession(sessionId: str) -> any {
 }
 
 """Send a message and get a response from the chatbot (SSE streaming)."""
-async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onChunk: any = None, abortSignal: any = None) -> any {
+async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onChunk: any = None, onEvent: any = None, abortSignal: any = None) -> any {
     try {
         # Get token for authentication
         token = localStorage.getItem("jac_token");
@@ -119,8 +119,19 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
 
                     if parsed.type == "chunk" {
                         if onChunk {
-                            onChunk(parsed.content);
+                            content = "";
+                            if parsed.data {
+                                content = parsed.data.content or "";
+                            } elif parsed.content {
+                                content = parsed.content;
+                            }
+                            onChunk(content);
                         }
+                    }
+
+                    # Forward all event types to onEvent callback
+                    if onEvent {
+                        onEvent(parsed);
                     }
                 } except Exception as parseError {
                     console.error("JSON parse error:", parseError, "Data:", data);

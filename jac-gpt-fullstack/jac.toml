@@ -15,7 +15,7 @@ sentence-transformers = ">=0.0.0"
 faiss-cpu = ">=0.0.0"
 
 [dependencies.npm]
-jac-client-node = "1.0.4"
+jac-client-node = "1.0.7"
 react-markdown = "^9.0.0"
 rehype-highlight = "^7.0.0"
 "highlight.js" = "^11.9.0"

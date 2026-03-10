@@ -45,12 +45,13 @@ jobs:
           python-version: '3.12'
 
       # Install required packages (including app dependencies for local validation)
-      # Install jac-scale from main to get code-server horizontal scaling support
+      # Install jac-scale editable from source until jaseci-labs/jaseci#5057 is fixed
       - name: Install Jaseci packages
         run: |
           pip install --upgrade pip
           pip install jaclang jac-client byllm
-          pip install git+https://github.com/jaseci-labs/jaseci.git@main#subdirectory=jac-scale
+          git clone --depth 1 --branch main https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
+          pip install -e /tmp/jaseci/jac-scale
 
       # Install app dependencies (required for jac start to validate main.jac locally)
       - name: Install app dependencies

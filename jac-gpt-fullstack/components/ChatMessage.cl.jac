@@ -82,16 +82,27 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> JsxElement 
                 </Tooltip>
             </Group>
             <Box px="md" py="sm" style={{"overflowX": "auto"}}>
-                <pre style={{
-                    "margin": "0",
-                    "padding": "0",
-                    "fontSize": "13px",
-                    "lineHeight": "1.6",
-                    "fontFamily": "JetBrains Mono, Consolas, Monaco, monospace",
-                    "whiteSpace": "pre-wrap",
-                    "wordBreak": "break-word",
-                    "color": "#e4e4e7"
-                }}>
+                <pre
+                    style={{
+                        "margin": "0",
+                        "padding": "0",
+                        "fontSize": "13px",
+                        "lineHeight": "1.6",
+                        "fontFamily": "JetBrains Mono, Consolas, Monaco, monospace",
+                        "whiteSpace": "pre-wrap",
+                        "wordBreak": "break-word",
+                        "color": "#e4e4e7"
+                    }}
+                    onCut={lambda e: any -> None { e.preventDefault(); }}
+                    onPaste={lambda e: any -> None { e.preventDefault(); }}
+                    onKeyDown={lambda e: any -> None {
+                        isCopy = (e.ctrlKey or e.metaKey) and (e.key == "c" or e.key == "C");
+                        isSelectAll = (e.ctrlKey or e.metaKey) and (e.key == "a" or e.key == "A");
+                        if (e.ctrlKey or e.metaKey) and not isCopy and not isSelectAll {
+                            e.preventDefault();
+                        }
+                    }}
+                >
                     <code>{code}</code>
                 </pre>
             </Box>
@@ -121,7 +132,11 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
         if editorRef.current {
             state = EditorState.create({
                 "doc": code,
-                "extensions": getJacExtensions()
+                "extensions": [
+                    getJacExtensions(),
+                    EditorState.readOnly.of(True),
+                    EditorView.editable.of(False)
+                ]
             });
             viewRef.current = Reflect.construct(EditorView, [{
                 "state": state,

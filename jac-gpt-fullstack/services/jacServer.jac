@@ -80,6 +80,7 @@ node RagChat {
         max_react_iterations=5,
         temperature=0.5,
         stream = True,
+        logging = True,
         tools = [search_docs]
     );
 
@@ -91,7 +92,8 @@ node QAChat {
     def respond(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        stream = True,  
+        stream = True,
+        logging = True,
         max_react_iterations=3
     );
 
@@ -104,6 +106,7 @@ node CodingChat {
         method="ReAct",
         messages=chat_history,
         stream = True,
+        logging = True,
         # max_react_iterations=5,
         tools = [search_docs]
     );
@@ -117,6 +120,7 @@ node DebuggerChat {
         method="ReAct",
         messages=chat_history,
         stream = True,
+        logging = True,
         # max_react_iterations=5,
         tools = [search_docs]
     );

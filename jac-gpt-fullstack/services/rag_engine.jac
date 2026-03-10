@@ -66,18 +66,25 @@ obj RagEngine {
         }
 
         # Load or create FAISS index
+        embeddings = self.get_embedding_function();
         if os.path.exists(self.faiss_path) and os.path.isdir(self.faiss_path) {
-            print(f"Loading existing FAISS index from {self.faiss_path}");
-            self.vectorstore = FAISS.load_local(
-                self.faiss_path,
-                self.get_embedding_function(),
-                allow_dangerous_deserialization=True
-            );
-        } else {
+            if embeddings is not None {
+                print(f"Loading existing FAISS index from {self.faiss_path}");
+                self.vectorstore = FAISS.load_local(
+                    self.faiss_path,
+                    embeddings,
+                    allow_dangerous_deserialization=True
+                );
+            } else {
+                print("FAISS index exists but embeddings unavailable. RAG search disabled.");
+            }
+        } elif embeddings is not None {
             print("Creating new FAISS index");
             documents: list = self.load_documents();
             chunks: list = self.split_documents(documents);
             self.create_faiss_index(chunks);
+        } else {
+            print("No FAISS index and no API key. RAG search disabled.");
         }
     }
 
@@ -141,8 +148,12 @@ obj RagEngine {
     }
 
     def get_embedding_function {
-        embeddings = OpenAIEmbeddings();
-        return embeddings;
+        api_key = os.getenv('OPENAI_API_KEY', '');
+        if not api_key {
+            print("Warning: OPENAI_API_KEY not set. Embeddings unavailable.");
+            return None;
+        }
+        return OpenAIEmbeddings();
     }
 
     """Create content string enriched with metadata for better semantic matching"""
