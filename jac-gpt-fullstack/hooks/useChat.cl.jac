@@ -66,6 +66,19 @@ def:pub useChat() -> any {
         prevMessageCountRef.current = currentCount;
     }, [messages]);
 
+    # Scroll to bottom whenever messages change (new messages or streaming content updates)
+    useEffect(lambda -> None {
+        # Always scroll when messages change - this handles both new messages and streaming updates
+        if messagesEndRef.current {
+            # Use setTimeout to ensure DOM has updated before scrolling
+            setTimeout(lambda -> None {
+                if messagesEndRef.current {
+                    messagesEndRef.current.scrollIntoView({"behavior": "smooth"});
+                }
+            }, 0);
+        }
+    }, [messages]);
+
     async def initSession() -> None {
         newSessionId = generateSessionId();
         result = await createSession(newSessionId);
