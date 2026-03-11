@@ -21,7 +21,7 @@ def:pub useChat() -> any {
 
     messagesEndRef = useRef(None);
     firstChunkRef = useRef(False);
-    prevMessageCountRef = useRef(0);
+    rafRef = useRef(None);
     abortControllerRef = useRef(None);
     isAuthenticated = jacIsLoggedIn();
 
@@ -56,18 +56,6 @@ def:pub useChat() -> any {
         }
     }, [messageCount]);
 
-    # Scroll to bottom only when new messages are added (not during streaming updates)
-    useEffect(lambda -> None {
-        currentCount = messages.length;
-        # Only scroll if message count increased (new message added)
-        if currentCount > prevMessageCountRef.current {
-            if messagesEndRef.current {
-                messagesEndRef.current.scrollIntoView({"behavior": "smooth"});
-            }
-        }
-        prevMessageCountRef.current = currentCount;
-    }, [messages]);
-
     # Scroll to bottom whenever messages change (new messages or streaming content updates)
     useEffect(lambda -> None {
         # Always scroll when messages change - this handles both new messages and streaming updates
@@ -78,6 +66,20 @@ def:pub useChat() -> any {
                     messagesEndRef.current.scrollIntoView({"behavior": "smooth"});
                 }
             }, 0);
+        }
+    }, [messages]);
+
+    useEffect(lambda -> None {
+        if messagesEndRef.current {
+            if rafRef.current {
+                cancelAnimationFrame(rafRef.current);
+            }
+            rafRef.current = requestAnimationFrame(lambda -> None {
+                if messagesEndRef.current {
+                    messagesEndRef.current.scrollIntoView({"behavior": "smooth"});
+                }
+                rafRef.current = None;
+            });
         }
     }, [messages]);
 
