@@ -16,7 +16,7 @@
 
 ### 1 What is Jac?
 
-Jac is an AI-native full-stack programming language that supersets Python and JavaScript with native compilation support. It introduces Object-Spatial Programming (OSP) and novel constructs for AI-integrated programming (such as `by llm()`), providing a unified language for backend, frontend, and AI development with full access to the PyPI and npm ecosystems.
+Jac is an AI-native full-stack programming language with Python-like syntax that compiles to Python bytecode, JavaScript, and native machine code (C-ABI compatible). It introduces Object-Spatial Programming (OSP) and novel constructs for AI-integrated programming (such as `by llm()`), providing a unified language for backend, frontend, and AI development with full access to the PyPI, npm, and native ecosystems.
 
 ```jac
 with entry {
@@ -30,7 +30,7 @@ with entry {
 |-----------|-------------|
 | **AI-Native** | LLMs as first-class citizens through Meaning Typed Programming |
 | **Full-Stack** | Backend and frontend in one unified language |
-| **Superset** | Full access to PyPI and npm ecosystems |
+| **Multi-Target** | Compiles to Python bytecode, JS, and native machine code -- full PyPI, npm, and native ecosystem access |
 | **Object-Spatial** | Graph-based domain modeling with mobile walkers |
 | **Cloud-Native** | One-command deployment with automatic scaling |
 | **Human & AI Friendly** | Readable structure for both humans and AI models |
@@ -209,7 +209,7 @@ Jac keywords are reserved and cannot be used as identifiers:
 |----------|----------|
 | **Archetypes** | `obj`, `node`, `edge`, `walker`, `class`, `enum` |
 | **Abilities** | `can`, `def`, `init`, `postinit` |
-| **Access** | `pub`, `priv`, `protect`, `static`, `override`, `abs` |
+| **Access** | `pub`, `priv`, `protect`, `static`, `override`, `abs`, `Self` |
 | **Control** | `if`, `elif`, `else`, `while`, `for`, `match`, `case`, `switch`, `default` |
 | **Loop** | `break`, `continue` |
 | **Return** | `return`, `yield`, `report`, `skip` |
@@ -237,7 +237,7 @@ obj Example {
     Backtick-escaped keywords in `has` declarations **do not work** -- they cause a `SyntaxError` in Python's dataclass machinery at runtime. Choose a non-keyword identifier instead (e.g., `has cls: str;` or `has kind: str;`).
 
 !!! note "Special variable references don't need backtick escaping"
-    The following are **built-in references**, not regular identifiers. Use them directly without backticks: `self`, `super`, `root`, `here`, `visitor`, `init`, `postinit`. For example, write `self.name`, `root ++> node`, and `def init()` -- never `` `self ``, `` `root ``, or `` `init ``.
+    The following are **built-in references**, not regular identifiers. Use them directly without backticks: `self`, `Self`, `super`, `root`, `here`, `visitor`, `init`, `postinit`. `self` is the current instance; `Self` is the enclosing type. For example, write `self.name`, `root ++> node`, and `def init()` -- never `` `self ``, `` `root ``, or `` `init ``.
 
 ### 7 Entry Point Variants
 
@@ -334,7 +334,29 @@ obj Container {
 }
 ```
 
-### 4 Union Types
+### 4 The `Self` Type
+
+`Self` (capital S) is a special type that refers to the enclosing archetype. It is distinct from `self` (lowercase), which refers to the current instance.
+
+```jac
+obj Node {
+    has value: int = 0,
+        next: Self | None = None;  # Self = Node in type annotations
+
+    class def create(v: int) -> Self {  # Self = cls in class methods
+        return Self(value=v);
+    }
+
+    def set_next(n: Self) -> Self {  # Self as parameter and return type
+        self.next = n;
+        return self;
+    }
+}
+```
+
+`Self` is polymorphic -- in a subclass, it resolves to the subclass type, not the parent. See [Class Methods and Self](functions-objects.md#6-static-methods-and-class-methods) for usage details.
+
+### 5 Union Types
 
 ```jac
 obj Example {
@@ -346,7 +368,7 @@ def process(data: list[int] | dict[str, int]) -> None {
 }
 ```
 
-### 5 Type References
+### 6 Type References
 
 Type references are used in OSP operations like filtering graph traversals by node type. The `Root` keyword refers to the root node type in entry/exit clauses, and the `(?:TypeName)` syntax filters collections or traversals by type.
 
@@ -357,7 +379,7 @@ def example() {
 }
 ```
 
-### 6 Literals
+### 7 Literals
 
 **Numbers:**
 
@@ -392,7 +414,7 @@ def example() {
 }
 ```
 
-### 7 F-String Format Specifications
+### 8 F-String Format Specifications
 
 F-strings support powerful formatting with the syntax `{expression:format_spec}`.
 
@@ -942,12 +964,12 @@ obj User {
     has profile: Profile | None = None;
 }
 
-def example(obj: User | None, user: User | None) {
-    # Without null-safe: raises AttributeError if obj is None
-    value = obj.profile;
+def example(item: User | None, user: User | None) {
+    # Without null-safe: raises AttributeError if item is None
+    value = item.profile;
 
-    # With null-safe: returns None if obj is None
-    value = obj?.profile;
+    # With null-safe: returns None if item is None
+    value = item?.profile;
 
     # Chained - stops at first None
     result = user?.profile?.settings;
@@ -991,9 +1013,9 @@ obj Data {
     }
 }
 
-def example(obj: Data | None, data: Data | None) {
-    # Returns None if obj is None, doesn't call method
-    result = obj?.transform("x");
+def example(item: Data | None, data: Data | None) {
+    # Returns None if item is None, doesn't call method
+    result = item?.transform("x");
 
     # Chained with arguments
     output = data?.transform("param")?.format();

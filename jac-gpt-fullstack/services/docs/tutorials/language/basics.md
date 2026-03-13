@@ -1,6 +1,6 @@
 # Jac Basics
 
-This tutorial covers the core syntax and concepts you need to start writing Jac programs. If you're coming from Python, most things will look familiar -- Jac is a superset of Python, so your existing knowledge applies directly. The key differences are syntactic (braces instead of indentation, semicolons to end statements) and conceptual (graph-native types, the `has` keyword for fields, `with entry` for entry points).
+This tutorial covers the core syntax and concepts you need to start writing Jac programs. If you're coming from Python, most things will look familiar -- Jac compiles to Python bytecode and shares many of Python's constructs, so your existing knowledge applies directly. The key differences are syntactic (braces instead of indentation, semicolons to end statements) and conceptual (graph-native types, the `has` keyword for fields, `with entry` for entry points).
 
 By the end of this tutorial, you'll be comfortable writing functions, objects, control flow, imports, and simple graph operations in Jac.
 
@@ -12,9 +12,9 @@ By the end of this tutorial, you'll be comfortable writing functions, objects, c
 
 ---
 
-## Jac is a Superset of Python
+## Jac and Python
 
-Jac supersets Python with new paradigms -- familiar Python concepts all apply. The relationship is similar to TypeScript and JavaScript: everything valid in the base language works, and the superset adds new capabilities on top. The main syntactic differences from Python are:
+Jac compiles to Python bytecode, so all Python libraries work natively and familiar Python concepts apply directly. Jac extends these with new paradigms -- graph-native types, object-spatial programming, and AI-native constructs. The main syntactic differences from Python are:
 
 | Python | Jac |
 |--------|-----|
@@ -437,13 +437,13 @@ When you deploy a Jac application as a server (with `jac start`), access modifie
 
 ```jac
 # Public endpoint -- auto-generates an HTTP API
-def:pub add_task(title: str) -> dict { ... }
+def:pub add_task(title: str) -> dict { ...; }
 
 # Private -- requires authentication, per-user data isolation
-def:priv get_tasks -> list { ... }
+def:priv get_tasks -> list { ...; }
 
 # Protected -- accessible within the module
-def:protect helper -> None { ... }
+def:protect helper -> None { ...; }
 ```
 
 | Modifier | Visibility | Use Case |

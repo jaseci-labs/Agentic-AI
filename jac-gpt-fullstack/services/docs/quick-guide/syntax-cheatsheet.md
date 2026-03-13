@@ -8,9 +8,10 @@ This page is a **lookup reference**, not a learning guide. For hands-on learning
 # ============================================================
 # Learn Jac in Y Minutes
 # ============================================================
-# Jac is a superset of Python with graph-native programming,
-# object-spatial walkers, AI-native constructs, and full-stack
-# codespaces -- all with brace-delimited blocks.
+# Jac compiles to Python bytecode, JavaScript, and native machine code.
+# It features graph-native programming, object-spatial walkers,
+# AI-native constructs, and full-stack codespaces -- all with
+# brace-delimited blocks.
 # Run a file with: jac <filename>
 
 # ============================================================
@@ -280,6 +281,16 @@ obj Dog {
     def bark() {
         print(f"{self.name} says Woof!");
     }
+
+    # Class method -- Self refers to the class
+    class def create(name: str) -> Self {
+        return Self(name=name);
+    }
+
+    # Static method -- no self or Self
+    static def species() -> str {
+        return "Canis familiaris";
+    }
 }
 
 # `class` follows standard Python class behavior
@@ -392,6 +403,12 @@ type Json = JsonPrimitive | list[Json] | dict[str, Json];
 # Generic type alias
 type NumberList = list[int | float];
 
+# Self type -- refers to the enclosing archetype
+obj TreeNode {
+    has value: int = 0,
+        next: Self | None = None;  # Self = TreeNode here
+}
+
 
 # ============================================================
 # Global Variables (glob)
@@ -480,6 +497,8 @@ with entry {
 # Decorators
 # ============================================================
 
+# Prefer `class def` for classmethods in obj (see Objects section above)
+# @classmethod decorator is supported for Python `class` compatibility
 @classmethod
 def my_class_method(cls: type) -> str {
     return cls.__name__;

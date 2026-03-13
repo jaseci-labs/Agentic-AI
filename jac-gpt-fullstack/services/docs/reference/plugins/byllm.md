@@ -531,7 +531,7 @@ def search_db(query: str, limit: int = 10) -> list[dict] {
 }
 
 """Send an email notification."""
-def send_email(to: str, subject: str, body: str) -> bool {
+def send_email(recipient: str, subject: str, body: str) -> bool {
     # Implementation
     return True;
 }
@@ -890,7 +890,6 @@ with entry {
 Multimodal works in both Python integration modes:
 
 ```python
-import jaclang
 from byllm.lib import Model, Image, by
 
 llm = Model(model_name="gpt-4o")
@@ -1394,7 +1393,6 @@ byLLM provides two modes for Python integration:
 Import byLLM directly in Python using the `@by` decorator:
 
 ```python
-import jaclang
 from dataclasses import dataclass
 from byllm.lib import Model, Image, by
 
@@ -1437,7 +1435,6 @@ Implement AI features in Jac and import seamlessly into Python:
 
 === "main.py"
     ```python
-    import jaclang
     from ai import Image, Person, get_person_info
 
     img = Image("photo.jpg")
