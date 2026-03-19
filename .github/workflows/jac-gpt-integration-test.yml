@@ -72,7 +72,7 @@ jobs:
           path: jac-gpt-fullstack/services/faiss_index
           key: jac-gpt-faiss-v1
 
-      - name: Install Playwright MCP dependencies
+      - name: Install Playwright and pytest dependencies
         run: |
           pip install pytest
           pip install playwright
