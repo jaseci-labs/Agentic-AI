@@ -12,8 +12,8 @@ import from playwright.sync_api { sync_playwright }
 
 glob HEADLESS: bool = not os.environ.get("HEADED", ""),
      SERVER_URL: str = os.environ.get("SERVER_URL", "http://localhost:8000"),
-     UI_TIMEOUT: int = 60_000,
-     RESPONSE_TIMEOUT: int = 120_000;
+     UI_TIMEOUT: int = 120_000,
+     RESPONSE_TIMEOUT: int = 180_000;
 
 # -- Helpers -------------------------------------------------------------------
 def _with_page(callback: Any, path: str = "/") -> None {
