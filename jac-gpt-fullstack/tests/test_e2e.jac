@@ -1,9 +1,9 @@
 """E2E tests for jac-gpt-fullstack UI.
 
 Run:
-    pytest tests/e2e_tests.jac -v
-    SERVER_URL=http://localhost:8000 pytest tests/e2e_tests.jac -v
-    HEADED=1 pytest tests/e2e_tests.jac -v
+    pytest tests/test_e2e.jac -v
+    SERVER_URL=http://localhost:8000 pytest tests/test_e2e.jac -v
+    HEADED=1 pytest tests/test_e2e.jac -v
 """
 
 import os;
