@@ -107,18 +107,31 @@ test "docs: toggle panel" {
 }
 
 """New Chat resets the current conversation back to the empty state."""
-test "chat: new chat clears conversation" {
+ test "chat: new chat clears conversation" {
     def check(page: Any) -> None {
-        _wait_for_home(page);
-        page.get_by_text("What is by llm?").first.click();
-        page.wait_for_selector("text=What is by llm?", timeout=10_000);
+         _wait_for_home(page);
+         page.get_by_text("What is by llm?").first.click();
+         page.wait_for_selector("text=What is by llm?", timeout=10_000);
+
+        # Ensure the app is done processing and controls are re-enabled
+        _wait_for_any_response(page);
+        new_chat_btn = page.get_by_role("button", name="New Chat").first;
+        new_chat_btn.wait_for(state="visible", timeout=UI_TIMEOUT);
+        page.wait_for_function(
+           "() => {"
+            "  const btn = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('New Chat'));"
+           "  return btn && !btn.disabled;"
+            "}"
+        , timeout=UI_TIMEOUT);
 
         page.get_by_role("button", name="New Chat").click();
+        new_chat_btn.click();
+
         page.wait_for_selector("text=How can I help you today?", timeout=10_000);
         assert page.get_by_text("How can I help you today?").first.is_visible();
     }
-    _with_page(check);
-}
+     _with_page(check);
+ }
 
 """Login page renders expected auth UI content."""
 test "auth: login page renders" {
