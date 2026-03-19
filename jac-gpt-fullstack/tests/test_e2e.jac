@@ -107,30 +107,45 @@ test "docs: toggle panel" {
 }
 
 """New Chat resets the current conversation back to the empty state."""
- test "chat: new chat clears conversation" {
+test "chat: new chat clears conversation" {
     def check(page: Any) -> None {
-         _wait_for_home(page);
-         page.get_by_text("What is by llm?").first.click();
-         page.wait_for_selector("text=What is by llm?", timeout=10_000);
+        _wait_for_home(page);
 
-        # Ensure the app is done processing and controls are re-enabled
-        _wait_for_any_response(page);
+        # Keep test independent of backend/model latency.
+        page.route(
+            "**/walker/interact",
+            lambda route: route.fulfill(
+                status=200,
+                headers={"Content-Type": "text/event-stream"},
+                body=(
+                    "data: {\"type\":\"chunk\",\"data\":{\"content\":\"stub reply\"}}\n\n"
+                    "data: {\"type\":\"steps_done\",\"data\":{}}\n\n"
+                )
+            )
+        );
+
+        page.get_by_text("What is by llm?").first.click();
+        page.wait_for_selector("text=What is by llm?", timeout=10_000);
+
         new_chat_btn = page.get_by_role("button", name="New Chat").first;
-        new_chat_btn.wait_for(state="visible", timeout=UI_TIMEOUT);
+        new_chat_btn.wait_for(state="visible", timeout=15_000);
         page.wait_for_function(
-           "() => {"
+            "() => {"
             "  const btn = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('New Chat'));"
-           "  return btn && !btn.disabled;"
-            "}"
-        , timeout=UI_TIMEOUT);
+            "  return !!btn && !btn.disabled;"
+            "}",
+            timeout=15_000
+        );
 
-        page.get_by_role("button", name="New Chat").click();
         new_chat_btn.click();
 
-        page.wait_for_selector("text=How can I help you today?", timeout=10_000);
+        # Assert empty-state UI in main pane.
+        page.wait_for_selector("text=How can I help you today?", timeout=15_000);
         assert page.get_by_text("How can I help you today?").first.is_visible();
+        assert page.get_by_text("What are walkers?").first.is_visible();
+        assert page.get_by_text("What are nodes?").first.is_visible();
     }
-     _with_page(check);
+    _with_page(check);
  }
 
 """Login page renders expected auth UI content."""
