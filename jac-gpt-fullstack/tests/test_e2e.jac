@@ -95,11 +95,7 @@ test "docs: toggle panel" {
             hide_btn.click();
         } else {
             page.evaluate(
-                "() => {"
-                "  const buttons = [...document.querySelectorAll('button')];"
-                "  const btn = buttons.find(b => b.textContent.includes('Hide Docs'));"
-                "  if (btn) btn.click();"
-                "}"
+                "() => { const buttons = [...document.querySelectorAll('button')]; const btn = buttons.find(b => b.textContent.includes('Hide Docs')); if (btn) btn.click(); }"
             );
         }
         page.wait_for_selector("text=Popular Topics", state="hidden", timeout=5_000);
