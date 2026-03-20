@@ -9,6 +9,7 @@ Run:
 import os;
 
 import from playwright.sync_api { sync_playwright }
+import from typing { Any }
 
 glob HEADLESS: bool = not os.environ.get("HEADED", ""),
      SERVER_URL: str = os.environ.get("SERVER_URL", "http://localhost:8000"),
