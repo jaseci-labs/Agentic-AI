@@ -115,14 +115,13 @@ test "chat: new chat clears conversation" {
         # Keep test independent of backend/model latency.
         page.route(
             "**/walker/interact",
-            lambda route: route.fulfill(
-                status=200,
-                headers={"Content-Type": "text/event-stream"},
-                body=(
-                    "data: {\"type\":\"chunk\",\"data\":{\"content\":\"stub reply\"}}\n\n"
-                    "data: {\"type\":\"steps_done\",\"data\":{}}\n\n"
-                )
-            )
+            lambda route: any -> None {
+                route.fulfill(
+                    status=200,
+                    headers={"Content-Type": "text/event-stream"},
+                    body="data: {\"type\":\"chunk\",\"data\":{\"content\":\"stub reply\"}}\n\ndata: {\"type\":\"steps_done\",\"data\":{}}\n\n"
+                );
+            }
         );
 
         page.get_by_text("What is by llm?").first.click();
