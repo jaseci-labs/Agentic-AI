@@ -126,10 +126,7 @@ test "chat: new chat clears conversation" {
         new_chat_btn = page.get_by_role("button", name="New Chat").first;
         new_chat_btn.wait_for(state="visible", timeout=15_000);
         page.wait_for_function(
-            "() => {"
-            "  const btn = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('New Chat'));"
-            "  return !!btn && !btn.disabled;"
-            "}",
+            "() => { const btn = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('New Chat')); return !!btn && !btn.disabled; }",
             timeout=15_000
         );
 
