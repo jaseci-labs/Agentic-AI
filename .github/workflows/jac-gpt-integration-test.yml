@@ -72,10 +72,11 @@ jobs:
           path: jac-gpt-fullstack/services/faiss_index
           key: jac-gpt-faiss-v1
 
-      - name: Install Playwright MCP dependencies
+      - name: Install Playwright and pytest dependencies
         run: |
-          npm install @playwright/mcp @modelcontextprotocol/sdk
-          npx playwright install chromium --with-deps
+          pip install pytest
+          pip install playwright
+          playwright install chromium --with-deps
 
       - name: Verify installation
         run: |
@@ -142,7 +143,7 @@ jobs:
       - name: Run E2E tests
         env:
           SERVER_URL: http://localhost:8000
-        run: node jac-gpt-fullstack/tests/e2e_test.mjs
+        run: pytest jac-gpt-fullstack/tests/test_e2e.jac -v
 
       - name: Stop server
         if: always()
