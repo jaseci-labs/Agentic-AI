@@ -57,8 +57,6 @@ jobs:
       - name: Install jaseci packages from source
         run: |
           pip install --upgrade pip
-          # Pin litellm below 1.82.8 which adds heavy deps that OOM the runner
-          pip install 'litellm<1.82.8'
           pip install -e /tmp/jaseci/jac
           pip install -e /tmp/jaseci/jac-byllm
           pip install -e /tmp/jaseci/jac-client
