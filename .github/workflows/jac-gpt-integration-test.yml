@@ -54,13 +54,19 @@ jobs:
           echo "JASECI_SHA=$(git -C /tmp/jaseci rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "Cloned jaseci at $(git -C /tmp/jaseci rev-parse HEAD)"
 
-      - name: Install jaseci packages from source
-        run: |
-          pip install --upgrade pip setuptools wheel
-          pip install --no-build-isolation -e /tmp/jaseci/jac
-          pip install --no-build-isolation -e /tmp/jaseci/jac-byllm
-          pip install --no-build-isolation -e /tmp/jaseci/jac-client
-          pip install --no-build-isolation -e /tmp/jaseci/jac-scale
+      # Each package gets its own step so pip starts fresh after litellm's heavy
+      # Rust extensions (tokenizers, hf-xet) are installed, preventing OOM kills.
+      - name: Install jac
+        run: pip install --upgrade pip setuptools wheel && pip install --no-build-isolation -e /tmp/jaseci/jac
+
+      - name: Install jac-byllm
+        run: pip install --no-build-isolation -e /tmp/jaseci/jac-byllm
+
+      - name: Install jac-client
+        run: pip install --no-build-isolation -e /tmp/jaseci/jac-client
+
+      - name: Install jac-scale
+        run: pip install --no-build-isolation -e /tmp/jaseci/jac-scale
 
       - name: Install app dependencies
         working-directory: jac-gpt-fullstack
