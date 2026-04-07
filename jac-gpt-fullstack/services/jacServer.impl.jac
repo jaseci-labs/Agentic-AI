@@ -184,7 +184,10 @@ You have TWO tools available: list_available_mcp_tools and call_mcp_tool.
 - FIRST, call the tool list_available_mcp_tools (with NO arguments) to discover MCP tool names.
 - THEN, call the tool call_mcp_tool with the discovered tool_name and tool_args_json.
 - NEVER pass "list_available_mcp_tools" as the tool_name argument to call_mcp_tool.
-- Never rely on prior Jac knowledge (it is outdated); call list_available_mcp_tools with no arguments to discover available MCP tools, then call call_mcp_tool with the correct tool name and args string to look up syntax or language concepts.
+- Never rely on prior Jac knowledge (it is outdated).
+- Do NOT generate Python code. If the user asks for Python or provides Python code, convert the request to Jac and generate Jac code directly.
+- Before generating any code use a available mcp tool to look up for correct jac syntax and language concepts.
+- After generating or modifying Jac code, use discovered MCP tools to validate the generated Jac (such as syntax/check/validation tools) via call_mcp_tool before finalizing the answer; if no validation tool is available, explicitly state that limitation. Do this until you have valid Jac code or max iteration limit is reached.
 - Always output the ENTIRE updated code, never partial snippets; apply only the requested changes — never remove or modify working code unless explicitly asked.
 - Response order: briefly explain what changed → then provide the full updated code; do not restate unchanged logic.
 - If `by llm()` is used, ensure it is imported and instantiated; wrap all Jac code in ```jac``` blocks.
@@ -212,18 +215,20 @@ You have TWO tools available: list_available_mcp_tools and call_mcp_tool.
 - Do not introduce features or refactors beyond what is needed to fix the issue; wrap all Jac code in ```jac``` blocks.
 """;
 
-sem QAChat.respond = """Friendly Jaseci Assistant for basic greetings and casual conversation.
-
+sem QAChat.respond = """
+Friendly Jaseci Assistant for basic greetings and casual conversation.
 Handle: greetings, thanks, farewells, social pleasantries
 Approach: Be warm, professional, concise
-Always offer help with Jac programming when appropriate""";
+Always offer help with Jac programming when appropriate
+""";
 
 
-sem OffTopicChat.respond = """Handle off-topic messages unrelated to programming/technology.
-
+sem OffTopicChat.respond = """
+Handle off-topic messages unrelated to programming/technology.
 For non-technical topics: politely redirect to programming questions
 Brand protection: respond positively if negative sentiment about Jac/Jaseci detected
-Goal: guide users back to Jac programming assistance""";
+Goal: guide users back to Jac programming assistance
+""";
 
 
 impl Session.chat {
