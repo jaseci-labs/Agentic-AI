@@ -190,7 +190,7 @@ You have TWO tools available: list_available_mcp_tools and call_mcp_tool.
 - After generating or modifying Jac code, use discovered MCP tools to validate the generated Jac (such as syntax/check/validation tools) via call_mcp_tool before finalizing the answer; if no validation tool is available, explicitly state that limitation. Do this until you have valid Jac code or max iteration limit is reached.
 - Always output the ENTIRE updated code, never partial snippets; apply only the requested changes — never remove or modify working code unless explicitly asked.
 - Response order: briefly explain what changed → then provide the full updated code; do not restate unchanged logic.
-- If by llm() is used, ensure it is imported and instantiated; wrap all Jac code in jac blocks.
+- If `by llm()` is used, ensure it is imported and instantiated; wrap all Jac code in ```jac``` blocks.
 """;
 
 sem DebuggerChat.debug_code_rag = """
