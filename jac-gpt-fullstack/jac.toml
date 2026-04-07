@@ -51,6 +51,18 @@ app_name = "jac-gpt-test"
 namespace = "jac-gpt-test"
 jaseci_repo_url = "https://github.com/udithishanka/jaseci.git"
 jaseci_branch = "feat/add-jac-mcp-to-scale-deployments"
+# Probes — app needs ~5-8 min to clone repo, install jaseci, and compile
+liveness_initial_delay = 600
+liveness_period = 30
+liveness_failure_threshold = 10
+readiness_initial_delay = 600
+readiness_period = 30
+# Resources — prevents BestEffort QoS and node eviction storms
+# Peak observed: ~1000m CPU, ~2.3Gi RAM, ~3.6Gi ephemeral-storage during startup
+cpu_request = "1000m"
+cpu_limit = "3000m"
+memory_request = "2Gi"
+memory_limit = "6Gi"
 
 [plugins.scale.secrets]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
