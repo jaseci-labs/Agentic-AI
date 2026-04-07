@@ -63,6 +63,8 @@ cpu_request = "1000m"
 cpu_limit = "3000m"
 memory_request = "2Gi"
 memory_limit = "6Gi"
+ephemeral_storage_request = "20Gi"
+ephemeral_storage_limit = "30Gi"
 
 [plugins.scale.secrets]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"

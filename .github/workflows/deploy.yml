@@ -69,16 +69,6 @@ jobs:
           jac start main.jac --scale --experimental
         working-directory: jac-gpt-fullstack
 
-      # Patch ephemeral-storage request so the scheduler avoids small-disk nodes.
-      # jac-scale does not yet support ephemeral-storage in jac.toml, so we
-      # patch it post-deploy. This forces scheduling onto nodes with >=20Gi disk.
-      - name: Patch ephemeral-storage request
-        run: |
-          kubectl patch deployment jac-gpt-test -n jac-gpt-test --type='json' -p='[
-            {"op":"add","path":"/spec/template/spec/containers/0/resources/requests/ephemeral-storage","value":"20Gi"},
-            {"op":"add","path":"/spec/template/spec/containers/0/resources/limits/ephemeral-storage","value":"30Gi"}
-          ]'
-
       # Get deployment status
       - name: Verify deployment
         run: |
