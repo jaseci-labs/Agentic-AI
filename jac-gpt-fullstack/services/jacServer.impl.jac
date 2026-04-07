@@ -10,9 +10,6 @@ def stream_chat_response(response_generator: any, visitor: any) -> any {
    response = "";
    for event in response_generator {
       yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
-      if event.event_type == "thought" or event.event_type == "tool_call" or event.event_type == "tool_result" or event.event_type == "steps_done" {
-         print(f"Received {event.event_type} event:", event.data);
-      }
       if event.event_type == "chunk" {
          response += event.data.get("content", "");
       }
