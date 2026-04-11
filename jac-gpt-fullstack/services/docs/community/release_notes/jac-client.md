@@ -6,6 +6,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 - **Feat: Multi-mode Sidecar for Windows Desktop**: --jac-cli flag for CLI proxy, manual plugin registration for frozen apps, .env loading from bundled location, UTF-8/NO_COLOR for Windows.
 - **Desktop Plugin Bundling Config**: Added `get_plugins_config()` to `DesktopConfig` for reading the `[desktop.plugins]` section from `jac.toml`, controlling which Jac plugins (jac-scale, byllm, jac-coder) are bundled into desktop apps.
+- **Fix: Sidecar Stdout Crash on Windows Desktop**: Redirect `sys.stdout` to `sys.stderr` after writing `JAC_SIDECAR_PORT` to Tauri. Tauri drops the stdout pipe after reading the port, causing subsequent `console.print()` and `sys.stdout.flush()` calls to crash with `OSError: [Errno 22] Invalid argument`.
 - **Feat: Client-Only Mode for Desktop Builds**: Added `client_only` build mode that builds only the web client bundle without the full Tauri app, useful for development and CI workflows.
 - **Fix: JAC_BUILD Env Var During Desktop Build**: Set `JAC_BUILD=1` environment variable during desktop build to prevent the Jac server from starting during compilation, avoiding port conflicts and unnecessary resource usage.
 - **Fix: Always Bundle jac_client as Core Sidecar Package**: `jac_client` is now bundled as a core package in PyInstaller builds regardless of `[desktop.plugins]` config, since the sidecar entry point depends on it. Previously, setting `jac_client = false` in plugins config would break the sidecar at startup with `ModuleNotFoundError`.
