@@ -60,7 +60,7 @@ jobs:
           pip install -e /tmp/jaseci/jac
           pip install -e /tmp/jaseci/jac-byllm
           pip install -e /tmp/jaseci/jac-client
-          pip install -e /tmp/jaseci/jac-scale
+          pip install -e "/tmp/jaseci/jac-scale[all]"
 
       - name: Install app dependencies
         working-directory: jac-gpt-fullstack
