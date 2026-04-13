@@ -114,7 +114,7 @@ node RagChat {
 
     def respond_mcp(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
-        max_react_iterations=10,
+        max_react_iterations=12,
         temperature=0.5,
         stream = True,
         logging = True,

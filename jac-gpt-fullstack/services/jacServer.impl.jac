@@ -3,6 +3,71 @@ import os;
 import from datetime {datetime}
 import from byllm.types { StreamEvent }
 
+# Two compact few-shot examples injected into CodingChat MCP messages.
+glob coding_mcp_few_shots: str = """
+FEW-SHOT EXAMPLE 1
+User: Create a walker that greets a name.
+Assistant:
+```jac
+node Person {
+    has name: str;
+    has age: int;
+}
+
+edge Knows {
+    has since: int;
+}
+
+walker Greeter {
+    can greet with Root entry {
+        visit [-->];
+    }
+
+    can say_hello with Person entry {
+        print(f"Hello, {here.name}!");
+        visit [-->];
+    }
+}
+
+with entry {
+    # Build graph
+    alice = Person(name="Alice", age=30);
+    bob = Person(name="Bob", age=25);
+
+    root ++> alice;
+    alice +>: Knows(since=2020) :+> bob;
+
+    # Spawn walker
+    root spawn Greeter();
+}
+```
+
+FEW-SHOT EXAMPLE 2
+User: Write a jac object to sum a list.
+Assistant:
+```jac
+obj Person {
+    has name: str;
+    has age: int;
+
+    def postinit() -> None {
+        # Called after the auto-generated init completes
+        print(f"Created {self.name}");
+    }
+
+    def greet() -> str {
+        return f"Hi, I'm {self.name}";
+    }
+}
+
+with entry {
+    # Usage
+    person = Person(name="Alice", age=30);
+    print(person.greet());
+}
+```
+""";
+
 # Shared helper function for streaming responses with SSE format
 def stream_chat_response(response_generator: any, visitor: any) -> any {
    print("Starting response streaming...");
@@ -24,6 +89,46 @@ def stream_chat_response(response_generator: any, visitor: any) -> any {
    return;
 }
 
+def build_coding_mcp_message(base_message: str) -> str {
+   msg = (
+      "Generate Jac code directly. Never draft Python first.\n\n"
+      + coding_mcp_few_shots
+      + "\n\nUSER REQUEST:\n"
+      + base_message
+   );
+   return msg;
+}
+
+def stream_coding_mcp_response(coding_agent: any, visitor: any) -> any {
+   attempt = 0;
+
+   prompt_message = build_coding_mcp_message(visitor.message);
+   response_generator = coding_agent.code_jac_mcp(message=prompt_message, chat_history=visitor.chat_history);
+
+   response = "";
+   events = [];
+   for event in response_generator {
+      if event.event_type == "chunk" {
+         events.append(event);
+         response += event.data.get("content", "");
+      } else {
+         yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
+      }
+   }
+
+   for event in events {
+      yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
+   }
+
+   if not visitor.skip_history {
+      session_node = ([root-->(?:Session)](?id==visitor.session_id))[0];
+      session_node.chat_history.append({"role": "assistant", "content": response});
+      session_node.updated_at = datetime.now().isoformat();
+   }
+
+   return;
+}
+
 impl RagChat.chat {
    print("Entering RAG node, mode:", visitor.mode);
    if visitor.mode == "mcp" {
@@ -42,10 +147,7 @@ impl RagChat.chat {
 impl CodingChat.chat {
    print("Entering Coding node, mode:", visitor.mode);
    if visitor.mode == "mcp" {
-      report stream_chat_response(
-         self.code_jac_mcp(message=visitor.message, chat_history=visitor.chat_history),
-         visitor
-      );
+      report stream_coding_mcp_response(self, visitor);
    } else {
       report stream_chat_response(
          self.code_jac_rag(message=visitor.message, chat_history=visitor.chat_history),
@@ -179,18 +281,24 @@ Jac code writer that generates or modifies code based on user requests and conve
 """;
 
 sem CodingChat.code_jac_mcp = """
-Jac code writer that generates or modifies code based on user requests and conversation history.
-You have TWO tools available: list_available_mcp_tools and call_mcp_tool.
-- FIRST, call the tool list_available_mcp_tools (with NO arguments) to discover MCP tool names.
-- THEN, call the tool call_mcp_tool with the discovered tool_name and tool_args_json.
-- NEVER pass "list_available_mcp_tools" as the tool_name argument to call_mcp_tool.
-- Never rely on prior Jac knowledge (it is outdated).
-- Do NOT generate Python code. If the user asks for Python or provides Python code, convert the request to Jac and generate Jac code directly.
-- Before generating any code use a available mcp tool to look up for correct jac syntax and language concepts.
-- After generating or modifying Jac code, use discovered MCP tools to validate the generated Jac (such as syntax/check/validation tools) via call_mcp_tool before finalizing the answer; if no validation tool is available, explicitly state that limitation. Do this until you have valid Jac code or max iteration limit is reached.
-- Always output the ENTIRE updated code, never partial snippets; apply only the requested changes — never remove or modify working code unless explicitly asked.
-- Response order: briefly explain what changed → then provide the full updated code; do not restate unchanged logic.
-- If `by llm()` is used, ensure it is imported and instantiated; wrap all Jac code in ```jac``` blocks.
+!!ALWAYS generate Jac code only. NEVER generate Python!!
+You are a Jac code writer for code creation and modification tasks.
+
+=== MANDATORY PROCESS - FOLLOW IN EXACT ORDER ===
+[STEP 1 - DISCOVER]  : FIND available MCP tools by calling list_available_mcp_tools() with NO arguments to discover available MCP tool names and their required arguments.
+[STEP 2 - CATEGORIZE]: Categorize discovered MCP tools results into: [syntax/reference tools] [validation/checker tools] [other tools].
+[STEP 3 - LEARN]     : !!DO NOT SKIP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY syntax/reference tools. Look up EVERY language feature, construct, and required import you plan to use. GET a GOOD UNDERSTANDING of the correct Jac syntax and usage before moving to next step.  
+[STEP 4 - GENERATE]  : Write COMPLETE Jac code that will produce a output using ONLY what was confirmed in Step 3. ALWAYS include all required imports at the top.
+[STEP 5 - VALIDATE]  : !!LOOP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY validation/checker tools. Fix ALL reported errors, re-validate. Repeat until no errors remain or tools are exhausted. MAX 5 retries — on each failure, re-lookup failing syntax before fixing.
+[STEP 6 - OUTPUT]    : If no validator exists, state explicitly. Return: one-line change summary → full code in ```jac``` block.
+
+=== STRICT RULES - NEVER VIOLATE ===
+- NEVER pass "list_available_mcp_tools" as tool_name to call_mcp_tool.
+- ALWAYS follow the exact process steps in order; do NOT skip or reorder steps.
+- NEVER output partial snippets — return the ENTIRE updated file.
+- NEVER output code that has not been validated; if validation fails, report exact errors instead.
+- NEVER modify working logic unless explicitly asked.
+- LAST tool call MUST always be a validation/checker tool.
 """;
 
 sem DebuggerChat.debug_code_rag = """
