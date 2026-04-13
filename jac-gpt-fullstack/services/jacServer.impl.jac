@@ -99,8 +99,13 @@ def build_coding_mcp_message(base_message: str) -> str {
    return msg;
 }
 
+def categorized_mcp_tools(mcp_tools: str) -> dict by llm()
+
 def stream_coding_mcp_response(coding_agent: any, visitor: any) -> any {
    attempt = 0;
+
+   mcp_tools = list_available_mcp_tools();
+   print("Available MCP tools:", mcp_tools);
 
    prompt_message = build_coding_mcp_message(visitor.message);
    response_generator = coding_agent.code_jac_mcp(message=prompt_message, chat_history=visitor.chat_history);
