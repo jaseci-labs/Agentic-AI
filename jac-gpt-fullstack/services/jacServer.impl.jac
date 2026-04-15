@@ -99,16 +99,26 @@ def build_coding_mcp_message(base_message: str) -> str {
    return msg;
 }
 
-def categorized_mcp_tools(mcp_tools: str) -> dict by llm()
+def categorized_mcp_tools(mcp_tools: str) -> dict[str, list[str]] by llm();
+
+sem categorized_mcp_tools = """
+You are an assistant that categorizes MCP tools for a Jac code generation task.
+Given a list of MCP tools with their names and descriptions, categorize them into three groups:
+1. Syntax/Reference Tools: Tools that provide information about Jac syntax, language constructs, or usage examples.
+2. Validation/Checker Tools: Tools that can validate Jac code, check for errors, or provide feedback on code correctness.
+3. Other Tools: Any tools that do not fit into the above categories.
+Return a JSON object with three keys: "syntax_tools", "validation_tools", and "other_tools", each containing a list of tool names with their description and params that belong to that category.
+""";
 
 def stream_coding_mcp_response(coding_agent: any, visitor: any) -> any {
-   attempt = 0;
-
    mcp_tools = list_available_mcp_tools();
-   print("Available MCP tools:", mcp_tools);
+
+   tools = categorized_mcp_tools(mcp_tools);
+   syntax_tools = tools.get("syntax_tools", []);
+   validation_tools = tools.get("validation_tools", []);
 
    prompt_message = build_coding_mcp_message(visitor.message);
-   response_generator = coding_agent.code_jac_mcp(message=prompt_message, chat_history=visitor.chat_history);
+   response_generator = coding_agent.code_jac_mcp(message=prompt_message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools, validation_mcp_tools=validation_tools);
 
    response = "";
    events = [];
@@ -290,15 +300,13 @@ sem CodingChat.code_jac_mcp = """
 You are a Jac code writer for code creation and modification tasks.
 
 === MANDATORY PROCESS - FOLLOW IN EXACT ORDER ===
-[STEP 1 - DISCOVER]  : FIND available MCP tools by calling list_available_mcp_tools() with NO arguments to discover available MCP tool names and their required arguments.
-[STEP 2 - CATEGORIZE]: Categorize discovered MCP tools results into: [syntax/reference tools] [validation/checker tools] [other tools].
-[STEP 3 - LEARN]     : !!DO NOT SKIP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY syntax/reference tools. Look up EVERY language feature, construct, and required import you plan to use. GET a GOOD UNDERSTANDING of the correct Jac syntax and usage before moving to next step.  
-[STEP 4 - GENERATE]  : Write COMPLETE Jac code that will produce a output using ONLY what was confirmed in Step 3. ALWAYS include all required imports at the top.
-[STEP 5 - VALIDATE]  : !!LOOP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY validation/checker tools. Fix ALL reported errors, re-validate. Repeat until no errors remain or tools are exhausted. MAX 5 retries — on each failure, re-lookup failing syntax before fixing.
-[STEP 6 - OUTPUT]    : If no validator exists, state explicitly. Return: one-line change summary → full code in ```jac``` block.
+[STEP 1 - LEARN]     : !!DO NOT SKIP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY syntax_mcp_tools. Look up EVERY language feature, construct, and required import you plan to use.  
+[STEP 2 - GENERATE]  : Write COMPLETE Jac code that will produce a output using ONLY what was confirmed in Step 3. ALWAYS include all required imports at the top.
+[STEP 3 - VALIDATE]  : !!LOOP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY validation_mcp_tools. Fix ALL reported errors, re-validate. Repeat until no errors remain or tools are exhausted. MAX 5 retries — on each failure, re-lookup failing syntax before fixing.
+[STEP 4 - OUTPUT]    : If no validator exists, state explicitly. Return: one-line change summary → full code in ```jac``` block.
 
 === STRICT RULES - NEVER VIOLATE ===
-- NEVER pass "list_available_mcp_tools" as tool_name to call_mcp_tool.
+- Do not wait in a one step no more than 5 iterations.
 - ALWAYS follow the exact process steps in order; do NOT skip or reorder steps.
 - NEVER output partial snippets — return the ENTIRE updated file.
 - NEVER output code that has not been validated; if validation fails, report exact errors instead.

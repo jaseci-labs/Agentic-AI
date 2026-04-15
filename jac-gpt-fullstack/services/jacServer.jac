@@ -77,10 +77,9 @@ def refer_full_language_examples() -> str {
     }
 }
 
-"""
-    List all tools exposed by the project's MCP server so the LLM can
-    decide which tool to call. Returns a formatted string with tool names,
-    descriptions, and parameter names.
+"""List all tools exposed by the project's MCP server so the LLM can
+   decide which tool to call. Returns a formatted string with tool names,
+   descriptions, and parameter names.
 """
 def list_available_mcp_tools() -> str {
     try {
@@ -150,14 +149,14 @@ node CodingChat {
         tools = [search_docs, refer_full_language_examples]
     );
 
-    def code_jac_mcp(message: str, chat_history: list[dict]) -> str by llm(
+    def code_jac_mcp(message: str, chat_history: list[dict], syntax_mcp_tools: list, validation_mcp_tools: list) -> str by llm(
         method="ReAct",
         messages=chat_history,
         max_react_iterations=12,
         temperature=0.3,
         stream = True,
         logging = True,
-        tools = [list_available_mcp_tools, call_mcp_tool]
+        tools = [call_mcp_tool]
     );
 
     can chat with interact entry;
