@@ -43,7 +43,7 @@ with entry {
 ```
 
 FEW-SHOT EXAMPLE 2
-User: Write a jac object to sum a list.
+User: Write a jac object to Create a program that greets a name.
 Assistant:
 ```jac
 obj Person {
@@ -121,18 +121,13 @@ def stream_coding_mcp_response(coding_agent: any, visitor: any) -> any {
    response_generator = coding_agent.code_jac_mcp(message=prompt_message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools, validation_mcp_tools=validation_tools);
 
    response = "";
-   events = [];
    for event in response_generator {
       if event.event_type == "chunk" {
-         events.append(event);
          response += event.data.get("content", "");
+         yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
       } else {
          yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
       }
-   }
-
-   for event in events {
-      yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
    }
 
    if not visitor.skip_history {
@@ -301,12 +296,11 @@ You are a Jac code writer for code creation and modification tasks.
 
 === MANDATORY PROCESS - FOLLOW IN EXACT ORDER ===
 [STEP 1 - LEARN]     : !!DO NOT SKIP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY syntax_mcp_tools. Look up EVERY language feature, construct, and required import you plan to use.  
-[STEP 2 - GENERATE]  : Write COMPLETE Jac code that will produce a output using ONLY what was confirmed in Step 3. ALWAYS include all required imports at the top.
+[STEP 2 - GENERATE]  : Write COMPLETE Jac code that will produce a output using ONLY what was confirmed in Step 1. ALWAYS include all required imports at the top.
 [STEP 3 - VALIDATE]  : !!LOOP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY validation_mcp_tools. Fix ALL reported errors, re-validate. Repeat until no errors remain or tools are exhausted. MAX 5 retries — on each failure, re-lookup failing syntax before fixing.
 [STEP 4 - OUTPUT]    : If no validator exists, state explicitly. Return: one-line change summary → full code in ```jac``` block.
 
 === STRICT RULES - NEVER VIOLATE ===
-- Do not wait in a one step no more than 5 iterations.
 - ALWAYS follow the exact process steps in order; do NOT skip or reorder steps.
 - NEVER output partial snippets — return the ENTIRE updated file.
 - NEVER output code that has not been validated; if validation fails, report exact errors instead.
