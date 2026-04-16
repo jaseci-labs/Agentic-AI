@@ -3,71 +3,6 @@ import os;
 import from datetime {datetime}
 import from byllm.types { StreamEvent }
 
-# Two compact few-shot examples injected into CodingChat MCP messages.
-glob coding_mcp_few_shots: str = """
-FEW-SHOT EXAMPLE 1
-User: Create a walker that greets a name.
-Assistant:
-```jac
-node Person {
-    has name: str;
-    has age: int;
-}
-
-edge Knows {
-    has since: int;
-}
-
-walker Greeter {
-    can greet with Root entry {
-        visit [-->];
-    }
-
-    can say_hello with Person entry {
-        print(f"Hello, {here.name}!");
-        visit [-->];
-    }
-}
-
-with entry {
-    # Build graph
-    alice = Person(name="Alice", age=30);
-    bob = Person(name="Bob", age=25);
-
-    root ++> alice;
-    alice +>: Knows(since=2020) :+> bob;
-
-    # Spawn walker
-    root spawn Greeter();
-}
-```
-
-FEW-SHOT EXAMPLE 2
-User: Write a jac object to Create a program that greets a name.
-Assistant:
-```jac
-obj Person {
-    has name: str;
-    has age: int;
-
-    def postinit() -> None {
-        # Called after the auto-generated init completes
-        print(f"Created {self.name}");
-    }
-
-    def greet() -> str {
-        return f"Hi, I'm {self.name}";
-    }
-}
-
-with entry {
-    # Usage
-    person = Person(name="Alice", age=30);
-    print(person.greet());
-}
-```
-""";
-
 # Shared helper function for streaming responses with SSE format
 def stream_chat_response(response_generator: any, visitor: any) -> any {
    print("Starting response streaming...");
@@ -89,16 +24,6 @@ def stream_chat_response(response_generator: any, visitor: any) -> any {
    return;
 }
 
-def build_coding_mcp_message(base_message: str) -> str {
-   msg = (
-      "Generate Jac code directly. Never draft Python first.\n\n"
-      + coding_mcp_few_shots
-      + "\n\nUSER REQUEST:\n"
-      + base_message
-   );
-   return msg;
-}
-
 def categorized_mcp_tools(mcp_tools: str) -> dict[str, list[str]] by llm();
 
 sem categorized_mcp_tools = """
@@ -117,8 +42,7 @@ def stream_coding_mcp_response(coding_agent: any, visitor: any) -> any {
    syntax_tools = tools.get("syntax_tools", []);
    validation_tools = tools.get("validation_tools", []);
 
-   prompt_message = build_coding_mcp_message(visitor.message);
-   response_generator = coding_agent.code_jac_mcp(message=prompt_message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools, validation_mcp_tools=validation_tools);
+   response_generator = coding_agent.code_jac_mcp(message=visitor.message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools, validation_mcp_tools=validation_tools);
 
    response = "";
    for event in response_generator {
