@@ -215,4 +215,8 @@ obj McpClient {
             self._server_process = None;
         }
     }
+
+    def get_tools_length() -> int {
+        return len(self._tools);
+    }
 }
