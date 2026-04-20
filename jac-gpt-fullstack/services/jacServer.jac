@@ -10,8 +10,19 @@ import from services.rag_engine {RagEngine, load_config}
 import from services.mcp_client {McpClient}
 import from datetime {datetime}
 
+# Long-lived MCP client subprocess (stdio JSON-RPC)
+glob mcp_client: McpClient = McpClient();
+glob available_mcp_tools_descriptions: str = mcp_client.get_tool_descriptions() if mcp_client.get_tools_length() > 0 else "";
+
+def categorized_mcp_tools(mcp_tools: str) -> dict[str, list[str]] by llm();
+def reorder_categorized_mcp_tools(categorized_tools: dict[str, list[str]]) -> dict[str, list[str]] by llm();
+
+glob mcp_tools_cache: dict[str, list[str]] = reorder_categorized_mcp_tools(categorized_mcp_tools(available_mcp_tools_descriptions)) if available_mcp_tools_descriptions else {"syntax_tools": [], "validation_tools": [], "other_tools": []};
+
 with entry {
     load_dotenv(override=True);
+    print(f"[MCP TOOLS CACHE]: syntax_tools={len(mcp_tools_cache.get('syntax_tools', []))}, validation_tools={len(mcp_tools_cache.get('validation_tools', []))}, other_tools={len(mcp_tools_cache.get('other_tools', []))}");
+    print(f"[MCP TOOLS CACHE DETAILS]: {json.dumps(mcp_tools_cache, indent=2)}");
 }
 
 # Load configuration
@@ -36,9 +47,6 @@ glob rag_engine: RagEngine = RagEngine(
     top_n=app_config.get("rag_engine", {}).get("reranking", {}).get("top_n", 5),
     cross_encoder_model=app_config.get("rag_engine", {}).get("reranking", {}).get("model", "cross-encoder/ms-marco-MiniLM-L6-v2")
 );
-
-# Long-lived MCP client subprocess (stdio JSON-RPC, same pattern as list_mcp_sse.jac)
-glob mcp_client: McpClient = McpClient();
 
 node Router {
 }
@@ -77,27 +85,43 @@ def refer_full_language_examples() -> str {
     }
 }
 
-"""List all tools exposed by the project's MCP server so the LLM can
-   decide which tool to call. Returns a formatted string with tool names,
-   descriptions, and parameter names.
 """
-def list_available_mcp_tools() -> str {
-    try {
-        return mcp_client.get_tool_descriptions();
-    } except Exception as e {
-        return f"MCP tools unavailable: {e}";
-    }
-}
+Call an MCP tool by name with JSON-encoded arguments.
 
-"""
-    Call an MCP tool by name. Pass tool arguments as a JSON-encoded string,
-    e.g. '{\"query\": \"walkers in Jac\"}'.
-    Returns the tool's text output or an error string.
+PARAMETERS:
+    tool_name     : Exact tool name as a string (e.g.:- "syntax_lookup", "validate_code").
+    tool_args_json: MUST be a valid JSON string with double-quoted keys and values.
+                    Use "" or "{}" if the tool takes no arguments. Never pass None.
+                    e.g.:- CORRECT  : '{"code":"obj Calculator {\\n    has result: float = 0.0;\\n\\n    def add(x: float) -> float;\\n    def get_result() -> float;\\n}\\n\\nimpl Calculator.add(x: float) -> float {\\n    self.result += x;\\n    return self.result;\\n}\\n\\nimpl Calculator.get_result() -> float {\\n    return self.result;\\n}\\n\\nwith entry {\\n    calc = Calculator();\\n    calc.add(5.0);\\n    print(calc.get_result());\\n}"}' | '{}'
+
+USAGE:
+    call_mcp_tool("tool_name", '{"key": "value"}')
+    Never call mcp_client directly — always go through this function.
+
+RETURNS:
+    Tool output on success. "MCP call failed: ..." on error.
+    Always check the return value before proceeding to the next step.
 """
 def call_mcp_tool(tool_name: str, tool_args_json: str) -> str {
     try {
         tool_args = json.loads(tool_args_json) if tool_args_json else {};
+
+        if not isinstance(tool_args, dict) {
+            return "MCP call failed: tool_args_json must decode to a JSON object (e.g. {\"key\":\"value\"}).";
+        }
+
         return mcp_client.call_tool(name=tool_name, args=tool_args);
+    } except json.JSONDecodeError as e {
+        start = max(0, e.pos - 30);
+        end = min(len(tool_args_json), e.pos + 30);
+        preview = tool_args_json[start:end];
+        return (
+            f"MCP call failed: invalid tool_args_json at line {e.lineno}, "
+            f"column {e.colno} (char {e.pos}). "
+            f"Reason: {e.msg}. "
+            f"Snippet near error: {preview!r}. "
+            f"Tip: escape newlines as \\\\n and quotes inside strings as \\\"."
+        );
     } except Exception as e {
         return f"MCP call failed: {e}";
     }
@@ -111,16 +135,16 @@ node RagChat {
         temperature=0.5,
         stream = True,
         logging = True,
-        tools = [search_docs, refer_full_language_examples]
+        tools = [search_docs]
     );
 
-    def respond_mcp(message: str, chat_history: list[dict]) -> str by llm(
+    def respond_mcp(message: str, chat_history: list[dict], syntax_mcp_tools: list) -> str by llm(
         method="ReAct",
         max_react_iterations=10,
         temperature=0.5,
         stream = True,
         logging = True,
-        tools = [list_available_mcp_tools, call_mcp_tool]
+        tools = [call_mcp_tool]
     );
 
     can chat with interact entry;
@@ -144,15 +168,17 @@ node CodingChat {
     def code_jac_rag(message: str, chat_history: list[dict]) -> str by llm(
         method="ReAct",
         messages=chat_history,
+        max_react_iterations=20,
+        temperature=0.3,
         stream = True,
         logging = True,
-        tools = [search_docs, refer_full_language_examples]
+        tools = [search_docs]
     );
 
     def code_jac_mcp(message: str, chat_history: list[dict], syntax_mcp_tools: list, validation_mcp_tools: list) -> str by llm(
         method="ReAct",
         messages=chat_history,
-        max_react_iterations=12,
+        max_react_iterations=20,
         temperature=0.3,
         stream = True,
         logging = True,
@@ -169,15 +195,15 @@ node DebuggerChat {
         messages=chat_history,
         stream = True,
         logging = True,
-        tools = [search_docs, refer_full_language_examples]
+        tools = [search_docs]
     );
 
-    def debug_code_mcp(message: str, chat_history: list[dict]) -> str by llm(
+    def debug_code_mcp(message: str, chat_history: list[dict], syntax_mcp_tools: list, validation_mcp_tools: list) -> str by llm(
         method="ReAct",
         messages=chat_history,
         stream = True,
         logging = True,
-        tools = [list_available_mcp_tools, call_mcp_tool]
+        tools = [call_mcp_tool]
     );
 
     can chat with interact entry;
