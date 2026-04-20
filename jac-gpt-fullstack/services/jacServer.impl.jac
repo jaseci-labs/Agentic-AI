@@ -11,63 +11,31 @@ def stream_chat_response(response_generator: any, visitor: any) -> any {
    for event in response_generator {
       yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
       if event.event_type == "chunk" {
-         response += event.data.get("content", "");
+         chunk_data = event.data or {};
+         response += chunk_data.get("content", "");
       }
    }
 
    if not visitor.skip_history {
-      session_node = ([root-->(?:Session)](?id==visitor.session_id))[0];
-      session_node.chat_history.append({"role": "assistant", "content": response});
-      session_node.updated_at = datetime.now().isoformat();
+      matching_sessions = ([root-->(?:Session)](?id==visitor.session_id));
+      if len(matching_sessions) > 0 {
+         session_node = matching_sessions[0];
+         session_node.chat_history.append({"role": "assistant", "content": response});
+         session_node.updated_at = datetime.now().isoformat();
+      } else {
+         print("Warning: Session not found while appending assistant response:", visitor.session_id);
+      }
    }
    
-   return;
-}
-
-def categorized_mcp_tools(mcp_tools: str) -> dict[str, list[str]] by llm();
-
-sem categorized_mcp_tools = """
-You are an assistant that categorizes MCP tools for a Jac code generation task.
-Given a list of MCP tools with their names and descriptions, categorize them into three groups:
-1. Syntax/Reference Tools: Tools that provide information about Jac syntax, language constructs, or usage examples.
-2. Validation/Checker Tools: Tools that can validate Jac code, check for errors, or provide feedback on code correctness.
-3. Other Tools: Any tools that do not fit into the above categories.
-Return a JSON object with three keys: "syntax_tools", "validation_tools", and "other_tools", each containing a list of tool names with their description and params that belong to that category.
-""";
-
-def stream_coding_mcp_response(coding_agent: any, visitor: any) -> any {
-   mcp_tools = list_available_mcp_tools();
-
-   tools = categorized_mcp_tools(mcp_tools);
-   syntax_tools = tools.get("syntax_tools", []);
-   validation_tools = tools.get("validation_tools", []);
-
-   response_generator = coding_agent.code_jac_mcp(message=visitor.message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools, validation_mcp_tools=validation_tools);
-
-   response = "";
-   for event in response_generator {
-      if event.event_type == "chunk" {
-         response += event.data.get("content", "");
-         yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
-      } else {
-         yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
-      }
-   }
-
-   if not visitor.skip_history {
-      session_node = ([root-->(?:Session)](?id==visitor.session_id))[0];
-      session_node.chat_history.append({"role": "assistant", "content": response});
-      session_node.updated_at = datetime.now().isoformat();
-   }
-
    return;
 }
 
 impl RagChat.chat {
    print("Entering RAG node, mode:", visitor.mode);
    if visitor.mode == "mcp" {
+      syntax_tools = mcp_tools_cache.get("syntax_tools", []);
       report stream_chat_response(
-         self.respond_mcp(message=visitor.message, chat_history=visitor.chat_history),
+         self.respond_mcp(message=visitor.message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools),
          visitor
       );
    } else {
@@ -81,7 +49,12 @@ impl RagChat.chat {
 impl CodingChat.chat {
    print("Entering Coding node, mode:", visitor.mode);
    if visitor.mode == "mcp" {
-      report stream_coding_mcp_response(self, visitor);
+      syntax_tools = mcp_tools_cache.get("syntax_tools", []);
+      validation_tools = mcp_tools_cache.get("validation_tools", []);
+      report stream_chat_response(
+         self.code_jac_mcp(message=visitor.message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools, validation_mcp_tools=validation_tools),
+         visitor
+      );
    } else {
       report stream_chat_response(
          self.code_jac_rag(message=visitor.message, chat_history=visitor.chat_history),
@@ -93,8 +66,10 @@ impl CodingChat.chat {
 impl DebuggerChat.chat {
    print("Entering Debugger node, mode:", visitor.mode);
    if visitor.mode == "mcp" {
+      syntax_tools = mcp_tools_cache.get("syntax_tools", []);
+      validation_tools = mcp_tools_cache.get("validation_tools", []);
       report stream_chat_response(
-         self.debug_code_mcp(message=visitor.message, chat_history=visitor.chat_history),
+         self.debug_code_mcp(message=visitor.message, chat_history=visitor.chat_history, syntax_mcp_tools=syntax_tools, validation_mcp_tools=validation_tools),
          visitor
       );
    } else {
@@ -183,11 +158,28 @@ FINAL REMINDER: Return ONLY A SINGLE INTEGER (0, 1, 2, 3, or 4). Nothing else
 
 # - Never generate new code - only curate existing examples.
 
+sem categorized_mcp_tools = """
+You are an assistant that categorizes MCP tools for a Jac code generation task. All tools should be included in the output, but one tools ahould only appear in ONE category. 
+Given a list of MCP tools with their names and descriptions, categorize them into three groups:
+1. Syntax/Reference Tools: Tools that provide INFORMATION to understand Jac, language constructs, or get usage examples and doc RESOURCES. DO NOT include code validation, error-checking, code parsing or code conversion tools in this category.
+2. Validation/Checker Tools: Tools that can validate Jac code, check and explain for errors, or provide feedback on code correctness.
+3. Other Tools: Any tools that do not fit into the above categories.
+Return a JSON object with three keys: "syntax_tools", "validation_tools", and "other_tools", each containing a list of tool names with their description and params that belong to that category.
+""";
+
+sem reorder_categorized_mcp_tools = """
+You are an assistant that reorders categorized MCP tools for optimal use in a Jac related tasks.
+Given a JSON object with three categories of MCP tools: "syntax_tools", "validation_tools", and "other_tools", reorder the tools within syntax_tools and validation_tools categories based on below criteria:
+Tier 1:- tools to understand Jac syntax, language constructs, search documentation, list examples and syntax checking and error explaining tools.  
+Tier 2:- tools to get specific resources, examples and code validation and code formatting tools.
+Return the JSON object with the same structure but with tools in syntax_tools and validation_tools reordered according to the above criteria. 
+The other_tools category should remain unchanged.  
+""";
+
 sem RagChat.respond_rag = """
 Jac/Jaseci documentation expert using local vector search only. For every query:
 - Call search_docs for EACH concept separately before answering — never rely on prior knowledge or chat history as a source of answers; use chat history only to form better search queries.
-- Also call refer_full_language_examples to access complete Jac language examples if needed.
-- Base answers strictly on what search_docs returns; if docs don't cover it, say so.
+- Base answers STRICTLY on what search_docs returns; if docs don't cover it, say so.
 - Re-search with synonyms or related terms if initial results are insufficient; never repeat an identical search.
 - Explain *why* it matters, not just *what* it is; for code concepts include: a step-by-step breakdown of each keyword/construct involved, then a declaration example, then a separate usage example.
 - End with a one-line citation of the documentation topic/section names used (not file paths); wrap all Jac code in ```jac``` blocks; use Markdown structure and bullet points.
@@ -195,11 +187,10 @@ Jac/Jaseci documentation expert using local vector search only. For every query:
 
 sem RagChat.respond_mcp = """
 Jac/Jaseci documentation expert using MCP tools. For every query:
-You have TWO tools available: list_available_mcp_tools and call_mcp_tool.
-- FIRST, call the tool list_available_mcp_tools (with NO arguments) to discover MCP tool names.
-- THEN, call the tool call_mcp_tool with the discovered tool_name and tool_args_json.
-- NEVER pass "list_available_mcp_tools" as the tool_name argument to call_mcp_tool.
-- Base answers strictly on what MCP tools return; if tools don't cover it, say so.
+You have ONE tool available: call_mcp_tool.
+- Never rely on prior knowledge or chat history as a source of answers; use chat history only to form better search queries.
+- Call call_mcp_tool(tool_name, tool_args_json) using syntax_mcp_tools. Look up EVERY language feature, construct, and required import need to answer the question. AT LEAST use 3 different tools in the EXACT order they appear for each answer. 
+- Base answers STRICTLY on what MCP tools return; if tools don't cover it, say so.
 - Explain *why* it matters, not just *what* it is; for code concepts include: a step-by-step breakdown of each keyword/construct involved, then a declaration example, then a separate usage example.
 - End with a one-line citation of the documentation topic/section names used (not file paths); wrap all Jac code in ```jac``` blocks; use Markdown structure and bullet points.
 """;
@@ -207,9 +198,8 @@ You have TWO tools available: list_available_mcp_tools and call_mcp_tool.
 sem CodingChat.code_jac_rag = """
 Jac code writer that generates or modifies code based on user requests and conversation history.
 - Never rely on prior Jac knowledge (it is outdated); use search_docs to verify syntax or language concepts — decompose the request into parts and search each separately (e.g. "walker syntax", "node declaration", "import syntax").
-- Also call refer_full_language_examples to access complete Jac language examples if needed.
 - Do NOT use search_docs for trivial changes such as renaming, adding attributes, updating values, or formatting.
-- Always output the ENTIRE updated code, never partial snippets; apply only the requested changes — never remove or modify working code unless explicitly asked.
+- Always output the ENTIRE updated code and ALWAYS include all required imports at the top, never partial snippets; apply only the requested changes — never remove or modify working code unless explicitly asked.
 - Response order: briefly explain what changed → then provide the full updated code; do not restate unchanged logic.
 - If `by llm()` is used, ensure it is imported and instantiated; wrap all Jac code in ```jac``` blocks.
 """;
@@ -219,24 +209,23 @@ sem CodingChat.code_jac_mcp = """
 You are a Jac code writer for code creation and modification tasks.
 
 === MANDATORY PROCESS - FOLLOW IN EXACT ORDER ===
-[STEP 1 - LEARN]     : !!DO NOT SKIP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY syntax_mcp_tools. Look up EVERY language feature, construct, and required import you plan to use.  
-[STEP 2 - GENERATE]  : Write COMPLETE Jac code that will produce a output using ONLY what was confirmed in Step 1. ALWAYS include all required imports at the top.
-[STEP 3 - VALIDATE]  : !!LOOP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY validation_mcp_tools. Fix ALL reported errors, re-validate. Repeat until no errors remain or tools are exhausted. MAX 5 retries — on each failure, re-lookup failing syntax before fixing.
-[STEP 4 - OUTPUT]    : If no validator exists, state explicitly. Return: one-line change summary → full code in ```jac``` block.
+[STEP 1 - LEARN]     : !!DO NOT SKIP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY syntax_mcp_tools. Look up EVERY language feature, construct, and required import you plan to use. DO NOT call same tool more than 5 times continounsly. ALWAYS neglect optional parameters in the tool calls.  
+[STEP 2 - GENERATE]  : Write COMPLETE Jac code that anyone can run without any modifications using ONLY what was confirmed in Step 1. ALWAYS include all required imports at the top.
+[STEP 3 - VALIDATE(MANDATORY)]  : !!LOOP!! Call call_mcp_tool(tool_name, tool_args_json) using ONLY validation_mcp_tools. Fix ALL reported errors, re-validate. Repeat until no errors remain or tools are exhausted. re-lookup failing syntax before fixing.
 
-=== STRICT RULES - NEVER VIOLATE ===
-- ALWAYS follow the exact process steps in order; do NOT skip or reorder steps.
-- NEVER output partial snippets — return the ENTIRE updated file.
-- NEVER output code that has not been validated; if validation fails, report exact errors instead.
-- NEVER modify working logic unless explicitly asked.
-- LAST tool call MUST always be a validation/checker tool.
+!!IMPORTANT!!
+- If you cannot produce valid Jac, output EXACTLY this one line and nothing else:
+  Final code is not valid Jac, unable to return code block.
+
+OUTPUT FORMAT (must follow exactly):
+1) First line: a single-line summary describing what changed in the code (plain text, no bullets, no markdown).
+2) Then: the COMPLETE updated Jac code wrapped inside ```jac``` blocks.
 """;
 
 sem DebuggerChat.debug_code_rag = """
 Jac code debugger that identifies and fixes all issues in the provided code.
 - Fix ALL issue types: syntax errors, logical errors, runtime errors, and incorrect/non-idiomatic Jac usage.
 - For any uncertain Jac syntax or construct, use search_docs — decompose the code into parts and search each separately (e.g. "walker syntax", "import syntax", "visit syntax").
-- Also call refer_full_language_examples to access complete Jac language examples if needed.
 - Jac-specific rule: `import from module { item }` statements do NOT end with a semicolon.
 - Response order: first explain what was wrong and *why* → then provide the complete corrected code; never output partial snippets.
 - Do not introduce features or refactors beyond what is needed to fix the issue; wrap all Jac code in ```jac``` blocks.
@@ -245,10 +234,9 @@ Jac code debugger that identifies and fixes all issues in the provided code.
 sem DebuggerChat.debug_code_mcp = """
 Jac code debugger that identifies and fixes all issues in the provided code.
 - Fix ALL issue types: syntax errors, logical errors, runtime errors, and incorrect/non-idiomatic Jac usage.
-You have TWO tools available: list_available_mcp_tools and call_mcp_tool.
-- FIRST, call the tool list_available_mcp_tools (with NO arguments) to discover MCP tool names.
-- THEN, call the tool call_mcp_tool with the discovered tool_name and tool_args_json.
-- NEVER pass "list_available_mcp_tools" as the tool_name argument to call_mcp_tool.
+You have ONE tool available: call_mcp_tool.
+- Call call_mcp_tool(tool_name, tool_args_json) using ONLY syntax_mcp_tools. Look up EVERY language feature, construct, and required import you plan to use.
+- Call call_mcp_tool(tool_name, tool_args_json) using ONLY validation_mcp_tools. Fix ALL reported errors, re-validate. Repeat until no errors remain or tools are exhausted. re-lookup failing syntax before fixing.
 - Jac-specific rule: `import from module { item }` statements do NOT end with a semicolon.
 - Response order: first explain what was wrong and *why* → then provide the complete corrected code; never output partial snippets.
 - Do not introduce features or refactors beyond what is needed to fix the issue; wrap all Jac code in ```jac``` blocks.
