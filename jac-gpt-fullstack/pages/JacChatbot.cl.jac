@@ -299,27 +299,51 @@ def:pub JacChatbot() -> JsxElement {
     mainContent = None;
     if hasMessages {
         # Active conversation - messages area
-        mainContent = <ScrollArea ref={scrollAreaRef} viewportRef={viewportRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
-            <div style={{
-                "maxWidth": "768px",
-                "margin": "0 auto",
-                "paddingTop": "16px",
-                "paddingBottom": "16px",
-                "minWidth": "0",
-                "overflow": "hidden"
-            }}>
+        if chat.mode == "both" {
+            mainContent = <ScrollArea ref={scrollAreaRef} viewportRef={viewportRef} style={{"flex": "1", "paddingLeft": "8px", "paddingRight": "8px"}} type="scroll">
                 <div style={{
-                    "display": "flex",
-                    "flexDirection": "column",
-                    "gap": "8px"
+                    "width": "100%",
+                    "margin": "0",
+                    "paddingTop": "16px",
+                    "paddingBottom": "16px",
+                    "minWidth": "0",
+                    "overflow": "hidden"
                 }}>
-                    {messageItems}
-                    {loadingContent}
+                    <div style={{
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "gap": "8px"
+                    }}>
+                        {messageItems}
+                        {loadingContent}
+                    </div>
+                    <div ref={chat.messagesEndRef} />
+                    <div ref={spacerRef} />
                 </div>
-                <div ref={chat.messagesEndRef} />
-                <div ref={spacerRef} />
-            </div>
-        </ScrollArea>;
+            </ScrollArea>;
+        } else {
+            mainContent = <ScrollArea ref={scrollAreaRef} viewportRef={viewportRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
+                <div style={{
+                    "maxWidth": "768px",
+                    "margin": "0 auto",
+                    "paddingTop": "16px",
+                    "paddingBottom": "16px",
+                    "minWidth": "0",
+                    "overflow": "hidden"
+                }}>
+                    <div style={{
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "gap": "8px"
+                    }}>
+                        {messageItems}
+                        {loadingContent}
+                    </div>
+                    <div ref={chat.messagesEndRef} />
+                    <div ref={spacerRef} />
+                </div>
+            </ScrollArea>;
+        }
     } else {
         # Empty state
         mainContent = <div style={{
