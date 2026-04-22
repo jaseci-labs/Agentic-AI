@@ -1,5 +1,70 @@
 """Service layer for communicating with the Jac backend using root spawn."""
 
+glob REQUEST_TIMEOUT_MS = 30000;
+
+"""Build a normalized error object for consistent UI handling."""
+def buildError(code: str, message: str, retryable: bool = False, statusCode: int = 0, details: str = "") -> dict {
+    return {
+        "code": code,
+        "message": message,
+        "retryable": retryable,
+        "status_code": statusCode,
+        "details": details,
+        "timestamp": Date().toISOString()
+    };
+}
+
+"""Create a standard failure response payload."""
+def errorResponse(errorObj: dict, extra: dict = {}) -> dict {
+    return {
+        "success": False,
+        "code": errorObj.code,
+        "message": errorObj.message,
+        "error": errorObj,
+        **extra
+    };
+}
+
+"""Convert unknown runtime errors into normalized error objects."""
+def normalizeRuntimeError(err: any, fallbackCode: str = "ERR_UNKNOWN_FRONTEND") -> dict {
+    errorName = err.name if err and err.name else "";
+    details = String(err) if err else "Unknown error";
+
+    if errorName == "AbortError" {
+        return buildError("ERR_ABORTED", "Request was cancelled.", False, 0, details);
+    }
+
+    if details.toLowerCase().includes("timeout") {
+        return buildError("ERR_TIMEOUT", "Request timed out. Please try again.", True, 408, details);
+    }
+
+    if details.toLowerCase().includes("network") or details.toLowerCase().includes("failed to fetch") {
+        return buildError("ERR_NETWORK", "Network error. Check your connection and try again.", True, 0, details);
+    }
+
+    return buildError(fallbackCode, "Something went wrong. Please try again.", False, 0, details);
+}
+
+"""Merge an external abort signal with a timeout signal."""
+def createTimedAbortSignal(externalSignal: any = None, timeoutMs: int = REQUEST_TIMEOUT_MS) -> any {
+    controller = Reflect.construct(AbortController, []);
+    timeoutId = setTimeout(lambda -> None {
+        controller.abort("timeout");
+    }, timeoutMs);
+
+    if externalSignal {
+        externalSignal.addEventListener("abort", lambda -> None {
+            clearTimeout(timeoutId);
+            controller.abort("external_abort");
+        });
+    }
+
+    return {
+        "signal": controller.signal,
+        "clear": lambda -> None { clearTimeout(timeoutId); }
+    };
+}
+
 """Generate a unique session ID."""
 def:pub generateSessionId() -> str {
     timestamp = Date.now();
@@ -25,11 +90,8 @@ async def:pub createSession(sessionId: str = "") -> any {
         };
     } except Exception as e {
         console.error("createSession error:", e);
-        return {
-            "success": False,
-            "error": String(e),
-            "session_id": sessionId
-        };
+        err = normalizeRuntimeError(e, "ERR_CREATE_SESSION");
+        return errorResponse(err, {"session_id": sessionId, "chat_history": []});
     }
 }
 
@@ -47,17 +109,15 @@ async def:pub getSession(sessionId: str) -> any {
         };
     } except Exception as e {
         console.error("getSession error:", e);
-        return {
-            "success": False,
-            "error": String(e),
-            "chat_history": [],
-            "found": False
-        };
+        err = normalizeRuntimeError(e, "ERR_GET_SESSION");
+        return errorResponse(err, {"chat_history": [], "found": False});
     }
 }
 
 """Send a message and get a response from the chatbot (SSE streaming)."""
 async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onChunk: any = None, onEvent: any = None, abortSignal: any = None, mode: str = "", skipHistory: bool = False) -> any {
+    timedAbort = createTimedAbortSignal(abortSignal, REQUEST_TIMEOUT_MS);
+
     try {
         # Get token for authentication
         token = localStorage.getItem("jac_token");
@@ -78,12 +138,33 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
                     "mode": mode,
                     "skip_history": skipHistory
                 }),
-                "signal": abortSignal
+                "signal": timedAbort.signal
             }
         );
+
+        if response.status >= 400 {
+            errorCode = "ERR_SERVER";
+            friendlyMessage = "Server error. Please try again.";
+            retryable = response.status >= 500 or response.status == 429;
+
+            if response.status == 401 or response.status == 403 {
+                errorCode = "ERR_AUTH";
+                friendlyMessage = "Authentication failed. Please sign in again.";
+            } elif response.status == 404 {
+                errorCode = "ERR_NOT_FOUND";
+                friendlyMessage = "Requested endpoint was not found.";
+            } elif response.status == 429 {
+                errorCode = "ERR_RATE_LIMIT";
+                friendlyMessage = "Too many requests. Please wait and try again.";
+            }
+
+            return errorResponse(
+                buildError(errorCode, friendlyMessage, retryable, response.status, "HTTP status " + String(response.status))
+            );
+        }
         
         if not response.body {
-            raise Exception("No response body") ;
+            return errorResponse(buildError("ERR_EMPTY_RESPONSE", "Empty response received from server.", True, response.status, "No response body"));
         }
 
         reader = response.body.getReader();
@@ -137,28 +218,54 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
                     }
                 } except Exception as parseError {
                     console.error("JSON parse error:", parseError, "Data:", data);
+                    if onEvent {
+                        onEvent({
+                            "type": "parse_error",
+                            "data": {
+                                "code": "ERR_STREAM_PARSE",
+                                "message": "Received malformed stream data.",
+                                "raw": data
+                            }
+                        });
+                    }
                 }
             }
         }
 
         return {
-            "success": True
+            "success": True,
+            "code": "OK",
+            "message": "Response streamed successfully"
         };
     } except Exception as e {
         # Check if it's an abort error
         errorName = e.name if e.name else "";
         if errorName == "AbortError" {
+            if timedAbort.signal and timedAbort.signal.reason == "timeout" {
+                timedAbort.clear();
+                return errorResponse(buildError("ERR_TIMEOUT", "Request timed out. Please try again.", True, 408, String(e)));
+            }
             console.log("Request aborted by user");
+            timedAbort.clear();
             return {
                 "success": False,
-                "aborted": True
+                "aborted": True,
+                "code": "ERR_ABORTED",
+                "message": "Request was cancelled by user.",
+                "error": buildError("ERR_ABORTED", "Request was cancelled by user.", False, 0, String(e))
             };
         }
+
+        if String(e).toLowerCase().includes("timeout") {
+            timedAbort.clear();
+            return errorResponse(buildError("ERR_TIMEOUT", "Request timed out. Please try again.", True, 408, String(e)));
+        }
+
         console.error("sendMessage error:", e);
-        return {
-            "success": False,
-            "error": String(e)
-        };
+        err = normalizeRuntimeError(e, "ERR_SEND_MESSAGE");
+        return errorResponse(err);
+    } finally {
+        timedAbort.clear();
     }
 }
 
@@ -178,11 +285,8 @@ async def:pub getSuggestions(message: str, chatHistory: list = []) -> any {
         };
     } except Exception as e {
         console.error("getSuggestions error:", e);
-        return {
-            "success": False,
-            "error": String(e),
-            "suggestions": []
-        };
+        err = normalizeRuntimeError(e, "ERR_GET_SUGGESTIONS");
+        return errorResponse(err, {"suggestions": [], "total": 0});
     }
 }
 
@@ -199,10 +303,8 @@ async def:pub getUserProfile(email: str) -> any {
         };
     } except Exception as e {
         console.error("getUserProfile error:", e);
-        return {
-            "success": False,
-            "error": String(e)
-        };
+        err = normalizeRuntimeError(e, "ERR_GET_USER_PROFILE");
+        return errorResponse(err, {"user": {}, "isAdmin": False});
     }
 }
 
@@ -219,12 +321,8 @@ async def:pub getAllUsers(requesterEmail: str = "") -> any {
         };
     } except Exception as e {
         console.error("getAllUsers error:", e);
-        return {
-            "success": False,
-            "error": String(e),
-            "users": [],
-            "total": 0
-        };
+        err = normalizeRuntimeError(e, "ERR_GET_ALL_USERS");
+        return errorResponse(err, {"users": [], "total": 0});
     }
 }
 
@@ -241,12 +339,8 @@ async def:pub getAllSessionsAdmin(requesterEmail: str = "") -> any {
         };
     } except Exception as e {
         console.error("getAllSessionsAdmin error:", e);
-        return {
-            "success": False,
-            "error": String(e),
-            "sessions": [],
-            "total": 0
-        };
+        err = normalizeRuntimeError(e, "ERR_GET_ALL_SESSIONS");
+        return errorResponse(err, {"sessions": [], "total": 0});
     }
 }
 
@@ -265,12 +359,8 @@ async def:pub getSessionMessagesAdmin(sessionId: str, requesterEmail: str = "") 
         };
     } except Exception as e {
         console.error("getSessionMessagesAdmin error:", e);
-        return {
-            "success": False,
-            "error": String(e),
-            "messages": [],
-            "total_messages": 0
-        };
+        err = normalizeRuntimeError(e, "ERR_GET_SESSION_MESSAGES");
+        return errorResponse(err, {"messages": [], "total_messages": 0});
     }
 }
 
@@ -289,9 +379,7 @@ async def:pub getDocContent(url: str) -> any {
         };
     } except Exception as e {
         console.error("getDocContent error:", e);
-        return {
-            "success": False,
-            "error": String(e)
-        };
+        err = normalizeRuntimeError(e, "ERR_GET_DOC_CONTENT");
+        return errorResponse(err, {"content": "", "title": "", "url": url});
     }
 }

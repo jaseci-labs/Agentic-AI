@@ -56,6 +56,7 @@ def:pub AdminDashboard() -> JsxElement {
     has activeTab: str = "overview";
     has isAdmin: bool = False;
     has checkingAuth: bool = True;
+    has hadQuestionLoadError: bool = False;
 
     # Theme tokens
     BG = "#141414";
@@ -92,9 +93,13 @@ def:pub AdminDashboard() -> JsxElement {
 
                     if usersResult.success {
                         users = usersResult.users;
+                    } else {
+                        error = "[" + (usersResult.code or "ERR_GET_ALL_USERS") + "] " + (usersResult.message or "Failed to load users.");
                     }
                     if sessionsResult.success {
                         sessions = sessionsResult.sessions;
+                    } else {
+                        error = "[" + (sessionsResult.code or "ERR_GET_ALL_SESSIONS") + "] " + (sessionsResult.message or "Failed to load sessions.");
                     }
                     loading = False;
                 } else {
@@ -156,6 +161,10 @@ def:pub AdminDashboard() -> JsxElement {
                     }
                 } except Exception as e {
                     console.error("Error loading session messages:", e);
+                    if not hadQuestionLoadError {
+                        error = "[ERR_GET_SESSION_MESSAGES] Some session messages could not be loaded.";
+                        hadQuestionLoadError = True;
+                    }
                 }
             }
 
@@ -215,11 +224,11 @@ def:pub AdminDashboard() -> JsxElement {
             if result.success {
                 selectedSession = result;
             } else {
-                error = "Failed to load session messages";
+                error = "[" + (result.code or "ERR_GET_SESSION_MESSAGES") + "] " + (result.message or "Failed to load session messages");
             }
         } except Exception as e {
             console.error("Error loading session:", e);
-            error = "Failed to load session messages";
+            error = "[ERR_GET_SESSION_MESSAGES] Failed to load session messages";
         } finally {
             sessionLoading = False;
         }

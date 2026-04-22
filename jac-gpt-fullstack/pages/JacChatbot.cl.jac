@@ -10,6 +10,7 @@ import from ..components.ChatInput { ChatInput }
 import from ..components.Sidebar { Sidebar }
 import from ..components.DocumentationPanel { DocumentationPanel }
 import from ..components.AgentReasoning { AgentReasoning }
+import from ..components.ErrorAlert { ErrorAlert }
 
 # Main Jac GPT Chatbot component (Complete Specification)
 def:pub JacChatbot() -> JsxElement {
@@ -467,6 +468,18 @@ def:pub JacChatbot() -> JsxElement {
             <div style={chatContainerStyle}>
                 {mobileMenuButton}
                 {headerBar}
+
+                {(
+                    <div style={{"padding": "12px 16px 0 16px"}}>
+                        <ErrorAlert
+                            error={chat.uiError}
+                            onClose={chat.clearUiError}
+                            onRetry={chat.handleRetryLastMessage}
+                        />
+                    </div>
+                    if chat.uiError
+                    else None
+                )}
                 
                 {mainContent}
 

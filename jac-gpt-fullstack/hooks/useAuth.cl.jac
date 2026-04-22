@@ -34,7 +34,7 @@ def:pub useAuth() -> any {
         error = "";
 
         if not username or not password {
-            error = "Please fill in all fields";
+            error = "[ERR_AUTH_INPUT] Please fill in all fields";
             return;
         }
 
@@ -45,11 +45,11 @@ def:pub useAuth() -> any {
             if success {
                 navigate("/");
             } else {
-                error = "Invalid username or password";
+                error = "[ERR_AUTH_INVALID] Invalid username or password";
             }
         } except Exception as ex {
             console.error("Login error:", ex);
-            error = "An error occurred during login";
+            error = "[ERR_AUTH_LOGIN] An error occurred during login";
         } finally {
             loading = False;
         }
@@ -60,17 +60,17 @@ def:pub useAuth() -> any {
         error = "";
 
         if not username or not password or not email {
-            error = "Please fill in all fields";
+            error = "[ERR_AUTH_INPUT] Please fill in all fields";
             return;
         }
 
         if password != confirmPassword {
-            error = "Passwords do not match";
+            error = "[ERR_AUTH_PASSWORD_MISMATCH] Passwords do not match";
             return;
         }
 
         if password.length < 6 {
-            error = "Password must be at least 6 characters";
+            error = "[ERR_AUTH_WEAK_PASSWORD] Password must be at least 6 characters";
             return;
         }
 
@@ -87,11 +87,11 @@ def:pub useAuth() -> any {
                     navigate("/login");
                 }
             } else {
-                error = "Registration failed. Username may already exist.";
+                error = "[ERR_AUTH_REGISTER] Registration failed. Username may already exist.";
             }
         } except Exception as ex {
             console.error("Registration error:", ex);
-            error = "An error occurred during registration";
+            error = "[ERR_AUTH_REGISTER] An error occurred during registration";
         } finally {
             loading = False;
         }
@@ -133,6 +133,7 @@ def:pub getUsernameFromToken() -> str {
             }
         } except Exception as decode_error {
             console.error("Failed to decode token:", decode_error);
+            localStorage.setItem("jac_auth_error", "[ERR_AUTH_TOKEN_DECODE] Could not read your login token. Please sign in again.");
         }
     }
 
