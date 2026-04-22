@@ -483,7 +483,7 @@ def:pub useChat() -> any {
                                 errMsg = (result.message if result.message else (result.error.message if result.error and result.error.message else "Failed to send message. Please try again."));
                                 return {
                                     "id": m.id,
-                                    "content": "[" + errCode + "] " + errMsg,
+                                    "content": "Sorry, I encountered an error" + "[" + errCode + "] " + errMsg,
                                     "isUser": m.isUser,
                                     "source": m.source,
                                     "pairKey": m.pairKey or "",
