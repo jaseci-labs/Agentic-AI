@@ -89,9 +89,96 @@ def:pub JacChatbot() -> JsxElement {
         docPanelOpen = not docPanelOpen;
     }
 
-    # Build message items — reasoning panels inserted inline before each bot message
-    allMessageItems = [];
+    # Find last user message ID for scroll-to-top ref
+    lastUserMsgId = "";
     for msg in chat.messages {
+        if msg.isUser {
+            lastUserMsgId = msg.id;
+        }
+    }
+
+    # Build message items — render both-mode RAG/MCP pairs side by side
+    allMessageItems = [];
+    idx = 0;
+    while idx < chat.messages.length {
+        msg = chat.messages[idx];
+
+        hasPair = (
+            (not msg.isUser) and
+            msg.pairKey and
+            (msg.source == "RAG" or msg.source == "MCP") and
+            (idx + 1 < chat.messages.length) and
+            (not chat.messages[idx + 1].isUser) and
+            (chat.messages[idx + 1].pairKey == msg.pairKey)
+        );
+
+        if hasPair {
+            nextMsg = chat.messages[idx + 1];
+
+            ragMsg = (msg if msg.source == "RAG" else (nextMsg if nextMsg.source == "RAG" else None));
+            mcpMsg = (msg if msg.source == "MCP" else (nextMsg if nextMsg.source == "MCP" else None));
+
+            allMessageItems.push(<div key={"pair_" + msg.pairKey} style={{"animation": "fadeIn 0.3s ease", "scrollMarginTop": "16px"}}>
+                <div style={{
+                    "display": "flex",
+                    "gap": "12px",
+                    "flexWrap": "wrap",
+                    "alignItems": "flex-start"
+                }}>
+                    {(
+                        <div style={{"flex": "1 1 320px", "minWidth": "280px", "display": "flex", "flexDirection": "column", "gap": "8px"}}>
+                            {(
+                                <AgentReasoning
+                                    steps={ragMsg.reasoningSteps or []}
+                                    isActive={ragMsg.isReasoning or False}
+                                    title="RAG Reasoning"
+                                    elapsedMs={ragMsg.elapsedMs or 0}
+                                />
+                                if ((ragMsg.reasoningSteps and ragMsg.reasoningSteps.length > 0) or ragMsg.isReasoning)
+                                else None
+                            )}
+                            <ChatMessage
+                                message={ragMsg.content}
+                                isUser={False}
+                                timestamp={ragMsg.timestamp}
+                                source={ragMsg.source or "RAG"}
+                            />
+                        </div>
+                        if ragMsg
+                        else None
+                    )}
+
+                    {(
+                        <div style={{"flex": "1 1 320px", "minWidth": "280px", "display": "flex", "flexDirection": "column", "gap": "8px"}}>
+                            {(
+                                <AgentReasoning
+                                    steps={mcpMsg.reasoningSteps or []}
+                                    isActive={mcpMsg.isReasoning or False}
+                                    title="MCP Reasoning"
+                                    elapsedMs={mcpMsg.elapsedMs or 0}
+                                />
+                                if ((mcpMsg.reasoningSteps and mcpMsg.reasoningSteps.length > 0) or mcpMsg.isReasoning)
+                                else None
+                            )}
+                            <ChatMessage
+                                message={mcpMsg.content}
+                                isUser={False}
+                                timestamp={mcpMsg.timestamp}
+                                source={mcpMsg.source or "MCP"}
+                            />
+                        </div>
+                        if mcpMsg
+                        else None
+                    )}
+                </div>
+            </div>);
+
+            idx = idx + 2;
+            continue;
+        }
+
+        msgRef = (chat.latestUserMsgRef if msg.id == lastUserMsgId else None);
+
         if not msg.isUser and msg.source == "RAG" {
             hasRagReasoning = (msg.reasoningSteps and msg.reasoningSteps.length > 0) or msg.isReasoning;
             if hasRagReasoning {
@@ -105,6 +192,7 @@ def:pub JacChatbot() -> JsxElement {
                 </div>);
             }
         }
+
         if not msg.isUser and msg.source == "MCP" {
             hasMcpReasoning = (msg.reasoningSteps and msg.reasoningSteps.length > 0) or msg.isReasoning;
             if hasMcpReasoning {
@@ -118,22 +206,17 @@ def:pub JacChatbot() -> JsxElement {
                 </div>);
             }
         }
-        allMessageItems.push(<div key={msg.id} style={{"animation": "fadeIn 0.3s ease", "scrollMarginTop": "16px"}}>
-             <ChatMessage
+
+        allMessageItems.push(<div key={msg.id} ref={msgRef} style={{"animation": "fadeIn 0.3s ease", "scrollMarginTop": "16px"}}>
+            <ChatMessage
                 message={msg.content}
                 isUser={msg.isUser}
                 timestamp={msg.timestamp}
                 source={msg.source or ""}
             />
         </div>);
-    }
-    # Build message items - split to insert reasoning before the streaming message
-    # Find last user message ID for scroll-to-top ref
-    lastUserMsgId = "";
-    for msg in chat.messages {
-        if msg.isUser {
-            lastUserMsgId = msg.id;
-        }
+
+        idx = idx + 1;
     }
 
     # allMessageItems = [];

@@ -210,6 +210,7 @@ def:pub useChat() -> any {
             }
 
             # Create bot message placeholders based on mode
+            responsePairKey = ("pair_" + String(Date.now()) + "_" + String(Math.random()) if mode == "both" else "");
             ragBotMessageId = "msg_" + String(Date.now()) + "_" + String(Math.random()) + "_rag";
             mcpBotMessageId = "msg_" + String(Date.now()) + "_" + String(Math.random()) + "_mcp";
 
@@ -218,6 +219,7 @@ def:pub useChat() -> any {
                 "content": "",
                 "isUser": False,
                 "source": "RAG",
+                "pairKey": responsePairKey,
                 "timestamp": Date(),
                 "reasoningSteps": [],
                 "isReasoning": True,
@@ -228,6 +230,7 @@ def:pub useChat() -> any {
                 "content": "",
                 "isUser": False,
                 "source": "MCP",
+                "pairKey": responsePairKey,
                 "timestamp": Date(),
                 "reasoningSteps": [],
                 "isReasoning": True,
@@ -268,6 +271,7 @@ def:pub useChat() -> any {
                                 "content": m.content + chunk,
                                 "isUser": m.isUser,
                                 "source": m.source,
+                                "pairKey": m.pairKey or "",
                                 "timestamp": m.timestamp,
                                 "reasoningSteps": m.reasoningSteps or [],
                                 "isReasoning": m.isReasoning or False,
@@ -296,6 +300,7 @@ def:pub useChat() -> any {
                                 "content": m.content + chunk,
                                 "isUser": m.isUser,
                                 "source": m.source,
+                                "pairKey": m.pairKey or "",
                                 "timestamp": m.timestamp,
                                 "reasoningSteps": m.reasoningSteps or [],
                                 "isReasoning": m.isReasoning or False,
@@ -336,6 +341,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": (m.reasoningSteps or []).concat([{"type": eventType, "data": eventData}]),
                                     "isReasoning": m.isReasoning,
@@ -359,6 +365,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": m.reasoningSteps or [],
                                     "isReasoning": False,
@@ -400,6 +407,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": (m.reasoningSteps or []).concat([{"type": eventType, "data": eventData}]),
                                     "isReasoning": m.isReasoning,
@@ -423,6 +431,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": m.reasoningSteps or [],
                                     "isReasoning": False,
@@ -477,6 +486,7 @@ def:pub useChat() -> any {
                                     "content": "[" + errCode + "] " + errMsg,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": m.reasoningSteps or [],
                                     "isReasoning": False,
