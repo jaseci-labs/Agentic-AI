@@ -53,6 +53,7 @@ def:pub Sidebar(
     has isExpanded: bool = True;
     has isAdmin: bool = False;
     has hoveredSessionId: str = "";
+    has sidebarError: any = None;
 
     navigate = useNavigate();
     isAuthenticated = jacIsLoggedIn();
@@ -65,14 +66,37 @@ def:pub Sidebar(
                     result = await getUserProfile(username);
                     if result.isAdmin {
                         isAdmin = True;
+                    } elif not result.success {
+                        sidebarError = {
+                            "code": result.code or "ERR_GET_USER_PROFILE",
+                            "message": result.message or "Could not verify account privileges.",
+                            "retryable": False
+                        };
                     }
                 } except Exception as e {
                     console.error("Admin check error:", e);
+                    sidebarError = {
+                        "code": "ERR_GET_USER_PROFILE",
+                        "message": "Could not verify account privileges.",
+                        "retryable": False
+                    };
                 }
             }
         }
         checkAdmin();
     }, [isAuthenticated]);
+
+    useEffect(lambda -> None {
+        authError = localStorage.getItem("jac_auth_error");
+        if authError {
+            sidebarError = {
+                "code": "ERR_AUTH_TOKEN_DECODE",
+                "message": authError.replace("[ERR_AUTH_TOKEN_DECODE] ", "") if authError.includes("[ERR_AUTH_TOKEN_DECODE]") else authError,
+                "retryable": False
+            };
+            localStorage.removeItem("jac_auth_error");
+        }
+    }, []);
 
     BG = "#141414";
     BORDER = "#374151";
@@ -595,6 +619,21 @@ def:pub Sidebar(
                     {statusLabel}
                 </Text>
             </Group>
+            {(
+                <Box style={{
+                    "marginTop": "8px",
+                    "fontSize": "12px",
+                    "color": "#fecaca",
+                    "background": "rgba(239, 68, 68, 0.08)",
+                    "border": "1px solid rgba(239, 68, 68, 0.25)",
+                    "padding": "8px 10px",
+                    "borderRadius": "8px"
+                }}>
+                    {"[" + (sidebarError.code or "ERR_UNKNOWN_FRONTEND") + "] " + (sidebarError.message or "Something went wrong.")}
+                </Box>
+                if sidebarError
+                else None
+            )}
         </Box>;
     }
 

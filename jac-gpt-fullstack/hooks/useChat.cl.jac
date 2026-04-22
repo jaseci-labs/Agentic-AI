@@ -7,6 +7,8 @@ import from ..hooks.useAuth { getUsernameFromToken }
 
 """Hook for managing chat state and interactions."""
 def:pub useChat() -> any {
+    UNSENT_MESSAGE_KEY = "jac_gpt_unsent_message";
+
     has messages: list = [];
     has sessionId: str = "";
     has isLoading: bool = False;
@@ -26,6 +28,8 @@ def:pub useChat() -> any {
     has reasoningSteps: list = [];
     has isReasoning: bool = False;
     has streamDoneSignal: int = 0;
+    has uiError: any = None;
+    has pendingUnsentMessage: str = "";
 
     messagesEndRef = useRef(None);
     firstChunkRef = useRef(False);
@@ -34,6 +38,29 @@ def:pub useChat() -> any {
     abortControllerRef = useRef(None);
     sendStartTimeRef = useRef(0);
     isAuthenticated = jacIsLoggedIn();
+
+    def setUiErrorFrom(result: any, fallbackCode: str = "ERR_UNKNOWN_FRONTEND", fallbackMessage: str = "Something went wrong. Please try again.") -> None {
+        errorObj = (result.error if result and result.error else None);
+        code = fallbackCode;
+        message = fallbackMessage;
+        retryable = False;
+
+        if errorObj {
+            code = errorObj.code or result.code or fallbackCode;
+            message = errorObj.message or result.message or fallbackMessage;
+            retryable = errorObj.retryable or False;
+        } else {
+            code = result.code or fallbackCode;
+            message = result.message or fallbackMessage;
+            retryable = result.retryable or False;
+        }
+
+        uiError = {
+            "code": code,
+            "message": message,
+            "retryable": retryable
+        };
+    }
 
     # Load message count from localStorage for guests
     useEffect(lambda -> None {
@@ -52,7 +79,22 @@ def:pub useChat() -> any {
             } except Exception as e {
                 console.error("Error loading sessions:", e);
                 chatSessions = [];
+                uiError = {
+                    "code": "ERR_LOCAL_SESSIONS",
+                    "message": "Could not restore saved chat sessions.",
+                    "retryable": False
+                };
             }
+        }
+
+        savedUnsent = localStorage.getItem(UNSENT_MESSAGE_KEY);
+        if savedUnsent {
+            pendingUnsentMessage = savedUnsent;
+            uiError = {
+                "code": "ERR_UNSENT_RECOVERED",
+                "message": "Recovered an unsent message. You can retry sending it.",
+                "retryable": True
+            };
         }
 
         # Initialize first session
@@ -99,6 +141,7 @@ def:pub useChat() -> any {
             sessionId = result.session_id;
         } else {
             sessionId = newSessionId;
+            setUiErrorFrom(result, "ERR_CREATE_SESSION", "Failed to initialize chat session.");
         }
     }
 
@@ -123,6 +166,9 @@ def:pub useChat() -> any {
 
         # Set loading immediately at the start
         isLoading = True;
+        uiError = None;
+        pendingUnsentMessage = content.trim();
+        localStorage.setItem(UNSENT_MESSAGE_KEY, content.trim());
 
         # Create user message
         userMessage = {
@@ -164,6 +210,7 @@ def:pub useChat() -> any {
             }
 
             # Create bot message placeholders based on mode
+            responsePairKey = ("pair_" + String(Date.now()) + "_" + String(Math.random()) if mode == "both" else "");
             ragBotMessageId = "msg_" + String(Date.now()) + "_" + String(Math.random()) + "_rag";
             mcpBotMessageId = "msg_" + String(Date.now()) + "_" + String(Math.random()) + "_mcp";
 
@@ -172,6 +219,7 @@ def:pub useChat() -> any {
                 "content": "",
                 "isUser": False,
                 "source": "RAG",
+                "pairKey": responsePairKey,
                 "timestamp": Date(),
                 "reasoningSteps": [],
                 "isReasoning": True,
@@ -182,6 +230,7 @@ def:pub useChat() -> any {
                 "content": "",
                 "isUser": False,
                 "source": "MCP",
+                "pairKey": responsePairKey,
                 "timestamp": Date(),
                 "reasoningSteps": [],
                 "isReasoning": True,
@@ -222,6 +271,7 @@ def:pub useChat() -> any {
                                 "content": m.content + chunk,
                                 "isUser": m.isUser,
                                 "source": m.source,
+                                "pairKey": m.pairKey or "",
                                 "timestamp": m.timestamp,
                                 "reasoningSteps": m.reasoningSteps or [],
                                 "isReasoning": m.isReasoning or False,
@@ -250,6 +300,7 @@ def:pub useChat() -> any {
                                 "content": m.content + chunk,
                                 "isUser": m.isUser,
                                 "source": m.source,
+                                "pairKey": m.pairKey or "",
                                 "timestamp": m.timestamp,
                                 "reasoningSteps": m.reasoningSteps or [],
                                 "isReasoning": m.isReasoning or False,
@@ -267,6 +318,16 @@ def:pub useChat() -> any {
             def onEventRag(event: any) -> None {
                 eventType = event.type or "";
                 eventData = event.data or {};
+                if eventType == "error" or eventType == "parse_error" {
+                    setUiErrorFrom({
+                        "error": {
+                            "code": eventData.code or "ERR_STREAM_RUNTIME",
+                            "message": eventData.message or "Streaming failed while generating a response.",
+                            "retryable": True
+                        }
+                    }, "ERR_STREAM_RUNTIME", "Streaming failed while generating a response.");
+                    ragIsReasoning = False;
+                }
                 if eventType == "thought" or eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
                     ragReasoningSteps = lambda prev: any -> any {
                         return prev.concat([{"type": eventType, "data": eventData}]);
@@ -280,6 +341,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": (m.reasoningSteps or []).concat([{"type": eventType, "data": eventData}]),
                                     "isReasoning": m.isReasoning,
@@ -303,6 +365,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": m.reasoningSteps or [],
                                     "isReasoning": False,
@@ -321,6 +384,16 @@ def:pub useChat() -> any {
             def onEventMcp(event: any) -> None {
                 eventType = event.type or "";
                 eventData = event.data or {};
+                if eventType == "error" or eventType == "parse_error" {
+                    setUiErrorFrom({
+                        "error": {
+                            "code": eventData.code or "ERR_STREAM_RUNTIME",
+                            "message": eventData.message or "Streaming failed while generating a response.",
+                            "retryable": True
+                        }
+                    }, "ERR_STREAM_RUNTIME", "Streaming failed while generating a response.");
+                    mcpIsReasoning = False;
+                }
                 if eventType == "thought" or eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
                     mcpReasoningSteps = lambda prev: any -> any {
                         return prev.concat([{"type": eventType, "data": eventData}]);
@@ -334,6 +407,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": (m.reasoningSteps or []).concat([{"type": eventType, "data": eventData}]),
                                     "isReasoning": m.isReasoning,
@@ -357,6 +431,7 @@ def:pub useChat() -> any {
                                     "content": m.content,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": m.reasoningSteps or [],
                                     "isReasoning": False,
@@ -378,9 +453,12 @@ def:pub useChat() -> any {
                     suggestResult = await getSuggestions(content.trim(), []);
                     if suggestResult.success and suggestResult.suggestions {
                         docSuggestions = suggestResult.suggestions;
+                    } elif not suggestResult.success {
+                        setUiErrorFrom(suggestResult, "ERR_GET_SUGGESTIONS", "Could not load documentation suggestions.");
                     }
                 } except Exception as e {
                     console.error("Error fetching suggestions:", e);
+                    setUiErrorFrom({"error": {"code": "ERR_GET_SUGGESTIONS", "message": "Could not load documentation suggestions.", "retryable": True}}, "ERR_GET_SUGGESTIONS", "Could not load documentation suggestions.");
                 } finally {
                     setTimeout(lambda -> None {
                         isSearchingDocs = False;
@@ -397,14 +475,18 @@ def:pub useChat() -> any {
                     };
                 } else {
                     console.error("Error in sendMessage:", result.error);
+                    setUiErrorFrom(result, "ERR_SEND_MESSAGE", "Failed to send message. Please try again.");
                     messages = lambda prev: any -> any {
                         return prev.map(lambda m: any -> any {
                             if m.id == botMsgId {
+                                errCode = (result.code if result.code else (result.error.code if result.error and result.error.code else "ERR_SEND_MESSAGE"));
+                                errMsg = (result.message if result.message else (result.error.message if result.error and result.error.message else "Failed to send message. Please try again."));
                                 return {
                                     "id": m.id,
-                                    "content": "Sorry, I encountered an error. Please try again.",
+                                    "content": "Sorry, I encountered an error" + "[" + errCode + "] " + errMsg,
                                     "isUser": m.isUser,
                                     "source": m.source,
+                                    "pairKey": m.pairKey or "",
                                     "timestamp": m.timestamp,
                                     "reasoningSteps": m.reasoningSteps or [],
                                     "isReasoning": False,
@@ -442,15 +524,25 @@ def:pub useChat() -> any {
                 if not mcpResult.success {
                     handleFailedResult(mcpResult, mcpBotMessageId);
                 }
+                if ragResult.success and mcpResult.success {
+                    localStorage.removeItem(UNSENT_MESSAGE_KEY);
+                    pendingUnsentMessage = "";
+                }
             } elif mode == "mcp" {
                 mcpResult = await sendMcp();
                 if not mcpResult.success {
                     handleFailedResult(mcpResult, mcpBotMessageId);
+                } else {
+                    localStorage.removeItem(UNSENT_MESSAGE_KEY);
+                    pendingUnsentMessage = "";
                 }
             } else {
                 ragResult = await sendRag();
                 if not ragResult.success {
                     handleFailedResult(ragResult, ragBotMessageId);
+                } else {
+                    localStorage.removeItem(UNSENT_MESSAGE_KEY);
+                    pendingUnsentMessage = "";
                 }
             }
 
@@ -458,9 +550,10 @@ def:pub useChat() -> any {
             abortControllerRef.current = None;
         } except Exception as e {
             console.error("Send message error:", e);
+            setUiErrorFrom({"error": {"code": "ERR_SEND_MESSAGE", "message": "Failed to send message. Please try again.", "retryable": True}}, "ERR_SEND_MESSAGE", "Failed to send message. Please try again.");
             errorMessage = {
                 "id": "msg_" + String(Date.now()),
-                "content": "Sorry, something went wrong. Please try again.",
+                "content": "[ERR_SEND_MESSAGE] Failed to send message. Please try again.",
                 "isUser": False,
                 "source": "",
                 "timestamp": Date()
@@ -470,6 +563,7 @@ def:pub useChat() -> any {
         } finally {
             # Clear abort controller after completion
             abortControllerRef.current = None;
+            isLoading = False;
 
             # Signal that streaming is fully done so scroll re-anchors
             streamDoneSignal = lambda prev: int -> int { return prev + 1; };
@@ -481,9 +575,12 @@ def:pub useChat() -> any {
             result = await getSuggestions(message, []);
             if result.success and result.suggestions {
                 docSuggestions = result.suggestions;
+            } elif not result.success {
+                setUiErrorFrom(result, "ERR_GET_SUGGESTIONS", "Could not load documentation suggestions.");
             }
         } except Exception as e {
             console.error("Error fetching suggestions:", e);
+            setUiErrorFrom({"error": {"code": "ERR_GET_SUGGESTIONS", "message": "Could not load documentation suggestions.", "retryable": True}}, "ERR_GET_SUGGESTIONS", "Could not load documentation suggestions.");
         }
     }
 
@@ -551,9 +648,12 @@ def:pub useChat() -> any {
                     newMessages.push(msg);
                 }
                 messages = lambda prev: any -> any { return newMessages; };
+            } elif not result.success {
+                setUiErrorFrom(result, "ERR_GET_SESSION", "Failed to load the selected session.");
             }
         } except Exception as e {
             console.error("Error loading session:", e);
+            setUiErrorFrom({"error": {"code": "ERR_GET_SESSION", "message": "Failed to load the selected session.", "retryable": True}}, "ERR_GET_SESSION", "Failed to load the selected session.");
         } finally {
             isLoading = False;
         }
@@ -586,6 +686,16 @@ def:pub useChat() -> any {
         isLoading = False;
     }
 
+    async def handleRetryLastMessage() -> None {
+        if pendingUnsentMessage and not isLoading {
+            await handleSendMessage(pendingUnsentMessage);
+        }
+    }
+
+    def clearUiError() -> None {
+        uiError = None;
+    }
+
     return {
         "messages": messages,
         "sessionId": sessionId,
@@ -603,10 +713,14 @@ def:pub useChat() -> any {
         "ragElapsedMs": ragElapsedMs,
         "mcpElapsedMs": mcpElapsedMs,
         "mode": mode,
+        "uiError": uiError,
+        "pendingUnsentMessage": pendingUnsentMessage,
         "messagesEndRef": messagesEndRef,
         "latestUserMsgRef": latestUserMsgRef,
         "canSendMessage": canSendMessage,
         "handleSendMessage": handleSendMessage,
+        "handleRetryLastMessage": handleRetryLastMessage,
+        "clearUiError": clearUiError,
         "handleNewChat": handleNewChat,
         "handleLoadSession": handleLoadSession,
         "handleDeleteSession": handleDeleteSession,
