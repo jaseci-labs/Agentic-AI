@@ -26,15 +26,17 @@ tailwind-merge = "^2.2.0"
 "@tabler/icons-react" = "^3.28.0"
 "@emotion/react" = "^11.14.0"
 react-error-boundary = "latest"
+
+# CodeMirror 6 for Jac syntax highlighting
 "@codemirror/view" = "^6.0.0"
 "@codemirror/state" = "^6.0.0"
 "@codemirror/language" = "^6.0.0"
 "@lezer/highlight" = "^1.0.0"
-monaco-textmate = "^3.0.1"
-monaco-editor-textmate = "^4.0.0"
+"monaco-textmate" = "^3.0.1"
+"monaco-editor-textmate" = "^4.0.0"
 
 [dependencies.npm.dev]
-"@jac-client/dev-deps" = "2.0.0"
+"@jac-client/dev-deps" = "1.0.0"
 
 [dev-dependencies]
 watchdog = ">=3.0.0"
@@ -49,11 +51,14 @@ app_name = "jac-gpt-test"
 namespace = "jac-gpt-test"
 jaseci_repo_url = "https://github.com/udithishanka/jaseci.git"
 jaseci_branch = "feat/add-jac-mcp-to-scale-deployments"
+# Probes — app needs ~5-8 min to clone repo, install jaseci, and compile
 liveness_initial_delay = 600
 liveness_period = 30
 liveness_failure_threshold = 10
 readiness_initial_delay = 600
 readiness_period = 30
+# Resources — prevents BestEffort QoS and node eviction storms
+# Peak observed: ~1000m CPU, ~2.3Gi RAM, ~3.6Gi ephemeral-storage during startup
 cpu_request = "1000m"
 cpu_limit = "3000m"
 memory_request = "2Gi"
@@ -64,11 +69,15 @@ ephemeral_storage_limit = "30Gi"
 [plugins.scale.secrets]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
 
+# Jacpack metadata - used when packing, stripped from created projects
 [jacpack]
 name = "jac-gpt"
 description = "Jac GPT fullstack template with chat interface"
 jaclang = "0.9.0"
-plugins = ["{'name': 'jac-client', 'version': '0.1.0'}"]
+
+[[jacpack.plugins]]
+name = "jac-client"
+version = "0.1.0"
 
 [jacpack.options]
 directories = [".jac"]
