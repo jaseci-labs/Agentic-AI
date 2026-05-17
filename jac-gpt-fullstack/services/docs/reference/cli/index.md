@@ -35,6 +35,7 @@ The CLI is extensible through plugins. When you install plugins like `jac-scale`
 | `jac jacpack` | Manage project templates (.jacpack files) |
 | `jac eject` | Compile a project to standalone Python + JavaScript (zero `.jac` files) |
 | `jac grammar` | Extract and print the Jac grammar |
+| `jac guide` | Show curated Jac reference guides |
 | `jac script` | Run project scripts |
 | `jac py2jac` | Convert Python to Jac |
 | `jac jac2py` | Convert Jac to Python |
@@ -228,7 +229,7 @@ jac start --scale --build
 
 ### jac create
 
-Initialize a new Jac project with configuration. Creates a project folder with the given name containing the project files.
+Initialize a new Jac project with configuration. Creates a project folder with the given name containing the project files, including an `AGENTS.md` that points AI coding agents at `jac guide`.
 
 ```bash
 jac create [-h] [-f] [-u USE] [-l] [name]
@@ -1491,6 +1492,44 @@ jac jac2js app.jac
 ---
 
 ## Utility Commands
+
+### jac guide
+
+Show the curated Jac reference guides bundled with the compiler -- the authoritative spec for writing correct, idiomatic Jac. AI coding agents and humans can read them straight from the CLI; nothing to install.
+
+```bash
+jac guide [-h] [-s SEARCH] [-e EXPORT] [-j] [topic]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `topic` | Guide name to display (omit to list every guide) | None |
+| `-s, --search` | List only guides matching a keyword | None |
+| `-e, --export` | Export all guides as a Claude Code skills directory at this path | None |
+| `-j, --json` | Emit machine-readable JSON (for tools and agents) | `False` |
+
+**Examples:**
+
+```bash
+# List every available guide
+jac guide
+
+# Print a specific guide
+jac guide jac-types
+
+# Find guides by keyword
+jac guide --search walker
+
+# Machine-readable list for tooling and agents
+jac guide --json
+
+# Export the guides as auto-loading Agent Skills
+jac guide --export ~/.claude/skills
+```
+
+See [Agent Skills and MCP](../../quick-guide/agent-skills-and-mcp.md) for using the guides with AI assistants.
+
+---
 
 ### jac grammar
 

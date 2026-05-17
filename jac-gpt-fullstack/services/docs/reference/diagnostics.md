@@ -12,6 +12,18 @@ Diagnostic codes follow the pattern `{severity}{category}{sequence}`:
 
 For example, `E1030` is a **type error** about attribute access, and `W3005` is a **lint warning** about empty parentheses.
 
+## Guide Pointers
+
+When a diagnostic maps to a topic covered by the bundled reference guides, `jac check` prints a one-line pointer beneath it:
+
+```text
+error[E1001]: Cannot assign Literal["hello"] to int
+  --> example.jac:2:5
+  → run 'jac guide jac-types' for guidance
+```
+
+Run the suggested command for the relevant reference material. See [`jac guide`](cli/index.md#jac-guide).
+
 ## Suppressing Diagnostics
 
 ### Inline Suppression
