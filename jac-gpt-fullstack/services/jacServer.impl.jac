@@ -3,13 +3,17 @@ import os;
 import from datetime {datetime}
 import from byllm.types { StreamEvent }
 
-# Shared helper function for streaming responses with SSE format
+# Shared helper that yields raw event dicts. jac-scale's sse_frame_stream
+# JSON-encodes each yielded item and wraps it in `data: ... \n\n`, so this
+# generator must not pre-frame the SSE payload itself. Doing so produces
+# `data: "data: {...}\\n\\n"` on the wire, the client's JSON.parse fails on
+# the inner `data: ...` prefix, and no chunks render in the UI.
 def stream_chat_response(response_generator: any, visitor: any) -> any {
    print("Starting response streaming...");
 
    response = "";
    for event in response_generator {
-      yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
+      yield {"type": event.event_type, "data": event.data};
       if event.event_type == "chunk" {
          chunk_data = event.data or {};
          response += chunk_data.get("content", "");
