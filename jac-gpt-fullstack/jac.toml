@@ -49,7 +49,8 @@ base_route_app = "app"
 [plugins.scale.kubernetes]
 app_name = "jac-gpt-test"
 namespace = "jac-gpt-test"
-# Probes — app needs ~5-8 min to clone repo, install jaseci, and compile
+jaseci_repo_url = "https://github.com/jaseci-labs/jaseci.git"
+jaseci_branch = "main"
 liveness_initial_delay = 600
 liveness_period = 30
 liveness_failure_threshold = 10
