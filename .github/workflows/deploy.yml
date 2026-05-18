@@ -45,18 +45,18 @@ jobs:
           python-version: '3.12'
 
       # Install required packages (including app dependencies for local validation).
-      # Pulled from jaseci-labs/jaseci main so the runner's jac-scale matches what
-      # the pod will clone via [plugins.scale.kubernetes].jaseci_repo_url/branch.
-      # Using fork-side jac-scale here generated a stale install command
-      # (pip install -e ./jac-scale, no extras) against an upstream-main runtime
-      # that now requires pymongo via jac-scale[data] — the pod ImportErrored
-      # on JacScaleUserManager boot.
+      # The runner's jac-scale must match what the pod clones via
+      # [plugins.scale.kubernetes].jaseci_repo_url/branch, otherwise the install
+      # command generated for the pod drifts from the runtime that gets cloned.
+      # Temporarily pinned to udithishanka/jaseci fix/byllm-streaming-cross-context-token-reset
+      # (jaseci-labs/jaseci#6016). Revert to jaseci-labs/jaseci main once merged.
       - name: Install Jaseci packages
         run: |
           pip install --upgrade pip
           pip install jaclang jac-client byllm
-          git clone --depth 1 --branch main https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
+          git clone --depth 1 --branch fix/byllm-streaming-cross-context-token-reset https://github.com/udithishanka/jaseci.git /tmp/jaseci
           pip install -e /tmp/jaseci/jac-scale
+          pip install -e /tmp/jaseci/jac-byllm
           pip install -e /tmp/jaseci/jac-mcp
 
       # Install app dependencies (required for jac start to validate main.jac locally)
