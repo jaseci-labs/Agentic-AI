@@ -44,13 +44,18 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Install required packages (including app dependencies for local validation)
-      # Install jac-scale from fork branch that includes jac-mcp in deployment pipeline
+      # Install required packages (including app dependencies for local validation).
+      # Pulled from jaseci-labs/jaseci main so the runner's jac-scale matches what
+      # the pod will clone via [plugins.scale.kubernetes].jaseci_repo_url/branch.
+      # Using fork-side jac-scale here generated a stale install command
+      # (pip install -e ./jac-scale, no extras) against an upstream-main runtime
+      # that now requires pymongo via jac-scale[data] — the pod ImportErrored
+      # on JacScaleUserManager boot.
       - name: Install Jaseci packages
         run: |
           pip install --upgrade pip
           pip install jaclang jac-client byllm
-          git clone --depth 1 --branch feat/add-jac-mcp-to-scale-deployments https://github.com/udithishanka/jaseci.git /tmp/jaseci
+          git clone --depth 1 --branch main https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
           pip install -e /tmp/jaseci/jac-scale
           pip install -e /tmp/jaseci/jac-mcp
 
