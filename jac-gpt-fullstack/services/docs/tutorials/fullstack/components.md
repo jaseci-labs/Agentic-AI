@@ -316,6 +316,116 @@ def:pub app() -> JsxElement {
 
 ---
 
+## JSX Slots: Control Flow as Children
+
+A component is just `def:pub Name(...) -> JsxElement { return <jsx>; }`. The interesting work happens inside the JSX itself, where every `{...}` is a **slot** -- a place where Jac code computes a child. Slots come in two shapes:
+
+- **Expression slot** (the usual case): `{name}`, `{user.profile.email}`, `{<Badge />}` -- whatever's inside renders directly.
+- **Statement slot**: when a slot begins with a statement keyword (`if`, `for`, `while`, `match`, `switch`, `with`, `try`, `return`), it switches into template mode. Each JSX statement inside the slot is appended to the element's children; control flow yields the JSX in its branches.
+
+The two forms share the same `{...}` syntax -- the compiler decides which shape applies from the body's first token.
+
+```jac
+to cl:
+
+def:pub Greeting(name: str) -> JsxElement {
+    return <div class="card">
+        {if name == "" {
+            <p>Hello, stranger</p>
+        } else {
+            <h1>Hello, {name}</h1>
+            <p>Welcome back.</p>
+        }}
+    </div>;
+}
+```
+
+**Key points:**
+
+- `{...}` slots replace inline comprehensions and nested ternaries -- the same `if`/`for`/`while`/etc. you write at function-body level works as a child.
+- A bare `return;` inside a statement slot is the **guard** form: rendering stops, the children accumulated so far become the slot's value.
+- A statement slot with no JSX renders to an empty fragment. Mix as needed: `<header>` and `<footer>` sit beside a `{for ... { ... }}` slot in the same parent.
+- The slot's bracketed shape is what disambiguates the keyword -- bare `for example` in JSX text remains plain text.
+
+### `for` and `while` loops
+
+`for it in items { <Row item={it} /> }` inside a slot lowers to a `JS` `for` loop that pushes each `<Row>` to the element's children -- not a comprehension over a `.map()`. Same shape for the `for x = 0 to n by 1 { ... }` form and for `while`.
+
+```jac
+to cl:
+
+def:pub ItemList(items: list[str]) -> JsxElement {
+    return <>
+        {if len(items) == 0 {
+            <p class="empty">Nothing here.</p>
+            return;
+        }}
+        <h2>Items</h2>
+        {for (i, item) in enumerate(items) {
+            <li key={i}>{item}</li>
+        }}
+    </>;
+}
+```
+
+`while` slots that emit keyless JSX get a `W2019` warning -- siblings produced by a loop need a stable `key=` so a re-render keeps their identity.
+
+### `has`-fields and Handlers
+
+A `def:pub -> JsxElement` body can declare `has`-fields and nested `def` handlers exactly like a regular component. `has`-fields keep the auto-`useState` wiring -- assigning to one rewrites to the generated setter:
+
+```jac
+to cl:
+
+def:pub Counter() -> JsxElement {
+    has count: int = 0;
+
+    def bump {
+        count = count + 1;
+    }
+
+    return <button onClick={bump}>Count: {count}</button>;
+}
+```
+
+### Dynamic Tags
+
+`<@expr />` chooses its element tag from an expression instead of a fixed name. The expression can be an identifier, a dotted access, or a brace-wrapped expression `<@{expr}>`, and resolves to a host-tag string, another component, or a `str | type` value:
+
+```jac
+to cl:
+
+def:pub Box(as_: str, children: any = None) -> JsxElement {
+    return <@as_ className="box">{children}</@as_>;
+}
+
+def:pub Demo() -> JsxElement {
+    return <>
+        <Box as_="article">Inside an article element</Box>
+        <Box as_="section">Inside a section element</Box>
+    </>;
+}
+```
+
+Use `as_`, not `as` -- `as` is reserved in Jac for import aliases.
+
+### Raw HTML: `unsafe_html`
+
+By default `{value}` is rendered as escaped text. The `unsafe_html(x)` ambient builtin returns a sentinel that the client runtime renders as raw HTML (via `dangerouslySetInnerHTML` on React, `innerHTML` on bare-serve). Use it only with content you trust -- the name is the security review hint at the call site:
+
+```jac
+to cl:
+
+def:pub Comment(c: dict) -> JsxElement {
+    return <article>
+        <h3>{c["author"]}</h3>
+        <div class="body">{unsafe_html(c["trusted_html"])}</div>
+    </article>;
+}
+```
+
+---
+
 ## Separate Component Files
 
 ### Header.cl.jac
@@ -432,6 +542,10 @@ def:pub app() -> JsxElement {
 | Concept | Syntax |
 |---------|--------|
 | Define component | `def:pub Name(title: str, count: int) -> JsxElement { }` |
+| Statement slot | `{for x in xs { <li>{x}</li> }}` inside a JSX element |
+| Early-exit guard | bare `return;` inside a statement slot |
+| Raw HTML opt-in | `{unsafe_html(trusted_html)}` |
+| Dynamic tag | `<@expr>...</@expr>` |
 | JSX element | `<div className="x">content</div>` |
 | Expression | `{expression}` |
 | Click handler | `onClick={lambda -> None { ... }}` |

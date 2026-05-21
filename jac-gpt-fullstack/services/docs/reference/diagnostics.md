@@ -311,6 +311,17 @@ Emitted by static analysis and declaration-implementation matching passes.
 | `E2011` | Parameter count mismatch for ability {name} |
 | `E2012` | From the declaration of {name} |
 
+### JSX Slot Body Rules
+
+Emitted by `ViewLowerPass` when a `{...}` JSX slot's statement-template body violates the body-shape rules. See the [components tutorial](../tutorials/fullstack/components.md#jsx-slots-control-flow-as-children) for the underlying model.
+
+| Code | Message |
+|------|---------|
+| `E2019` | A JSX slot renders template content and cannot 'return' a value. Drop the value to use a bare 'return;' guard, or move the value-producing expression outside the JSX slot. |
+| `E2020` | 'return' is not allowed inside a '{loop}' loop in a JSX slot. Use 'continue' to skip an iteration. |
+| `E2021` | '{kw}' is not allowed inside a '{loop}' loop in a JSX slot. Use 'continue' to skip an iteration. |
+| `W2019` | 'while' loop in a JSX slot renders JSX without a 'key' attribute -- add 'key=' so siblings keep their identity across re-renders. |
+
 ---
 
 ## Lint Rules (W3xxx / E3xxx)
