@@ -172,6 +172,7 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
 
         buffer = "";
         fullText = "";
+        answerBuffer = "";
 
         while True {
             read_result = await reader.read();
@@ -212,10 +213,32 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
                         if onChunk {
                             onChunk(content);
                         }
+                    } elif parsed.type == "thought" {
+                        # A ReAct loop without a finish-tool streams the model's
+                        # answer as `thought` events (never `chunk`). Stream them
+                        # straight into the response body so the answer renders
+                        # live, and buffer them for persistence. The body is
+                        # cleared on `tool_call` (see onEvent in useChat), so only
+                        # the post-tool final answer survives, not the
+                        # intermediate reasoning.
+                        tcontent = "";
+                        if parsed.data {
+                            tcontent = parsed.data.content or "";
+                        }
+                        answerBuffer += tcontent;
+                        if onChunk {
+                            onChunk(tcontent);
+                        }
+                    } elif parsed.type == "tool_call" {
+                        # Pre-tool thoughts were intermediate reasoning, not the
+                        # answer. Drop them from the persistence buffer (the body
+                        # is reset in parallel by the onEvent handler).
+                        answerBuffer = "";
                     }
 
-                    # Forward all event types to onEvent callback
-                    if onEvent {
+                    # Forward events to the reasoning panel, except per-token
+                    # `thought` events which now stream into the response body.
+                    if onEvent and parsed.type != "thought" {
                         onEvent(parsed);
                     }
                 } except Exception as parseError {
@@ -232,6 +255,13 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
                     }
                 }
             }
+        }
+
+        # If the answer arrived only as `thought` events (ReAct plain-text path,
+        # no `chunk`), the buffered final answer is the text to persist. It has
+        # already streamed into the body live above.
+        if not fullText and answerBuffer {
+            fullText = answerBuffer;
         }
 
         return {

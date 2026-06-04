@@ -328,7 +328,7 @@ def:pub useChat() -> any {
                     }, "ERR_STREAM_RUNTIME", "Streaming failed while generating a response.");
                     ragIsReasoning = False;
                 }
-                if eventType == "thought" or eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
+                if eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
                     ragReasoningSteps = lambda prev: any -> any {
                         return prev.concat([{"type": eventType, "data": eventData}]);
                     };
@@ -338,7 +338,7 @@ def:pub useChat() -> any {
                             if m.id == ragBotMessageId {
                                 updatedMessages.push({
                                     "id": m.id,
-                                    "content": m.content,
+                                    "content": ("" if eventType == "tool_call" else m.content),
                                     "isUser": m.isUser,
                                     "source": m.source,
                                     "pairKey": m.pairKey or "",
@@ -394,7 +394,7 @@ def:pub useChat() -> any {
                     }, "ERR_STREAM_RUNTIME", "Streaming failed while generating a response.");
                     mcpIsReasoning = False;
                 }
-                if eventType == "thought" or eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
+                if eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
                     mcpReasoningSteps = lambda prev: any -> any {
                         return prev.concat([{"type": eventType, "data": eventData}]);
                     };
@@ -404,7 +404,7 @@ def:pub useChat() -> any {
                             if m.id == mcpBotMessageId {
                                 updatedMessages.push({
                                     "id": m.id,
-                                    "content": m.content,
+                                    "content": ("" if eventType == "tool_call" else m.content),
                                     "isUser": m.isUser,
                                     "source": m.source,
                                     "pairKey": m.pairKey or "",
