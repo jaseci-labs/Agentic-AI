@@ -57,10 +57,15 @@ jobs:
       - name: Install jaseci packages from source
         run: |
           pip install --upgrade pip
+          # Core jaclang keeps pyproject.toml -> pip editable (also provides the
+          # `jac` CLI used to install the plugins below).
           pip install -e /tmp/jaseci/jac
-          pip install -e /tmp/jaseci/jac-byllm
-          pip install -e /tmp/jaseci/jac-client
-          pip install -e "/tmp/jaseci/jac-scale[all]"
+          # Plugins no longer ship pyproject.toml (jaseci-labs/jaseci#6322); they
+          # build from jac.toml via `jac install`, so `pip install -e` fails with
+          # "neither 'setup.py' nor 'pyproject.toml' found".
+          jac install -e /tmp/jaseci/jac-byllm
+          jac install -e /tmp/jaseci/jac-client
+          jac install -e /tmp/jaseci/jac-scale --extras all
 
       - name: Install app dependencies
         working-directory: jac-gpt-fullstack
