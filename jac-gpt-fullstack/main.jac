@@ -11,6 +11,7 @@ import from services.jacServer {
         OffTopicChat,
         new_session,
         get_session,
+        save_turn,
         interact,
         suggest_docs,
         get_doc_content,

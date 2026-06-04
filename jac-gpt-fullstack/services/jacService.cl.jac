@@ -171,6 +171,8 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
         decoder = Reflect.construct(TextDecoder, ["utf-8"]);
 
         buffer = "";
+        fullText = "";
+        answerBuffer = "";
 
         while True {
             read_result = await reader.read();
@@ -201,19 +203,42 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
                     parsed = JSON.parse(data);
 
                     if parsed.type == "chunk" {
+                        content = "";
+                        if parsed.data {
+                            content = parsed.data.content or "";
+                        } elif parsed.content {
+                            content = parsed.content;
+                        }
+                        fullText += content;
                         if onChunk {
-                            content = "";
-                            if parsed.data {
-                                content = parsed.data.content or "";
-                            } elif parsed.content {
-                                content = parsed.content;
-                            }
                             onChunk(content);
                         }
+                    } elif parsed.type == "thought" {
+                        # A ReAct loop without a finish-tool streams the model's
+                        # answer as `thought` events (never `chunk`). Stream them
+                        # straight into the response body so the answer renders
+                        # live, and buffer them for persistence. The body is
+                        # cleared on `tool_call` (see onEvent in useChat), so only
+                        # the post-tool final answer survives, not the
+                        # intermediate reasoning.
+                        tcontent = "";
+                        if parsed.data {
+                            tcontent = parsed.data.content or "";
+                        }
+                        answerBuffer += tcontent;
+                        if onChunk {
+                            onChunk(tcontent);
+                        }
+                    } elif parsed.type == "tool_call" {
+                        # Pre-tool thoughts were intermediate reasoning, not the
+                        # answer. Drop them from the persistence buffer (the body
+                        # is reset in parallel by the onEvent handler).
+                        answerBuffer = "";
                     }
 
-                    # Forward all event types to onEvent callback
-                    if onEvent {
+                    # Forward events to the reasoning panel, except per-token
+                    # `thought` events which now stream into the response body.
+                    if onEvent and parsed.type != "thought" {
                         onEvent(parsed);
                     }
                 } except Exception as parseError {
@@ -232,10 +257,18 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
             }
         }
 
+        # If the answer arrived only as `thought` events (ReAct plain-text path,
+        # no `chunk`), the buffered final answer is the text to persist. It has
+        # already streamed into the body live above.
+        if not fullText and answerBuffer {
+            fullText = answerBuffer;
+        }
+
         return {
             "success": True,
             "code": "OK",
-            "message": "Response streamed successfully"
+            "message": "Response streamed successfully",
+            "full_text": fullText
         };
     } except Exception as e {
         # Check if it's an abort error
@@ -266,6 +299,32 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
         return errorResponse(err);
     } finally {
         timedAbort.clear();
+    }
+}
+
+"""Persist a single chat turn (defaults to the assistant response).
+
+Called after the SSE stream finishes so the response is committed within a
+normal walker request; the streamed generator on the backend cannot persist it
+itself because it runs after the walker has already committed.
+"""
+async def:pub saveTurn(sessionId: str, content: str, role: str = "assistant") -> any {
+    if not content {
+        return {"success": False, "session_id": sessionId};
+    }
+
+    try {
+        response = root spawn save_turn(session_id=sessionId, content=content, role=role);
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
+
+        return {
+            "success": result.success or False,
+            "session_id": result.session_id or sessionId
+        };
+    } except Exception as e {
+        console.error("saveTurn error:", e);
+        err = normalizeRuntimeError(e, "ERR_SAVE_TURN");
+        return errorResponse(err, {"session_id": sessionId});
     }
 }
 

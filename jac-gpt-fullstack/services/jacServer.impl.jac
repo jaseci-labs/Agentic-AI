@@ -3,35 +3,23 @@ import os;
 import from datetime {datetime}
 import from byllm.types { StreamEvent }
 
-# Shared helper that yields raw event dicts. jac-scale's sse_frame_stream
-# JSON-encodes each yielded item and wraps it in `data: ... \n\n`, so this
-# generator must not pre-frame the SSE payload itself. Doing so produces
-# `data: "data: {...}\\n\\n"` on the wire, the client's JSON.parse fails on
-# the inner `data: ...` prefix, and no chunks render in the UI.
+# Maps the upstream byLLM StreamEvent generator into raw event dicts and streams
+# each token through live as it is produced.
+#
+# Persistence note: the assistant turn is intentionally NOT saved here. jac-scale
+# commits the walker's graph mutations when spawn_walker returns, BEFORE the
+# StreamingResponse consumes this generator, so a chat_history.append here would
+# run after the commit and never be flushed (that is exactly why assistant
+# messages silently stopped persisting). The client calls the save_turn walker
+# once the stream completes (see jacService.saveTurn), which commits normally.
+#
+# Yielded items must stay raw dicts: jac-scale's sse_frame_stream JSON-encodes
+# each item and wraps it in `data: ... \n\n`. Pre-framing here would produce
+# `data: "data: {...}"` on the wire and break the client's JSON.parse.
 def stream_chat_response(response_generator: any, visitor: any) -> any {
-   print("Starting response streaming...");
-
-   response = "";
    for event in response_generator {
       yield {"type": event.event_type, "data": event.data};
-      if event.event_type == "chunk" {
-         chunk_data = event.data or {};
-         response += chunk_data.get("content", "");
-      }
    }
-
-   if not visitor.skip_history {
-      matching_sessions = ([root-->(?:Session)](?id==visitor.session_id));
-      if len(matching_sessions) > 0 {
-         session_node = matching_sessions[0];
-         session_node.chat_history.append({"role": "assistant", "content": response});
-         session_node.updated_at = datetime.now().isoformat();
-      } else {
-         print("Warning: Session not found while appending assistant response:", visitor.session_id);
-      }
-   }
-   
-   return;
 }
 
 impl RagChat.chat {
@@ -268,9 +256,13 @@ impl Session.chat {
       self.user_email = visitor.user_email;
    }
 
-   # Save user message to chat history only for the primary call (not skip_history)
-   self.chat_history.append({"role": "user", "content": visitor.message});
-   self.updated_at = datetime.now().isoformat();
+   # Save user message to chat history only for the primary call (not skip_history).
+   # In "both" mode the secondary (mcp) call runs with skip_history=True so the
+   # user turn is not appended twice for the same message.
+   if not visitor.skip_history {
+      self.chat_history.append({"role": "user", "content": visitor.message});
+      self.updated_at = datetime.now().isoformat();
+   }
 
    visitor.chat_history = self.chat_history;
 

@@ -2,7 +2,7 @@
 
 import from react { useState, useEffect, useRef }
 import from "@jac/runtime" { jacIsLoggedIn }
-import from ..services.jacService { createSession, getSession, sendMessage, getSuggestions, generateSessionId }
+import from ..services.jacService { createSession, getSession, sendMessage, saveTurn, getSuggestions, generateSessionId }
 import from ..hooks.useAuth { getUsernameFromToken }
 
 """Hook for managing chat state and interactions."""
@@ -328,7 +328,7 @@ def:pub useChat() -> any {
                     }, "ERR_STREAM_RUNTIME", "Streaming failed while generating a response.");
                     ragIsReasoning = False;
                 }
-                if eventType == "thought" or eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
+                if eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
                     ragReasoningSteps = lambda prev: any -> any {
                         return prev.concat([{"type": eventType, "data": eventData}]);
                     };
@@ -338,7 +338,7 @@ def:pub useChat() -> any {
                             if m.id == ragBotMessageId {
                                 updatedMessages.push({
                                     "id": m.id,
-                                    "content": m.content,
+                                    "content": ("" if eventType == "tool_call" else m.content),
                                     "isUser": m.isUser,
                                     "source": m.source,
                                     "pairKey": m.pairKey or "",
@@ -394,7 +394,7 @@ def:pub useChat() -> any {
                     }, "ERR_STREAM_RUNTIME", "Streaming failed while generating a response.");
                     mcpIsReasoning = False;
                 }
-                if eventType == "thought" or eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
+                if eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
                     mcpReasoningSteps = lambda prev: any -> any {
                         return prev.concat([{"type": eventType, "data": eventData}]);
                     };
@@ -404,7 +404,7 @@ def:pub useChat() -> any {
                             if m.id == mcpBotMessageId {
                                 updatedMessages.push({
                                     "id": m.id,
-                                    "content": m.content,
+                                    "content": ("" if eventType == "tool_call" else m.content),
                                     "isUser": m.isUser,
                                     "source": m.source,
                                     "pairKey": m.pairKey or "",
@@ -503,6 +503,12 @@ def:pub useChat() -> any {
             async def sendRag() -> any {
                 result = await sendMessage(content.trim(), sessionId, userEmail, onChunkRag, onEventRag, ragAbortController.signal, "rag", False);
                 ragElapsedMs = Date.now() - sendStartTimeRef.current;
+                # Persist the assistant turn once the stream has fully arrived. The
+                # backend cannot save it from the streamed generator (that runs
+                # after the walker commits), so the client commits it explicitly.
+                if result.success and result.full_text {
+                    await saveTurn(sessionId, result.full_text);
+                }
                 return result;
             }
 
@@ -510,6 +516,11 @@ def:pub useChat() -> any {
                 skipHist = mode == "both";
                 result = await sendMessage(content.trim(), sessionId, userEmail, onChunkMcp, onEventMcp, mcpAbortController.signal, "mcp", skipHist);
                 mcpElapsedMs = Date.now() - sendStartTimeRef.current;
+                # Mirror the backend skip_history: in "both" mode the rag call owns
+                # history, so only persist the mcp turn when it is the primary call.
+                if result.success and result.full_text and not skipHist {
+                    await saveTurn(sessionId, result.full_text);
+                }
                 return result;
             }
 
