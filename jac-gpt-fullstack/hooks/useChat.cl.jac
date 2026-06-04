@@ -2,7 +2,7 @@
 
 import from react { useState, useEffect, useRef }
 import from "@jac/runtime" { jacIsLoggedIn }
-import from ..services.jacService { createSession, getSession, sendMessage, getSuggestions, generateSessionId }
+import from ..services.jacService { createSession, getSession, sendMessage, saveTurn, getSuggestions, generateSessionId }
 import from ..hooks.useAuth { getUsernameFromToken }
 
 """Hook for managing chat state and interactions."""
@@ -503,6 +503,12 @@ def:pub useChat() -> any {
             async def sendRag() -> any {
                 result = await sendMessage(content.trim(), sessionId, userEmail, onChunkRag, onEventRag, ragAbortController.signal, "rag", False);
                 ragElapsedMs = Date.now() - sendStartTimeRef.current;
+                # Persist the assistant turn once the stream has fully arrived. The
+                # backend cannot save it from the streamed generator (that runs
+                # after the walker commits), so the client commits it explicitly.
+                if result.success and result.full_text {
+                    await saveTurn(sessionId, result.full_text);
+                }
                 return result;
             }
 
@@ -510,6 +516,11 @@ def:pub useChat() -> any {
                 skipHist = mode == "both";
                 result = await sendMessage(content.trim(), sessionId, userEmail, onChunkMcp, onEventMcp, mcpAbortController.signal, "mcp", skipHist);
                 mcpElapsedMs = Date.now() - sendStartTimeRef.current;
+                # Mirror the backend skip_history: in "both" mode the rag call owns
+                # history, so only persist the mcp turn when it is the primary call.
+                if result.success and result.full_text and not skipHist {
+                    await saveTurn(sessionId, result.full_text);
+                }
                 return result;
             }
 

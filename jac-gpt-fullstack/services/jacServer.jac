@@ -307,6 +307,32 @@ walker :pub new_session {
     can create_session with Root entry;
 }
 
+walker :pub save_turn {
+    has session_id: str;
+    has content: str;
+    has role: str = "assistant";
+
+    obj __specs__ {
+        static has methods: list = ["post"];
+    }
+
+    # Persists a single chat turn. Called by the client after the SSE stream
+    # completes so the assistant response is committed within a normal walker
+    # request (the streamed generator that produced the text runs after the
+    # walker commits, so it cannot persist the turn itself).
+    can save with Root entry {
+        matching_sessions = ([-->(?:Session)](?id==self.session_id));
+        if len(matching_sessions) > 0 {
+            session_node = matching_sessions[0];
+            session_node.chat_history.append({"role": self.role, "content": self.content});
+            session_node.updated_at = datetime.now().isoformat();
+            report {"success": True, "session_id": self.session_id};
+        } else {
+            report {"success": False, "session_id": self.session_id, "error": "session_not_found"};
+        }
+    }
+}
+
 walker get_session_stats {
     has session_id: str;
 

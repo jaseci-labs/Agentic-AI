@@ -171,6 +171,7 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
         decoder = Reflect.construct(TextDecoder, ["utf-8"]);
 
         buffer = "";
+        fullText = "";
 
         while True {
             read_result = await reader.read();
@@ -201,13 +202,14 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
                     parsed = JSON.parse(data);
 
                     if parsed.type == "chunk" {
+                        content = "";
+                        if parsed.data {
+                            content = parsed.data.content or "";
+                        } elif parsed.content {
+                            content = parsed.content;
+                        }
+                        fullText += content;
                         if onChunk {
-                            content = "";
-                            if parsed.data {
-                                content = parsed.data.content or "";
-                            } elif parsed.content {
-                                content = parsed.content;
-                            }
                             onChunk(content);
                         }
                     }
@@ -235,7 +237,8 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
         return {
             "success": True,
             "code": "OK",
-            "message": "Response streamed successfully"
+            "message": "Response streamed successfully",
+            "full_text": fullText
         };
     } except Exception as e {
         # Check if it's an abort error
@@ -266,6 +269,32 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
         return errorResponse(err);
     } finally {
         timedAbort.clear();
+    }
+}
+
+"""Persist a single chat turn (defaults to the assistant response).
+
+Called after the SSE stream finishes so the response is committed within a
+normal walker request; the streamed generator on the backend cannot persist it
+itself because it runs after the walker has already committed.
+"""
+async def:pub saveTurn(sessionId: str, content: str, role: str = "assistant") -> any {
+    if not content {
+        return {"success": False, "session_id": sessionId};
+    }
+
+    try {
+        response = root spawn save_turn(session_id=sessionId, content=content, role=role);
+        result = response.reports[response.reports.length - 1] if response.reports and response.reports.length > 0 else {};
+
+        return {
+            "success": result.success or False,
+            "session_id": result.session_id or sessionId
+        };
+    } except Exception as e {
+        console.error("saveTurn error:", e);
+        err = normalizeRuntimeError(e, "ERR_SAVE_TURN");
+        return errorResponse(err, {"session_id": sessionId});
     }
 }
 
