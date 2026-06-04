@@ -312,10 +312,6 @@ walker :pub save_turn {
     has content: str;
     has role: str = "assistant";
 
-    obj __specs__ {
-        static has methods: list = ["post"];
-    }
-
     # Persists a single chat turn. Called by the client after the SSE stream
     # completes so the assistant response is committed within a normal walker
     # request (the streamed generator that produced the text runs after the
