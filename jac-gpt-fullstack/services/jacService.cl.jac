@@ -90,6 +90,7 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
         decoder = Reflect.construct(TextDecoder, ["utf-8"]);
 
         buffer = "";
+        fullResponse = "";
 
         while True {
             read_result = await reader.read();
@@ -120,14 +121,15 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
                     parsed = JSON.parse(data);
 
                     if parsed.type == "chunk" {
+                        chunkContent = "";
+                        if parsed.data {
+                            chunkContent = parsed.data.content or "";
+                        } elif parsed.content {
+                            chunkContent = parsed.content;
+                        }
+                        fullResponse += chunkContent;
                         if onChunk {
-                            content = "";
-                            if parsed.data {
-                                content = parsed.data.content or "";
-                            } elif parsed.content {
-                                content = parsed.content;
-                            }
-                            onChunk(content);
+                            onChunk(chunkContent);
                         }
                     }
 
@@ -142,7 +144,8 @@ async def:pub sendMessage(message: str, sessionId: str, userEmail: str = "", onC
         }
 
         return {
-            "success": True
+            "success": True,
+            "response_text": fullResponse
         };
     } except Exception as e {
         # Check if it's an abort error
