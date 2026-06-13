@@ -3,22 +3,23 @@ import os;
 import from datetime {datetime}
 import from byllm.types { StreamEvent }
 
-# Shared helper function for streaming responses with SSE format
+# Shared helper for streaming chat responses.
+#
+# Yield RAW dicts here — do NOT pre-frame as "data: ...\n\n". jac-scale's
+# sse_frame_stream wraps every yielded value as `data: {json.dumps(item)}\n\n`
+# itself, so pre-framing produces double-wrapped frames
+# (`data: "data: {...}\n\n"`) that the client parses as a string, dropping
+# every chunk. Yielding a plain dict lets sse_frame_stream emit a single,
+# correct SSE frame: `data: {"type": ..., "data": ...}\n\n`.
+#
+# Pure data producer — must NOT touch the graph here. jac-scale drives this
+# generator on a thread-pool worker AFTER the walker committed and the request
+# context was torn down, so any graph query resolves against an empty context.
 def stream_chat_response(response_generator: any, visitor: any) -> any {
    print("Starting response streaming...");
 
-   response = "";
    for event in response_generator {
-      yield f"data: {json.dumps({'type': event.event_type, 'data': event.data})}\n\n";
-      if event.event_type == "chunk" {
-         response += event.data.get("content", "");
-      }
-   }
-
-   if not visitor.skip_history {
-      session_node = ([root-->(?:Session)](?id==visitor.session_id))[0];
-      session_node.chat_history.append({"role": "assistant", "content": response});
-      session_node.updated_at = datetime.now().isoformat();
+      yield {"type": event.event_type, "data": event.data};
    }
    
    return;
