@@ -48,13 +48,11 @@ jobs:
       # The runner's jac-scale must match what the pod clones via
       # [plugins.scale.kubernetes].jaseci_repo_url/branch, otherwise the install
       # command generated for the pod drifts from the runtime that gets cloned.
-      # Temporarily pinned to udithishanka/jaseci fix/byllm-streaming-cross-context-token-reset
-      # (jaseci-labs/jaseci#6016). Revert to jaseci-labs/jaseci main once merged.
       - name: Install Jaseci packages
         run: |
           pip install --upgrade pip
           pip install jaclang jac-client byllm
-          git clone --depth 1 --branch fix/byllm-streaming-cross-context-token-reset https://github.com/udithishanka/jaseci.git /tmp/jaseci
+          git clone --depth 1 --branch main https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
           pip install -e /tmp/jaseci/jac-scale
           pip install -e /tmp/jaseci/jac-byllm
           pip install -e /tmp/jaseci/jac-mcp
