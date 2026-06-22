@@ -61,7 +61,6 @@ jobs:
           # and must be installed via `jac install -e` (pip can't build them).
           pip install -e /tmp/jaseci/jac
           jac install -e /tmp/jaseci/jac-byllm
-          jac install -e /tmp/jaseci/jac-client
           jac install -e /tmp/jaseci/jac-scale --extras all
 
       - name: Install app dependencies
