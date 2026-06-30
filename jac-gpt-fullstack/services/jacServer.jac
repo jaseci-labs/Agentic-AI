@@ -10,6 +10,12 @@ import from services.rag_engine {RagEngine, load_config}
 import from services.mcp_client {McpClient}
 import from datetime {datetime}
 
+# Load environment variables (API keys, model overrides) up front, before any
+# LLM-backed initialization runs, so credentials are available to the calls below.
+with entry {
+    load_dotenv(override=True);
+}
+
 # Long-lived MCP client subprocess (stdio JSON-RPC)
 glob mcp_client: McpClient = McpClient();
 glob available_mcp_tools_descriptions: str = mcp_client.get_tool_descriptions() if mcp_client.get_tools_length() > 0 else "";
@@ -17,12 +23,21 @@ glob available_mcp_tools_descriptions: str = mcp_client.get_tool_descriptions() 
 def categorized_mcp_tools(mcp_tools: str) -> dict[str, list[str]] by llm();
 def reorder_categorized_mcp_tools(categorized_tools: dict[str, list[str]]) -> dict[str, list[str]] by llm();
 
-glob mcp_tools_cache: dict[str, list[str]] = reorder_categorized_mcp_tools(categorized_mcp_tools(available_mcp_tools_descriptions)) if available_mcp_tools_descriptions else {"syntax_tools": [], "validation_tools": [], "other_tools": []};
-
-with entry {
-    load_dotenv(override=True);
-    print(f"[MCP TOOLS CACHE]: syntax_tools={len(mcp_tools_cache.get('syntax_tools', []))}, validation_tools={len(mcp_tools_cache.get('validation_tools', []))}, other_tools={len(mcp_tools_cache.get('other_tools', []))}");
-    print(f"[MCP TOOLS CACHE DETAILS]: {json.dumps(mcp_tools_cache, indent=2)}");
+# Categorizing MCP tools needs a working LLM. Build the cache defensively so a
+# missing API key or an unreachable LLM degrades to an empty cache instead of
+# crashing server startup. The MCP chat abilities read this via .get(..., []),
+# so an empty cache is safe. Initialized after `llm` is configured (see below).
+def build_mcp_tools_cache() -> dict[str, list[str]] {
+    empty = {"syntax_tools": [], "validation_tools": [], "other_tools": []};
+    if not available_mcp_tools_descriptions {
+        return empty;
+    }
+    try {
+        return reorder_categorized_mcp_tools(categorized_mcp_tools(available_mcp_tools_descriptions));
+    } except Exception as e {
+        print(f"[MCP TOOLS CACHE] LLM categorization unavailable, continuing with empty cache: {e}");
+        return empty;
+    }
 }
 
 # Load configuration
@@ -36,6 +51,14 @@ glob faiss_path: str = os.path.join(services_dir, app_config.get("paths", {}).ge
 
 glob model_name: str = os.environ.get("MODEL", app_config.get("llm", {}).get("model_name", "gpt-4.1-mini"));
 glob llm = Model(model_name=model_name);
+
+# Built now that `llm` and the environment are ready; never fails server startup.
+glob mcp_tools_cache: dict[str, list[str]] = build_mcp_tools_cache();
+
+with entry {
+    print(f"[MCP TOOLS CACHE]: syntax_tools={len(mcp_tools_cache.get('syntax_tools', []))}, validation_tools={len(mcp_tools_cache.get('validation_tools', []))}, other_tools={len(mcp_tools_cache.get('other_tools', []))}");
+}
+
 glob embedding_model = SentenceTransformer('all-MiniLM-L6-v2');
         
 glob rag_engine: RagEngine = RagEngine(
