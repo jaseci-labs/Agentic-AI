@@ -1,7 +1,7 @@
 import json;
 import os;
 import from datetime {datetime}
-import from byllm.types { StreamEvent }
+import from jaclang.byllm.types { StreamEvent }
 
 # Maps the upstream byLLM StreamEvent generator into raw event dicts and streams
 # each token through live as it is produced.

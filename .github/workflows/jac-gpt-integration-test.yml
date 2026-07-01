@@ -8,11 +8,13 @@ on:
       - main
     paths:
       - 'jac-gpt-fullstack/**'
+      - '.github/workflows/jac-gpt-integration-test.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'jac-gpt-fullstack/**'
+      - '.github/workflows/jac-gpt-integration-test.yml'
   workflow_dispatch:
     inputs:
       jaseci_ref:
@@ -27,16 +29,30 @@ jobs:
   integration-test:
     name: Server Start Test (jaseci main)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Cold cache builds the jac binary from source (Zig + bundled CPython/LLVM),
+    # which is slow the first time on a branch; subsequent runs restore it in
+    # seconds via the setup-jac output cache.
+    timeout-minutes: 60
 
     steps:
+      # jaseci is checked out at the workspace ROOT so its own setup-jac composite
+      # action resolves (it hardcodes jac/-relative paths for the binary + caches).
+      # jaclang now ships as the self-contained `jac` binary, not a pip package,
+      # so `pip install -e ./jac` / `jac install -e ./jac-byllm` no longer exist.
+      - name: Checkout jaseci (binary source + setup-jac action)
+        uses: actions/checkout@v4
+        with:
+          repository: jaseci-labs/jaseci
+          ref: ${{ github.event.inputs.jaseci_ref || 'main' }}
+          submodules: recursive
+
+      - name: Record jaseci SHA
+        run: echo "JASECI_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Checkout Agentic-AI
         uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          path: app
 
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
@@ -46,38 +62,47 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Clone jaseci repo
-        run: |
-          REF="${{ github.event.inputs.jaseci_ref || 'main' }}"
-          git clone --depth 1 --recurse-submodules --branch "$REF" \
-            https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
-          echo "JASECI_SHA=$(git -C /tmp/jaseci rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "Cloned jaseci at $(git -C /tmp/jaseci rev-parse HEAD)"
+      - name: Set up jac (build the binary)
+        uses: ./.github/actions/setup-jac
 
-      - name: Install jaseci packages from source
+      # The binary bundles jaclang (incl. the folded-in client + byllm), but the
+      # heavy runtime capability closures are installed separately, exactly as
+      # jaseci's own CI does. Pins mirror jac/jaclang/project/capabilities.jac.
+      - name: Install serve capability deps (for `jac start`)
         run: |
-          pip install --upgrade pip
-          # Core jac ships a pyproject.toml; plugins now ship only jac.toml
-          # and must be installed via `jac install -e` (pip can't build them).
-          pip install -e /tmp/jaseci/jac
-          jac install -e /tmp/jaseci/jac-byllm
-          jac install -e /tmp/jaseci/jac-scale --extras all
+          jac install \
+            "fastapi>=0.121.3,<0.122.0" "uvicorn[standard]>=0.38.0,<0.39.0" \
+            "pyjwt>=2.10.1,<2.11.0" "fastapi-sso>=0.21.0,<1.0.0" \
+            "python-multipart>=0.0.21,<1.0.0" "bcrypt>=4.0.0,<5.0.0" \
+            "aiohttp>=3.9.0,<4.0.0" "sqlalchemy>=2.0.0,<3.0.0" \
+            "email-validator>=2.3.0,<3.0.0" "python-dotenv>=1.2.1,<2.0.0" \
+            "requests>=2.32.0,<3.0.0" \
+            --global
+
+      - name: Install byllm capability deps (for `by llm()`)
+        run: |
+          jac install \
+            "litellm>=1.70.0,<=1.82.6" "pillow>=12.0.0,<13.0.0" \
+            "httpx>=0.27.0" "loguru>=0.7.2,<0.8.0" \
+            --global
 
       - name: Install app dependencies
-        working-directory: jac-gpt-fullstack
+        working-directory: app/jac-gpt-fullstack
         run: jac install
 
       - name: Restore FAISS index cache
         uses: actions/cache@v4
         with:
-          path: jac-gpt-fullstack/services/faiss_index
+          path: app/jac-gpt-fullstack/services/faiss_index
           key: jac-gpt-faiss-v1
 
-      - name: Install Playwright and pytest dependencies
+      - name: Install Playwright dependencies
+        # --global puts playwright in the binary's own site so the e2e (run from
+        # the project dir) can import it; a plain install would land in the
+        # project venv instead.
         run: |
-          pip install pytest
-          pip install playwright
-          playwright install chromium --with-deps
+          jac install playwright --global
+          jac -m playwright install chromium --with-deps
 
       - name: Verify installation
         run: |
@@ -89,11 +114,11 @@ jobs:
           echo "${{ env.JASECI_SHA }}"
 
       - name: Run jac check
-        working-directory: jac-gpt-fullstack
+        working-directory: app/jac-gpt-fullstack
         run: jac check main.jac
 
       - name: Start server in background
-        working-directory: jac-gpt-fullstack
+        working-directory: app/jac-gpt-fullstack
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -142,9 +167,12 @@ jobs:
           fi
 
       - name: Run E2E tests
+        working-directory: app/jac-gpt-fullstack
         env:
           SERVER_URL: http://localhost:8000
-        run: pytest jac-gpt-fullstack/tests/test_e2e.jac -v
+        # Run from the project dir so the binary loads jac-gpt's deps; the binary
+        # provides jaclang + pytest (system pytest has neither).
+        run: jac test tests/test_e2e.jac -vv
 
       - name: Stop server
         if: always()
@@ -168,7 +196,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-screenshots
-          path: jac-gpt-fullstack/tests/screenshots/
+          path: app/jac-gpt-fullstack/tests/screenshots/
           retention-days: 7
 
       - name: Job summary

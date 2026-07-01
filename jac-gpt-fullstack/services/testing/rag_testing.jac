@@ -3,7 +3,7 @@ import os;
 import json;
 import requests;
 import time;
-import from byllm.lib {Model}
+import from jaclang.byllm.lib {Model}
 import from dotenv {load_dotenv}
 import from services.database {get_database}
 import from services.rag_engine {RagEngine, load_config}
