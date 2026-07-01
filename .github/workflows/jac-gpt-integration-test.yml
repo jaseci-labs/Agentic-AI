@@ -17,42 +17,23 @@ on:
       - '.github/workflows/jac-gpt-integration-test.yml'
   workflow_dispatch:
     inputs:
-      jaseci_ref:
-        description: 'Jaseci branch/tag/SHA to test against'
+      jac_release:
+        description: 'jaseci release tag to test against (dev = rolling build of main)'
         required: false
-        default: 'main'
+        default: 'dev'
 
 permissions:
   contents: read
 
 jobs:
   integration-test:
-    name: Server Start Test (jaseci main)
+    name: Server Start Test (jaseci dev/main)
     runs-on: ubuntu-latest
-    # Cold cache builds the jac binary from source (Zig + bundled CPython/LLVM),
-    # which is slow the first time on a branch; subsequent runs restore it in
-    # seconds via the setup-jac output cache.
-    timeout-minutes: 60
+    timeout-minutes: 30
 
     steps:
-      # jaseci is checked out at the workspace ROOT so its own setup-jac composite
-      # action resolves (it hardcodes jac/-relative paths for the binary + caches).
-      # jaclang now ships as the self-contained `jac` binary, not a pip package,
-      # so `pip install -e ./jac` / `jac install -e ./jac-byllm` no longer exist.
-      - name: Checkout jaseci (binary source + setup-jac action)
-        uses: actions/checkout@v4
-        with:
-          repository: jaseci-labs/jaseci
-          ref: ${{ github.event.inputs.jaseci_ref || 'main' }}
-          submodules: recursive
-
-      - name: Record jaseci SHA
-        run: echo "JASECI_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
       - name: Checkout Agentic-AI
         uses: actions/checkout@v4
-        with:
-          path: app
 
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
@@ -62,11 +43,30 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Set up jac (build the binary)
-        uses: ./.github/actions/setup-jac
+      # jaclang ships as a self-contained native binary (bundled CPython + bun),
+      # not a pip package, so there is nothing to `pip install`. The `dev` release
+      # is a prebuilt rolling build of main -- download it directly (seconds)
+      # instead of compiling from source with Zig (~34 min cold on every run,
+      # since a cross-repo cache goes cold whenever jaseci touches jaclang).
+      - name: Install jac binary (prebuilt dev build of main)
+        env:
+          JAC_RELEASE: ${{ github.event.inputs.jac_release || 'dev' }}
+        run: |
+          set -euo pipefail
+          ASSET="jac-${JAC_RELEASE}-linux-x86_64"
+          BASE="https://github.com/jaseci-labs/jaseci/releases/download/${JAC_RELEASE}"
+          mkdir -p "$HOME/.jacbin"
+          cd "$HOME/.jacbin"
+          echo "Downloading ${ASSET} from ${BASE}..."
+          curl -fsSL -o "${ASSET}" "${BASE}/${ASSET}"
+          curl -fsSL -o "${ASSET}.sha256" "${BASE}/${ASSET}.sha256"
+          sha256sum -c "${ASSET}.sha256"
+          mv "${ASSET}" jac
+          chmod +x jac
+          echo "$HOME/.jacbin" >> "$GITHUB_PATH"
 
-      # The binary bundles jaclang (incl. the folded-in client + byllm), but the
-      # heavy runtime capability closures are installed separately, exactly as
+      # The binary bundles jaclang (incl. the folded-in client + byllm + scale),
+      # but the heavy runtime capability closures install separately, exactly as
       # jaseci's own CI does. Pins mirror jac/jaclang/project/capabilities.jac.
       - name: Install serve capability deps (for `jac start`)
         run: |
@@ -87,13 +87,13 @@ jobs:
             --global
 
       - name: Install app dependencies
-        working-directory: app/jac-gpt-fullstack
+        working-directory: jac-gpt-fullstack
         run: jac install
 
       - name: Restore FAISS index cache
         uses: actions/cache@v4
         with:
-          path: app/jac-gpt-fullstack/services/faiss_index
+          path: jac-gpt-fullstack/services/faiss_index
           key: jac-gpt-faiss-v1
 
       - name: Install Playwright dependencies
@@ -110,15 +110,15 @@ jobs:
           jac --version
           echo "=== Plugins ==="
           jac plugins list
-          echo "=== Jaseci SHA ==="
-          echo "${{ env.JASECI_SHA }}"
+          JAC_VERSION="$(jac --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+          echo "JAC_VERSION=${JAC_VERSION:-unknown}" >> "$GITHUB_ENV"
 
       - name: Run jac check
-        working-directory: app/jac-gpt-fullstack
+        working-directory: jac-gpt-fullstack
         run: jac check main.jac
 
       - name: Start server in background
-        working-directory: app/jac-gpt-fullstack
+        working-directory: jac-gpt-fullstack
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -167,7 +167,7 @@ jobs:
           fi
 
       - name: Run E2E tests
-        working-directory: app/jac-gpt-fullstack
+        working-directory: jac-gpt-fullstack
         env:
           SERVER_URL: http://localhost:8000
         # Run from the project dir so the binary loads jac-gpt's deps; the binary
@@ -196,7 +196,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-screenshots
-          path: app/jac-gpt-fullstack/tests/screenshots/
+          path: jac-gpt-fullstack/tests/screenshots/
           retention-days: 7
 
       - name: Job summary
@@ -206,7 +206,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Jaseci SHA** | \`${{ env.JASECI_SHA }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Jaseci ref** | \`${{ github.event.inputs.jaseci_ref || 'main' }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Jac version** | \`${{ env.JAC_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **jac release** | \`${{ github.event.inputs.jac_release || 'dev' }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Status** | \`${{ job.status }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Trigger** | \`${{ github.event_name }}\` |" >> $GITHUB_STEP_SUMMARY
