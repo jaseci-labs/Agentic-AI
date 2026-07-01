@@ -4,7 +4,7 @@ Reads the mkdocs.yml file and constructs a JSON file with title and URL for each
 Includes semantic embeddings for each title for similarity search.
 """
 
-import from byllm.lib {Model}
+import from jaclang.byllm.lib {Model}
 import yaml;
 import from dotenv {load_dotenv}
 import json;

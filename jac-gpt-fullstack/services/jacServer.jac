@@ -4,7 +4,7 @@ import json;
 import numpy as np;
 import from sentence_transformers {SentenceTransformer}
 import requests;
-import from byllm.lib {Model}
+import from jaclang.byllm.lib {Model}
 import from dotenv {load_dotenv}
 import from services.rag_engine {RagEngine, load_config}
 import from services.mcp_client {McpClient}
