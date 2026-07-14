@@ -45,19 +45,27 @@ jobs:
           python-version: '3.12'
 
       # Install required packages (including app dependencies for local validation).
-      # The runner's jac-scale must match what the pod clones via
-      # [plugins.scale.kubernetes].jaseci_repo_url/branch, otherwise the install
-      # command generated for the pod drifts from the runtime that gets cloned.
-      # Temporarily pinned to udithishanka/jaseci fix/byllm-streaming-cross-context-token-reset
-      # (jaseci-labs/jaseci#6016). Revert to jaseci-labs/jaseci main once merged.
+      # The runner's install must match what the pod clones via
+      # [plugins.scale.kubernetes].jaseci_repo_url/branch + jaseci_commit,
+      # otherwise the install command generated for the pod drifts from the
+      # runtime that gets cloned.
+      # Pinned to jaseci-labs/jaseci b6cabe6 (merge of byllm streaming fix
+      # #6604) on the pre-fold multi-package layout this app requires. This
+      # block mirrors the pod's exact sequence, verified locally with `jac check`:
+      # plugins ship only a jac.toml (no pyproject.toml), so they install with
+      # `jac install -e ... --extras all`, NOT `pip install -e`.
       - name: Install Jaseci packages
         run: |
           pip install --upgrade pip
-          pip install jaclang jac-client byllm
-          git clone --depth 1 --branch fix/byllm-streaming-cross-context-token-reset https://github.com/udithishanka/jaseci.git /tmp/jaseci
-          pip install -e /tmp/jaseci/jac-scale
-          pip install -e /tmp/jaseci/jac-byllm
-          pip install -e /tmp/jaseci/jac-mcp
+          git clone --branch main https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
+          git -C /tmp/jaseci checkout b6cabe6668d0f98f9f7d9460e610e33d048a66bd
+          git -C /tmp/jaseci submodule update --init --recursive
+          pip install pluggy
+          pip install -e /tmp/jaseci/jac
+          jac install -e /tmp/jaseci/jac-scale --extras all
+          jac install -e /tmp/jaseci/jac-client
+          jac install -e /tmp/jaseci/jac-byllm
+          jac install -e /tmp/jaseci/jac-mcp
 
       # Install app dependencies (required for jac start to validate main.jac locally)
       - name: Install app dependencies
