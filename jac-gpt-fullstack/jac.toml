@@ -49,10 +49,15 @@ base_route_app = "app"
 [plugins.scale.kubernetes]
 app_name = "jac-gpt-test"
 namespace = "jac-gpt-test"
-# Temporarily pinned to the byllm streaming cross-Context fix
-# (jaseci-labs/jaseci#6016). Revert to jaseci-labs/jaseci main once merged.
-jaseci_repo_url = "https://github.com/udithishanka/jaseci.git"
-jaseci_branch = "fix/byllm-streaming-cross-context-token-reset"
+# Pinned to jaseci-labs/jaseci b6cabe6 -- the merge of the byllm streaming
+# cross-Context fix (#6604), on the PRE-FOLD multi-package layout this app
+# requires. Do NOT bump to the folded/binary releases (v0.30+): this app
+# imports top-level `byllm`, which was folded into `jaclang.byllm` and no
+# longer exists there. Verified: this app + this runtime pass `jac check`.
+# Keep jaseci_commit identical to deploy.yml.
+jaseci_repo_url = "https://github.com/jaseci-labs/jaseci.git"
+jaseci_branch = "main"
+jaseci_commit = "b6cabe6668d0f98f9f7d9460e610e33d048a66bd"
 liveness_initial_delay = 600
 liveness_period = 30
 liveness_failure_threshold = 10
