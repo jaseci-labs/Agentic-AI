@@ -59,6 +59,9 @@ jobs:
           ( cd "$HOME/.jacbin" && echo "$(cut -d' ' -f1 jac.sha256)  jac" | sha256sum -c - )
           chmod +x "$HOME/.jacbin/jac"
           echo "$HOME/.jacbin" >> "$GITHUB_PATH"
+          # $GITHUB_PATH only affects LATER steps, so also export PATH here so the
+          # version check below finds `jac` in this same step (as jacBuilder does).
+          export PATH="$HOME/.jacbin:$PATH"
           jac --version
 
       # Install app + scale runtime deps from jac.toml (byLLM and jac-scale are
