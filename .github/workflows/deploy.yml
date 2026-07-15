@@ -47,27 +47,22 @@ jobs:
       # jaclang ships as a self-contained `jac` binary. Under jaseci#7084,
       # `jac start --scale` ships this same binary to the pods over a
       # ReadWriteMany bundle PVC -- no source clone, no code-server, no
-      # --experimental. Pinned to stable v0.31.3: it carries the #7084 deploy
-      # redesign, predates the #7376 breaking change, and `jac check` passes.
-      # Download the latest STABLE jac binary -- it MUST match the runtime the
-      # pods use (`jac start --scale` ships the 'stable' binary to pods), so the
-      # runner seals the app with the same jac the pods run. The app is migrated
-      # to v0.32.x grammar (#7376 parenthesized lambdas); older jac would reject it.
-      - name: Install jac binary (latest stable -- matches the pod runtime)
+      # --experimental. We use the rolling `dev` prerelease (rebuilt from main),
+      # NOT latest stable: v0.32.0 stable (2026-07-13) predates jaseci/jac#7420
+      # (merged 2026-07-14), the fix for issue #7412 -- "client bundler omits the
+      # __jacJsx factory", which blanks the app ("__jacJsx is not defined") on
+      # rich/error renders. The dev binary carries #7420; jac.toml's bare [dev]
+      # table tells the pods to run this same dev binary. Matches jacBuilder's
+      # deploy-dev.yml. Swap `dev` for a pinned release tag once stable ships #7420.
+      - name: Install the jac dev binary (carries the #7420 __jacJsx client fix)
         run: |
           mkdir -p "$HOME/.jacbin"
-          rel=$(curl -fsSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/jaseci-labs/jaseci/releases/latest)
-          asset_url=$(echo "$rel" | jq -r '.assets[] | select(.name | test("^jac-[0-9].*-linux-x86_64$")) | .browser_download_url')
-          test -n "$asset_url" || { echo "ERROR: no linux-x86_64 asset on latest stable"; exit 1; }
-          echo "Latest stable: $(echo "$rel" | jq -r .tag_name)"
-          curl -fsSL -o "$HOME/.jacbin/jac" "$asset_url"
-          curl -fsSL -o "$HOME/.jacbin/jac.sha256" "${asset_url}.sha256"
-          ( cd "$HOME/.jacbin" && echo "$(cut -d' ' -f1 jac.sha256)  jac" | sha256sum -c - )
+          curl -fsSL "https://github.com/jaseci-labs/jaseci/releases/download/dev/jac-dev-linux-x86_64" -o "$HOME/.jacbin/jac"
           chmod +x "$HOME/.jacbin/jac"
           echo "$HOME/.jacbin" >> "$GITHUB_PATH"
           export PATH="$HOME/.jacbin:$PATH"
           jac --version
+          jac start --help | grep -q -- "--scale"
 
       # Install app deps. The .jab seal resolves the app's Python imports from
       # the GLOBAL jac site (the client compile pulls in server modules like
@@ -83,13 +78,33 @@ jobs:
             sentence-transformers faiss-cpu
         working-directory: jac-gpt-fullstack
 
-      # Deploy using jac-scale (secrets from env via [scale.secrets]).
-      # The binary is shipped to pods over the RWX bundle PVC (bundle_storage_class).
+      # Deploy using jac-scale (secrets from env via [scale.secrets]). The binary
+      # is shipped to pods over the RWX bundle PVC (bundle_storage_class). Under
+      # #7084, `jac start --scale` ships the binary, applies the manifest (~2min),
+      # then HANGS on non-daemon threads (litellm, k8s watch loops). timeout 1800
+      # caps the hang; exit 124 is EXPECTED and treated as success. The
+      # "Ready: downloading" marker is proof the manifest was applied (any prep
+      # failure raises non-124, surfaced below). Mirrors jacBuilder deploy-dev.yml.
       - name: Deploy JAC-GPT Fullstack with jac-scale
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          jac start main.jac --scale
+          set +e
+          timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+          if [ "$EXIT_CODE" -ne 0 ] && [ "$EXIT_CODE" -ne 124 ]; then
+            echo "jac start failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
+          if [ "$EXIT_CODE" -eq 124 ]; then
+            echo "jac start hit the 1800s cap (expected: it hangs on non-daemon threads once the deploy is applied)"
+          fi
+          if ! grep -q "Ready: downloading" /tmp/jacstart.log; then
+            echo "ERROR: jac start never reported the runtime Ready; NO manifest was applied. Failing loudly."
+            exit 1
+          fi
+          echo "Deployment spec applied by jac-scale."
         working-directory: jac-gpt-fullstack
 
       # Get deployment status
