@@ -10,7 +10,7 @@ def buildError(code: str, message: str, retryable: bool = False, statusCode: int
         "retryable": retryable,
         "status_code": statusCode,
         "details": details,
-        "timestamp": Date().toISOString()
+        "timestamp": new Date().toISOString()
     };
 }
 
