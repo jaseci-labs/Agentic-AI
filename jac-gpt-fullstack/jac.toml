@@ -50,6 +50,10 @@ base_route_app = "app"
 app_name = "jac-gpt-test"
 namespace = "jac-gpt-test"
 bundle_storage_class = "efs-sc"
+# Generates the users.acl secret key the redis pod mounts. WITHOUT this the pod
+# fails: 'redis-acl references non-existent secret key: users.acl' -> redis never
+# rolls out -> the deploy times out. (jacBuilder sets the same.)
+redis_username = "default"
 liveness_initial_delay = 600
 liveness_period = 30
 liveness_failure_threshold = 10
@@ -65,10 +69,16 @@ ephemeral_storage_limit = "30Gi"
 [scale.secrets]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
 
+# Data backend (matches jacBuilder). backend=mongo -> data.mongo (pymongo);
+# type=redis -> data.redis. redis_memory_limit=1Gi per jaseci#7307: the 256Mi
+# default OOMKills redis (200mb maxmemory + RSS overhead).
+[scale.database]
+backend = "mongo"
+type = "redis"
+redis_memory_limit = "1Gi"
+
 # byLLM / `by llm()` capability. Without this, litellm is NOT installed and every
-# chat request 500s: "Capability 'llm' is required but not installed". Note: we
-# intentionally do NOT declare [scale.database]/redis_username -- the app connects
-# to the existing (no-ACL) redis, and adding ACL auth 503s the session routes.
+# chat request 500s: "Capability 'llm' is required but not installed".
 [byllm]
 
 [byllm.parallel]
