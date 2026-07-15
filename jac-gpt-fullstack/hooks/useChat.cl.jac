@@ -175,7 +175,7 @@ def:pub useChat() -> any {
             "id": "msg_" + String(Date.now()),
             "content": content.trim(),
             "isUser": True,
-            "timestamp": new Date()
+            "timestamp": Reflect.construct(Date, [])
         };
 
         messages = lambda (prev: any) { return prev.concat([userMessage]); };
@@ -220,7 +220,7 @@ def:pub useChat() -> any {
                 "isUser": False,
                 "source": "RAG",
                 "pairKey": responsePairKey,
-                "timestamp": new Date(),
+                "timestamp": Reflect.construct(Date, []),
                 "reasoningSteps": [],
                 "isReasoning": True,
                 "elapsedMs": 0
@@ -231,7 +231,7 @@ def:pub useChat() -> any {
                 "isUser": False,
                 "source": "MCP",
                 "pairKey": responsePairKey,
-                "timestamp": new Date(),
+                "timestamp": Reflect.construct(Date, []),
                 "reasoningSteps": [],
                 "isReasoning": True,
                 "elapsedMs": 0
@@ -567,7 +567,7 @@ def:pub useChat() -> any {
                 "content": "[ERR_SEND_MESSAGE] Failed to send message. Please try again.",
                 "isUser": False,
                 "source": "",
-                "timestamp": new Date()
+                "timestamp": Reflect.construct(Date, [])
             };
             messages = lambda (prev: any) { return prev.concat([errorMessage]); };
             isLoading = False;
@@ -654,7 +654,7 @@ def:pub useChat() -> any {
                         "id": "msg_" + String(Date.now()) + "_" + String(Math.random()),
                         "content": historyItem.content,
                         "isUser": historyItem.role == "user",
-                        "timestamp": new Date()
+                        "timestamp": Reflect.construct(Date, [])
                     };
                     newMessages.push(msg);
                 }
