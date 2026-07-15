@@ -48,12 +48,12 @@ def normalizeRuntimeError(err: any, fallbackCode: str = "ERR_UNKNOWN_FRONTEND") 
 """Merge an external abort signal with a timeout signal."""
 def createTimedAbortSignal(externalSignal: any = None, timeoutMs: int = REQUEST_TIMEOUT_MS) -> any {
     controller = Reflect.construct(AbortController, []);
-    timeoutId = setTimeout(lambda -> None {
+    timeoutId = setTimeout(lambda () {
         controller.abort("timeout");
     }, timeoutMs);
 
     if externalSignal {
-        externalSignal.addEventListener("abort", lambda -> None {
+        externalSignal.addEventListener("abort", lambda () {
             clearTimeout(timeoutId);
             controller.abort("external_abort");
         });
@@ -61,7 +61,7 @@ def createTimedAbortSignal(externalSignal: any = None, timeoutMs: int = REQUEST_
 
     return {
         "signal": controller.signal,
-        "clear": lambda -> None { clearTimeout(timeoutId); }
+        "clear": lambda () { clearTimeout(timeoutId); }
     };
 }
 

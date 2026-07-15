@@ -94,7 +94,7 @@ def:pub ReasoningStep(step: any, index: int) -> JsxElement {
                     "wordBreak": "break-word",
                     "cursor": cursorStyle
                 }}
-                onClick={lambda { if isLongContent { expanded = not expanded; } }}
+                onClick={lambda () { if isLongContent { expanded = not expanded; } }}
             >
                 {displayContent}
             </Text>
@@ -132,7 +132,7 @@ def:pub AgentReasoning(steps: list, isActive: bool = false, title: str = "Agent 
     stepsEndRef = useRef(None);
 
     # Auto-scroll within the reasoning panel when new steps arrive
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         if isOpen and stepsEndRef.current {
             stepsEndRef.current.scrollIntoView({"behavior": "smooth", "block": "nearest"});
         }
@@ -190,7 +190,7 @@ def:pub AgentReasoning(steps: list, isActive: bool = false, title: str = "Agent 
                 "cursor": "pointer",
                 "borderBottom": borderBottom
             }}
-            onClick={lambda { isOpen = not isOpen; }}
+            onClick={lambda () { isOpen = not isOpen; }}
         >
             <Group gap="xs">
                 {loaderElement}
@@ -209,7 +209,7 @@ def:pub AgentReasoning(steps: list, isActive: bool = false, title: str = "Agent 
             "overflowY": "auto",
             "padding": contentPadding
         }}>
-            {steps.map(lambda (step: any, i: int) -> any {
+            {steps.map(lambda () {
                 return <ReasoningStep key={i} step={step} index={i} />;
             })}
             <div ref={stepsEndRef} />

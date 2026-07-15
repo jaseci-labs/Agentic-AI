@@ -71,7 +71,7 @@ def:pub AdminDashboard() -> JsxElement {
     PANEL_BORDER = "rgba(255,255,255,0.08)";
 
     # Check auth + admin status on mount
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         async def checkAdminAndLoad() -> None {
             if not jacIsLoggedIn() {
                 navigate("/login");
@@ -119,14 +119,14 @@ def:pub AdminDashboard() -> JsxElement {
     }, []);
 
     # Load questions when tab is clicked (lazy)
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         async def loadQuestions() -> None {
             if activeTab != "questions" or questionsLoaded or sessions.length == 0 {
                 return;
             }
 
             # Filter to only sessions with messages
-            sessionsWithMessages = sessions.filter(lambda s: any -> any {
+            sessionsWithMessages = sessions.filter(lambda (s: any) {
                 return (s.message_count or 0) > 0;
             });
 
@@ -208,7 +208,7 @@ def:pub AdminDashboard() -> JsxElement {
             return userQuestions;
         }
         term = questionSearchTerm.toLowerCase();
-        return userQuestions.filter(lambda q: any -> any {
+        return userQuestions.filter(lambda (q: any) {
             return (
                 (q.question and q.question.toLowerCase().includes(term)) or
                 (q.user_email and q.user_email.toLowerCase().includes(term)) or
@@ -272,7 +272,7 @@ def:pub AdminDashboard() -> JsxElement {
                     <Text size="xl" fw={700} c={TEXT}>Access Denied</Text>
                     <Text c={MUTED} size="sm">Admin privileges required to access this page.</Text>
                     <Button
-                        onClick={lambda -> None { navigate("/"); }}
+                        onClick={lambda () { navigate("/"); }}
                         leftSection={<IconArrowLeft size={16} />}
                         styles={{
                             "root": {
@@ -288,7 +288,7 @@ def:pub AdminDashboard() -> JsxElement {
     }
 
     # Filter out empty sessions (created on page load but never used)
-    activeSessions_list = sessions.filter(lambda s: any -> any {
+    activeSessions_list = sessions.filter(lambda (s: any) {
         return (s.message_count or 0) > 0;
     });
 
@@ -371,7 +371,7 @@ def:pub AdminDashboard() -> JsxElement {
             </Box>
             <Box p="md">
                 <Stack gap="sm">
-                    {users.map(lambda u: any, index: int -> any {
+                    {users.map(lambda (u: any, index: int) {
                         return <Paper key={index} p="md" radius="md" style={{
                             "background": PANEL,
                             "border": "1px solid " + PANEL_BORDER
@@ -433,11 +433,11 @@ def:pub AdminDashboard() -> JsxElement {
             </Box>
             <ScrollArea style={{"height": "500px"}} p="md">
                 <Stack gap="xs">
-                    {activeSessions_list.map(lambda s: any, index: int -> any {
+                    {activeSessions_list.map(lambda (s: any, index: int) {
                         isSelected = selectedSession and selectedSession.session_id == s.session_id;
                         return <Box
                             key={index}
-                            onClick={lambda -> None { handleViewSession(s.session_id); }}
+                            onClick={lambda () { handleViewSession(s.session_id); }}
                             style={{
                                 "padding": "12px",
                                 "borderRadius": "8px",
@@ -499,7 +499,7 @@ def:pub AdminDashboard() -> JsxElement {
         } elif selectedSession {
             sessionDetailContent = <ScrollArea style={{"height": "500px"}} p="md">
                 <Stack gap="md">
-                    {selectedSession.messages.map(lambda msg: any, index: int -> any {
+                    {selectedSession.messages.map(lambda (msg: any, index: int) {
                         isUser = msg.role == "user";
                         return <Box
                             key={index}
@@ -588,7 +588,7 @@ def:pub AdminDashboard() -> JsxElement {
         } elif userQuestions.length > 0 and filteredQuestions.length > 0 {
             questionsBody = <ScrollArea style={{"height": "500px"}}>
                 <Stack gap="sm" p="md">
-                    {filteredQuestions.map(lambda q: any, index: int -> any {
+                    {filteredQuestions.map(lambda (q: any, index: int) {
                         return <Paper key={index} p="md" radius="md" style={{
                             "background": PANEL,
                             "border": "1px solid " + PANEL_BORDER
@@ -676,7 +676,7 @@ def:pub AdminDashboard() -> JsxElement {
                     <TextInput
                         placeholder="Search questions..."
                         value={questionSearchTerm}
-                        onChange={lambda e: any -> None { questionSearchTerm = e.target.value; }}
+                        onChange={lambda (e: any) { questionSearchTerm = e.target.value; }}
                         leftSection={<IconSearch size={16} />}
                         style={{"width": "280px"}}
                         styles={{
@@ -702,7 +702,7 @@ def:pub AdminDashboard() -> JsxElement {
             variant="light"
             mb="lg"
             withCloseButton
-            onClose={lambda -> None { error = ""; }}
+            onClose={lambda () { error = ""; }}
             styles={{
                 "root": {
                     "background": "rgba(239, 68, 68, 0.08)",
@@ -726,7 +726,7 @@ def:pub AdminDashboard() -> JsxElement {
                 <Box>
                     <Group gap="sm" mb="xs">
                         <Button
-                            onClick={lambda -> None { navigate("/"); }}
+                            onClick={lambda () { navigate("/"); }}
                             variant="subtle"
                             size="sm"
                             leftSection={<IconArrowLeft size={16} />}
@@ -761,7 +761,7 @@ def:pub AdminDashboard() -> JsxElement {
 
             <Group gap="sm" mb="lg">
                 <Button
-                    onClick={lambda -> None { activeTab = "overview"; }}
+                    onClick={lambda () { activeTab = "overview"; }}
                     variant={((("filled" if activeTab == "overview" else "outline")))}
                     styles={{
                         "root": {
@@ -774,7 +774,7 @@ def:pub AdminDashboard() -> JsxElement {
                     Overview
                 </Button>
                 <Button
-                    onClick={lambda -> None { activeTab = "users"; }}
+                    onClick={lambda () { activeTab = "users"; }}
                     variant={((("filled" if activeTab == "users" else "outline")))}
                     leftSection={<IconUsers size={16} />}
                     styles={{
@@ -788,7 +788,7 @@ def:pub AdminDashboard() -> JsxElement {
                     {"Users ("}{String(users.length)}{")"}
                 </Button>
                 <Button
-                    onClick={lambda -> None { activeTab = "sessions"; }}
+                    onClick={lambda () { activeTab = "sessions"; }}
                     variant={((("filled" if activeTab == "sessions" else "outline")))}
                     leftSection={<IconMessageCircle size={16} />}
                     styles={{
@@ -802,7 +802,7 @@ def:pub AdminDashboard() -> JsxElement {
                     {"Sessions ("}{String(activeSessions_list.length)}{")"}
                 </Button>
                 <Button
-                    onClick={lambda -> None { activeTab = "questions"; }}
+                    onClick={lambda () { activeTab = "questions"; }}
                     variant={((("filled" if activeTab == "questions" else "outline")))}
                     leftSection={<IconQuestionMark size={16} />}
                     styles={{

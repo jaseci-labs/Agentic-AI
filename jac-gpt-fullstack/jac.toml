@@ -17,9 +17,6 @@ numpy = "~=2.5"
 
 [dependencies.npm]
 jac-client-node = "1.0.7"
-# Required by the v0.31.x jac-client runtime's compiled form support; without it
-# the client bundle fails: Rollup "failed to resolve import @tanstack/react-form"
-# (jacBuilder declares the same for the same reason).
 "@tanstack/react-form" = "^1.33.0"
 react-markdown = "^9.0.0"
 rehype-highlight = "^7.0.0"

@@ -18,7 +18,7 @@ import ".global.css";
 
 """Main app component with routing."""
 def:pub app() -> JsxElement {
-    useEffect(lambda {
+    useEffect(lambda () {
         async def initMonaco() -> None {
             try {
                 await initializeMonacoGlobally();

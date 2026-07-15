@@ -49,25 +49,38 @@ jobs:
       # ReadWriteMany bundle PVC -- no source clone, no code-server, no
       # --experimental. Pinned to stable v0.31.3: it carries the #7084 deploy
       # redesign, predates the #7376 breaking change, and `jac check` passes.
-      - name: Install jac binary (stable v0.31.3)
+      # Download the latest STABLE jac binary -- it MUST match the runtime the
+      # pods use (`jac start --scale` ships the 'stable' binary to pods), so the
+      # runner seals the app with the same jac the pods run. The app is migrated
+      # to v0.32.x grammar (#7376 parenthesized lambdas); older jac would reject it.
+      - name: Install jac binary (latest stable -- matches the pod runtime)
         run: |
           mkdir -p "$HOME/.jacbin"
-          ASSET="jac-0.31.3-linux-x86_64"
-          BASE="https://github.com/jaseci-labs/jaseci/releases/download/v0.31.3"
-          curl -fsSL -o "$HOME/.jacbin/jac" "$BASE/$ASSET"
-          curl -fsSL -o "$HOME/.jacbin/jac.sha256" "$BASE/$ASSET.sha256"
+          rel=$(curl -fsSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/jaseci-labs/jaseci/releases/latest)
+          asset_url=$(echo "$rel" | jq -r '.assets[] | select(.name | test("^jac-[0-9].*-linux-x86_64$")) | .browser_download_url')
+          test -n "$asset_url" || { echo "ERROR: no linux-x86_64 asset on latest stable"; exit 1; }
+          echo "Latest stable: $(echo "$rel" | jq -r .tag_name)"
+          curl -fsSL -o "$HOME/.jacbin/jac" "$asset_url"
+          curl -fsSL -o "$HOME/.jacbin/jac.sha256" "${asset_url}.sha256"
           ( cd "$HOME/.jacbin" && echo "$(cut -d' ' -f1 jac.sha256)  jac" | sha256sum -c - )
           chmod +x "$HOME/.jacbin/jac"
           echo "$HOME/.jacbin" >> "$GITHUB_PATH"
-          # $GITHUB_PATH only affects LATER steps, so also export PATH here so the
-          # version check below finds `jac` in this same step (as jacBuilder does).
           export PATH="$HOME/.jacbin:$PATH"
           jac --version
 
-      # Install app + scale runtime deps from jac.toml (byLLM and jac-scale are
-      # folded into the binary; their Python deps come via `jac install`).
+      # Install app deps. The .jab seal resolves the app's Python imports from
+      # the GLOBAL jac site (the client compile pulls in server modules like
+      # rag_engine -> langchain/sentence-transformers), so the heavy deps must be
+      # installed --global too, or the seal skips those modules ("Seal incomplete").
       - name: Install app dependencies
-        run: jac install
+        run: |
+          jac install
+          jac install --global \
+            python-dotenv requests numpy \
+            langchain-openai langchain-community langchain-chroma \
+            langchain-text-splitters langchain-core pypdf \
+            sentence-transformers faiss-cpu
         working-directory: jac-gpt-fullstack
 
       # Deploy using jac-scale (secrets from env via [scale.secrets]).
