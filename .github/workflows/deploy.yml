@@ -38,17 +38,6 @@ jobs:
           aws eks update-kubeconfig --region us-east-2 --name jaseci-cluster
           kubectl config current-context
 
-      # jac-scale (K-track) builds the app base image and pushes it to ECR
-      # before deploying (EKS is remote; images can't be side-loaded). The OIDC
-      # role GitHubActionsJaseciDeployRole already carries the ECR permissions.
-      - name: ECR login + ensure repo
-        run: |
-          aws ecr get-login-password --region us-east-2 \
-            | docker login --username AWS --password-stdin \
-                776241927220.dkr.ecr.us-east-2.amazonaws.com
-          aws ecr describe-repositories --repository-names jac-gpt-test --region us-east-2 2>/dev/null \
-            || aws ecr create-repository --repository-name jac-gpt-test --region us-east-2
-
       # Set up Python
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -83,8 +72,6 @@ jobs:
       - name: Deploy JAC-GPT Fullstack with jac-scale
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          # jac.toml's [scale.kubernetes].image_registry interpolates this.
-          ECR_REGISTRY: 776241927220.dkr.ecr.us-east-2.amazonaws.com
         run: |
           jac start main.jac --scale
         working-directory: jac-gpt-fullstack

@@ -55,10 +55,6 @@ namespace = "jac-gpt-test"
 # cluster default (gp3/EBS) is RWO and rejects RWX, so pin the bundle PVC to an
 # RWX class. REQUIRES an RWX storage class named `efs-sc` on jaseci-cluster.
 bundle_storage_class = "efs-sc"
-# jac-scale (K-track) builds the app base image and pushes it here before
-# deploying (EKS is remote; images can't be side-loaded). The deploy's OIDC
-# role already carries ECR permissions. Interpolated from ECR_REGISTRY env.
-image_registry = "${ECR_REGISTRY}"
 liveness_initial_delay = 600
 liveness_period = 30
 liveness_failure_threshold = 10
