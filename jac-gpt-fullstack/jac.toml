@@ -46,11 +46,19 @@ base_route_app = "app"
 
 [plugins.client]
 
-[plugins.scale.kubernetes]
+[scale.kubernetes]
 app_name = "jac-gpt-test"
 namespace = "jac-gpt-test"
-jaseci_repo_url = "https://github.com/jaseci-labs/jaseci.git"
-jaseci_branch = "main"
+# New jac-scale deploy (jaseci#7084): the pod runtime is the downloaded jac
+# binary, shipped to pods over a ReadWriteMany bundle PVC -- no source clone,
+# no code-server, so the old ReadWriteOnce multi-attach failure is gone. The
+# cluster default (gp3/EBS) is RWO and rejects RWX, so pin the bundle PVC to an
+# RWX class. REQUIRES an RWX storage class named `efs-sc` on jaseci-cluster.
+bundle_storage_class = "efs-sc"
+# jac-scale (K-track) builds the app base image and pushes it here before
+# deploying (EKS is remote; images can't be side-loaded). The deploy's OIDC
+# role already carries ECR permissions. Interpolated from ECR_REGISTRY env.
+image_registry = "${ECR_REGISTRY}"
 liveness_initial_delay = 600
 liveness_period = 30
 liveness_failure_threshold = 10
@@ -65,7 +73,7 @@ memory_limit = "6Gi"
 ephemeral_storage_request = "20Gi"
 ephemeral_storage_limit = "30Gi"
 
-[plugins.scale.secrets]
+[scale.secrets]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
 
 # Jacpack metadata - used when packing, stripped from created projects

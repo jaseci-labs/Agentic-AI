@@ -38,38 +38,55 @@ jobs:
           aws eks update-kubeconfig --region us-east-2 --name jaseci-cluster
           kubectl config current-context
 
+      # jac-scale (K-track) builds the app base image and pushes it to ECR
+      # before deploying (EKS is remote; images can't be side-loaded). The OIDC
+      # role GitHubActionsJaseciDeployRole already carries the ECR permissions.
+      - name: ECR login + ensure repo
+        run: |
+          aws ecr get-login-password --region us-east-2 \
+            | docker login --username AWS --password-stdin \
+                776241927220.dkr.ecr.us-east-2.amazonaws.com
+          aws ecr describe-repositories --repository-names jac-gpt-test --region us-east-2 2>/dev/null \
+            || aws ecr create-repository --repository-name jac-gpt-test --region us-east-2
+
       # Set up Python
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      # Install required packages (including app dependencies for local validation).
-      # The runner's jac-scale must match what the pod clones via
-      # [plugins.scale.kubernetes].jaseci_repo_url/branch, otherwise the install
-      # command generated for the pod drifts from the runtime that gets cloned.
-      - name: Install Jaseci packages
+      # jaclang ships as a self-contained `jac` binary. Under jaseci#7084,
+      # `jac start --scale` ships this same binary to the pods over a
+      # ReadWriteMany bundle PVC -- no source clone, no code-server, no
+      # --experimental. Pinned to stable v0.31.3: it carries the #7084 deploy
+      # redesign, predates the #7376 breaking change, and `jac check` passes.
+      - name: Install jac binary (stable v0.31.3)
         run: |
-          pip install --upgrade pip
-          pip install jaclang jac-client byllm
-          git clone --depth 1 --branch main https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
-          # Plugins ship only a jac.toml (no pyproject.toml) on main, so they
-          # must be installed via `jac install -e`, not `pip install -e`.
-          jac install -e /tmp/jaseci/jac-scale /tmp/jaseci/jac-byllm /tmp/jaseci/jac-mcp
+          mkdir -p "$HOME/.jacbin"
+          ASSET="jac-0.31.3-linux-x86_64"
+          BASE="https://github.com/jaseci-labs/jaseci/releases/download/v0.31.3"
+          curl -fsSL -o "$HOME/.jacbin/jac" "$BASE/$ASSET"
+          curl -fsSL -o "$HOME/.jacbin/jac.sha256" "$BASE/$ASSET.sha256"
+          ( cd "$HOME/.jacbin" && echo "$(cut -d' ' -f1 jac.sha256)  jac" | sha256sum -c - )
+          chmod +x "$HOME/.jacbin/jac"
+          echo "$HOME/.jacbin" >> "$GITHUB_PATH"
+          jac --version
 
-      # Install app dependencies (required for jac start to validate main.jac locally)
+      # Install app + scale runtime deps from jac.toml (byLLM and jac-scale are
+      # folded into the binary; their Python deps come via `jac install`).
       - name: Install app dependencies
-        run: |
-          pip install python-dotenv requests pymongo langchain-openai langchain-community langchain-chroma pypdf sentence-transformers faiss-cpu
+        run: jac install
         working-directory: jac-gpt-fullstack
 
-      # Deploy using jac-scale (secrets resolved from env via [plugins.scale.secrets])
-      # Code-server pattern enables seamless redeployment without destroy
+      # Deploy using jac-scale (secrets from env via [scale.secrets]).
+      # The binary is shipped to pods over the RWX bundle PVC (bundle_storage_class).
       - name: Deploy JAC-GPT Fullstack with jac-scale
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # jac.toml's [scale.kubernetes].image_registry interpolates this.
+          ECR_REGISTRY: 776241927220.dkr.ecr.us-east-2.amazonaws.com
         run: |
-          jac start main.jac --scale --experimental
+          jac start main.jac --scale
         working-directory: jac-gpt-fullstack
 
       # Get deployment status
