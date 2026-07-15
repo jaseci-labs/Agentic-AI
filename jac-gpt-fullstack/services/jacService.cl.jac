@@ -1,6 +1,10 @@
 """Service layer for communicating with the Jac backend using root spawn."""
 
-glob REQUEST_TIMEOUT_MS = 30000;
+# 120s, not 30s: /walker/interact STREAMS a RAG answer (retrieval + CrossEncoder
+# rerank + LLM generation + reasoning steps), which routinely exceeds 30s. The
+# old 30s aborted mid-stream -> AbortError, which (pre-#7420) also blanked the
+# page via the __jacJsx error-boundary bug. Applies to the whole streamed request.
+glob REQUEST_TIMEOUT_MS = 120000;
 
 """Build a normalized error object for consistent UI handling."""
 def buildError(code: str, message: str, retryable: bool = False, statusCode: int = 0, details: str = "") -> dict {
