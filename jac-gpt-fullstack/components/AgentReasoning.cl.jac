@@ -209,7 +209,7 @@ def:pub AgentReasoning(steps: list, isActive: bool = false, title: str = "Agent 
             "overflowY": "auto",
             "padding": contentPadding
         }}>
-            {steps.map(lambda () {
+            {steps.map(lambda (step: any, i: int) {
                 return <ReasoningStep key={i} step={step} index={i} />;
             })}
             <div ref={stepsEndRef} />
