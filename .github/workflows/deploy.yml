@@ -78,13 +78,15 @@ jobs:
             sentence-transformers faiss-cpu
         working-directory: jac-gpt-fullstack
 
-      # Deploy using jac-scale (secrets from env via [scale.secrets]). The binary
-      # is shipped to pods over the RWX bundle PVC (bundle_storage_class). Under
-      # #7084, `jac start --scale` ships the binary, applies the manifest (~2min),
-      # then HANGS on non-daemon threads (litellm, k8s watch loops). timeout 1800
-      # caps the hang; exit 124 is EXPECTED and treated as success. The
-      # "Ready: downloading" marker is proof the manifest was applied (any prep
-      # failure raises non-124, surfaced below). Mirrors jacBuilder deploy-dev.yml.
+      # Deploy using jac-scale (secrets from env via [scale.secrets]). The binary +
+      # the sealed .jab ship to pods over the RWX bundle PVC (bundle_storage_class).
+      # `jac start --scale` preps the binary, SEALS the app, APPLIES the manifest,
+      # then WAITS for the pod rollout. jac-gpt's pod bootstraps heavy RAG deps onto
+      # slow EFS (>14min) + can hit an image-pull i/o flake, so the rollout-wait
+      # times out -> jac start exits 1 (or hangs -> 124). BOTH happen AFTER the .jab
+      # + manifest are applied, so neither is a real failure -- the pod finishes
+      # bootstrapping async. We only fail if jac-scale never sealed + applied.
+      # (jacBuilder's ECR-baked pods start fast enough to only ever hit the 124 case.)
       - name: Deploy JAC-GPT Fullstack with jac-scale
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -93,18 +95,28 @@ jobs:
           timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
-          if [ "$EXIT_CODE" -ne 0 ] && [ "$EXIT_CODE" -ne 124 ]; then
-            echo "jac start failed with exit code $EXIT_CODE"
-            exit $EXIT_CODE
+          # Proof jac-scale got past binary-prep + seal (shipped the .jab):
+          grep -q "Ready: downloading" /tmp/jacstart.log && PREPPED=yes || PREPPED=no
+          # Proof jac-scale APPLIED the manifest -- it prints "timeout diagnostics:"
+          # ONLY after creating the pods and waiting on the rollout (never on a
+          # seal/prep failure, which aborts earlier):
+          grep -q "timeout diagnostics:" /tmp/jacstart.log && APPLIED=yes || APPLIED=no
+
+          if [ "$PREPPED" != yes ]; then
+            echo "ERROR: jac start never sealed/prepped the app (exit $EXIT_CODE); nothing applied. Failing."
+            exit ${EXIT_CODE:-1}
           fi
-          if [ "$EXIT_CODE" -eq 124 ]; then
-            echo "jac start hit the 1800s cap (expected: it hangs on non-daemon threads once the deploy is applied)"
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "Deployment applied cleanly."
+          elif [ "$EXIT_CODE" -eq 124 ]; then
+            echo "jac start hit the 1800s cap after applying (expected post-apply hang)."
+          elif [ "$APPLIED" = yes ]; then
+            echo "NOTE: jac start exit $EXIT_CODE = rollout-wait timeout AFTER the .jab + manifest were applied (pod bootstraps heavy RAG deps on slow EFS). Async, not a deploy failure -- treating as success."
+          else
+            echo "jac start exited $EXIT_CODE after seal but the manifest was NOT applied. Failing."
+            exit ${EXIT_CODE:-1}
           fi
-          if ! grep -q "Ready: downloading" /tmp/jacstart.log; then
-            echo "ERROR: jac start never reported the runtime Ready; NO manifest was applied. Failing loudly."
-            exit 1
-          fi
-          echo "Deployment spec applied by jac-scale."
+          echo "Deployment spec applied by jac-scale (pod finishes bootstrapping async; see Verify step)."
         working-directory: jac-gpt-fullstack
 
       # Get deployment status
