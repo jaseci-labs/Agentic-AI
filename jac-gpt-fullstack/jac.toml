@@ -75,6 +75,19 @@ ephemeral_storage_limit = "30Gi"
 
 [scale.secrets]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
+# Fix B -- jac-scale single-app deploy() ordering bug workaround.
+# The single-app deploy() finalizes the app container env BEFORE it appends the DB
+# URIs: kubernetes_target.jac builds the container (~L1041), _deploy_databases
+# appends MONGODB_URI/REDIS_URL to env_list (~L1119), then the Deployment is created
+# (~L1128) -- too late. So the pod never receives MONGODB_URI and jac-scale silently
+# falls back to per-pod SQLite for identity/graph -> login 401 + "User not found" 500
+# across the 3 replicas. [scale.secrets] is baked into the app's envFrom secret BEFORE
+# the container is built, so passing the URIs here reaches the pod correctly. The
+# values are resolved from the mongo/redis secrets jac-scale already created, in the
+# deploy.yml "Resolve MongoDB/Redis URIs" step. Drop this once jac-scale reorders the
+# single-app deploy to run _deploy_databases before building the container.
+MONGODB_URI = "${MONGODB_URI}"
+REDIS_URL = "${REDIS_URL}"
 
 # Data backend (matches jacBuilder). backend=mongo -> data.mongo (pymongo);
 # type=redis -> data.redis. redis_memory_limit=1Gi per jaseci#7307: the 256Mi

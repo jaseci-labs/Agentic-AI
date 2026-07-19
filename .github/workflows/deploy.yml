@@ -78,6 +78,32 @@ jobs:
             sentence-transformers faiss-cpu
         working-directory: jac-gpt-fullstack
 
+      # Fix B -- resolve the DB connection URIs for the app.
+      # jac-scale's single-app deploy() finalizes the app container env BEFORE
+      # _deploy_databases appends MONGODB_URI/REDIS_URL, so the pod never gets them
+      # and identity silently falls back to per-pod SQLite (login 401 / "User not
+      # found" 500 across replicas). [scale.secrets] IS wired into the app before the
+      # container is built, so we pass the URIs that way. jac-scale already stored the
+      # correct connection strings in the mongo/redis secrets it created; pull them
+      # here into the env so [scale.secrets] ${MONGODB_URI}/${REDIS_URL} resolve.
+      # kubeconfig was set up in the "Update kubeconfig for EKS" step above.
+      - name: Resolve MongoDB/Redis URIs for the app (Fix B)
+        run: |
+          MONGODB_URI="$(kubectl get secret jac-gpt-test-mongodb-secret -n jac-gpt-test -o go-template='{{index .data "connection-string" | base64decode}}')"
+          REDIS_URL="$(kubectl get secret jac-gpt-test-redis-secret -n jac-gpt-test -o go-template='{{index .data "connection-string" | base64decode}}')"
+          if [ -z "$MONGODB_URI" ]; then
+            echo "ERROR: could not resolve MONGODB_URI from secret jac-gpt-test-mongodb-secret."
+            echo "Failing rather than silently deploying the app on per-pod SQLite."
+            exit 1
+          fi
+          echo "::add-mask::$MONGODB_URI"
+          [ -n "$REDIS_URL" ] && echo "::add-mask::$REDIS_URL"
+          {
+            echo "MONGODB_URI=$MONGODB_URI"
+            echo "REDIS_URL=$REDIS_URL"
+          } >> "$GITHUB_ENV"
+          echo "Resolved MONGODB_URI and REDIS_URL from cluster secrets (values masked)."
+
       # Deploy using jac-scale (secrets from env via [scale.secrets]). The binary +
       # the sealed .jab ship to pods over the RWX bundle PVC (bundle_storage_class).
       # `jac start --scale` preps the binary, SEALS the app, APPLIES the manifest,
