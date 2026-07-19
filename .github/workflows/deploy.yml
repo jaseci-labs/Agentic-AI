@@ -45,19 +45,23 @@ jobs:
           python-version: '3.12'
 
       # jaclang ships as a self-contained `jac` binary. Under jaseci#7084,
-      # `jac start --scale` ships this same binary to the pods over a
-      # ReadWriteMany bundle PVC -- no source clone, no code-server, no
-      # --experimental. We use the rolling `dev` prerelease (rebuilt from main),
-      # NOT latest stable: v0.32.0 stable (2026-07-13) predates jaseci/jac#7420
-      # (merged 2026-07-14), the fix for issue #7412 -- "client bundler omits the
-      # __jacJsx factory", which blanks the app ("__jacJsx is not defined") on
-      # rich/error renders. The dev binary carries #7420; jac.toml's bare [dev]
-      # table tells the pods to run this same dev binary. Matches jacBuilder's
-      # deploy-dev.yml. Swap `dev` for a pinned release tag once stable ships #7420.
-      - name: Install the jac dev binary (carries the #7420 __jacJsx client fix)
+      # `jac start --scale` ships this same binary to the pods over a ReadWriteMany
+      # bundle PVC. PINNED to STABLE v0.32.1 -- NOT the rolling `dev` prerelease:
+      # v0.32.1 carries jaseci/jac#7420 (the __jacJsx factory fix for the #7412
+      # blank screen) AND #7456 (builtin-type-as-value fix), but PREDATES the
+      # v0.33.0 grammar change that dropped the C-style for-loop and broke the seal
+      # on the services/docs/*.jac examples ("Seal incomplete: N module(s) have no
+      # JIR"). The rolling `dev` rolled to 0.33.0 and started failing -- pinning to
+      # a stable tag avoids that moving target. (No [dev] table in jac.toml now =>
+      # release channel; the runner's v0.32.1 binary is shipped to the pods.)
+      - name: Install the jac binary (pinned to stable v0.32.1)
         run: |
           mkdir -p "$HOME/.jacbin"
-          curl -fsSL "https://github.com/jaseci-labs/jaseci/releases/download/dev/jac-dev-linux-x86_64" -o "$HOME/.jacbin/jac"
+          base="https://github.com/jaseci-labs/jac/releases/download/v0.32.1/jac-0.32.1-linux-x86_64"
+          curl -fsSL "$base" -o "$HOME/.jacbin/jac"
+          curl -fsSL "${base}.sha256" -o "$HOME/.jacbin/jac.sha256" 2>/dev/null \
+            && ( cd "$HOME/.jacbin" && echo "$(cut -d' ' -f1 jac.sha256)  jac" | sha256sum -c - ) \
+            || echo "sha256 asset not present; skipping checksum verify"
           chmod +x "$HOME/.jacbin/jac"
           echo "$HOME/.jacbin" >> "$GITHUB_PATH"
           export PATH="$HOME/.jacbin:$PATH"

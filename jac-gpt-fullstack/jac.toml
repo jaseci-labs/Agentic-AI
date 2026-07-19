@@ -46,12 +46,12 @@ base_route_app = "app"
 
 [plugins.client]
 
-# Bare [dev] table -> pods run the same rolling `dev` jac binary the runner uses
-# (jac-dev-linux-x86_64), which carries jaseci/jac#7420: the client bundler now
-# emits the __jacJsx factory. v0.32.0 stable OMITS it -> "__jacJsx is not defined"
-# blanks the app on rich/error renders (issue #7412). Matches jacBuilder's dev
-# deploy; swap for a pinned release tag once a stable release ships the fix.
-[dev]
+# Pinned to STABLE v0.32.1 (see deploy.yml) -- NOT the rolling `dev` binary.
+# v0.32.1 carries jaseci/jac#7420 (__jacJsx factory, fixes the #7412 blank screen)
+# AND #7456 (builtin-type-as-value fix), but PREDATES the v0.33.0 grammar change
+# that dropped the C-style for-loop and broke the seal on services/docs/*.jac
+# examples ("Seal incomplete: no JIR"). No [dev] table => release channel; under
+# jaseci#7084 the runner's v0.32.1 binary is shipped to the pods, so both match.
 
 [scale.kubernetes]
 app_name = "jac-gpt-test"
