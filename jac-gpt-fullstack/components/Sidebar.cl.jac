@@ -59,7 +59,7 @@ def:pub Sidebar(
     isAuthenticated = jacIsLoggedIn();
     username = getUsernameFromToken();
 
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         async def checkAdmin() -> None {
             if isAuthenticated and username and username != "Guest" {
                 try {
@@ -86,7 +86,7 @@ def:pub Sidebar(
         checkAdmin();
     }, [isAuthenticated]);
 
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         authError = localStorage.getItem("jac_auth_error");
         if authError {
             sidebarError = {
@@ -183,10 +183,10 @@ def:pub Sidebar(
                             "cursor": "pointer",
                             "transition": "transform 0.2s ease"
                         }}
-                        onMouseEnter={lambda e: any -> None {
+                        onMouseEnter={lambda (e: any) {
                             e.currentTarget.style.transform = "scale(1.05)";
                         }}
-                        onMouseLeave={lambda e: any -> None {
+                        onMouseLeave={lambda (e: any) {
                             e.currentTarget.style.transform = "scale(1)";
                         }}
                     >
@@ -228,10 +228,10 @@ def:pub Sidebar(
                         "cursor": "pointer",
                         "transition": "transform 0.2s ease"
                     }}
-                    onMouseEnter={lambda e: any -> None {
+                    onMouseEnter={lambda (e: any) {
                         e.currentTarget.style.transform = "scale(1.05)";
                     }}
-                    onMouseLeave={lambda e: any -> None {
+                    onMouseLeave={lambda (e: any) {
                         e.currentTarget.style.transform = "scale(1)";
                     }}
                 >
@@ -303,7 +303,7 @@ def:pub Sidebar(
 
     if isExpanded and chatSessions.length > 0 {
         sessionsContent = <Stack gap={8}>
-            {chatSessions.map(lambda session: any -> any {
+            {chatSessions.map(lambda (session: any) {
                 isCurrentSession = session.id == currentSessionId;
                 isHovered = hoveredSessionId == session.id;
 
@@ -323,13 +323,13 @@ def:pub Sidebar(
                         "cursor": (("not-allowed" if isLoading else "pointer")),
                         "transition": "all 0.2s ease"
                     }}
-                    onClick={lambda -> None {
+                    onClick={lambda () {
                         if not isLoading and onLoadSession {
                             onLoadSession(session.id);
                         }
                     }}
-                    onMouseEnter={lambda -> None { hoveredSessionId = session.id; }}
-                    onMouseLeave={lambda -> None { hoveredSessionId = ""; }}
+                    onMouseEnter={lambda () { hoveredSessionId = session.id; }}
+                    onMouseLeave={lambda () { hoveredSessionId = ""; }}
                 >
                     <Text
                         size="sm"
@@ -351,7 +351,7 @@ def:pub Sidebar(
                                     variant="subtle"
                                     size="xs"
                                     radius="sm"
-                                    onClick={lambda e: any -> None {
+                                    onClick={lambda (e: any) {
                                         e.stopPropagation();
                                     }}
                                     style={{
@@ -367,7 +367,7 @@ def:pub Sidebar(
                                 <Menu.Item
                                     color="red"
                                     leftSection={<IconTrash size={14} />}
-                                    onClick={lambda e: any -> None {
+                                    onClick={lambda (e: any) {
                                         e.stopPropagation();
                                         if not isLoading and onDeleteSession {
                                             onDeleteSession(session.id);
@@ -426,7 +426,7 @@ def:pub Sidebar(
 
                 {(
                     <Button
-                        onClick={lambda -> None { navigate("/dashboard"); }}
+                        onClick={lambda () { navigate("/dashboard"); }}
                         variant="subtle"
                         fullWidth
                         size="xs"
@@ -525,7 +525,7 @@ def:pub Sidebar(
                 {(
                     <Tooltip label="Admin Dashboard" position="right">
                         <ActionIcon
-                            onClick={lambda -> None { navigate("/dashboard"); }}
+                            onClick={lambda () { navigate("/dashboard"); }}
                             variant="subtle"
                             size="lg"
                             radius="md"
@@ -583,7 +583,7 @@ def:pub Sidebar(
     helpButton = <Box px={(("md" if isExpanded else "xs"))} pt="xs" pb="sm">
         <Tooltip label="Help & FAQ" position="right" disabled={isExpanded}>
             <Button
-                onClick={lambda -> None { window.open("https://www.jac-lang.org/learn/data_spatial/FAQ/", "_blank"); }}
+                onClick={lambda () { window.open("https://www.jac-lang.org/learn/data_spatial/FAQ/", "_blank"); }}
                 variant="subtle"
                 fullWidth={isExpanded}
                 size={(("sm" if isExpanded else "md"))}

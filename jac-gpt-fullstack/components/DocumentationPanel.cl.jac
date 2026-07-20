@@ -16,11 +16,11 @@ def:pub DocumentationPanel(
     has defaultSuggestions: list = [];
 
     # Load default documentation suggestions from JSON
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         fetch("../services/docs_links/default_suggestion_links.json")
-            .then(lambda response: any -> any { return response.json(); })
-            .then(lambda data: any -> None { defaultSuggestions = data; })
-            .catch(lambda err: any -> None { console.log("Failed to load default suggestions:", err); });
+            .then(lambda (response: any) { return response.json(); })
+            .then(lambda (data: any) { defaultSuggestions = data; })
+            .catch(lambda (err: any) { console.log("Failed to load default suggestions:", err); });
     }, []);
 
     # Ensure HTTPS for URLs
@@ -32,7 +32,7 @@ def:pub DocumentationPanel(
     }
 
     # Update suggestions when props change
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         if suggestions.length > 0 {
             currentSuggestions = suggestions;
         } else {
@@ -51,7 +51,7 @@ def:pub DocumentationPanel(
             "url": secureUrl
         };
         
-        setTimeout(lambda -> None {
+        setTimeout(lambda () {
             loading = False;
         }, 500);
     }
@@ -139,8 +139,8 @@ def:pub DocumentationPanel(
                         "cursor": "pointer",
                         "transition": "background-color 0.2s"
                     }}
-                    onMouseEnter={lambda e: any -> None { e.target.style.backgroundColor = "#374151"; }}
-                    onMouseLeave={lambda e: any -> None { e.target.style.backgroundColor = "transparent"; }}
+                    onMouseEnter={lambda (e: any) { e.target.style.backgroundColor = "#374151"; }}
+                    onMouseLeave={lambda (e: any) { e.target.style.backgroundColor = "transparent"; }}
                 >
                     {closeIcon}
                 </button>
@@ -175,7 +175,7 @@ def:pub DocumentationPanel(
                 <div style={{"textAlign": "center"}}>
                     <p style={{"color": "#f87171", "marginBottom": "8px"}}>{error}</p>
                     <button
-                        onClick={lambda -> None { error = ""; }}
+                        onClick={lambda () { error = ""; }}
                         style={{
                             "padding": "8px 16px",
                             "border": "1px solid #374151",
@@ -227,7 +227,7 @@ def:pub DocumentationPanel(
                         {"Back"}
                     </button>
                     <button
-                        onClick={lambda -> None { window.open(ensureHttpsUrl(selectedDoc.url), "_blank"); }}
+                        onClick={lambda () { window.open(ensureHttpsUrl(selectedDoc.url), "_blank"); }}
                         style={{
                             "display": "flex",
                             "alignItems": "center",
@@ -316,10 +316,10 @@ def:pub DocumentationPanel(
                 )}
 
                 <div style={{"display": "flex", "flexDirection": "column", "gap": "12px"}}>
-                    {currentSuggestions.map(lambda suggestion: any, index: int -> any {
+                    {currentSuggestions.map(lambda (suggestion: any, index: int) {
                         return <div
                             key={index}
-                            onClick={lambda -> None { handleSuggestionClick(suggestion); }}
+                            onClick={lambda () { handleSuggestionClick(suggestion); }}
                             style={{
                                 "padding": "16px",
                                 "background": "linear-gradient(to bottom right, #1e1e1e, #252525)",
@@ -345,7 +345,7 @@ def:pub DocumentationPanel(
                                         "gap": "8px"
                                     }}>
                                         <span style={{"fontSize": "inherit", "display": "flex", "alignItems": "center"}}>
-                                            {suggestion.title.split("●").map(lambda part: str, i: int -> any {
+                                            {suggestion.title.split("●").map(lambda (part: str, i: int) {
                                                 if i == 0 {
                                                     return part;
                                                 }
@@ -374,8 +374,8 @@ def:pub DocumentationPanel(
                                         "fontFamily": "monospace",
                                         "transition": "color 0.2s"
                                     }}
-                                    onMouseEnter={lambda e: any -> None { e.target.style.color = "#93c5fd"; }}
-                                    onMouseLeave={lambda e: any -> None { e.target.style.color = "#60a5fa"; }}
+                                    onMouseEnter={lambda (e: any) { e.target.style.color = "#93c5fd"; }}
+                                    onMouseLeave={lambda (e: any) { e.target.style.color = "#60a5fa"; }}
                                     >
                                         {ensureHttpsUrl(suggestion.url)}
                                     </p>

@@ -63,7 +63,7 @@ def:pub useChat() -> any {
     }
 
     # Load message count from localStorage for guests
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         if not isAuthenticated {
             savedCount = localStorage.getItem("jac_gpt_message_count");
             if savedCount {
@@ -102,18 +102,18 @@ def:pub useChat() -> any {
     }, []);
 
     # Save message count to localStorage
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         if not isAuthenticated {
             localStorage.setItem("jac_gpt_message_count", String(messageCount));
         }
     }, [messageCount]);
 
     # Scroll latest user message to top when new messages are added
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         currentCount = messages.length;
         # Only scroll if message count increased (new message added)
         if currentCount > prevMessageCountRef.current {
-            setTimeout(lambda -> None {
+            setTimeout(lambda () {
                 if latestUserMsgRef.current {
                     latestUserMsgRef.current.scrollIntoView({"behavior": "smooth", "block": "start"});
                 }
@@ -124,9 +124,9 @@ def:pub useChat() -> any {
 
     # Re-anchor scroll after full response stream completes
     # Use auto (no animation) to prevent visible flicker when reasoning collapses
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         if streamDoneSignal > 0 {
-            requestAnimationFrame(lambda -> None {
+            requestAnimationFrame(lambda () {
                 if latestUserMsgRef.current {
                     latestUserMsgRef.current.scrollIntoView({"behavior": "auto", "block": "start"});
                 }
@@ -162,7 +162,7 @@ def:pub useChat() -> any {
         }
 
         # Check if this is the first message BEFORE updating state
-        isFirstMessage = messages.filter(lambda m: any -> bool { return m.isUser; }).length == 0;
+        isFirstMessage = messages.filter(lambda (m: any) { return m.isUser; }).length == 0;
 
         # Set loading immediately at the start
         isLoading = True;
@@ -175,10 +175,10 @@ def:pub useChat() -> any {
             "id": "msg_" + String(Date.now()),
             "content": content.trim(),
             "isUser": True,
-            "timestamp": Date()
+            "timestamp": Reflect.construct(Date, [])
         };
 
-        messages = lambda prev: any -> any { return prev.concat([userMessage]); };
+        messages = lambda (prev: any) { return prev.concat([userMessage]); };
         lastUserMessage = content.trim();
 
         # Update session title immediately if first message
@@ -188,7 +188,7 @@ def:pub useChat() -> any {
 
         # Increment message count for guests
         if not isAuthenticated {
-            messageCount = lambda prev: int -> int { return prev + 1; };
+            messageCount = lambda (prev: int) { return prev + 1; };
         }
 
         try {
@@ -197,7 +197,7 @@ def:pub useChat() -> any {
             mcpAbortController = Reflect.construct(AbortController, []);
             # Store both so the stop button can cancel both
             abortControllerRef.current = {
-                "abort": lambda -> None {
+                "abort": lambda () {
                     ragAbortController.abort();
                     mcpAbortController.abort();
                 }
@@ -220,7 +220,7 @@ def:pub useChat() -> any {
                 "isUser": False,
                 "source": "RAG",
                 "pairKey": responsePairKey,
-                "timestamp": Date(),
+                "timestamp": Reflect.construct(Date, []),
                 "reasoningSteps": [],
                 "isReasoning": True,
                 "elapsedMs": 0
@@ -231,18 +231,18 @@ def:pub useChat() -> any {
                 "isUser": False,
                 "source": "MCP",
                 "pairKey": responsePairKey,
-                "timestamp": Date(),
+                "timestamp": Reflect.construct(Date, []),
                 "reasoningSteps": [],
                 "isReasoning": True,
                 "elapsedMs": 0
             };
 
             if mode == "both" {
-                messages = lambda prev: any -> any { return prev.concat([ragBotMessage, mcpBotMessage]); };
+                messages = lambda (prev: any) { return prev.concat([ragBotMessage, mcpBotMessage]); };
             } elif mode == "mcp" {
-                messages = lambda prev: any -> any { return prev.concat([mcpBotMessage]); };
+                messages = lambda (prev: any) { return prev.concat([mcpBotMessage]); };
             } else {
-                messages = lambda prev: any -> any { return prev.concat([ragBotMessage]); };
+                messages = lambda (prev: any) { return prev.concat([ragBotMessage]); };
             }
 
             firstChunkRef.current = False;
@@ -262,7 +262,7 @@ def:pub useChat() -> any {
                     firstChunkRef.current = True;
                     isLoading = False;
                 }
-                messages = lambda prev: any -> any {
+                messages = lambda (prev: any) {
                     updatedMessages = [];
                     for m in prev {
                         if m.id == ragBotMessageId {
@@ -291,7 +291,7 @@ def:pub useChat() -> any {
                     firstChunkRef.current = True;
                     isLoading = False;
                 }
-                messages = lambda prev: any -> any {
+                messages = lambda (prev: any) {
                     updatedMessages = [];
                     for m in prev {
                         if m.id == mcpBotMessageId {
@@ -329,10 +329,10 @@ def:pub useChat() -> any {
                     ragIsReasoning = False;
                 }
                 if eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
-                    ragReasoningSteps = lambda prev: any -> any {
+                    ragReasoningSteps = lambda (prev: any) {
                         return prev.concat([{"type": eventType, "data": eventData}]);
                     };
-                    messages = lambda prev: any -> any {
+                    messages = lambda (prev: any) {
                         updatedMessages = [];
                         for m in prev {
                             if m.id == ragBotMessageId {
@@ -356,7 +356,7 @@ def:pub useChat() -> any {
                 }
                 if eventType == "steps_done" or eventType == "chunk" {
                     ragIsReasoning = False;
-                    messages = lambda prev: any -> any {
+                    messages = lambda (prev: any) {
                         updatedMessages = [];
                         for m in prev {
                             if m.id == ragBotMessageId {
@@ -395,10 +395,10 @@ def:pub useChat() -> any {
                     mcpIsReasoning = False;
                 }
                 if eventType == "tool_call" or eventType == "tool_result" or eventType == "steps_done" {
-                    mcpReasoningSteps = lambda prev: any -> any {
+                    mcpReasoningSteps = lambda (prev: any) {
                         return prev.concat([{"type": eventType, "data": eventData}]);
                     };
-                    messages = lambda prev: any -> any {
+                    messages = lambda (prev: any) {
                         updatedMessages = [];
                         for m in prev {
                             if m.id == mcpBotMessageId {
@@ -422,7 +422,7 @@ def:pub useChat() -> any {
                 }
                 if eventType == "steps_done" or eventType == "chunk" {
                     mcpIsReasoning = False;
-                    messages = lambda prev: any -> any {
+                    messages = lambda (prev: any) {
                         updatedMessages = [];
                         for m in prev {
                             if m.id == mcpBotMessageId {
@@ -460,7 +460,7 @@ def:pub useChat() -> any {
                     console.error("Error fetching suggestions:", e);
                     setUiErrorFrom({"error": {"code": "ERR_GET_SUGGESTIONS", "message": "Could not load documentation suggestions.", "retryable": True}}, "ERR_GET_SUGGESTIONS", "Could not load documentation suggestions.");
                 } finally {
-                    setTimeout(lambda -> None {
+                    setTimeout(lambda () {
                         isSearchingDocs = False;
                     }, 3000);
                 }
@@ -470,14 +470,14 @@ def:pub useChat() -> any {
             # Helper to handle a failed result for a specific bot message id
             def handleFailedResult(result: any, botMsgId: str) -> None {
                 if result.aborted {
-                    messages = lambda prev: any -> any {
-                        return prev.filter(lambda m: any -> bool { return m.id != botMsgId; });
+                    messages = lambda (prev: any) {
+                        return prev.filter(lambda (m: any) { return m.id != botMsgId; });
                     };
                 } else {
                     console.error("Error in sendMessage:", result.error);
                     setUiErrorFrom(result, "ERR_SEND_MESSAGE", "Failed to send message. Please try again.");
-                    messages = lambda prev: any -> any {
-                        return prev.map(lambda m: any -> any {
+                    messages = lambda (prev: any) {
+                        return prev.map(lambda (m: any) {
                             if m.id == botMsgId {
                                 errCode = (result.code if result.code else (result.error.code if result.error and result.error.code else "ERR_SEND_MESSAGE"));
                                 errMsg = (result.message if result.message else (result.error.message if result.error and result.error.message else "Failed to send message. Please try again."));
@@ -567,9 +567,9 @@ def:pub useChat() -> any {
                 "content": "[ERR_SEND_MESSAGE] Failed to send message. Please try again.",
                 "isUser": False,
                 "source": "",
-                "timestamp": Date()
+                "timestamp": Reflect.construct(Date, [])
             };
-            messages = lambda prev: any -> any { return prev.concat([errorMessage]); };
+            messages = lambda (prev: any) { return prev.concat([errorMessage]); };
             isLoading = False;
         } finally {
             # Clear abort controller after completion
@@ -577,7 +577,7 @@ def:pub useChat() -> any {
             isLoading = False;
 
             # Signal that streaming is fully done so scroll re-anchors
-            streamDoneSignal = lambda prev: int -> int { return prev + 1; };
+            streamDoneSignal = lambda (prev: int) { return prev + 1; };
         }
     }
 
@@ -604,12 +604,12 @@ def:pub useChat() -> any {
             }
 
             # Check if session exists
-            existingIndex = chatSessions.findIndex(lambda s: any -> bool { return s.id == sessionId; });
+            existingIndex = chatSessions.findIndex(lambda (s: any) { return s.id == sessionId; });
 
             if existingIndex >= 0 {
                 # Update existing session
-                chatSessions = lambda prev: any -> any {
-                    updatedSessions = prev.map(lambda s: any, idx: int -> any {
+                chatSessions = lambda (prev: any) {
+                    updatedSessions = prev.map(lambda (s: any, idx: int) {
                         if idx == existingIndex {
                             return {"id": s.id, "title": title, "createdAt": s.createdAt};
                         }
@@ -625,7 +625,7 @@ def:pub useChat() -> any {
                     "title": title,
                     "createdAt": String(Date.now())
                 };
-                chatSessions = lambda prev: any -> any {
+                chatSessions = lambda (prev: any) {
                     updated = [newSession].concat(prev);
                     localStorage.setItem("jac_gpt_sessions", JSON.stringify(updated));
                     return updated;
@@ -654,11 +654,11 @@ def:pub useChat() -> any {
                         "id": "msg_" + String(Date.now()) + "_" + String(Math.random()),
                         "content": historyItem.content,
                         "isUser": historyItem.role == "user",
-                        "timestamp": Date()
+                        "timestamp": Reflect.construct(Date, [])
                     };
                     newMessages.push(msg);
                 }
-                messages = lambda prev: any -> any { return newMessages; };
+                messages = lambda (prev: any) { return newMessages; };
             } elif not result.success {
                 setUiErrorFrom(result, "ERR_GET_SESSION", "Failed to load the selected session.");
             }
@@ -671,8 +671,8 @@ def:pub useChat() -> any {
     }
 
     def handleDeleteSession(deleteSessionId: str) -> None {
-        chatSessions = lambda prev: any -> any {
-            updated = prev.filter(lambda s: any -> bool { return s.id != deleteSessionId; });
+        chatSessions = lambda (prev: any) {
+            updated = prev.filter(lambda (s: any) { return s.id != deleteSessionId; });
             localStorage.setItem("jac_gpt_sessions", JSON.stringify(updated));
             return updated;
         };
