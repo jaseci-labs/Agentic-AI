@@ -13,9 +13,11 @@ langchain-chroma = ">=0.0.0"
 pypdf = ">=0.0.0"
 sentence-transformers = ">=0.0.0"
 faiss-cpu = ">=0.0.0"
+numpy = "~=2.5"
 
 [dependencies.npm]
 jac-client-node = "1.0.7"
+"@tanstack/react-form" = "^1.33.0"
 react-markdown = "^9.0.0"
 rehype-highlight = "^7.0.0"
 "highlight.js" = "^11.9.0"
@@ -26,14 +28,12 @@ tailwind-merge = "^2.2.0"
 "@tabler/icons-react" = "^3.28.0"
 "@emotion/react" = "^11.14.0"
 react-error-boundary = "latest"
-
-# CodeMirror 6 for Jac syntax highlighting
 "@codemirror/view" = "^6.0.0"
 "@codemirror/state" = "^6.0.0"
 "@codemirror/language" = "^6.0.0"
 "@lezer/highlight" = "^1.0.0"
-"monaco-textmate" = "^3.0.1"
-"monaco-editor-textmate" = "^4.0.0"
+monaco-textmate = "^3.0.1"
+monaco-editor-textmate = "^4.0.0"
 
 [dependencies.npm.dev]
 "@jac-client/dev-deps" = "1.0.0"
@@ -46,18 +46,26 @@ base_route_app = "app"
 
 [plugins.client]
 
-[plugins.scale.kubernetes]
+# Pinned to STABLE v0.32.1 (see deploy.yml) -- NOT the rolling `dev` binary.
+# v0.32.1 carries jaseci/jac#7420 (__jacJsx factory, fixes the #7412 blank screen)
+# AND #7456 (builtin-type-as-value fix), but PREDATES the v0.33.0 grammar change
+# that dropped the C-style for-loop and broke the seal on services/docs/*.jac
+# examples ("Seal incomplete: no JIR"). No [dev] table => release channel; under
+# jaseci#7084 the runner's v0.32.1 binary is shipped to the pods, so both match.
+
+[scale.kubernetes]
 app_name = "jac-gpt-test"
 namespace = "jac-gpt-test"
-jaseci_repo_url = "https://github.com/jaseci-labs/jaseci.git"
-jaseci_branch = "main"
+bundle_storage_class = "efs-sc"
+# Generates the users.acl secret key the redis pod mounts. WITHOUT this the pod
+# fails: 'redis-acl references non-existent secret key: users.acl' -> redis never
+# rolls out -> the deploy times out. (jacBuilder sets the same.)
+redis_username = "default"
 liveness_initial_delay = 600
 liveness_period = 30
 liveness_failure_threshold = 10
 readiness_initial_delay = 600
 readiness_period = 30
-# Resources — prevents BestEffort QoS and node eviction storms
-# Peak observed: ~1000m CPU, ~2.3Gi RAM, ~3.6Gi ephemeral-storage during startup
 cpu_request = "1000m"
 cpu_limit = "3000m"
 memory_request = "2Gi"
@@ -65,18 +73,42 @@ memory_limit = "6Gi"
 ephemeral_storage_request = "20Gi"
 ephemeral_storage_limit = "30Gi"
 
-[plugins.scale.secrets]
+[scale.secrets]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
+# Fix B -- jac-scale single-app deploy() ordering bug workaround.
+# The single-app deploy() finalizes the app container env BEFORE it appends the DB
+# URIs: kubernetes_target.jac builds the container (~L1041), _deploy_databases
+# appends MONGODB_URI/REDIS_URL to env_list (~L1119), then the Deployment is created
+# (~L1128) -- too late. So the pod never receives MONGODB_URI and jac-scale silently
+# falls back to per-pod SQLite for identity/graph -> login 401 + "User not found" 500
+# across the 3 replicas. [scale.secrets] is baked into the app's envFrom secret BEFORE
+# the container is built, so passing the URIs here reaches the pod correctly. The
+# values are resolved from the mongo/redis secrets jac-scale already created, in the
+# deploy.yml "Resolve MongoDB/Redis URIs" step. Drop this once jac-scale reorders the
+# single-app deploy to run _deploy_databases before building the container.
+MONGODB_URI = "${MONGODB_URI}"
+REDIS_URL = "${REDIS_URL}"
 
-# Jacpack metadata - used when packing, stripped from created projects
+# Data backend (matches jacBuilder). backend=mongo -> data.mongo (pymongo);
+# type=redis -> data.redis. redis_memory_limit=1Gi per jaseci#7307: the 256Mi
+# default OOMKills redis (200mb maxmemory + RSS overhead).
+[scale.database]
+backend = "mongo"
+type = "redis"
+redis_memory_limit = "1Gi"
+
+# byLLM / `by llm()` capability. Without this, litellm is NOT installed and every
+# chat request 500s: "Capability 'llm' is required but not installed".
+[byllm]
+
+[byllm.parallel]
+enabled = true
+
 [jacpack]
 name = "jac-gpt"
 description = "Jac GPT fullstack template with chat interface"
 jaclang = "0.9.0"
-
-[[jacpack.plugins]]
-name = "jac-client"
-version = "0.1.0"
+plugins = [{ name = "jac-client", version = "0.1.0" }]
 
 [jacpack.options]
 directories = [".jac"]

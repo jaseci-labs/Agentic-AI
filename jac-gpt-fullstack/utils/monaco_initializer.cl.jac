@@ -39,7 +39,7 @@ async def _performInitialization() -> any {
 
         # Create TextMate registry
         registry = Reflect.construct(Registry, [{
-            getGrammarDefinition: lambda {
+            getGrammarDefinition: lambda () {
                 return {
                     format: "json",
                     content: JSON.stringify(jacGrammar)
@@ -91,7 +91,7 @@ async def:pub setupMonacoEditor(monaco: any, editor: any) -> any {
 
         # Register language if not already registered
         languages = monaco.languages.getLanguages();
-        isJacRegistered = languages.some(lambda lang: any { return lang.id == "jac"; });
+        isJacRegistered = languages.some(lambda (lang: any) { return lang.id == "jac"; });
 
         if not isJacRegistered {
             monaco.languages.register({ id: "jac" });
