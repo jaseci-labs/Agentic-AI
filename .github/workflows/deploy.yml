@@ -137,8 +137,13 @@ jobs:
           timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
-          # Proof jac-scale got past binary-prep + seal (shipped the .jab):
-          grep -q "Ready: downloading" /tmp/jacstart.log && PREPPED=yes || PREPPED=no
+          # Proof jac-scale got past binary-prep + seal (shipped the .jab). jac-scale
+          # prints "Ready: <blurb>" ONLY after the seal succeeds. The blurb is
+          # "downloading ..." for the dev/stable channels, but "shipping the local jac
+          # binary" for the LOCAL channel we now use (JAC_SCALE_BINARY_PATH) -- so match
+          # both. (Matching only "downloading" here is what falsely failed run a8bae48:
+          # the seal + apply both succeeded but PREPPED came back "no".)
+          grep -qE "Ready: (downloading|shipping)" /tmp/jacstart.log && PREPPED=yes || PREPPED=no
           # Proof jac-scale APPLIED the manifest -- it prints "timeout diagnostics:"
           # ONLY after creating the pods and waiting on the rollout (never on a
           # seal/prep failure, which aborts earlier):
