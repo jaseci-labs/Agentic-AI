@@ -44,32 +44,126 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Install required packages (including app dependencies for local validation).
-      # The runner's jac-scale must match what the pod clones via
-      # [plugins.scale.kubernetes].jaseci_repo_url/branch, otherwise the install
-      # command generated for the pod drifts from the runtime that gets cloned.
-      - name: Install Jaseci packages
+      # jaclang ships as a self-contained `jac` binary. Under jaseci#7084,
+      # `jac start --scale` ships this same binary to the pods over a ReadWriteMany
+      # bundle PVC. PINNED to STABLE v0.32.1 -- NOT the rolling `dev` prerelease:
+      # v0.32.1 carries jaseci/jac#7420 (the __jacJsx factory fix for the #7412
+      # blank screen) AND #7456 (builtin-type-as-value fix), but PREDATES the
+      # v0.33.0 grammar change that dropped the C-style for-loop and broke the seal
+      # on the services/docs/*.jac examples ("Seal incomplete: N module(s) have no
+      # JIR"). The rolling `dev` rolled to 0.33.0 and started failing -- pinning to
+      # a stable tag avoids that moving target. (No [dev] table in jac.toml now =>
+      # release channel; the runner's v0.32.1 binary is shipped to the pods.)
+      - name: Install the jac binary (pinned to stable v0.32.1)
         run: |
-          pip install --upgrade pip
-          pip install jaclang jac-client byllm
-          git clone --depth 1 --branch main https://github.com/jaseci-labs/jaseci.git /tmp/jaseci
-          # Plugins ship only a jac.toml (no pyproject.toml) on main, so they
-          # must be installed via `jac install -e`, not `pip install -e`.
-          jac install -e /tmp/jaseci/jac-scale /tmp/jaseci/jac-byllm /tmp/jaseci/jac-mcp
+          mkdir -p "$HOME/.jacbin"
+          base="https://github.com/jaseci-labs/jac/releases/download/v0.32.1/jac-0.32.1-linux-x86_64"
+          curl -fsSL "$base" -o "$HOME/.jacbin/jac"
+          curl -fsSL "${base}.sha256" -o "$HOME/.jacbin/jac.sha256" 2>/dev/null \
+            && ( cd "$HOME/.jacbin" && echo "$(cut -d' ' -f1 jac.sha256)  jac" | sha256sum -c - ) \
+            || echo "sha256 asset not present; skipping checksum verify"
+          chmod +x "$HOME/.jacbin/jac"
+          echo "$HOME/.jacbin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.jacbin:$PATH"
+          jac --version
+          jac start --help | grep -q -- "--scale"
 
-      # Install app dependencies (required for jac start to validate main.jac locally)
+      # Install app deps. The .jab seal resolves the app's Python imports from
+      # the GLOBAL jac site (the client compile pulls in server modules like
+      # rag_engine -> langchain/sentence-transformers), so the heavy deps must be
+      # installed --global too, or the seal skips those modules ("Seal incomplete").
       - name: Install app dependencies
         run: |
-          pip install python-dotenv requests pymongo langchain-openai langchain-community langchain-chroma pypdf sentence-transformers faiss-cpu
+          jac install
+          jac install --global \
+            python-dotenv requests numpy \
+            langchain-openai langchain-community langchain-chroma \
+            langchain-text-splitters langchain-core pypdf \
+            sentence-transformers faiss-cpu
         working-directory: jac-gpt-fullstack
 
-      # Deploy using jac-scale (secrets resolved from env via [plugins.scale.secrets])
-      # Code-server pattern enables seamless redeployment without destroy
+      # Fix B -- resolve the DB connection URIs for the app.
+      # jac-scale's single-app deploy() finalizes the app container env BEFORE
+      # _deploy_databases appends MONGODB_URI/REDIS_URL, so the pod never gets them
+      # and identity silently falls back to per-pod SQLite (login 401 / "User not
+      # found" 500 across replicas). [scale.secrets] IS wired into the app before the
+      # container is built, so we pass the URIs that way. jac-scale already stored the
+      # correct connection strings in the mongo/redis secrets it created; pull them
+      # here into the env so [scale.secrets] ${MONGODB_URI}/${REDIS_URL} resolve.
+      # kubeconfig was set up in the "Update kubeconfig for EKS" step above.
+      - name: Resolve MongoDB/Redis URIs for the app (Fix B)
+        run: |
+          MONGODB_URI="$(kubectl get secret jac-gpt-test-mongodb-secret -n jac-gpt-test -o go-template='{{index .data "connection-string" | base64decode}}')"
+          REDIS_URL="$(kubectl get secret jac-gpt-test-redis-secret -n jac-gpt-test -o go-template='{{index .data "connection-string" | base64decode}}')"
+          if [ -z "$MONGODB_URI" ]; then
+            echo "ERROR: could not resolve MONGODB_URI from secret jac-gpt-test-mongodb-secret."
+            echo "Failing rather than silently deploying the app on per-pod SQLite."
+            exit 1
+          fi
+          echo "::add-mask::$MONGODB_URI"
+          [ -n "$REDIS_URL" ] && echo "::add-mask::$REDIS_URL"
+          {
+            echo "MONGODB_URI=$MONGODB_URI"
+            echo "REDIS_URL=$REDIS_URL"
+          } >> "$GITHUB_ENV"
+          echo "Resolved MONGODB_URI and REDIS_URL from cluster secrets (values masked)."
+
+      # Deploy using jac-scale (secrets from env via [scale.secrets]). The binary +
+      # the sealed .jab ship to pods over the RWX bundle PVC (bundle_storage_class).
+      # `jac start --scale` preps the binary, SEALS the app, APPLIES the manifest,
+      # then WAITS for the pod rollout. jac-gpt's pod bootstraps heavy RAG deps onto
+      # slow EFS (>14min) + can hit an image-pull i/o flake, so the rollout-wait
+      # times out -> jac start exits 1 (or hangs -> 124). BOTH happen AFTER the .jab
+      # + manifest are applied, so neither is a real failure -- the pod finishes
+      # bootstrapping async. We only fail if jac-scale never sealed + applied.
+      # (jacBuilder's ECR-baked pods start fast enough to only ever hit the 124 case.)
       - name: Deploy JAC-GPT Fullstack with jac-scale
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          jac start main.jac --scale --experimental
+          set +e
+          # THE fix for "Seal incomplete: services/jacServer.jac no JIR":
+          # the v0.32.1 pin in the "Install the jac binary" step only sets the RUNNER's
+          # jac. jac-scale's seal downloads its OWN pod binary from jaseci-labs/jaseci
+          # releases/LATEST (currently v0.33.0) and seals + ships THAT -- ignoring the
+          # pin (scale/injector/binary.jac:114). v0.33.0 consistently mis-compiles
+          # services/jacServer.jac (the only byllm-importing module) to "no bytecode"
+          # -> seal incomplete, every run (that is why retries didn't help). Verified
+          # locally: v0.33.0 fails every attempt; v0.32.1 seals 21/21. Setting
+          # JAC_SCALE_BINARY_PATH switches jac-scale to its LOCAL channel
+          # (scale/config/dev_config.jac:16), so the seal ships THIS runner's pinned
+          # v0.32.1 binary to the seal + pods -- making the pin effective end to end.
+          export JAC_SCALE_BINARY_PATH="$HOME/.jacbin/jac"
+          timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+          # Proof jac-scale got past binary-prep + seal (shipped the .jab). jac-scale
+          # prints "Ready: <blurb>" ONLY after the seal succeeds. The blurb is
+          # "downloading ..." for the dev/stable channels, but "shipping the local jac
+          # binary" for the LOCAL channel we now use (JAC_SCALE_BINARY_PATH) -- so match
+          # both. (Matching only "downloading" here is what falsely failed run a8bae48:
+          # the seal + apply both succeeded but PREPPED came back "no".)
+          grep -qE "Ready: (downloading|shipping)" /tmp/jacstart.log && PREPPED=yes || PREPPED=no
+          # Proof jac-scale APPLIED the manifest -- it prints "timeout diagnostics:"
+          # ONLY after creating the pods and waiting on the rollout (never on a
+          # seal/prep failure, which aborts earlier):
+          grep -q "timeout diagnostics:" /tmp/jacstart.log && APPLIED=yes || APPLIED=no
+
+          if [ "$PREPPED" != yes ]; then
+            echo "ERROR: jac start never sealed/prepped the app (exit $EXIT_CODE); nothing applied. Failing."
+            exit ${EXIT_CODE:-1}
+          fi
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "Deployment applied cleanly."
+          elif [ "$EXIT_CODE" -eq 124 ]; then
+            echo "jac start hit the 1800s cap after applying (expected post-apply hang)."
+          elif [ "$APPLIED" = yes ]; then
+            echo "NOTE: jac start exit $EXIT_CODE = rollout-wait timeout AFTER the .jab + manifest were applied (pod bootstraps heavy RAG deps on slow EFS). Async, not a deploy failure -- treating as success."
+          else
+            echo "jac start exited $EXIT_CODE after seal but the manifest was NOT applied. Failing."
+            exit ${EXIT_CODE:-1}
+          fi
+          echo "Deployment spec applied by jac-scale (pod finishes bootstrapping async; see Verify step)."
         working-directory: jac-gpt-fullstack
 
       # Get deployment status

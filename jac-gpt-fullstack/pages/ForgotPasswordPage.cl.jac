@@ -30,7 +30,7 @@ def:pub ForgotPasswordPage() -> JsxElement {
         try {
             # TODO: Implement password reset API call
             # For now, simulate success with setTimeout
-            await Promise.resolve(setTimeout(lambda -> None { }, 1000));
+            await Promise.resolve(setTimeout(lambda () { }, 1000));
             success = "Password reset instructions have been sent to your email.";
         } except Exception as ex {
             console.error("Forgot password error:", ex);

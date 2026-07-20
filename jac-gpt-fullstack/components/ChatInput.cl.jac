@@ -21,7 +21,7 @@ def:pub ChatInput(
     textareaRef = useRef(None);
 
     # Auto-resize textarea (60px min, 200px max)
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         if textareaRef.current {
             textareaRef.current.style.height = "auto";
             scrollHeight = textareaRef.current.scrollHeight;
@@ -97,8 +97,8 @@ def:pub ChatInput(
                     value={inputValue}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    onFocus={lambda -> None { isFocused = True; }}
-                    onBlur={lambda -> None { isFocused = False; }}
+                    onFocus={lambda () { isFocused = True; }}
+                    onBlur={lambda () { isFocused = False; }}
                     placeholder={placeholder}
                     disabled={disabled and not isLoading}
                     style={{
@@ -119,12 +119,12 @@ def:pub ChatInput(
                         "boxShadow": boxShadowValue,
                         "overflow": "auto"
                     }}
-                    onMouseEnter={lambda e: any -> None {
+                    onMouseEnter={lambda (e: any) {
                         if not isFocused {
                             e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.5)";
                         }
                     }}
-                    onMouseLeave={lambda e: any -> None {
+                    onMouseLeave={lambda (e: any) {
                         if not isFocused {
                             e.currentTarget.style.borderColor = "rgba(55, 65, 81, 0.5)";
                         }
@@ -155,7 +155,7 @@ def:pub ChatInput(
                         "opacity": buttonOpacity,
                         "padding": "0"
                     }}
-                    onMouseEnter={lambda e: any -> None {
+                    onMouseEnter={lambda (e: any) {
                         if canSend or isLoading {
                             e.currentTarget.style.transform = "translateY(50%) scale(1.05)";
                             # Orange glow shadow on hover
@@ -165,7 +165,7 @@ def:pub ChatInput(
                             }
                         }
                     }}
-                    onMouseLeave={lambda e: any -> None {
+                    onMouseLeave={lambda (e: any) {
                         e.currentTarget.style.transform = "translateY(50%) scale(1)";
                         e.currentTarget.style.boxShadow = "none";
                         if isLoading {
@@ -196,13 +196,13 @@ def:pub ChatInput(
                     {"value": "rag", "label": "RAG", "activeColor": "rgba(59, 130, 246, 0.25)", "activeBorder": "rgba(59, 130, 246, 0.5)", "activeText": "#93c5fd"},
                     {"value": "mcp", "label": "MCP", "activeColor": "rgba(168, 85, 247, 0.25)", "activeBorder": "rgba(168, 85, 247, 0.5)", "activeText": "#c4b5fd"},
                     {"value": "both", "label": "Both", "activeColor": "rgba(249, 115, 22, 0.25)", "activeBorder": "rgba(249, 115, 22, 0.5)", "activeText": "#fdba74"}
-                ].map(lambda opt: any -> any {
+                ].map(lambda (opt: any) {
                     isActive = mode == opt.value;
                     return <button
                         key={opt.value}
                         type="button"
                         disabled={isLoading}
-                        onClick={lambda -> None { onModeChange(opt.value); }}
+                        onClick={lambda () { onModeChange(opt.value); }}
                         style={{
                             "padding": "4px 14px",
                             "borderRadius": "16px",

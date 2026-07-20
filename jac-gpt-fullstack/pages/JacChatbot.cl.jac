@@ -32,7 +32,7 @@ def:pub JacChatbot() -> JsxElement {
     spacerRef = useRef(None);
 
     # Resize spacer via DOM ref before paint — no state, no re-render, no vibration
-    useLayoutEffect(lambda -> None {
+    useLayoutEffect(lambda () {
         vp = viewportRef.current;
         ref = chat.latestUserMsgRef.current;
         spacer = spacerRef.current;
@@ -49,7 +49,7 @@ def:pub JacChatbot() -> JsxElement {
     }, [chat.messages]);
 
     # Add CSS animations on mount
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         # Add keyframes for animations if not already present
         styleId = "chat-animations";
         if not document.getElementById(styleId) {
@@ -255,7 +255,7 @@ def:pub JacChatbot() -> JsxElement {
                 "gap": "4px",
                 "alignItems": "flex-end"
             }}>
-                {[0, 1, 2].map(lambda i: int -> any {
+                {[0, 1, 2].map(lambda (i: int) {
                     delays = ["0s", "0.15s", "0.3s"];
                     return <div
                         key={i}
@@ -393,10 +393,10 @@ def:pub JacChatbot() -> JsxElement {
                         "flexWrap": "wrap",
                         "justifyContent": "center"
                     }}>
-                        {["What is by llm?", "What are walkers?", "What are nodes?"].map(lambda text: str -> any {
+                        {["What is by llm?", "What are walkers?", "What are nodes?"].map(lambda (text: str) {
                             return <button
                                 key={text}
-                                onClick={lambda -> None {
+                                onClick={lambda () {
                                     chat.handleSendMessage(text);
                                 }}
                                 style={{
@@ -410,10 +410,10 @@ def:pub JacChatbot() -> JsxElement {
                                     "transition": "all 0.2s ease",
                                     "fontFamily": "Inter"
                                 }}
-                                onMouseEnter={lambda e: any -> None {
+                                onMouseEnter={lambda (e: any) {
                                     e.target.style.background = "rgba(249, 115, 22, 0.15)";
                                 }}
-                                onMouseLeave={lambda e: any -> None {
+                                onMouseLeave={lambda (e: any) {
                                     e.target.style.background = "rgba(255, 255, 255, 0.05)";
                                 }}
                             >

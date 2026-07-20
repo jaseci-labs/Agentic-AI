@@ -45,7 +45,7 @@ def:pub RegisterPage() -> JsxElement {
     ORANGE_DARK = "#ea580c";
 
     # Redirect if already logged in
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         if jacIsLoggedIn() {
             navigate("/");
         }
