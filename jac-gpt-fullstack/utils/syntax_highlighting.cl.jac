@@ -194,7 +194,7 @@ def:pub getJacExtensions() -> list {
     return [
         StreamLanguage.define({
             "name": "jac",
-            "startState": lambda { return { "inBlockComment": False }; },
+            "startState": lambda () { return { "inBlockComment": False }; },
             "token": tokenJac,
             "tokenTable": JAC_TOKEN_TABLE
         }),

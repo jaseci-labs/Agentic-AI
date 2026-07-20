@@ -282,7 +282,7 @@ obj RagEngine {
             doc_score_pairs = list(zip(docs_only, scores));
 
             # Sort by score in descending order
-            results = sorted(doc_score_pairs, key=lambda x: float: -x[1]);
+            results = sorted(doc_score_pairs, key=lambda (x) { -x[1]; });
 
             # Filter to only include documents with score > 0.5
             # results = [(doc, float(score)) for (doc, score) in doc_score_pairs if score > 0.5];

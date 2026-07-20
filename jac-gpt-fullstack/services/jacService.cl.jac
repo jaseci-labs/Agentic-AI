@@ -1,6 +1,10 @@
 """Service layer for communicating with the Jac backend using root spawn."""
 
-glob REQUEST_TIMEOUT_MS = 30000;
+# 120s, not 30s: /walker/interact STREAMS a RAG answer (retrieval + CrossEncoder
+# rerank + LLM generation + reasoning steps), which routinely exceeds 30s. The
+# old 30s aborted mid-stream -> AbortError, which (pre-#7420) also blanked the
+# page via the __jacJsx error-boundary bug. Applies to the whole streamed request.
+glob REQUEST_TIMEOUT_MS = 120000;
 
 """Build a normalized error object for consistent UI handling."""
 def buildError(code: str, message: str, retryable: bool = False, statusCode: int = 0, details: str = "") -> dict {
@@ -10,7 +14,7 @@ def buildError(code: str, message: str, retryable: bool = False, statusCode: int
         "retryable": retryable,
         "status_code": statusCode,
         "details": details,
-        "timestamp": Date().toISOString()
+        "timestamp": Reflect.construct(Date, []).toISOString()
     };
 }
 
@@ -48,12 +52,12 @@ def normalizeRuntimeError(err: any, fallbackCode: str = "ERR_UNKNOWN_FRONTEND") 
 """Merge an external abort signal with a timeout signal."""
 def createTimedAbortSignal(externalSignal: any = None, timeoutMs: int = REQUEST_TIMEOUT_MS) -> any {
     controller = Reflect.construct(AbortController, []);
-    timeoutId = setTimeout(lambda -> None {
+    timeoutId = setTimeout(lambda () {
         controller.abort("timeout");
     }, timeoutMs);
 
     if externalSignal {
-        externalSignal.addEventListener("abort", lambda -> None {
+        externalSignal.addEventListener("abort", lambda () {
             clearTimeout(timeoutId);
             controller.abort("external_abort");
         });
@@ -61,7 +65,7 @@ def createTimedAbortSignal(externalSignal: any = None, timeoutMs: int = REQUEST_
 
     return {
         "signal": controller.signal,
-        "clear": lambda -> None { clearTimeout(timeoutId); }
+        "clear": lambda () { clearTimeout(timeoutId); }
     };
 }
 

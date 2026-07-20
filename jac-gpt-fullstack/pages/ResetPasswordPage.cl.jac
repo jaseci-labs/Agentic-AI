@@ -15,7 +15,7 @@ def:pub ResetPasswordPage() -> JsxElement {
     has token: str = "";
 
     # Get token from URL on mount
-    useEffect(lambda -> None {
+    useEffect(lambda () {
         urlParams = URLSearchParams(window.location.search);
         tokenParam = urlParams.get("token");
         if tokenParam {
@@ -57,9 +57,9 @@ def:pub ResetPasswordPage() -> JsxElement {
 
         try {
             # TODO: Implement password reset API call with token
-            await Promise.resolve(setTimeout(lambda -> None { }, 1000));
+            await Promise.resolve(setTimeout(lambda () { }, 1000));
             success = "Password has been reset successfully!";
-            setTimeout(lambda -> None {
+            setTimeout(lambda () {
                 navigate("/login");
             }, 2000);
         } except Exception as ex {

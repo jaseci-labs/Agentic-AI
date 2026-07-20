@@ -32,7 +32,7 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> JsxElement 
     def handleCopy() -> None {
         navigator.clipboard.writeText(code);
         copied = true;
-        setTimeout(lambda { copied = false; }, 2000);
+        setTimeout(lambda () { copied = false; }, 2000);
     }
 
     copyLabel = "Copy code";
@@ -93,9 +93,9 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> JsxElement 
                         "wordBreak": "break-word",
                         "color": "#e4e4e7"
                     }}
-                    onCut={lambda e: any -> None { e.preventDefault(); }}
-                    onPaste={lambda e: any -> None { e.preventDefault(); }}
-                    onKeyDown={lambda e: any -> None {
+                    onCut={lambda (e: any) { e.preventDefault(); }}
+                    onPaste={lambda (e: any) { e.preventDefault(); }}
+                    onKeyDown={lambda (e: any) {
                         isCopy = (e.ctrlKey or e.metaKey) and (e.key == "c" or e.key == "C");
                         isSelectAll = (e.ctrlKey or e.metaKey) and (e.key == "a" or e.key == "A");
                         if (e.ctrlKey or e.metaKey) and not isCopy and not isSelectAll {
@@ -120,11 +120,11 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
     def handleCopy() -> None {
         navigator.clipboard.writeText(code);
         copied = true;
-        setTimeout(lambda { copied = false; }, 2000);
+        setTimeout(lambda () { copied = false; }, 2000);
     }
 
     # Create / destroy the CodeMirror EditorView when code changes
-    useEffect(lambda {
+    useEffect(lambda () {
         if viewRef.current {
             viewRef.current.destroy();
             viewRef.current = None;
@@ -143,7 +143,7 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
                 "parent": editorRef.current
             }]);
         }
-        return lambda { if viewRef.current { viewRef.current.destroy(); viewRef.current = None; } };
+        return lambda () { if viewRef.current { viewRef.current.destroy(); viewRef.current = None; } };
     }, [code]);
 
     copyLabel = "Copy code";
@@ -223,7 +223,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
 
     # Bot message: Markdown enabled
     components = {
-        "code": lambda p: any -> any {
+        "code": lambda (p: any) {
             console.log("=== Code component called ===");
             console.log("Props:", p);
             
@@ -281,7 +281,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             </Code>;
         },
 
-        "h1": lambda p: any -> any {
+        "h1": lambda (p: any) {
             return <Text size="lg" fw={700} c="white" mt="md" mb="xs"
                 style={{
                     "borderBottom": "1px solid rgba(255,255,255,0.10)",
@@ -291,44 +291,44 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             </Text>;
         },
 
-        "h2": lambda p: any -> any {
+        "h2": lambda (p: any) {
             return <Text size="md" fw={700} c="white" mt="sm" mb="xs">
                 {p.children}
             </Text>;
         },
 
-        "h3": lambda p: any -> any {
+        "h3": lambda (p: any) {
             return <Text size="sm" fw={700} c="white" mt="sm" mb="xs">
                 {p.children}
             </Text>;
         },
 
-        "p": lambda p: any -> any {
+        "p": lambda (p: any) {
             return <Text size="sm" c="gray.3" my="xs" style={{"lineHeight": "1.7"}}>
                 {p.children}
             </Text>;
         },
 
-        "ul": lambda p: any -> any {
+        "ul": lambda (p: any) {
             return <Box component="ul" my="xs" pl="md" style={{"listStyleType": "disc"}}>
                 {p.children}
             </Box>;
         },
 
-        "ol": lambda p: any -> any {
+        "ol": lambda (p: any) {
             return <Box component="ol" my="xs" pl="md" style={{"listStyleType": "decimal"}}>
                 {p.children}
             </Box>;
         },
 
-        "li": lambda p: any -> any {
+        "li": lambda (p: any) {
             return <Text component="li" size="sm" c="gray.3"
                 style={{"lineHeight": "1.7", "marginBottom": "4px"}}>
                 {p.children}
             </Text>;
         },
 
-        "strong": lambda p: any -> any {
+        "strong": lambda (p: any) {
             return <strong style={{
                 "fontWeight": "700",
                 "color": "#ffffff"
@@ -337,7 +337,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             </strong>;
         },
 
-        "em": lambda p: any -> any {
+        "em": lambda (p: any) {
             return <em style={{
                 "fontStyle": "italic",
                 "color": "#a1a1aa"
@@ -346,7 +346,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             </em>;
         },
 
-        "a": lambda p: any -> any {
+        "a": lambda (p: any) {
             return <Text
                 component="a"
                 href={p.href}
@@ -363,7 +363,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             </Text>;
         },
 
-        "hr": lambda p: any -> any {
+        "hr": lambda (p: any) {
             return <Box my="md" style={{"borderTop": "1px solid rgba(255,255,255,0.10)"}} />;
         }
     };
