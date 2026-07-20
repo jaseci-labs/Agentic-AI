@@ -13,17 +13,17 @@ import from ..components.AgentReasoning { AgentReasoning }
 import from ..components.ErrorAlert { ErrorAlert }
 
 # Main Jac GPT Chatbot component (Complete Specification)
-def:pub JacChatbot() -> JsxElement {
+def:pub JacChatbot(theme: str = "dark", onSetTheme: any = None) -> JsxElement {
     has sidebarOpen: bool = False;
     has docPanelOpen: bool = False;
 
     # Color scheme from specification
-    BG = "#141414";                  # main background
-    BORDER = "#374151";              # gray-700
-    TEXT = "#ffffff";
-    TEXT_SECONDARY = "#d1d5db";      # gray-300
-    MUTED = "#9ca3af";               # gray-400
-    ORANGE = "#f97316";              # primary accent
+    BG = "var(--background)";                  # main background (themeable)
+    BORDER = "var(--border-light)";            # divider / panel border
+    TEXT = "var(--text-primary)";
+    TEXT_SECONDARY = "var(--text-secondary)";
+    MUTED = "var(--text-muted)";
+    ORANGE = "var(--primary)";                 # primary accent
 
     chat = useChat();
     isAuthenticated = jacIsLoggedIn();
@@ -142,6 +142,7 @@ def:pub JacChatbot() -> JsxElement {
                                 isUser={False}
                                 timestamp={ragMsg.timestamp}
                                 source={ragMsg.source or "RAG"}
+                                theme={theme}
                             />
                         </div>
                         if ragMsg
@@ -165,6 +166,7 @@ def:pub JacChatbot() -> JsxElement {
                                 isUser={False}
                                 timestamp={mcpMsg.timestamp}
                                 source={mcpMsg.source or "MCP"}
+                                theme={theme}
                             />
                         </div>
                         if mcpMsg
@@ -213,6 +215,7 @@ def:pub JacChatbot() -> JsxElement {
                 isUser={msg.isUser}
                 timestamp={msg.timestamp}
                 source={msg.source or ""}
+                theme={theme}
             />
         </div>);
 
@@ -298,64 +301,46 @@ def:pub JacChatbot() -> JsxElement {
     # Messages content or empty state
     mainContent = None;
     if hasMessages {
-        # Active conversation - messages area
-        if chat.mode == "both" {
-            mainContent = <ScrollArea ref={scrollAreaRef} viewportRef={viewportRef} style={{"flex": "1", "paddingLeft": "8px", "paddingRight": "8px"}} type="scroll">
+        # Active conversation - messages area (all modes share one centered 768px column;
+        # both-mode RAG/MCP pairs render as two side-by-side columns inside it)
+        mainContent = <ScrollArea ref={scrollAreaRef} viewportRef={viewportRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
+            <div style={{
+                "maxWidth": "768px",
+                "margin": "0 auto",
+                "paddingTop": "16px",
+                "paddingBottom": "16px",
+                "minWidth": "0",
+                "overflow": "hidden"
+            }}>
                 <div style={{
-                    "width": "100%",
-                    "margin": "0",
-                    "paddingTop": "16px",
-                    "paddingBottom": "16px",
-                    "minWidth": "0",
-                    "overflow": "hidden"
+                    "display": "flex",
+                    "flexDirection": "column",
+                    "gap": "8px"
                 }}>
-                    <div style={{
-                        "display": "flex",
-                        "flexDirection": "column",
-                        "gap": "8px"
-                    }}>
-                        {messageItems}
-                        {loadingContent}
-                    </div>
-                    <div ref={chat.messagesEndRef} />
-                    <div ref={spacerRef} />
+                    {messageItems}
+                    {loadingContent}
                 </div>
-            </ScrollArea>;
-        } else {
-            mainContent = <ScrollArea ref={scrollAreaRef} viewportRef={viewportRef} style={{"flex": "1", "paddingLeft": "16px", "paddingRight": "16px"}} type="scroll">
-                <div style={{
-                    "maxWidth": "768px",
-                    "margin": "0 auto",
-                    "paddingTop": "16px",
-                    "paddingBottom": "16px",
-                    "minWidth": "0",
-                    "overflow": "hidden"
-                }}>
-                    <div style={{
-                        "display": "flex",
-                        "flexDirection": "column",
-                        "gap": "8px"
-                    }}>
-                        {messageItems}
-                        {loadingContent}
-                    </div>
-                    <div ref={chat.messagesEndRef} />
-                    <div ref={spacerRef} />
-                </div>
-            </ScrollArea>;
-        }
+                <div ref={chat.messagesEndRef} />
+                <div ref={spacerRef} />
+            </div>
+        </ScrollArea>;
     } else {
         # Empty state
         mainContent = <div style={{
+            "position": "relative",
             "flex": "1",
             "display": "flex",
             "flexDirection": "column",
             "alignItems": "center",
             "justifyContent": "center",
             "paddingLeft": "16px",
-            "paddingRight": "16px"
+            "paddingRight": "16px",
+            "overflow": "hidden"
         }}>
-            <div style={{
+            <div className="jc-home-glow" />
+            <div className="jc-fade-in" style={{
+                "position": "relative",
+                "zIndex": "1",
                 "maxWidth": "768px",
                 "width": "100%",
                 "margin": "0 auto",
@@ -364,17 +349,37 @@ def:pub JacChatbot() -> JsxElement {
                 "alignItems": "center",
                 "justifyContent": "center"
             }}>
+                <img
+                    src="/logo.png"
+                    alt="JacGPT"
+                    className="jc-float"
+                    style={{
+                        "width": "64px",
+                        "height": "64px",
+                        "objectFit": "contain",
+                        "marginBottom": "24px",
+                        "filter": "drop-shadow(0 0 26px rgba(249,115,22,0.45))"
+                    }}
+                />
                 <h1 style={{
-                    "fontSize": "30px",
-                    "color": TEXT_SECONDARY,
-                    "fontWeight": "500",
-                    "fontFamily": "'Inter, sans-serif'",
-                    "marginBottom": "36px",
+                    "fontSize": "34px",
+                    "color": TEXT,
+                    "fontWeight": "700",
+                    "letterSpacing": "-0.02em",
+                    "marginBottom": "10px",
                     "textAlign": "center"
                 }}>
                     How can I help you today?
                 </h1>
-                
+                <p style={{
+                    "fontSize": "15px",
+                    "color": MUTED,
+                    "marginBottom": "36px",
+                    "textAlign": "center"
+                }}>
+                    Your AI companion for the Jac programming language
+                </p>
+
                 <div style={{"width": "100%"}}>
                     <ChatInput
                         onSendMessage={chat.handleSendMessage}
@@ -389,35 +394,24 @@ def:pub JacChatbot() -> JsxElement {
                     <div style={{
                         "display": "flex",
                         "gap": "12px",
-                        "marginTop": "2px",
+                        "marginTop": "14px",
                         "flexWrap": "wrap",
                         "justifyContent": "center"
                     }}>
-                        {["What is by llm?", "What are walkers?", "What are nodes?"].map(lambda (text: str) {
+                        {[
+                            {"icon": "✦", "label": "What is by llm?"},
+                            {"icon": "◈", "label": "What are walkers?"},
+                            {"icon": "◉", "label": "What are nodes?"}
+                        ].map(lambda (prompt: any) {
                             return <button
-                                key={text}
+                                key={prompt.label}
+                                className="jc-prompt-pill"
                                 onClick={lambda () {
-                                    chat.handleSendMessage(text);
-                                }}
-                                style={{
-                                    "padding": "10px 18px",
-                                    "border": "none",
-                                    "borderRadius": "24px",
-                                    "background": "rgba(255, 255, 255, 0.05)",
-                                    "color": TEXT_SECONDARY,
-                                    "cursor": "pointer",
-                                    "fontSize": "16px",
-                                    "transition": "all 0.2s ease",
-                                    "fontFamily": "Inter"
-                                }}
-                                onMouseEnter={lambda (e: any) {
-                                    e.target.style.background = "rgba(249, 115, 22, 0.15)";
-                                }}
-                                onMouseLeave={lambda (e: any) {
-                                    e.target.style.background = "rgba(255, 255, 255, 0.05)";
+                                    chat.handleSendMessage(prompt.label);
                                 }}
                             >
-                                {text}
+                                <span style={{"color": ORANGE, "fontSize": "13px"}}>{prompt.icon}</span>
+                                <span>{prompt.label}</span>
                             </button>;
                         })}
                     </div>
@@ -428,6 +422,7 @@ def:pub JacChatbot() -> JsxElement {
 
     # Layout widths when docs open
     chatContainerStyle = {
+        "position": "relative",
         "flex": "1",
         "display": "flex",
         "flexDirection": "column",
@@ -444,7 +439,7 @@ def:pub JacChatbot() -> JsxElement {
         docPanelElement = <div style={{
             "width": "50%",
             "borderLeft": "1px solid " + BORDER,
-            "background": BG
+            "background": "transparent"
         }}>
             <DocumentationPanel
                 message={chat.lastUserMessage}
@@ -490,73 +485,41 @@ def:pub JacChatbot() -> JsxElement {
     # Create text span with shimmer effect when searching
     textSpan = None;
     if chat.isSearchingDocs {
-        textSpan = <span style={{
-            "background": "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.85) 35%, rgba(255, 255, 255, 0.4) 45%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.4) 55%, rgba(255, 255, 255, 0.85) 65%, rgba(255, 255, 255, 1) 100%)",
-            "backgroundSize": "200% 100%",
-            "backgroundClip": "text",
-            "WebkitBackgroundClip": "text",
-            "color": "transparent",
-            "animation": "shimmer 2.5s linear infinite"
-        }}>{docButtonText}</span>;
+        textSpan = <span className="jc-docs-shimmer">{docButtonText}</span>;
     } else {
         textSpan = <span>{docButtonText}</span>;
     }
 
-    headerBar = <div style={{
-        "display": "flex",
-        "alignItems": "center",
-        "justifyContent": "space-between",
-        "padding": "8px",
-        "borderBottom": "1px solid " + BORDER,
-        "background": BG
-    }}>
-        <div style={{
+    floatingDocsButton = <button
+        onClick={toggleDocPanel}
+        className="jc-header-docs-btn"
+        style={{
+            "position": "absolute",
+            "top": "10px",
+            "right": "16px",
+            "zIndex": "20",
             "display": "flex",
             "alignItems": "center",
-            "gap": "12px"
-        }}>
-            <img
-                src="/logo.png"
-                style={{
-                    "width": "32px",
-                    "height": "32px",
-                    "objectFit": "contain"
-                }}
-            />
-            <h1 style={{
-                "fontSize": "20px",
-                "fontWeight": "600",
-                "color": TEXT
-            }}>
-                Jac GPT
-            </h1>
-        </div>
+            "gap": "8px",
+            "padding": "8px 16px",
+            "border": (("1px solid " + ORANGE if docPanelOpen else "1px solid " + BORDER)),
+            "borderRadius": "8px",
+            "background": ((ORANGE if docPanelOpen else "var(--docs-btn-bg)")),
+            "backdropFilter": "blur(8px)",
+            "WebkitBackdropFilter": "blur(8px)",
+            "color": (("#ffffff" if docPanelOpen else TEXT)),
+            "cursor": "pointer",
+            "fontSize": "14px",
+            "transition": "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)"
+        }}
+    >
+        {((<IconX size={16} />) if docPanelOpen else (<IconBook size={16} />))}
+        {textSpan}
+    </button>;
 
-        <button
-            onClick={toggleDocPanel}
-            style={{
-                "display": "flex",
-                "alignItems": "center",
-                "gap": "8px",
-                "padding": "8px 16px",
-                "border": (("1px solid " + ORANGE if docPanelOpen else "1px solid " + BORDER)),
-                "borderRadius": "8px",
-                "background": ((ORANGE if docPanelOpen else "transparent")),
-                "color": TEXT,
-                "cursor": "pointer",
-                "fontSize": "14px",
-                "transition": "all 0.2s ease"
-            }}
-        >
-            {((<IconX size={16} />) if docPanelOpen else (<IconBook size={16} />))}
-            {textSpan}
-        </button>
-    </div>;
-
-    return <div style={{
+    return <div className="jc-main-bg" style={{
         "display": "flex",
-        "height": "100vh",
-        "background": BG
+        "height": "100vh"
     }}>
         <Sidebar
             isOpen={sidebarOpen}
@@ -569,12 +532,14 @@ def:pub JacChatbot() -> JsxElement {
             isLoading={chat.isLoading}
             messageCount={chat.messageCount}
             maxFreeMessages={chat.maxFreeMessages}
+            theme={theme}
+            onSetTheme={onSetTheme}
         />
 
         <div style={{"flex": "1", "display": "flex", "overflow": "hidden"}}>
             <div style={chatContainerStyle}>
                 {mobileMenuButton}
-                {headerBar}
+                {(floatingDocsButton if not docPanelOpen else None)}
 
                 {(
                     <div style={{"padding": "12px 16px 0 16px"}}>

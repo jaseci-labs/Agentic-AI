@@ -15,12 +15,19 @@ def:pub DocumentationPanel(
     has error: str = "";
     has defaultSuggestions: list = [];
 
-    # Load default documentation suggestions from JSON
+    # Load default documentation suggestions from JSON.
+    # NOTE: the explicit no-op cleanup return is required. Without a trailing
+    # statement the Jac client compiler turns this single-expression body into an
+    # implicit-return arrow (`() => fetch(...)`), so the effect returns the fetch
+    # Promise. React stores that as the cleanup and calls it on unmount (closing
+    # the panel) — crashing with "g is not a function". Returning a real function
+    # gives React a valid, harmless cleanup.
     useEffect(lambda () {
         fetch("../services/docs_links/default_suggestion_links.json")
             .then(lambda (response: any) { return response.json(); })
             .then(lambda (data: any) { defaultSuggestions = data; })
             .catch(lambda (err: any) { console.log("Failed to load default suggestions:", err); });
+        return lambda () { };
     }, []);
 
     # Ensure HTTPS for URLs
@@ -82,11 +89,11 @@ def:pub DocumentationPanel(
         <line x1="10" x2="21" y1="14" y2="3"></line>
     </svg>;
 
-    chevronRightIcon = <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    chevronRightIcon = <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="m9 18 6-6-6-6"></path>
     </svg>;
 
-    closeIcon = <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    closeIcon = <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" x2="6" y1="6" y2="18"></line>
         <line x1="6" x2="18" y1="6" y2="18"></line>
     </svg>;
@@ -96,17 +103,16 @@ def:pub DocumentationPanel(
     </svg>;
 
     # Main container - full height and width
-    return <div style={{
+    return <div className="jc-docs-panel" style={{
         "display": "flex",
         "flexDirection": "column",
         "height": "100%",
-        "width": "100%",
-        "backgroundColor": "#141414"
+        "width": "100%"
     }}>
         {(
             <div style={{
-                "padding": "16px",
-                "borderBottom": "1px solid #374151",
+                "padding": "16px 20px",
+                "borderBottom": "1px solid var(--border)",
                 "display": "flex",
                 "alignItems": "center",
                 "justifyContent": "space-between"
@@ -114,13 +120,14 @@ def:pub DocumentationPanel(
                 <div style={{
                     "display": "flex",
                     "alignItems": "center",
-                    "gap": "8px"
+                    "gap": "10px"
                 }}>
-                    {bookIcon}
+                    <span className="jc-icon-chip">{bookIcon}</span>
                     <span style={{
-                        "fontSize": "18px",
-                        "fontWeight": "600",
-                        "color": "#ffffff"
+                        "fontSize": "16px",
+                        "fontWeight": "700",
+                        "color": "var(--text-primary)",
+                        "letterSpacing": "-0.01em"
                     }}>
                         {"Documentation"}
                     </span>
@@ -134,12 +141,12 @@ def:pub DocumentationPanel(
                         "width": "32px",
                         "height": "32px",
                         "border": "none",
-                        "borderRadius": "6px",
+                        "borderRadius": "8px",
                         "backgroundColor": "transparent",
                         "cursor": "pointer",
                         "transition": "background-color 0.2s"
                     }}
-                    onMouseEnter={lambda (e: any) { e.target.style.backgroundColor = "#374151"; }}
+                    onMouseEnter={lambda (e: any) { e.target.style.backgroundColor = "var(--hover-bg)"; }}
                     onMouseLeave={lambda (e: any) { e.target.style.backgroundColor = "transparent"; }}
                 >
                     {closeIcon}
@@ -158,7 +165,7 @@ def:pub DocumentationPanel(
                 "gap": "8px"
             }}>
                 {loaderIcon}
-                <span style={{"color": "#9ca3af", "fontSize": "14px"}}>
+                <span style={{"color": "var(--text-muted)", "fontSize": "14px"}}>
                     {"Loading documentation..."}
                 </span>
             </div>
@@ -173,15 +180,15 @@ def:pub DocumentationPanel(
                 "justifyContent": "center"
             }}>
                 <div style={{"textAlign": "center"}}>
-                    <p style={{"color": "#f87171", "marginBottom": "8px"}}>{error}</p>
+                    <p style={{"color": "var(--error)", "marginBottom": "8px"}}>{error}</p>
                     <button
                         onClick={lambda () { error = ""; }}
                         style={{
                             "padding": "8px 16px",
-                            "border": "1px solid #374151",
+                            "border": "1px solid var(--border-light)",
                             "borderRadius": "8px",
                             "backgroundColor": "transparent",
-                            "color": "#9ca3af",
+                            "color": "var(--text-muted)",
                             "cursor": "pointer",
                             "transition": "background-color 0.2s"
                         }}
@@ -202,7 +209,7 @@ def:pub DocumentationPanel(
             }}>
                 <div style={{
                     "padding": "16px",
-                    "borderBottom": "1px solid #374151",
+                    "borderBottom": "1px solid var(--border-light)",
                     "display": "flex",
                     "alignItems": "center",
                     "justifyContent": "space-between"
@@ -214,10 +221,10 @@ def:pub DocumentationPanel(
                             "alignItems": "center",
                             "gap": "8px",
                             "padding": "8px 16px",
-                            "border": "1px solid #374151",
+                            "border": "1px solid var(--border-light)",
                             "borderRadius": "9999px",
                             "backgroundColor": "transparent",
-                            "color": "#9ca3af",
+                            "color": "var(--text-muted)",
                             "cursor": "pointer",
                             "fontSize": "14px",
                             "transition": "all 0.2s"
@@ -236,7 +243,7 @@ def:pub DocumentationPanel(
                             "border": "1px solid rgba(249, 115, 22, 0.2)",
                             "borderRadius": "9999px",
                             "backgroundColor": "rgba(249, 115, 22, 0.1)",
-                            "color": "#fb923c",
+                            "color": "var(--primary)",
                             "cursor": "pointer",
                             "fontSize": "14px",
                             "transition": "all 0.2s"
@@ -280,7 +287,7 @@ def:pub DocumentationPanel(
                     <h3 style={{
                         "fontSize": "18px",
                         "fontWeight": "700",
-                        "color": "#ffffff",
+                        "color": "var(--text-primary)",
                         "marginBottom": "8px"
                     }}>
                         {"Relevant Documentation"}
@@ -289,7 +296,7 @@ def:pub DocumentationPanel(
                     <h3 style={{
                         "fontSize": "18px",
                         "fontWeight": "700",
-                        "color": "#ffffff",
+                        "color": "var(--text-primary)",
                         "marginBottom": "8px"
                     }}>
                         {"Popular Topics"}
@@ -297,7 +304,7 @@ def:pub DocumentationPanel(
                 )}
                 {(
                     <p style={{
-                        "color": "#9ca3af",
+                        "color": "var(--text-muted)",
                         "fontSize": "14px",
                         "lineHeight": "1.5",
                         "marginBottom": "16px"
@@ -306,7 +313,7 @@ def:pub DocumentationPanel(
                     </p>
                     if suggestions.length > 0 else
                     <p style={{
-                        "color": "#9ca3af",
+                        "color": "var(--text-muted)",
                         "fontSize": "14px",
                         "lineHeight": "1.5",
                         "marginBottom": "16px"
@@ -319,15 +326,9 @@ def:pub DocumentationPanel(
                     {currentSuggestions.map(lambda (suggestion: any, index: int) {
                         return <div
                             key={index}
+                            className="jc-doc-card"
                             onClick={lambda () { handleSuggestionClick(suggestion); }}
-                            style={{
-                                "padding": "16px",
-                                "background": "linear-gradient(to bottom right, #1e1e1e, #252525)",
-                                "border": "1px solid #374151",
-                                "borderRadius": "12px",
-                                "cursor": "pointer",
-                                "transition": "all 0.3s"
-                            }}
+                            style={{"padding": "16px"}}
                         >
                             <div style={{
                                 "display": "flex",
@@ -335,9 +336,9 @@ def:pub DocumentationPanel(
                                 "justifyContent": "space-between"
                             }}>
                                 <div style={{"flex": "1"}}>
-                                    <h4 style={{
+                                    <h4 className="jc-doc-title" style={{
                                         "fontWeight": "600",
-                                        "color": "#ffffff",
+                                        "color": "var(--text-primary)",
                                         "marginBottom": "8px",
                                         "fontSize": "16px",
                                         "display": "flex",
@@ -355,12 +356,12 @@ def:pub DocumentationPanel(
                                                 </span>;
                                             })}
                                         </span>
-                                        {chevronRightIcon}
+                                        <span className="jc-doc-chevron" style={{"display": "flex", "flexShrink": 0}}>{chevronRightIcon}</span>
                                     </h4>
                                     {(
                                         <p style={{
                                             "fontSize": "14px",
-                                            "color": "#9ca3af",
+                                            "color": "var(--text-secondary)",
                                             "marginBottom": "8px",
                                             "lineHeight": "1.5"
                                         }}>
@@ -370,12 +371,12 @@ def:pub DocumentationPanel(
                                     )}
                                     <p style={{
                                         "fontSize": "11px",
-                                        "color": "#60a5fa",
+                                        "color": "var(--doc-link)",
                                         "fontFamily": "monospace",
                                         "transition": "color 0.2s"
                                     }}
-                                    onMouseEnter={lambda (e: any) { e.target.style.color = "#93c5fd"; }}
-                                    onMouseLeave={lambda (e: any) { e.target.style.color = "#60a5fa"; }}
+                                    onMouseEnter={lambda (e: any) { e.target.style.color = "var(--doc-link-hover)"; }}
+                                    onMouseLeave={lambda (e: any) { e.target.style.color = "var(--doc-link)"; }}
                                     >
                                         {ensureHttpsUrl(suggestion.url)}
                                     </p>

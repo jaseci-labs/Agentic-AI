@@ -53,6 +53,7 @@ glob JAC_TOKEN_TABLE = {
     "punctuation": tags.punctuation
 };
 
+# Dark palette (VS Code Dark+ inspired) — used on the dark code surface.
 glob jacHighlightStyle = syntaxHighlighting(HighlightStyle.define([
     { "tag": tags.comment,      "color": "#6a9955", "fontStyle": "italic" },
     { "tag": tags.string,       "color": "#ce9178" },
@@ -66,6 +67,22 @@ glob jacHighlightStyle = syntaxHighlighting(HighlightStyle.define([
     { "tag": tags.operator,     "color": "#d4d4d4" },
     { "tag": tags.punctuation,  "color": "#d4d4d4" },
     { "tag": arrowTag,          "color": "#ff6b6b", "fontWeight": "bold" }
+]));
+
+# Light palette (VS Code Light+ inspired) — high-contrast on the light code surface.
+glob jacHighlightStyleLight = syntaxHighlighting(HighlightStyle.define([
+    { "tag": tags.comment,      "color": "#008000", "fontStyle": "italic" },
+    { "tag": tags.string,       "color": "#a31515" },
+    { "tag": tags.number,       "color": "#098658" },
+    { "tag": tags.keyword,      "color": "#0000ff" },
+    { "tag": controlFlowTag,    "color": "#af00db" },
+    { "tag": tags.typeName,     "color": "#267f99" },
+    { "tag": tags.className,    "color": "#267f99" },
+    { "tag": functionNameTag,   "color": "#795e26" },
+    { "tag": tags.variableName, "color": "#001080" },
+    { "tag": tags.operator,     "color": "#24292f" },
+    { "tag": tags.punctuation,  "color": "#24292f" },
+    { "tag": arrowTag,          "color": "#c2410c", "fontWeight": "bold" }
 ]));
 
 def tokenJac(stream: any, state: any) -> str {
@@ -189,8 +206,26 @@ def tokenJac(stream: any, state: any) -> str {
 # Exported factory — the only public symbol in this module.
 # Returns the extension array for a read-only Jac EditorView.
 # ---------------------------------------------------------------------------
-"""Return CodeMirror 6 extensions for a read-only Jac syntax viewer."""
-def:pub getJacExtensions() -> list {
+"""Return CodeMirror 6 extensions for a read-only Jac syntax viewer.
+
+`theme` selects the highlight palette + base text color ("light" or "dark").
+The surrounding surface background is themed separately via CSS (.jc-code-surface).
+"""
+def:pub getJacExtensions(theme: str = "dark") -> list {
+    isLight = (theme == "light");
+    highlight = (jacHighlightStyleLight if isLight else jacHighlightStyle);
+
+    ampStyle = {
+        "background": "transparent",
+        "outline": "none",
+        "fontFamily": "Monaco, Menlo, Ubuntu Mono, monospace"
+    };
+    # Only pin base (untokenized) text color in light mode; dark keeps its
+    # inherited light-on-dark color so existing dark blocks are untouched.
+    if isLight {
+        ampStyle["color"] = "#24292f";
+    }
+
     return [
         StreamLanguage.define({
             "name": "jac",
@@ -198,13 +233,9 @@ def:pub getJacExtensions() -> list {
             "token": tokenJac,
             "tokenTable": JAC_TOKEN_TABLE
         }),
-        jacHighlightStyle,
+        highlight,
         EditorView.baseTheme({
-            "&": {
-                "background": "transparent",
-                "outline": "none",
-                "fontFamily": "Monaco, Menlo, Ubuntu Mono, monospace"
-            },
+            "&": ampStyle,
             "&.cm-focused": {
                 "outline": "none"
             },

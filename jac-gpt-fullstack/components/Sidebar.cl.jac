@@ -28,7 +28,9 @@ import from "@tabler/icons-react" {
     IconLogin,
     IconMessage,
     IconShieldCheck,
-    IconDots
+    IconDots,
+    IconSun,
+    IconMoon
 }
 import from ..hooks.useAuth { getUsernameFromToken }
 import from ..services.jacService { getUserProfile }
@@ -44,7 +46,9 @@ def:pub Sidebar(
     onDeleteSession: any = None,
     isLoading: bool = False,
     messageCount: int = 0,
-    maxFreeMessages: int = 30
+    maxFreeMessages: int = 30,
+    theme: str = "dark",
+    onSetTheme: any = None
 ) -> JsxElement {
 
     isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -98,14 +102,17 @@ def:pub Sidebar(
         }
     }, []);
 
-    BG = "#141414";
-    BORDER = "#374151";
-    TEXT = "#ffffff";
-    MUTED = "#9ca3af";
-    MUTED2 = "#6b7280";
-    PANEL = "rgba(255,255,255,0.04)";
-    PANEL_BORDER = "rgba(255,255,255,0.08)";
-    ORANGE = "#f97316";
+    BG = "var(--sidebar)";
+    BORDER = "var(--border)";
+    TEXT = "var(--text-primary)";
+    MUTED = "var(--text-muted)";
+    MUTED2 = "var(--text-dim)";
+    PANEL = "var(--panel)";
+    PANEL_BORDER = "var(--panel-border)";
+    ORANGE = "var(--primary)";
+    ORANGE_LIGHT = "var(--primary-light)";
+    HOVER_BG = "var(--hover-bg)";
+    ACTIVE_BG = "var(--active-bg)";
 
     LOGO_SRC = "/logo.png";
 
@@ -153,150 +160,146 @@ def:pub Sidebar(
         "top": "0",
         "height": "100vh",
         "width": String(sidebarWidth) + "px",
-        "background": BG,
-        "borderRight": "1px solid " + BORDER,
         "zIndex": "50",
-        "transition": "all 0.25s ease",
+        "transition": "width 0.25s ease, transform 0.25s ease",
         "transform": (("translateX(0)" if shouldShow else "translateX(-100%)"))
     };
 
-    logoSection = <Box
+    logoBox = <Box
+        onClick={handleLogoClick}
         style={{
-            "padding": "14px 14px",
-            "borderBottom": "1px solid " + BORDER
+            "width": "40px",
+            "height": "40px",
+            "borderRadius": "11px",
+            "background": "rgba(249,115,22,0.12)",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "boxShadow": "0 0 14px rgba(249,115,22,0.22)",
+            "cursor": "pointer",
+            "transition": "transform 0.2s ease",
+            "flexShrink": 0
+        }}
+        onMouseEnter={lambda (e: any) {
+            e.currentTarget.style.transform = "scale(1.05)";
+        }}
+        onMouseLeave={lambda (e: any) {
+            e.currentTarget.style.transform = "scale(1)";
         }}
     >
-        <Group justify="space-between" align="center" wrap="nowrap">
-            {(
-                <Group gap="sm" align="center" wrap="nowrap">
-                    <Box
-                        onClick={handleLogoClick}
-                        style={{
-                            "width": "44px",
-                            "height": "44px",
-                            "borderRadius": "12px",
-                            "background": "rgba(249,115,22,0.12)",
-                            "display": "flex",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                            "boxShadow": "0 0 14px rgba(249,115,22,0.25)",
-                            "cursor": "pointer",
-                            "transition": "transform 0.2s ease"
-                        }}
-                        onMouseEnter={lambda (e: any) {
-                            e.currentTarget.style.transform = "scale(1.05)";
-                        }}
-                        onMouseLeave={lambda (e: any) {
-                            e.currentTarget.style.transform = "scale(1)";
-                        }}
-                    >
-                        <img
-                            src={LOGO_SRC}
-                            alt="Jaseci"
-                            style={{
-                                "width": "28px",
-                                "height": "28px",
-                                "objectFit": "contain",
-                                "display": "block"
-                            }}
-                        />
-                    </Box>
+        <img
+            src={LOGO_SRC}
+            alt="Jaseci"
+            style={{
+                "width": "26px",
+                "height": "26px",
+                "objectFit": "contain",
+                "display": "block"
+            }}
+        />
+    </Box>;
 
-                    <Box style={{"lineHeight": "1.1"}}>
+    logoSection = None;
+    if isExpanded {
+        logoSection = <Box style={{"padding": "14px 14px", "borderBottom": "1px solid " + BORDER}}>
+            <Group justify="space-between" align="center" wrap="nowrap">
+                <Group gap="sm" align="center" wrap="nowrap" style={{"minWidth": "0"}}>
+                    {logoBox}
+                    <Box style={{"lineHeight": "1.15", "minWidth": "0"}}>
                         <Text fw={700} style={{"fontSize": "18px", "color": TEXT}}>
-                            Jaseci
+                            Jac GPT
                         </Text>
                         <Text style={{"fontSize": "12px", "color": MUTED, "marginTop": "2px"}}>
-                            Jac programming companion
+                            Your AI companion for Jac programming
                         </Text>
                     </Box>
                 </Group>
-                if isExpanded
-                else
-                <Box
-                    mx="auto"
-                    onClick={handleLogoClick}
-                    style={{
-                        "width": "44px",
-                        "height": "44px",
-                        "borderRadius": "12px",
-                        "background": "rgba(249,115,22,0.12)",
-                        "display": "flex",
-                        "alignItems": "center",
-                        "justifyContent": "center",
-                        "boxShadow": "0 0 14px rgba(249,115,22,0.25)",
-                        "cursor": "pointer",
-                        "transition": "transform 0.2s ease"
-                    }}
-                    onMouseEnter={lambda (e: any) {
-                        e.currentTarget.style.transform = "scale(1.05)";
-                    }}
-                    onMouseLeave={lambda (e: any) {
-                        e.currentTarget.style.transform = "scale(1)";
-                    }}
-                >
-                    <img
-                        src={LOGO_SRC}
-                        alt="Jaseci"
-                        style={{
-                            "width": "26px",
-                            "height": "26px",
-                            "objectFit": "contain",
-                            "display": "block"
-                        }}
-                    />
-                </Box>
-            )}
 
-            <Group gap="xs" align="center" wrap="nowrap">
-                <ActionIcon
-                    onClick={toggleExpanded}
-                    variant="subtle"
-                    size="sm"
-                    radius="md"
-                    visibleFrom="lg"
-                    style={{"color": MUTED}}
-                >
-                    {((<IconChevronLeft size={18} />) if isExpanded else (<IconChevronRight size={18} />))}
-                </ActionIcon>
+                <Group gap="xs" align="center" wrap="nowrap" style={{"flexShrink": 0}}>
+                    <ActionIcon
+                        onClick={toggleExpanded}
+                        variant="subtle"
+                        size="sm"
+                        radius="md"
+                        visibleFrom="lg"
+                        style={{"color": MUTED}}
+                    >
+                        <IconChevronLeft size={18} />
+                    </ActionIcon>
 
-                <ActionIcon
-                    onClick={onToggle}
-                    variant="subtle"
-                    size="sm"
-                    radius="md"
-                    hiddenFrom="lg"
-                    style={{"color": MUTED}}
-                >
-                    <IconX size={18} />
-                </ActionIcon>
+                    <ActionIcon
+                        onClick={onToggle}
+                        variant="subtle"
+                        size="sm"
+                        radius="md"
+                        hiddenFrom="lg"
+                        style={{"color": MUTED}}
+                    >
+                        <IconX size={18} />
+                    </ActionIcon>
+                </Group>
             </Group>
-        </Group>
-    </Box>;
+        </Box>;
+    } else {
+        logoSection = <Box style={{
+            "padding": "14px 6px",
+            "borderBottom": "1px solid " + BORDER,
+            "display": "flex",
+            "flexDirection": "column",
+            "alignItems": "center",
+            "gap": "10px"
+        }}>
+            {logoBox}
+            <ActionIcon
+                onClick={toggleExpanded}
+                variant="subtle"
+                size="sm"
+                radius="md"
+                visibleFrom="lg"
+                style={{"color": MUTED}}
+            >
+                <IconChevronRight size={18} />
+            </ActionIcon>
+            <ActionIcon
+                onClick={onToggle}
+                variant="subtle"
+                size="sm"
+                radius="md"
+                hiddenFrom="lg"
+                style={{"color": MUTED}}
+            >
+                <IconX size={18} />
+            </ActionIcon>
+        </Box>;
+    }
 
     newChatButton = <Box px="md" py="sm">
-        <Button
-            onClick={onNewChat}
-            disabled={isLoading}
-            fullWidth={True}
-            radius="md"
-            variant="outline"
-            styles={{
-                "root": {
-                    "background": "rgba(55, 65, 81, 0.80)",
-                    "borderColor": "rgba(75, 85, 99, 1)",
-                    "color": TEXT,
-                    "height": "44px",
-                    "paddingLeft": (("14px" if isExpanded else "0px")),
-                    "paddingRight": (("14px" if isExpanded else "0px"))
-                }
-            }}
-        >
-            <Group justify="center" gap="sm" style={{"width": "100%"}}>
-                <IconPlus size={16} />
-                {(<Text fw={600} style={{"color": TEXT, "fontSize": "14px"}}>New Chat</Text>) if isExpanded else None}
-            </Group>
-        </Button>
+        <Tooltip label="New Chat" position="right" offset={12} withinPortal={True} disabled={isExpanded}>
+            <Button
+                onClick={onNewChat}
+                disabled={isLoading}
+                fullWidth={True}
+                radius="md"
+                variant="outline"
+                className="jc-newchat"
+                styles={{
+                    "root": {
+                        "background": "var(--hover-bg)",
+                        "borderColor": "var(--border-light)",
+                        "borderLeft": (("2px solid " + ORANGE) if isExpanded else "1px solid var(--border-light)"),
+                        "color": TEXT,
+                        "height": "46px",
+                        "paddingLeft": (("14px" if isExpanded else "0px")),
+                        "paddingRight": (("14px" if isExpanded else "0px"))
+                    }
+                }}
+            >
+                <Group justify="center" gap="sm" style={{"width": "100%"}}>
+                    <IconPlus size={16} color={ORANGE} />
+                    {(<Text fw={600} style={{"color": TEXT, "fontSize": "14px"}}>New Chat</Text>) if isExpanded else None}
+                </Group>
+            </Button>
+        </Tooltip>
     </Box>;
 
     sessionsContent = <Text size="sm" c={MUTED2} ta="center" py="lg">No chat history yet</Text>;
@@ -309,16 +312,18 @@ def:pub Sidebar(
 
                 return <Box
                     key={session.id}
+                    className="jc-sidebar-item"
                     style={{
                         "position": "relative",
                         "display": "flex",
                         "alignItems": "center",
-                        "gap": "8px",
-                        "padding": "8px 12px",
+                        "gap": "10px",
+                        "padding": "9px 10px",
                         "borderRadius": "8px",
                         "width": "100%",
-                        "background": (("rgba(55, 65, 81, 0.8)" if isCurrentSession else "transparent")),
-                        "color": (TEXT if isCurrentSession else "#d1d5db"),
+                        "borderLeft": (("2px solid " + ORANGE) if isCurrentSession else "2px solid transparent"),
+                        "background": (ACTIVE_BG if isCurrentSession else (HOVER_BG if isHovered else "transparent")),
+                        "color": (TEXT if isCurrentSession else "var(--text-secondary)"),
                         "opacity": (("0.5" if isLoading else "1")),
                         "cursor": (("not-allowed" if isLoading else "pointer")),
                         "transition": "all 0.2s ease"
@@ -331,6 +336,11 @@ def:pub Sidebar(
                     onMouseEnter={lambda () { hoveredSessionId = session.id; }}
                     onMouseLeave={lambda () { hoveredSessionId = ""; }}
                 >
+                    <IconMessage
+                        size={15}
+                        color={(ORANGE if isCurrentSession else MUTED)}
+                        style={{"flexShrink": 0}}
+                    />
                     <Text
                         size="sm"
                         style={{
@@ -339,7 +349,7 @@ def:pub Sidebar(
                             "textOverflow": "ellipsis",
                             "whiteSpace": "nowrap"
                         }}
-                        c={(TEXT if isCurrentSession else "#d1d5db")}
+                        c={(TEXT if isCurrentSession else "var(--text-secondary)")}
                     >
                         {session.title}
                     </Text>
@@ -390,7 +400,7 @@ def:pub Sidebar(
     chatSessionsList = None;
     if isExpanded {
         chatSessionsList = <Box px="md" style={{"height": "100%", "display": "flex", "flexDirection": "column", "overflow": "hidden"}}>
-            <Text size="xs" fw={600} c={MUTED} tt="uppercase" mb="sm">Recent Chats</Text>
+            <Text size="xs" fw={700} c={MUTED} tt="uppercase" mb="sm" style={{"letterSpacing": "0.1em", "opacity": 0.75}}>Recent Chats</Text>
             <ScrollArea style={{"flex": "1", "minHeight": "0"}} type="scroll">
                 {sessionsContent}
             </ScrollArea>
@@ -401,27 +411,37 @@ def:pub Sidebar(
 
     userSection = None;
     if isAuthenticated and isExpanded {
-        userSection = <Box px="md" py="sm">
+        userSection = <Box px="md" py={6}>
             <Paper
-                p="sm"
+                p={10}
                 radius="md"
                 style={{
                     "background": PANEL,
                     "border": "1px solid " + PANEL_BORDER
                 }}
             >
-                <Group gap="sm" mb="sm">
+                <Group gap="sm" mb={8}>
                     <Avatar
                         radius="xl"
-                        size="sm"
-                        style={{
-                            "background": ORANGE,
-                            "color": "white"
+                        size={38}
+                        styles={{
+                            "root": {
+                                "background": "linear-gradient(135deg, " + ORANGE + " 0%, " + ORANGE_LIGHT + " 100%)",
+                                "boxShadow": "0 0 12px rgba(249,115,22,0.30)"
+                            },
+                            "placeholder": {
+                                "background": "transparent",
+                                "color": "white",
+                                "fontWeight": 700
+                            }
                         }}
                     >
                         {getUserInitials()}
                     </Avatar>
-                    <Text size="sm" fw={600} c={TEXT} style={{"flex": "1"}}>{username}</Text>
+                    <Box style={{"flex": "1", "minWidth": "0", "lineHeight": "1.2"}}>
+                        <Text size="sm" fw={700} c={TEXT} style={{"overflow": "hidden", "textOverflow": "ellipsis", "whiteSpace": "nowrap"}}>{username}</Text>
+                        <Text size="xs" c={MUTED}>Jac Developer</Text>
+                    </Box>
                 </Group>
 
                 {(
@@ -456,9 +476,9 @@ def:pub Sidebar(
 
     guestSection = None;
     if not isAuthenticated and isExpanded {
-        guestSection = <Box px="md" pt="sm" pb="sm">
+        guestSection = <Box px="md" pt={6} pb={6}>
             <Paper
-                p="sm"
+                p={10}
                 radius="md"
                 style={{
                     "background": PANEL,
@@ -469,8 +489,8 @@ def:pub Sidebar(
                     style={{
                         "fontSize": "12px",
                         "color": MUTED,
-                        "background": "rgba(31, 41, 55, 0.6)",
-                        "padding": "10px 12px",
+                        "background": "var(--chip-bg)",
+                        "padding": "8px 12px",
                         "borderRadius": "10px",
                         "marginBottom": "10px"
                     }}
@@ -478,42 +498,34 @@ def:pub Sidebar(
                     {"Free messages: "}{messageCount}{"/"}{maxFreeMessages}
                 </Box>
 
-                <Stack gap="xs">
-                    <Link to="/register" style={{"textDecoration": "none"}}>
-                        <Button
-                            fullWidth
-                            radius="md"
-                            size="sm"
-                            leftSection={<IconUserPlus size={16} />}
-                            style={{
-                                "background": ORANGE,
-                                "color": "white",
-                                "height": "44px"
-                            }}
-                        >
-                            Sign Up
-                        </Button>
-                    </Link>
+                <Text size="xs" c={MUTED} style={{"lineHeight": 1.5, "marginBottom": "10px"}}>
+                    Sign in to save your chats.
+                </Text>
 
-                    <Link to="/login" style={{"textDecoration": "none"}}>
-                        <Button
-                            fullWidth
-                            radius="md"
-                            size="sm"
-                            variant="outline"
-                            leftSection={<IconLogin size={16} />}
-                            styles={{
-                                "root": {
-                                    "borderColor": ORANGE,
-                                    "color": ORANGE,
-                                    "height": "44px"
-                                }
-                            }}
-                        >
-                            Sign In
-                        </Button>
+                <Link to="/login" style={{"textDecoration": "none"}}>
+                    <Button
+                        fullWidth
+                        radius="md"
+                        size="sm"
+                        className="jc-primary-cta"
+                        leftSection={<IconLogin size={16} />}
+                        style={{
+                            "background": "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                            "color": "white",
+                            "height": "44px",
+                            "boxShadow": "0 6px 18px rgba(249,115,22,0.22)"
+                        }}
+                    >
+                        Sign In
+                    </Button>
+                </Link>
+
+                <Text ta="center" size="xs" c={MUTED} mt={10}>
+                    {"Don't have an account? "}
+                    <Link to="/register" className="jc-create-account">
+                        {"Create Account →"}
                     </Link>
-                </Stack>
+                </Text>
             </Paper>
         </Box>;
     }
@@ -523,7 +535,7 @@ def:pub Sidebar(
         if isAuthenticated {
             collapsedAuthSection = <Stack gap="xs" align="center" px="xs" pt="sm">
                 {(
-                    <Tooltip label="Admin Dashboard" position="right">
+                    <Tooltip label="Admin Dashboard" position="right" offset={12} withinPortal={True}>
                         <ActionIcon
                             onClick={lambda () { navigate("/dashboard"); }}
                             variant="subtle"
@@ -537,7 +549,7 @@ def:pub Sidebar(
                     if isAdmin
                     else None
                 )}
-                <Tooltip label="Log out" position="right">
+                <Tooltip label="Log out" position="right" offset={12} withinPortal={True}>
                     <ActionIcon
                         onClick={handleLogout}
                         variant="subtle"
@@ -551,26 +563,13 @@ def:pub Sidebar(
             </Stack>;
         } else {
             collapsedAuthSection = <Stack gap="xs" align="center" px="xs" pt="sm">
-                <Tooltip label="Sign Up" position="right">
-                    <Link to="/register">
+                <Tooltip label="Sign In" position="right" offset={12} withinPortal={True}>
+                    <Link to="/login">
                         <ActionIcon
                             variant="filled"
                             size="lg"
                             radius="md"
                             style={{"background": ORANGE, "color": "white"}}
-                        >
-                            <IconUserPlus size={18} />
-                        </ActionIcon>
-                    </Link>
-                </Tooltip>
-
-                <Tooltip label="Sign In" position="right">
-                    <Link to="/login">
-                        <ActionIcon
-                            variant="outline"
-                            size="lg"
-                            radius="md"
-                            style={{"borderColor": ORANGE, "color": ORANGE}}
                         >
                             <IconLogin size={18} />
                         </ActionIcon>
@@ -580,17 +579,23 @@ def:pub Sidebar(
         }
     }
 
-    helpButton = <Box px={(("md" if isExpanded else "xs"))} pt="xs" pb="sm">
-        <Tooltip label="Help & FAQ" position="right" disabled={isExpanded}>
+    helpButton = <Box px={(("md" if isExpanded else "xs"))} pt={2} pb={2}>
+        <Tooltip label="Help & FAQ" position="right" offset={12} withinPortal={True} disabled={isExpanded}>
             <Button
                 onClick={lambda () { window.open("https://www.jac-lang.org/learn/data_spatial/FAQ/", "_blank"); }}
                 variant="subtle"
                 fullWidth={isExpanded}
-                size={(("sm" if isExpanded else "md"))}
+                size={(("xs" if isExpanded else "md"))}
                 leftSection={((<IconHelp size={16} />) if isExpanded else None)}
-                style={{
-                    "justifyContent": (("flex-start" if isExpanded else "center")),
-                    "color": MUTED
+                styles={{
+                    "root": {
+                        "height": "30px",
+                        "justifyContent": (("flex-start" if isExpanded else "center")),
+                        "color": MUTED
+                    },
+                    "root:hover": {
+                        "background": "rgba(255,255,255,0.03)"
+                    }
                 }}
             >
                 {(("Help & FAQ") if isExpanded else (<IconHelp size={18} />))}
@@ -603,17 +608,18 @@ def:pub Sidebar(
         dotColor = (("#22c55e" if isAuthenticated else ORANGE));
         statusLabel = (("Ready to help" if isAuthenticated else "Guest mode"));
 
-        statusIndicator = <Box px="md" pb="md">
+        statusIndicator = <Box px="md" pt={2} pb={8}>
             <Group gap="xs" style={{
-                "background": "rgba(31, 41, 55, 0.6)",
-                "padding": "10px 12px",
+                "background": "var(--chip-bg)",
+                "padding": "7px 12px",
                 "borderRadius": "10px"
             }}>
-                <Box style={{
+                <Box className="jc-pulse-dot" style={{
                     "width": "8px",
                     "height": "8px",
                     "borderRadius": "50%",
-                    "background": dotColor
+                    "background": dotColor,
+                    "boxShadow": "0 0 8px " + dotColor
                 }} />
                 <Text size="xs" c={MUTED}>
                     {statusLabel}
@@ -637,6 +643,54 @@ def:pub Sidebar(
         </Box>;
     }
 
+    def toggleTheme() -> None {
+        if onSetTheme {
+            onSetTheme(("light" if theme == "dark" else "dark"));
+        }
+    }
+
+    themeSwitch = None;
+    themeToggleCollapsed = None;
+    if isExpanded {
+        themeSwitch = <Box px="md" pt={2} pb={10}>
+            <Group justify="space-between" align="center" wrap="nowrap">
+                <Text size="xs" fw={600} c={MUTED}>Theme</Text>
+                <div
+                    className="jc-theme-switch"
+                    role="switch"
+                    tabIndex={0}
+                    aria-label="Toggle light or dark theme"
+                    onClick={lambda () { toggleTheme(); }}
+                    onKeyDown={lambda (e: any) {
+                        if e.key == "Enter" or e.key == " " {
+                            e.preventDefault();
+                            toggleTheme();
+                        }
+                    }}
+                >
+                    <span className="jc-sw-knob" />
+                    <IconSun size={13} className="jc-sw-sun" />
+                    <IconMoon size={13} className="jc-sw-moon" />
+                </div>
+            </Group>
+        </Box>;
+    } else {
+        themeIcon = ((<IconSun size={18} />) if theme == "light" else (<IconMoon size={18} />));
+        themeToggleCollapsed = <Box px="xs" pt={2} pb="sm" style={{"display": "flex", "justifyContent": "center"}}>
+            <Tooltip label="Toggle theme" position="right" offset={12} withinPortal={True}>
+                <ActionIcon
+                    onClick={lambda () { toggleTheme(); }}
+                    variant="subtle"
+                    size="lg"
+                    radius="md"
+                    style={{"color": ORANGE}}
+                >
+                    {themeIcon}
+                </ActionIcon>
+            </Tooltip>
+        </Box>;
+    }
+
     bottomArea = <Box>
         <Divider color={BORDER} />
         {userSection}
@@ -644,12 +698,14 @@ def:pub Sidebar(
         {collapsedAuthSection}
         {helpButton}
         {statusIndicator}
+        {themeSwitch}
+        {themeToggleCollapsed}
     </Box>;
 
     return <>
         {mobileOverlay}
 
-        <Box style={sidebarStyle}>
+        <Box className="jc-sidebar" style={sidebarStyle}>
             <Box style={{"display": "flex", "flexDirection": "column", "height": "100%"}}>
                 {logoSection}
                 {newChatButton}

@@ -10,6 +10,7 @@ import from .pages.ForgotPasswordPage { ForgotPasswordPage }
 import from .pages.ResetPasswordPage { ResetPasswordPage }
 import from .pages.AdminDashboard { AdminDashboard }
 import from .utils.ProtectedRoute { ProtectedRoute }
+import from .components.auth.AuthShell { AuthShell }
 
 import from ".utils.monaco_initializer" { initializeMonacoGlobally }
 
@@ -18,6 +19,8 @@ import ".global.css";
 
 """Main app component with routing."""
 def:pub app() -> JsxElement {
+    has colorScheme: str = (localStorage.getItem("jac_theme") or "dark");
+
     useEffect(lambda () {
         async def initMonaco() -> None {
             try {
@@ -28,7 +31,22 @@ def:pub app() -> JsxElement {
 
         initMonaco();
     }, []);
-    # Custom Mantine theme for dark mode
+
+    # Apply + persist the active theme: drives our CSS vars via data-theme on <html>
+    # and Mantine components via forceColorScheme. Single source of truth.
+    useEffect(lambda () {
+        document.documentElement.setAttribute("data-theme", colorScheme);
+        try {
+            localStorage.setItem("jac_theme", colorScheme);
+        } except Exception {
+        }
+    }, [colorScheme]);
+
+    def handleSetTheme(newScheme: str) -> None {
+        colorScheme = newScheme;
+    }
+
+    # Custom Mantine theme
     theme = createTheme({
         "primaryColor": "violet",
         "defaultRadius": "md",
@@ -49,12 +67,14 @@ def:pub app() -> JsxElement {
         }
     });
 
-    return <MantineProvider theme={theme} defaultColorScheme="dark">
+    return <MantineProvider theme={theme} forceColorScheme={colorScheme}>
         <Router>
             <Routes>
-                <Route path="/" element={<JacChatbot />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/" element={<JacChatbot theme={colorScheme} onSetTheme={handleSetTheme} />} />
+                <Route element={<AuthShell />}>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                </Route>
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />

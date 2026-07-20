@@ -52,9 +52,8 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> JsxElement 
     return <Box my="sm">
         <Paper
             radius="md"
+            className="jc-code-surface"
             style={{
-                "background": "rgba(0,0,0,0.42)",
-                "border": "1px solid rgba(255,255,255,0.10)",
                 "overflow": "hidden"
             }}
         >
@@ -63,8 +62,8 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> JsxElement 
                 px="md"
                 py="xs"
                 style={{
-                    "borderBottom": "1px solid rgba(255,255,255,0.06)",
-                    "background": "rgba(0,0,0,0.25)"
+                    "borderBottom": "1px solid var(--code-header-border)",
+                    "background": "var(--code-header-bg)"
                 }}
             >
                 <Text size="xs" c="dimmed" ff="monospace">
@@ -91,7 +90,7 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> JsxElement 
                         "fontFamily": "JetBrains Mono, Consolas, Monaco, monospace",
                         "whiteSpace": "pre-wrap",
                         "wordBreak": "break-word",
-                        "color": "#e4e4e7"
+                        "color": "var(--code-plain-text)"
                     }}
                     onCut={lambda (e: any) { e.preventDefault(); }}
                     onPaste={lambda (e: any) { e.preventDefault(); }}
@@ -112,7 +111,7 @@ def:pub CodeBlock(language: str, code: str, children: any = null) -> JsxElement 
 
 
 """Read-only Jac code block using CodeMirror 6."""
-def:pub JacCodeBlock(code: str) -> JsxElement {
+def:pub JacCodeBlock(code: str, theme: str = "dark") -> JsxElement {
     has copied: bool = false;
     editorRef = useRef(None);
     viewRef = useRef(None);
@@ -133,7 +132,7 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
             state = EditorState.create({
                 "doc": code,
                 "extensions": [
-                    getJacExtensions(),
+                    getJacExtensions(theme),
                     EditorState.readOnly.of(True),
                     EditorView.editable.of(False)
                 ]
@@ -144,7 +143,7 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
             }]);
         }
         return lambda () { if viewRef.current { viewRef.current.destroy(); viewRef.current = None; } };
-    }, [code]);
+    }, [code, theme]);
 
     copyLabel = "Copy code";
     copyColor = "gray";
@@ -158,9 +157,8 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
     return <Box my="sm">
         <Paper
             radius="md"
+            className="jc-code-surface"
             style={{
-                "background": "rgba(0,0,0,0.42)",
-                "border": "1px solid rgba(255,255,255,0.10)",
                 "overflow": "hidden"
             }}
         >
@@ -169,8 +167,8 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
                 px="md"
                 py="xs"
                 style={{
-                    "borderBottom": "1px solid rgba(255,255,255,0.06)",
-                    "background": "rgba(0,0,0,0.25)"
+                    "borderBottom": "1px solid var(--code-header-border)",
+                    "background": "var(--code-header-bg)"
                 }}
             >
                 <Text size="xs" c="dimmed" ff="monospace">jac</Text>
@@ -194,9 +192,9 @@ def:pub JacCodeBlock(code: str) -> JsxElement {
 }
 
 """Chat message component."""
-def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: str = "") -> JsxElement {
+def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: str = "", theme: str = "dark") -> JsxElement {
 
-    ORANGE = "#f97316";
+    ORANGE = "var(--primary)";
     logoSrc = "/logo.png";
 
     if isUser {
@@ -207,13 +205,13 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
                     style={{
                         "padding": "16px",
                         "maxWidth": "80%",
-                        "background": "rgba(255, 255, 255, 0.05)",
-                        "border": "none",
+                        "background": "var(--hover-bg)",
+                        "border": "1px solid var(--border)",
                         "borderRadius": "24px",
                         "boxShadow": "none"
                     }}
                 >
-                    <Text size="sm" c="white" style={{"whiteSpace": "pre-wrap", "lineHeight": "1.6"}}>
+                    <Text size="sm" c="var(--text-primary)" style={{"whiteSpace": "pre-wrap", "lineHeight": "1.6"}}>
                         {message}
                     </Text>
                 </div>
@@ -223,6 +221,12 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
 
     # Bot message: Markdown enabled
     components = {
+        "pre": lambda (p: any) {
+            # Pass-through: the code block (CodeBlock/JacCodeBlock) is its own card,
+            # so the markdown <pre> must not wrap it in a second container.
+            return <>{p.children}</>;
+        },
+
         "code": lambda (p: any) {
             console.log("=== Code component called ===");
             console.log("Props:", p);
@@ -257,7 +261,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
                 # Use lightweight tokenizer for Jac code
                 if language == "jac" {
                     console.log("Rendering JacCodeBlock");
-                    return <JacCodeBlock code={codeContent} />;
+                    return <JacCodeBlock code={codeContent} theme={theme} />;
                 }
                 
                 console.log("Rendering CodeBlock for language:", language);
@@ -269,12 +273,12 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             # Inline code
             return <Code
                 style={{
-                    "background": "rgba(249,115,22,0.15)",
-                    "color": "#fdba74",
+                    "background": "var(--primary-dim)",
+                    "color": "var(--primary)",
                     "padding": "2px 6px",
                     "borderRadius": "4px",
                     "fontSize": "13px",
-                    "border": "1px solid rgba(249,115,22,0.20)"
+                    "border": "1px solid rgba(249,115,22,0.25)"
                 }}
             >
                 {children}
@@ -282,29 +286,25 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
         },
 
         "h1": lambda (p: any) {
-            return <Text size="lg" fw={700} c="white" mt="md" mb="xs"
-                style={{
-                    "borderBottom": "1px solid rgba(255,255,255,0.10)",
-                    "paddingBottom": "8px"
-                }}>
+            return <Text size="lg" fw={700} c="var(--text-primary)" mt="md" mb="xs">
                 {p.children}
             </Text>;
         },
 
         "h2": lambda (p: any) {
-            return <Text size="md" fw={700} c="white" mt="sm" mb="xs">
+            return <Text size="md" fw={700} c="var(--text-primary)" mt="sm" mb="xs">
                 {p.children}
             </Text>;
         },
 
         "h3": lambda (p: any) {
-            return <Text size="sm" fw={700} c="white" mt="sm" mb="xs">
+            return <Text size="sm" fw={700} c="var(--text-primary)" mt="sm" mb="xs">
                 {p.children}
             </Text>;
         },
 
         "p": lambda (p: any) {
-            return <Text size="sm" c="gray.3" my="xs" style={{"lineHeight": "1.7"}}>
+            return <Text size="sm" c="var(--text-primary)" my="xs" style={{"lineHeight": "1.7"}}>
                 {p.children}
             </Text>;
         },
@@ -322,7 +322,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
         },
 
         "li": lambda (p: any) {
-            return <Text component="li" size="sm" c="gray.3"
+            return <Text component="li" size="sm" c="var(--text-primary)"
                 style={{"lineHeight": "1.7", "marginBottom": "4px"}}>
                 {p.children}
             </Text>;
@@ -331,7 +331,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
         "strong": lambda (p: any) {
             return <strong style={{
                 "fontWeight": "700",
-                "color": "#ffffff"
+                "color": "var(--text-primary)"
             }}>
                 {p.children}
             </strong>;
@@ -340,7 +340,7 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
         "em": lambda (p: any) {
             return <em style={{
                 "fontStyle": "italic",
-                "color": "#a1a1aa"
+                "color": "var(--text-primary)"
             }}>
                 {p.children}
             </em>;
@@ -364,7 +364,8 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
         },
 
         "hr": lambda (p: any) {
-            return <Box my="md" style={{"borderTop": "1px solid rgba(255,255,255,0.10)"}} />;
+            # Divider rules removed — sections separate via heading weight + spacing, not lines.
+            return None;
         }
     };
 
@@ -377,10 +378,10 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             "marginBottom": "6px",
             "padding": "2px 10px",
             "borderRadius": "12px",
-            "background": "rgba(59, 130, 246, 0.15)",
-            "border": "1px solid rgba(59, 130, 246, 0.35)"
+            "background": "var(--rag-badge-bg)",
+            "border": "1px solid var(--rag-badge-border)"
         }}>
-            <Text size="xs" fw={600} style={{"color": "#93c5fd", "letterSpacing": "0.03em"}}>RAG Response</Text>
+            <Text size="xs" fw={600} style={{"color": "var(--rag-badge-text)", "letterSpacing": "0.03em"}}>RAG Response</Text>
         </div>;
     } elif source == "MCP" {
         sourceLabel = <div style={{
@@ -389,10 +390,10 @@ def:pub ChatMessage(message: str, isUser: bool, timestamp: any = null, source: s
             "marginBottom": "6px",
             "padding": "2px 10px",
             "borderRadius": "12px",
-            "background": "rgba(168, 85, 247, 0.15)",
-            "border": "1px solid rgba(168, 85, 247, 0.35)"
+            "background": "var(--mcp-badge-bg)",
+            "border": "1px solid var(--mcp-badge-border)"
         }}>
-            <Text size="xs" fw={600} style={{"color": "#c4b5fd", "letterSpacing": "0.03em"}}>MCP Response</Text>
+            <Text size="xs" fw={600} style={{"color": "var(--mcp-badge-text)", "letterSpacing": "0.03em"}}>MCP Response</Text>
         </div>;
     }
 
