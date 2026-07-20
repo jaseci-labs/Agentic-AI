@@ -122,26 +122,20 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set +e
-          run_start() { timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log; return "${PIPESTATUS[0]}"; }
-          run_start; EXIT_CODE=$?
-          # Cold-start byllm seal race: services/jacServer.jac is the only module that
-          # imports byllm (jaclang.byllm.lib). On a FRESH runner the scale seal's pod
-          # binary (.pod-jac) compiles byllm cold, a v0.32.1 compiler race drops
-          # jacServer.jac's bytecode, and the deploy dies with "Seal incomplete: 1
-          # module has no JIR (services/jacServer.jac)". Warming the runner's own jac
-          # does NOT help -- the seal uses a separately-downloaded binary. BUT that
-          # first attempt STILL compiles+caches byllm in the pod binary's
-          # content-keyed runtime, so an immediate retry (same pod binary bytes)
-          # reuses byllm and seals clean. Verified locally: 1st staged seal fails,
-          # 2nd reuses byllm -> 21/21. Retry only while the seal never completed
-          # ("Ready: downloading" absent) AND it was this specific race.
-          for attempt in 2 3; do
-            if grep -q "Ready: downloading" /tmp/jacstart.log || ! grep -q "Seal incomplete" /tmp/jacstart.log; then
-              break
-            fi
-            echo "Seal incomplete on attempt $((attempt - 1)) (cold byllm compile race); byllm is now cached -- retrying (attempt $attempt)..."
-            run_start; EXIT_CODE=$?
-          done
+          # THE fix for "Seal incomplete: services/jacServer.jac no JIR":
+          # the v0.32.1 pin in the "Install the jac binary" step only sets the RUNNER's
+          # jac. jac-scale's seal downloads its OWN pod binary from jaseci-labs/jaseci
+          # releases/LATEST (currently v0.33.0) and seals + ships THAT -- ignoring the
+          # pin (scale/injector/binary.jac:114). v0.33.0 consistently mis-compiles
+          # services/jacServer.jac (the only byllm-importing module) to "no bytecode"
+          # -> seal incomplete, every run (that is why retries didn't help). Verified
+          # locally: v0.33.0 fails every attempt; v0.32.1 seals 21/21. Setting
+          # JAC_SCALE_BINARY_PATH switches jac-scale to its LOCAL channel
+          # (scale/config/dev_config.jac:16), so the seal ships THIS runner's pinned
+          # v0.32.1 binary to the seal + pods -- making the pin effective end to end.
+          export JAC_SCALE_BINARY_PATH="$HOME/.jacbin/jac"
+          timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log
+          EXIT_CODE=${PIPESTATUS[0]}
           set -e
           # Proof jac-scale got past binary-prep + seal (shipped the .jab):
           grep -q "Ready: downloading" /tmp/jacstart.log && PREPPED=yes || PREPPED=no
