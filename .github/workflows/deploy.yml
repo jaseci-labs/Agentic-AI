@@ -108,27 +108,6 @@ jobs:
           } >> "$GITHUB_ENV"
           echo "Resolved MONGODB_URI and REDIS_URL from cluster secrets (values masked)."
 
-      # Warm the byllm compile cache BEFORE the scale seal.
-      # services/jacServer.jac is the only app module that imports byllm
-      # (`import from jaclang.byllm.lib { Model }`). On a fresh runner, the seal's
-      # FIRST byllm compile happens while sealing jacServer.jac, and a v0.32.1
-      # cold-start compiler race drops jacServer.jac's bytecode -> the deploy dies
-      # with "Seal incomplete: 1 module has no JIR (services/jacServer.jac)". It
-      # only bites when byllm is cold, which is every CI run. Pre-compiling byllm
-      # here caches its .jir in the binary-keyed runtime site; the seal runs a
-      # content-identical copy of this same binary (.pod-jac), so it REUSES the
-      # warm cache and never triggers the cold compile -> jacServer.jac seals.
-      # Verified locally: warm-up ~3s, then the exact seal reuses byllm (0 recompiled,
-      # 21/21). Non-fatal: even a failed warm-up still caches byllm.
-      - name: Warm byllm compile cache (avoids cold-seal race on jacServer.jac)
-        run: |
-          WARM="$(mktemp -d)"
-          printf '[project]\nname = "byllm-warm"\nentry-point = "warm.jac"\n' > "$WARM/jac.toml"
-          printf 'import from jaclang.byllm.lib { Model }\nwith entry { }\n' > "$WARM/warm.jac"
-          ( cd "$WARM" && jac build --no_typecheck warm.jac ) \
-            || echo "byllm warm-up returned non-zero (still caches byllm); continuing to the seal."
-          rm -rf "$WARM"
-
       # Deploy using jac-scale (secrets from env via [scale.secrets]). The binary +
       # the sealed .jab ship to pods over the RWX bundle PVC (bundle_storage_class).
       # `jac start --scale` preps the binary, SEALS the app, APPLIES the manifest,
@@ -143,8 +122,26 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set +e
-          timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log
-          EXIT_CODE=${PIPESTATUS[0]}
+          run_start() { timeout 1800 jac start main.jac --scale 2>&1 | tee /tmp/jacstart.log; return "${PIPESTATUS[0]}"; }
+          run_start; EXIT_CODE=$?
+          # Cold-start byllm seal race: services/jacServer.jac is the only module that
+          # imports byllm (jaclang.byllm.lib). On a FRESH runner the scale seal's pod
+          # binary (.pod-jac) compiles byllm cold, a v0.32.1 compiler race drops
+          # jacServer.jac's bytecode, and the deploy dies with "Seal incomplete: 1
+          # module has no JIR (services/jacServer.jac)". Warming the runner's own jac
+          # does NOT help -- the seal uses a separately-downloaded binary. BUT that
+          # first attempt STILL compiles+caches byllm in the pod binary's
+          # content-keyed runtime, so an immediate retry (same pod binary bytes)
+          # reuses byllm and seals clean. Verified locally: 1st staged seal fails,
+          # 2nd reuses byllm -> 21/21. Retry only while the seal never completed
+          # ("Ready: downloading" absent) AND it was this specific race.
+          for attempt in 2 3; do
+            if grep -q "Ready: downloading" /tmp/jacstart.log || ! grep -q "Seal incomplete" /tmp/jacstart.log; then
+              break
+            fi
+            echo "Seal incomplete on attempt $((attempt - 1)) (cold byllm compile race); byllm is now cached -- retrying (attempt $attempt)..."
+            run_start; EXIT_CODE=$?
+          done
           set -e
           # Proof jac-scale got past binary-prep + seal (shipped the .jab):
           grep -q "Ready: downloading" /tmp/jacstart.log && PREPPED=yes || PREPPED=no
