@@ -18,7 +18,8 @@ import from "@mantine/core" {
 import from "@tabler/icons-react" {
     IconUser,
     IconLock,
-    IconAlertCircle
+    IconAlertCircle,
+    IconArrowRight
 }
 import from ..hooks.useAuth { useAuth }
 
@@ -32,15 +33,12 @@ def:pub LoginPage() -> JsxElement {
     loading = hook.loading;
 
     # ---- Jaseci theme tokens ----
-    BG = "#0b0b0f";
-    BORDER = "rgba(255,255,255,0.10)";
-    BORDER_SOFT = "rgba(255,255,255,0.06)";
-    TEXT = "#ffffff";
-    MUTED = "#9ca3af";
-    INPUT_BG = "rgba(255,255,255,0.04)";
-    INPUT_BORDER = "rgba(255,255,255,0.10)";
-    ORANGE = "#f97316";
-    ORANGE_DARK = "#ea580c";
+    TEXT = "var(--text-primary)";
+    MUTED = "var(--text-muted)";
+    INPUT_BG = "var(--input-bg)";
+    INPUT_BORDER = "var(--border-light)";
+    ORANGE = "var(--primary)";
+    ORANGE_DARK = "var(--primary-hover)";
 
     # Redirect if already logged in
     useEffect(lambda () {
@@ -60,7 +58,8 @@ def:pub LoginPage() -> JsxElement {
             styles={{
                 "root": {
                     "background": "rgba(239, 68, 68, 0.08)",
-                    "border": "1px solid rgba(239, 68, 68, 0.25)"
+                    "border": "1px solid rgba(239, 68, 68, 0.25)",
+                    "borderRadius": "12px"
                 },
                 "message": {"color": "#fecaca"}
             }}
@@ -69,67 +68,37 @@ def:pub LoginPage() -> JsxElement {
         </Alert>;
     }
 
-    return <Box style={{
-        "minHeight": "100vh",
-        "background": "radial-gradient(circle at 20% 10%, rgba(249,115,22,0.10) 0%, transparent 40%), " +
-                      "radial-gradient(circle at 80% 30%, rgba(249,115,22,0.06) 0%, transparent 45%), " +
-                      "linear-gradient(135deg, " + BG + " 0%, #0f0f15 50%, " + BG + " 100%)",
-        "display": "flex",
-        "alignItems": "center",
-        "justifyContent": "center",
-        "padding": "20px"
-    }}>
-        <Paper
-            p="xl"
-            radius="lg"
-            style={{
-                "width": "100%",
-                "maxWidth": "420px",
-                "background": "rgba(20, 20, 20, 0.92)",
-                "border": "1px solid " + BORDER_SOFT,
-                "backdropFilter": "blur(10px)",
-                "boxShadow": "0 20px 60px rgba(0,0,0,0.55)"
-            }}
-        >
-            <Stack gap="lg">
-                <Box ta="center">
-                    <Box style={{
-                        "width": "64px",
-                        "height": "64px",
-                        "margin": "0 auto 16px",
-                        "borderRadius": "16px",
-                        "background": "rgba(249, 115, 22, 0.12)",
-                        "border": "1px solid rgba(249, 115, 22, 0.35)",
-                        "display": "flex",
-                        "alignItems": "center",
-                        "justifyContent": "center",
-                        "boxShadow": "0 0 26px rgba(249, 115, 22, 0.18)"
-                    }}>
-                        <Box style={{
-                            "width": "34px",
-                            "height": "34px",
-                            "borderRadius": "12px",
-                            "background": "linear-gradient(135deg, " + ORANGE + " 0%, " + ORANGE_DARK + " 100%)",
-                            "display": "flex",
-                            "alignItems": "center",
-                            "justifyContent": "center"
-                        }}>
-                            <span style={{
-                                "display": "block",
-                                "width": "10px",
-                                "height": "10px",
-                                "borderRadius": "50%",
-                                "background": "rgba(255,255,255,0.85)"
-                            }} />
-                        </Box>
-                    </Box>
+    logoMark = <img
+        src="/logo.png"
+        alt="JacGPT"
+        style={{
+            "height": "42px",
+            "width": "auto",
+            "display": "block",
+            "flexShrink": 0,
+            "filter": "drop-shadow(0 0 12px rgba(249,115,22,0.35))"
+        }}
+    />;
 
-                    <Text size="xl" fw={700} c={TEXT} mb={4}>
-                        Welcome Back
-                    </Text>
-                    <Text size="sm" c={MUTED}>
-                        Sign in to continue to Jac GPT
-                    </Text>
+    return <Paper
+        p={36}
+        radius={20}
+        className="jc-float-card jc-card-in"
+        style={{"width": "100%"}}
+    >
+        <Stack gap="lg">
+                <Box>
+                    <Group gap="sm" mb={20}>
+                        {logoMark}
+                        <Box>
+                            <Text size="xl" fw={800} c={TEXT} style={{"letterSpacing": "-0.02em"}}>
+                                Welcome back
+                            </Text>
+                            <Text size="sm" c={MUTED}>
+                                Sign in to your JacGPT workspace
+                            </Text>
+                        </Box>
+                    </Group>
                 </Box>
 
                 <form onSubmit={hook.handleLogin}>
@@ -142,12 +111,14 @@ def:pub LoginPage() -> JsxElement {
                             disabled={loading}
                             leftSection={<IconUser size={16} />}
                             autoComplete="username"
+                            radius="md"
                             styles={{
-                                "label": {"color": MUTED, "marginBottom": "8px"},
+                                "label": {"color": MUTED, "marginBottom": "8px", "fontWeight": 600, "fontSize": "12px", "textTransform": "uppercase", "letterSpacing": "0.06em"},
                                 "input": {
                                     "background": INPUT_BG,
                                     "border": "1px solid " + INPUT_BORDER,
-                                    "color": TEXT
+                                    "color": TEXT,
+                                    "height": "46px"
                                 },
                                 "section": {"color": MUTED}
                             }}
@@ -161,16 +132,30 @@ def:pub LoginPage() -> JsxElement {
                             disabled={loading}
                             leftSection={<IconLock size={16} />}
                             autoComplete="current-password"
+                            radius="md"
                             styles={{
-                                "label": {"color": MUTED, "marginBottom": "8px"},
+                                "label": {"color": MUTED, "marginBottom": "8px", "fontWeight": 600, "fontSize": "12px", "textTransform": "uppercase", "letterSpacing": "0.06em"},
                                 "input": {
                                     "background": INPUT_BG,
                                     "border": "1px solid " + INPUT_BORDER,
-                                    "color": TEXT
+                                    "color": TEXT,
+                                    "height": "46px"
                                 },
                                 "section": {"color": MUTED}
                             }}
                         />
+
+                        <Group justify="flex-end" mt={-4}>
+                            <Anchor
+                                component={Link}
+                                to="/forgot-password"
+                                size="sm"
+                                fw={600}
+                                style={{"color": ORANGE, "textDecoration": "none"}}
+                            >
+                                Forgot password?
+                            </Anchor>
+                        </Group>
 
                         {errorDisplay}
 
@@ -179,15 +164,20 @@ def:pub LoginPage() -> JsxElement {
                             fullWidth
                             loading={loading}
                             size="md"
-                            mt="xs"
+                            radius="md"
+                            rightSection={<IconArrowRight size={16} />}
                             styles={{
                                 "root": {
                                     "background": "linear-gradient(135deg, " + ORANGE + " 0%, " + ORANGE_DARK + " 100%)",
                                     "border": "1px solid rgba(249,115,22,0.35)",
-                                    "boxShadow": "0 10px 26px rgba(249, 115, 22, 0.18)"
+                                    "boxShadow": "0 10px 26px rgba(249, 115, 22, 0.22)",
+                                    "height": "48px",
+                                    "fontWeight": 700,
+                                    "transition": "filter 200ms ease, transform 200ms ease"
                                 },
                                 "root:hover": {
-                                    "filter": "brightness(1.05)"
+                                    "filter": "brightness(1.06)",
+                                    "transform": "translateY(-1px)"
                                 }
                             }}
                         >
@@ -196,20 +186,31 @@ def:pub LoginPage() -> JsxElement {
                     </Stack>
                 </form>
 
-                <Group justify="center">
-                    <Anchor
-                        component={Link}
-                        to="/forgot-password"
-                        size="sm"
-                        fw={700}
-                        style={{
-                            "color": ORANGE,
-                            "textDecoration": "none"
-                        }}
-                    >
-                        Forgot password?
-                    </Anchor>
-                </Group>
+                <Divider color="var(--border)" label="or" labelPosition="center" styles={{"label": {"color": MUTED}}} />
+
+                <Anchor
+                    component={Link}
+                    to="/"
+                    style={{"textDecoration": "none"}}
+                >
+                    <Box style={{
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "gap": "8px",
+                        "height": "46px",
+                        "borderRadius": "12px",
+                        "background": "var(--hover-bg)",
+                        "border": "1px solid var(--border-light)",
+                        "color": "var(--text-secondary)",
+                        "fontSize": "14px",
+                        "fontWeight": 600
+                    }}>
+                        Continue as Guest
+                        <span style={{"color": "var(--text-muted)", "fontWeight": 400}}>(Limited messages)</span>
+                        <IconArrowRight size={14} />
+                    </Box>
+                </Anchor>
 
                 <Text ta="center" size="sm" c={MUTED}>
                     {"Don't have an account? "}
@@ -217,31 +218,11 @@ def:pub LoginPage() -> JsxElement {
                         component={Link}
                         to="/register"
                         fw={700}
-                        style={{
-                            "color": ORANGE,
-                            "textDecoration": "none"
-                        }}
+                        style={{"color": ORANGE, "textDecoration": "none"}}
                     >
-                        Sign up
+                        Sign up free
                     </Anchor>
                 </Text>
-
-                <Divider color="rgba(255,255,255,0.08)" />
-
-                <Group justify="center">
-                    <Anchor
-                        component={Link}
-                        to="/"
-                        size="sm"
-                        style={{
-                            "color": "rgba(255,255,255,0.55)",
-                            "textDecoration": "none"
-                        }}
-                    >
-                        Continue as Guest (Limited messages)
-                    </Anchor>
-                </Group>
             </Stack>
-        </Paper>
-    </Box>;
+        </Paper>;
 }

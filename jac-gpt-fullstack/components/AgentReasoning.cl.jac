@@ -75,7 +75,7 @@ def:pub ReasoningStep(step: any, index: int) -> JsxElement {
 
     iterationLabel = None;
     if step.data.iteration {
-        iterationLabel = <Text size="xs" c="dimmed">
+        iterationLabel = <Text size="xs" c="var(--text-muted)">
             {"Step " + String(step.data.iteration)}
         </Text>;
     }
@@ -85,7 +85,7 @@ def:pub ReasoningStep(step: any, index: int) -> JsxElement {
         contentBlock = <Box mt="4px">
             <Text
                 size="xs"
-                c="dimmed"
+                c="var(--text-secondary)"
                 style={{
                     "fontFamily": "JetBrains Mono, Consolas, monospace",
                     "fontSize": "11px",

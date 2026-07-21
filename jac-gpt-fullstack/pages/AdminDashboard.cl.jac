@@ -59,16 +59,16 @@ def:pub AdminDashboard() -> JsxElement {
     has hadQuestionLoadError: bool = False;
 
     # Theme tokens
-    BG = "#141414";
-    SURFACE = "#1a1a1e";
-    BORDER = "#374151";
-    TEXT = "#ffffff";
-    MUTED = "#9ca3af";
-    MUTED2 = "#6b7280";
-    ORANGE = "#f97316";
-    ORANGE_DARK = "#ea580c";
-    PANEL = "rgba(255,255,255,0.04)";
-    PANEL_BORDER = "rgba(255,255,255,0.08)";
+    BG = "var(--background)";
+    SURFACE = "var(--surface)";
+    BORDER = "var(--border-light)";
+    TEXT = "var(--text-primary)";
+    MUTED = "var(--text-muted)";
+    MUTED2 = "var(--text-dim)";
+    ORANGE = "var(--primary)";
+    ORANGE_DARK = "var(--primary-hover)";
+    PANEL = "var(--panel)";
+    PANEL_BORDER = "var(--panel-border)";
 
     # Check auth + admin status on mount
     useEffect(lambda () {
@@ -616,7 +616,7 @@ def:pub AdminDashboard() -> JsxElement {
                                 <Text size="xs" c={MUTED2}>{formatDate(q.created_at)}</Text>
                             </Group>
                             <Box style={{
-                                "background": "rgba(31, 41, 55, 0.6)",
+                                "background": "var(--chip-bg)",
                                 "padding": "12px 16px",
                                 "borderRadius": "8px",
                                 "borderLeft": "4px solid " + ORANGE

@@ -1,32 +1,185 @@
 /* Global styles for Jac GPT Client with Mantine */
 
 :root {
-    /* Dark theme colors - matching violet/purple brand */
+    /* ===== Surfaces (Jaseci orange / deep-dark system) ===== */
     --background: #0a0a0f;
-    --surface: #0f0f15;
+    --bg-deep: #0d0d18;
+    --surface: #12121a;
     --surface-hover: #16161f;
-    --border: rgba(255, 255, 255, 0.06);
-    --border-light: rgba(255, 255, 255, 0.1);
+    --sidebar: #101018;
+    --card: #14141c;
+    --card-hover: #1a1a24;
+    --muted: #16162a;
 
-    /* Text colors */
+    /* ===== Borders ===== */
+    --border: rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.14);
+
+    /* ===== Text ===== */
     --text-primary: #fafafa;
     --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
+    --text-muted: #8b8ba7;
+    --text-faint: rgba(255, 255, 255, 0.45);
 
-    /* Brand colors - violet/purple theme */
-    --primary: #7c3aed;
-    --primary-light: #a855f7;
-    --primary-hover: #6d28d9;
-    --secondary: #8b5cf6;
+    /* ===== Brand (orange) ===== */
+    --primary: #f97316;
+    --primary-light: #ff9a3c;
+    --primary-hover: #ea580c;
+    --primary-dim: rgba(249, 115, 22, 0.15);
+    --primary-soft: rgba(249, 115, 22, 0.08);
+    --secondary: #f97316;
+    --accent: #f97316;
 
-    /* Status colors */
+    /* ===== Status ===== */
     --success: #22c55e;
     --error: #ef4444;
     --warning: #eab308;
+    --info: #38bdf8;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-    --gradient-secondary: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%);
+    /* ===== Gradients ===== */
+    --gradient-primary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    --gradient-brand: linear-gradient(135deg, #ff9a3c 0%, #f97316 55%, #ea580c 100%);
+    --gradient-secondary: linear-gradient(135deg, #ff9a3c 0%, #f97316 100%);
+
+    /* ===== Radii ===== */
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 28px;
+    --radius-full: 9999px;
+
+    /* ===== Shadows & glows ===== */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.55);
+    --glow-orange: 0 0 20px rgba(249, 115, 22, 0.30);
+    --glow-orange-sm: 0 0 12px rgba(249, 115, 22, 0.20);
+    --glow-orange-lg: 0 0 40px rgba(249, 115, 22, 0.25);
+    --ring-orange: 0 0 0 1px rgba(249, 115, 22, 0.40), 0 0 24px rgba(249, 115, 22, 0.15);
+
+    /* ===== Motion ===== */
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --dur-fast: 150ms;
+    --dur: 250ms;
+    --dur-slow: 350ms;
+
+    /* ===== Layout ===== */
+    --sidebar-width: 280px;
+    --docs-width: 384px;
+
+    /* ===== Component tokens (themeable) ===== */
+    --panel: rgba(255, 255, 255, 0.03);
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --input-bg: rgba(255, 255, 255, 0.04);
+    --hover-bg: rgba(255, 255, 255, 0.04);
+    --active-bg: rgba(249, 115, 22, 0.10);
+    --text-dim: #6b7280;
+    --chip-bg: rgba(31, 41, 55, 0.6);
+    --docs-btn-bg: rgba(11, 11, 18, 0.55);
+
+    /* Code block surface (themeable) — a raised panel that reads clearly
+       lighter than the near-black page, so it doesn't melt into the background. */
+    --code-surface-bg: #1a1a24;
+    --code-surface-border: rgba(255, 255, 255, 0.10);
+    --code-header-bg: rgba(0, 0, 0, 0.22);
+    --code-header-border: rgba(255, 255, 255, 0.07);
+    --code-plain-text: #e4e4e7;
+    --code-shadow: 0 2px 12px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    /* Source badges (RAG / MCP response tags) — themeable */
+    --rag-badge-bg: rgba(59, 130, 246, 0.15);
+    --rag-badge-border: rgba(59, 130, 246, 0.35);
+    --rag-badge-text: #93c5fd;
+    --mcp-badge-bg: rgba(168, 85, 247, 0.15);
+    --mcp-badge-border: rgba(168, 85, 247, 0.35);
+    --mcp-badge-text: #c4b5fd;
+
+    /* Documentation link color — clearly clickable, secondary to the title */
+    --doc-link: #60a5fa;
+    --doc-link-hover: #93c5fd;
+
+    /* ===== Fonts ===== */
+    --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* =====================================================================
+   LIGHT THEME — warm daylight; orange preserved (deepened to #ea580c for
+   contrast on white). Applied when data-theme="light" is on <html>.
+   ===================================================================== */
+:root[data-theme="light"] {
+    --background: #eeece6;
+    --bg-deep: #e7e4dc;
+    --surface: #ffffff;
+    --surface-hover: #f6f4ef;
+    --sidebar: #f6f4ef;
+    --card: #ffffff;
+    --card-hover: #faf9f5;
+    --muted: #e8e6df;
+
+    --border: rgba(28, 24, 16, 0.12);
+    --border-light: rgba(28, 24, 16, 0.15);
+    --border-strong: rgba(28, 24, 16, 0.20);
+
+    --text-primary: #1b1a20;
+    --text-secondary: #514f59;
+    --text-muted: #78767e;
+    --text-faint: rgba(20, 18, 15, 0.42);
+    --text-dim: #8a8790;
+
+    --primary: #ea580c;
+    --primary-light: #f97316;
+    --primary-hover: #c2410c;
+    --primary-dim: rgba(249, 115, 22, 0.14);
+    --primary-soft: rgba(249, 115, 22, 0.08);
+    --secondary: #ea580c;
+    --accent: #ea580c;
+
+    --success: #16a34a;
+    --error: #dc2626;
+    --warning: #d97706;
+    --info: #0284c7;
+
+    --panel: #ffffff;
+    --panel-border: rgba(28, 24, 16, 0.12);
+    --input-bg: #ffffff;
+    --hover-bg: rgba(28, 24, 16, 0.05);
+    --active-bg: rgba(249, 115, 22, 0.10);
+    --chip-bg: #e8e6df;
+    --docs-btn-bg: rgba(255, 255, 255, 0.82);
+
+    /* Code block surface — soft light card that reads distinct from the ground */
+    --code-surface-bg: #f6f6f3;
+    --code-surface-border: rgba(28, 24, 16, 0.14);
+    --code-header-bg: rgba(28, 24, 16, 0.04);
+    --code-header-border: rgba(28, 24, 16, 0.09);
+    --code-plain-text: #24292f;
+    --code-shadow: none;
+
+    /* Source badges — darker text + firmer tint for legibility on a light ground */
+    --rag-badge-bg: rgba(37, 99, 235, 0.10);
+    --rag-badge-border: rgba(37, 99, 235, 0.30);
+    --rag-badge-text: #1d4ed8;
+    --mcp-badge-bg: rgba(124, 58, 237, 0.10);
+    --mcp-badge-border: rgba(124, 58, 237, 0.30);
+    --mcp-badge-text: #6d28d9;
+
+    /* Documentation link — accessible blue on a light ground */
+    --doc-link: #2563eb;
+    --doc-link-hover: #1d4ed8;
+
+    --shadow-sm: 0 1px 2px rgba(20, 18, 15, 0.05);
+    --shadow-md: 0 4px 14px rgba(20, 18, 15, 0.07);
+    --shadow-lg: 0 8px 26px rgba(20, 18, 15, 0.08);
+    --shadow-xl: 0 18px 50px rgba(20, 18, 15, 0.12);
+    --glow-orange: 0 0 20px rgba(249, 115, 22, 0.22);
+    --glow-orange-sm: 0 0 12px rgba(249, 115, 22, 0.16);
+    --glow-orange-lg: 0 0 40px rgba(249, 115, 22, 0.18);
+    --ring-orange: 0 0 0 1px rgba(249, 115, 22, 0.40), 0 0 20px rgba(249, 115, 22, 0.12);
 }
 
 * {
@@ -125,8 +278,10 @@ html, body {
 }
 
 .mantine-Textarea-input:focus,
-.mantine-TextInput-input:focus {
-    border-color: var(--primary) !important;
+.mantine-TextInput-input:focus,
+.mantine-PasswordInput-input:focus-within {
+    border-color: rgba(249, 115, 22, 0.55) !important;
+    box-shadow: var(--ring-orange) !important;
 }
 
 .mantine-Textarea-input::placeholder,
@@ -134,12 +289,10 @@ html, body {
     color: var(--text-muted) !important;
 }
 
-/* Code block styling */
+/* Code text area — the visible container is the code block's own card (Paper),
+   so the raw <pre> stays bare (no extra card/border/padding). */
 pre {
-    background-color: rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem;
+    margin: 0;
     overflow-x: auto;
 }
 
@@ -150,10 +303,10 @@ code {
 
 /* Inline code */
 :not(pre) > code {
-    background-color: rgba(124, 58, 237, 0.15);
-    color: #c084fc;
+    background-color: rgba(249, 115, 22, 0.12);
+    color: #ff9a3c;
     padding: 0.125rem 0.375rem;
-    border-radius: 4px;
+    border-radius: 5px;
     font-size: 0.875em;
 }
 
@@ -255,3 +408,648 @@ a:hover {
         display: block;
     }
 }
+
+/* =====================================================================
+   DESIGN SYSTEM — reusable premium primitives (jc- namespace)
+   Use these in components instead of duplicating inline style objects.
+   ===================================================================== */
+
+/* Glassmorphism surface */
+.jc-glass {
+    background: rgba(18, 18, 26, 0.72);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* Standard elevated card */
+.jc-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease),
+        box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.jc-card:hover {
+    border-color: var(--border-strong);
+    background: var(--card-hover);
+}
+
+/* Interactive lift on hover */
+.jc-hover-lift {
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+        border-color var(--dur) var(--ease);
+}
+.jc-hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Orange gradient text */
+.jc-gradient-text {
+    background: var(--gradient-secondary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* Soft focus ring helper (apply on :focus-within wrappers) */
+.jc-focus-ring:focus-within {
+    border-color: rgba(249, 115, 22, 0.45);
+    box-shadow: var(--ring-orange);
+}
+
+/* Subtle animated ambient background (orbs) for hero / auth screens */
+.jc-bg-orbs {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+.jc-bg-orbs::before,
+.jc-bg-orbs::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.55;
+}
+.jc-bg-orbs::before {
+    width: 460px;
+    height: 460px;
+    top: -8%;
+    left: -6%;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.16), transparent 70%);
+    animation: orbFloat 18s var(--ease) infinite;
+}
+.jc-bg-orbs::after {
+    width: 380px;
+    height: 380px;
+    bottom: -10%;
+    right: -4%;
+    background: radial-gradient(circle, rgba(234, 88, 12, 0.12), transparent 70%);
+    animation: orbFloat 22s var(--ease) infinite reverse;
+}
+
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(40px, 30px) scale(1.08); }
+    66% { transform: translate(-30px, 20px) scale(0.95); }
+}
+
+@keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.jc-fade-in { animation: fadeIn var(--dur-slow) var(--ease) forwards; }
+.jc-slide-up { animation: slideUp var(--dur-slow) var(--ease) forwards; }
+.jc-float { animation: floatY 4s ease-in-out infinite; }
+
+/* Standard transition helper */
+.jc-transition {
+    transition: all var(--dur) var(--ease);
+}
+
+/* ===== Auth screens (Login / Register / Forgot / Reset) ===== */
+.jc-auth-shell {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(249, 115, 22, 0.10) 0%, transparent 42%),
+        radial-gradient(circle at 82% 82%, rgba(234, 88, 12, 0.07) 0%, transparent 46%),
+        linear-gradient(135deg, #0a0a0f 0%, #0f0f16 50%, #0a0a0f 100%);
+}
+.jc-auth-hero {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 56px 6vw;
+    position: relative;
+    z-index: 1;
+}
+.jc-auth-panel {
+    width: 100%;
+    max-width: 560px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    position: relative;
+    z-index: 1;
+}
+.jc-feature-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease),
+        background var(--dur) var(--ease);
+}
+.jc-feature-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(249, 115, 22, 0.30);
+    background: rgba(249, 115, 22, 0.04);
+}
+
+@media (max-width: 980px) {
+    .jc-auth-hero { display: none; }
+    .jc-auth-panel { margin: 0 auto; }
+}
+
+/* ===== Premium floating auth card (glass + ambient glow + layered elevation) ===== */
+.jc-float-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+}
+/* soft orange ambient light pooled behind the card */
+.jc-float-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 5% 7%;
+    z-index: 0;
+    border-radius: 44px;
+    background: radial-gradient(ellipse at 50% 38%,
+        rgba(249, 115, 22, 0.20), rgba(249, 115, 22, 0.05) 46%, transparent 72%);
+    filter: blur(48px);
+    pointer-events: none;
+    animation: glowBreathe 7s var(--ease) infinite;
+}
+.jc-float-card {
+    position: relative;
+    z-index: 1;
+    /* override Mantine's opaque Paper bg so the glass/backdrop-blur reads through */
+    background: rgba(18, 18, 26, 0.70) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    /* layered elevation: deep soft shadow + crisp ring + faint orange + top inner highlight */
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.50),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 0 48px rgba(249, 115, 22, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: transform var(--dur-slow) var(--ease), box-shadow var(--dur-slow) var(--ease);
+}
+.jc-float-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 30px 68px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.07),
+        0 0 64px rgba(249, 115, 22, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+@keyframes glowBreathe {
+    0%, 100% { opacity: 0.72; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Gentle fade when the form card swaps inside the persistent auth shell.
+   Starts at 0.4 opacity (never fully blank) so switching Login <-> Register
+   settles smoothly instead of blinking. */
+.jc-card-in { animation: cardIn 0.24s var(--ease); }
+@keyframes cardIn {
+    from { opacity: 0.4; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =====================================================================
+   SIDEBAR — reusable premium primitives
+   ===================================================================== */
+.jc-sidebar {
+    background: rgba(16, 16, 24, 0.95);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border-right: 1px solid var(--border-light);
+}
+
+/* Chat list row: transparent base, subtle hover, orange left-accent when active */
+.jc-sidebar-item {
+    border-left: 2px solid transparent;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease);
+}
+
+/* New Chat button hover glow */
+.jc-newchat {
+    transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+        box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease) !important;
+}
+.jc-newchat:hover {
+    border-color: rgba(249, 115, 22, 0.40) !important;
+    box-shadow: 0 0 14px rgba(249, 115, 22, 0.18) !important;
+    transform: translateY(-1px);
+}
+
+/* Pulsing status dot (color-agnostic — inherits the dot's own background) */
+.jc-pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.82); }
+}
+
+/* =====================================================================
+   HOME / empty chat state
+   ===================================================================== */
+/* Soft orange spotlight behind the welcome hero */
+.jc-home-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -62%);
+    width: 620px;
+    height: 620px;
+    max-width: 92vw;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.10), transparent 62%);
+    filter: blur(52px);
+    pointer-events: none;
+    z-index: 0;
+    animation: glowBreathe 8s var(--ease) infinite;
+}
+/* Quick-prompt pill */
+.jc-prompt-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius-full);
+    background: rgba(22, 22, 42, 0.8);
+    border: 1px solid var(--border-light);
+    color: rgba(255, 255, 255, 0.82);
+    cursor: pointer;
+    font-size: 14.5px;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+        background var(--dur) var(--ease), transform var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.jc-prompt-pill:hover {
+    border-color: rgba(249, 115, 22, 0.40);
+    box-shadow: 0 0 14px rgba(249, 115, 22, 0.12);
+    background: rgba(249, 115, 22, 0.06);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* =====================================================================
+   CHAT COMPOSER + MODE TOGGLE
+   ===================================================================== */
+.jc-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    border-radius: 22px;
+    padding: 10px 12px;
+    background: rgba(22, 22, 42, 0.9);
+    border: 1px solid var(--border-light);
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.jc-composer:focus-within {
+    border-color: rgba(249, 115, 22, 0.42);
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.40), 0 0 26px rgba(249, 115, 22, 0.14);
+}
+.jc-composer textarea::placeholder { color: rgba(255, 255, 255, 0.40); }
+
+/* Send / stop button */
+.jc-send-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding: 0;
+    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease),
+        background var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.jc-send-btn:hover:not(:disabled) { transform: scale(1.06); }
+.jc-send-btn:active:not(:disabled) { transform: scale(0.96); }
+.jc-send-btn.ready:hover {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.5), 0 0 40px rgba(249, 115, 22, 0.2);
+}
+
+/* Segmented RAG / MCP / Both toggle */
+.jc-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-full);
+    background: rgba(18, 18, 26, 0.72);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid var(--border-light);
+}
+.jc-mode-btn {
+    padding: 5px 16px;
+    border-radius: var(--radius-full);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--dur) var(--ease);
+}
+.jc-mode-btn:hover:not(.active):not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.85);
+}
+.jc-mode-btn.active {
+    background: linear-gradient(135deg, #f97316, #ff7a1a);
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.40);
+    color: #ffffff;
+    font-weight: 600;
+}
+.jc-mode-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* =====================================================================
+   DOCUMENTATION PANEL
+   ===================================================================== */
+.jc-docs-panel {
+    background: rgba(12, 12, 20, 0.97);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border-left: 1px solid var(--border-light);
+}
+/* Orange-tinted icon chip (header / accents) */
+.jc-icon-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+/* Documentation suggestion card */
+.jc-doc-card {
+    background: rgba(22, 22, 42, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+        background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.jc-doc-card:hover {
+    border-color: rgba(249, 115, 22, 0.35);
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.08);
+    background: rgba(22, 22, 42, 0.9);
+    transform: translateY(-1px);
+}
+.jc-doc-title { transition: color var(--dur) var(--ease); }
+.jc-doc-card:hover .jc-doc-title { color: var(--primary); }
+.jc-doc-chevron { color: #9ca3af; transition: color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.jc-doc-card:hover .jc-doc-chevron { color: var(--primary); transform: translateX(2px); }
+/* Pill button used in the docs panel (Back / View full docs) */
+.jc-doc-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--dur) var(--ease);
+}
+
+/* =====================================================================
+   MAIN WORKSPACE BACKGROUND
+   Deep blue-dark base (sits just below the sidebar/composer surfaces so
+   they read as elevated) + two whisper-soft ambient glows for depth.
+   Not pure black; brand-tied; minimal and non-distracting.
+   ===================================================================== */
+.jc-main-bg {
+    background:
+        radial-gradient(ellipse 90% 55% at 50% -8%, rgba(249, 115, 22, 0.055), transparent 60%),
+        radial-gradient(circle at 88% 92%, rgba(99, 102, 241, 0.030), transparent 48%),
+        #0b0b12;
+}
+
+/* Sidebar auth — primary Sign In CTA hover (lift + glow), matches app CTAs */
+.jc-primary-cta {
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+        filter var(--dur) var(--ease) !important;
+}
+.jc-primary-cta:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    box-shadow: 0 8px 22px rgba(249, 115, 22, 0.30) !important;
+}
+/* Secondary "Create Account" text link — discoverable, not dominant */
+.jc-create-account {
+    color: rgba(249, 115, 22, 0.78);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--dur) var(--ease);
+}
+.jc-create-account:hover { color: #ff9a3c; }
+
+/* "Show Docs" header button — subtle premium hover (glow + lift + brighter edge) */
+.jc-header-docs-btn:hover {
+    transform: translateY(-1px) scale(1.02);
+    border-color: rgba(249, 115, 22, 0.50) !important;
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.22), 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+.jc-header-docs-btn:active {
+    transform: translateY(0) scale(0.99);
+}
+
+/* "Searching docs" shimmer — moving highlight band, theme-aware so it stays readable on either pill */
+.jc-docs-shimmer {
+    background: linear-gradient(90deg,
+        #ffffff 0%, rgba(255, 255, 255, 0.85) 35%, rgba(255, 255, 255, 0.4) 45%,
+        rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.4) 55%,
+        rgba(255, 255, 255, 0.85) 65%, #ffffff 100%);
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: shimmer 2.5s linear infinite;
+}
+:root[data-theme="light"] .jc-docs-shimmer {
+    background: linear-gradient(90deg,
+        #1b1a20 0%, rgba(27, 26, 32, 0.85) 35%, rgba(234, 88, 12, 0.75) 45%,
+        rgba(234, 88, 12, 0.95) 50%, rgba(234, 88, 12, 0.75) 55%,
+        rgba(27, 26, 32, 0.85) 65%, #1b1a20 100%);
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+/* ===== Ambient floating orange particles (shared by auth screens) ===== */
+.jc-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+.jc-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(249, 146, 68, 0.95);
+    box-shadow: 0 0 6px 1px rgba(249, 115, 22, 0.55);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation-name: particleDrift;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+/* slow rise + gentle fade in/out; per-particle peak opacity via --p-op */
+@keyframes particleDrift {
+    0%   { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0; }
+    15%  { opacity: var(--p-op, 0.5); }
+    50%  { transform: translate3d(6px, -22px, 0) scale(1.15); opacity: var(--p-op, 0.5); }
+    85%  { opacity: var(--p-op, 0.5); }
+    100% { transform: translate3d(-4px, -46px, 0) scale(0.85); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .jc-particle { animation: none; opacity: var(--p-op, 0.4); }
+    .jc-float-wrap::before { animation: none; }
+}
+
+/* =====================================================================
+   THEME SWITCH (sidebar) — sun (left) + moon (right) + sliding knob
+   ===================================================================== */
+.jc-theme-switch {
+    position: relative; width: 52px; height: 26px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 7px;
+    cursor: pointer; flex: none; box-sizing: border-box;
+    background: var(--chip-bg); border: 1px solid var(--border);
+    transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.jc-theme-switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.jc-theme-switch .jc-sw-knob {
+    position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; z-index: 0;
+    background: rgba(255, 255, 255, 0.18); transform: translateX(26px);
+    transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.jc-theme-switch svg { width: 13px; height: 13px; z-index: 1; position: relative; transition: color var(--dur) var(--ease); }
+.jc-theme-switch .jc-sw-sun { color: var(--text-dim); }
+.jc-theme-switch .jc-sw-moon { color: #ff9a3c; }
+:root[data-theme="light"] .jc-theme-switch .jc-sw-knob { transform: translateX(0); background: #ffffff; box-shadow: 0 1px 3px rgba(20, 18, 15, 0.22); }
+:root[data-theme="light"] .jc-theme-switch .jc-sw-sun { color: #ea580c; }
+:root[data-theme="light"] .jc-theme-switch .jc-sw-moon { color: var(--text-dim); }
+
+/* =====================================================================
+   CODE BLOCKS — intentionally dark in BOTH themes (readable syntax,
+   VS Code / ChatGPT convention). Forced over Mantine's Paper bg.
+   ===================================================================== */
+.jc-code-surface {
+    background: var(--code-surface-bg) !important;
+    border: 1px solid var(--code-surface-border) !important;
+    box-shadow: var(--code-shadow) !important;
+    overflow: hidden;
+}
+
+/* =====================================================================
+   LIGHT THEME — overrides for classes/elements that hardcode dark values
+   ===================================================================== */
+/* Tier 1 panels — sidebar + docs drawer: own surface, clear edge, faint directional lift */
+:root[data-theme="light"] .jc-sidebar {
+    background: var(--sidebar);
+    border-right: 1px solid rgba(28, 24, 16, 0.10);
+    box-shadow: 1px 0 0 rgba(28, 24, 16, 0.03), 6px 0 26px rgba(28, 24, 16, 0.04);
+}
+:root[data-theme="light"] .jc-docs-panel {
+    background: var(--sidebar);
+    border-left: 1px solid rgba(28, 24, 16, 0.10);
+    box-shadow: -1px 0 0 rgba(28, 24, 16, 0.03), -8px 0 30px rgba(28, 24, 16, 0.05);
+}
+:root[data-theme="light"] .jc-glass { background: rgba(255, 255, 255, 0.74); border-color: var(--border-light); }
+
+/* Tier 2 cards — white, visible border, subtle lift so they float above the ground */
+:root[data-theme="light"] .jc-doc-card { background: #ffffff; border-color: var(--border); box-shadow: 0 1px 2px rgba(28, 24, 16, 0.05); }
+:root[data-theme="light"] .jc-doc-card:hover { background: #ffffff; border-color: rgba(249, 115, 22, 0.38); box-shadow: 0 2px 12px rgba(249, 115, 22, 0.10); }
+:root[data-theme="light"] .jc-feature-card { background: #fdfcf9; border-color: var(--border); box-shadow: 0 1px 2px rgba(28, 24, 16, 0.05); }
+:root[data-theme="light"] .jc-feature-card:hover { transform: translateY(-2px); border-color: rgba(249, 115, 22, 0.30); background: #fdfcf9; box-shadow: 0 6px 18px rgba(28, 24, 16, 0.08); }
+:root[data-theme="light"] .jc-prompt-pill { background: #ffffff; border-color: var(--border); color: var(--text-secondary); box-shadow: 0 1px 2px rgba(28, 24, 16, 0.05); }
+:root[data-theme="light"] .jc-prompt-pill:hover { border-color: rgba(249, 115, 22, 0.40); background: #ffffff; color: var(--text-primary); box-shadow: 0 2px 12px rgba(249, 115, 22, 0.12); }
+:root[data-theme="light"] .jc-mode-toggle { background: #ffffff; border-color: var(--border); box-shadow: 0 1px 2px rgba(28, 24, 16, 0.05); }
+:root[data-theme="light"] .jc-mode-btn:hover:not(.active):not(:disabled) { background: rgba(28, 24, 16, 0.05); color: var(--text-primary); }
+
+/* Composer — clearly elevated input surface */
+:root[data-theme="light"] .jc-composer { background: #ffffff; border-color: var(--border-light); box-shadow: 0 1px 2px rgba(28, 24, 16, 0.04), 0 8px 24px rgba(28, 24, 16, 0.05); }
+:root[data-theme="light"] .jc-composer:focus-within { border-color: rgba(249, 115, 22, 0.42); box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.35), 0 8px 26px rgba(249, 115, 22, 0.08); }
+:root[data-theme="light"] .jc-composer textarea::placeholder { color: rgba(28, 24, 16, 0.42); }
+
+/* "Show Docs" floating pill — glass surface with a soft lift so it reads as elevated, not a black chip */
+:root[data-theme="light"] .jc-header-docs-btn { box-shadow: 0 1px 2px rgba(28, 24, 16, 0.06), 0 6px 18px rgba(28, 24, 16, 0.07); }
+:root[data-theme="light"] .jc-header-docs-btn:hover { box-shadow: 0 0 16px rgba(249, 115, 22, 0.16), 0 4px 14px rgba(28, 24, 16, 0.10); }
+
+/* Auth / float card — white, warm border, real elevation */
+:root[data-theme="light"] .jc-float-card {
+    /* Warm frosted near-white — shares the cream's hue instead of clashing as stark neutral white */
+    background: rgba(253, 251, 247, 0.82) !important;
+    border: 1px solid rgba(28, 24, 16, 0.08) !important;
+    /* Rests on the surface (tight, negative-spread pool) instead of floating like a dropped sheet;
+       the warm glow halo ties it to the orange atmosphere — the light equivalent of the dark card's signature layer. */
+    box-shadow:
+        0 0 0 1px rgba(28, 24, 16, 0.045),
+        0 1px 2px rgba(28, 24, 16, 0.04),
+        0 16px 40px -16px rgba(28, 24, 16, 0.14),
+        0 0 44px rgba(249, 115, 22, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+:root[data-theme="light"] .jc-float-card:hover {
+    box-shadow:
+        0 0 0 1px rgba(28, 24, 16, 0.06),
+        0 1px 2px rgba(28, 24, 16, 0.05),
+        0 22px 50px -16px rgba(28, 24, 16, 0.16),
+        0 0 54px rgba(249, 115, 22, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Softer, smaller ambient glow — orange reads much hotter against a light ground */
+:root[data-theme="light"] .jc-main-bg {
+    background:
+        radial-gradient(ellipse 66% 40% at 50% -6%, rgba(249, 115, 22, 0.035), transparent 55%),
+        var(--background);
+}
+:root[data-theme="light"] .jc-auth-shell {
+    background:
+        /* Warm luminous lift behind the card — the card emerges from a soft halo instead of sitting on flat cream */
+        radial-gradient(circle at 78% 45%, rgba(255, 250, 244, 0.55) 0%, transparent 40%),
+        /* Warm atmosphere, nudged toward the dark theme's presence (still gentle on a light ground) */
+        radial-gradient(circle at 15% 12%, rgba(249, 115, 22, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 88% 90%, rgba(234, 88, 12, 0.045) 0%, transparent 42%),
+        /* A hair deeper cream at the edges gives a subtle vignette so the lit card zone reads brighter */
+        linear-gradient(135deg, #f1eee7 0%, #f5f2eb 50%, #ece9e1 100%);
+}
+
+/* Accents */
+:root[data-theme="light"] .jc-create-account { color: rgba(234, 88, 12, 0.9); }
+:root[data-theme="light"] .jc-create-account:hover { color: #c2410c; }
+
+/* Mantine inputs / placeholders */
+:root[data-theme="light"] .mantine-Textarea-input,
+:root[data-theme="light"] .mantine-TextInput-input,
+:root[data-theme="light"] .mantine-PasswordInput-input {
+    background-color: #ffffff !important; border-color: var(--border-light) !important; color: var(--text-primary) !important;
+}
+:root[data-theme="light"] .mantine-TextInput-input::placeholder,
+:root[data-theme="light"] .mantine-Textarea-input::placeholder { color: var(--text-muted) !important; }
+
+/* scrollbar, inline code, selection, links in light */
+:root[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(28, 24, 16, 0.20); }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(28, 24, 16, 0.30); }
+:root[data-theme="light"] :not(pre) > code { background-color: rgba(249, 115, 22, 0.12); color: #c2410c; }
+:root[data-theme="light"] ::selection { background-color: rgba(249, 115, 22, 0.22); color: #1b1a20; }
+:root[data-theme="light"] ::-moz-selection { background-color: rgba(249, 115, 22, 0.22); color: #1b1a20; }
+:root[data-theme="light"] a { color: var(--primary); }
+:root[data-theme="light"] a:hover { color: var(--primary-hover); }
